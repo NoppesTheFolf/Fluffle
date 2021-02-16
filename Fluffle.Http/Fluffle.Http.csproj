@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<RootNamespace>Noppes.Fluffle.Http</RootNamespace>
+		<AssemblyName>Noppes.Fluffle.Http</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Flurl.Http" Version="3.0.1" />
+		<PackageReference Include="MessagePack" Version="2.2.85" />
+		<PackageReference Include="MessagePackAnalyzer" Version="2.2.85" />
+		<PackageReference Include="Polly" Version="7.2.1" />
+	</ItemGroup>
+
+</Project>
