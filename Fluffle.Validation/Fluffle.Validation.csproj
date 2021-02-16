@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<AssemblyName>Noppes.Fluffle.Validation</AssemblyName>
+		<RootNamespace>Noppes.Fluffle.Validation</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FluentValidation" Version="9.5.1" />
+	</ItemGroup>
+
+</Project>
