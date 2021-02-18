@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<AssemblyName>Noppes.Fluffle.Vips</AssemblyName>
+		<RootNamespace>Noppes.Fluffle.Vips</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Update="FluffleVips.so">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="LibFluffleVips.so">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>
