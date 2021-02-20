@@ -24,7 +24,7 @@
     {
         public string TraceId { get; set; }
 
-        public TracedV1Error(string code, string message, string traceId) : base(code, message)
+        public TracedV1Error(string code, string traceId, string message) : base(code, message)
         {
             TraceId = traceId;
         }
