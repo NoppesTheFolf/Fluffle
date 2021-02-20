@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<TargetFramework>net5.0</TargetFramework>
+		<RootNamespace>Noppes.Fluffle.Api</RootNamespace>
+		<AssemblyName>Noppes.Fluffle.Api</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Fluffle.Configuration\Fluffle.Configuration.csproj" />
+		<ProjectReference Include="..\Fluffle.Database\Fluffle.Database.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FluentValidation" Version="9.5.1" />
+		<PackageReference Include="FluentValidation.AspNetCore" Version="9.5.1" />
+		<PackageReference Include="Humanizer.Core" Version="2.8.26" />
+		<PackageReference Include="MessagePack.AspNetCoreMvcFormatter" Version="2.2.85" />
+		<PackageReference Include="Nito.AsyncEx" Version="5.1.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
+	</ItemGroup>
+
+</Project>
