@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Noppes.Fluffle.Api.RunnableServices;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -11,9 +12,9 @@ namespace Noppes.Fluffle.Api.AccessControl
     /// A seeder which can be ran at application startup to make sure the permissions defined in the
     /// application also exist in the database.
     /// </summary>
-    public abstract class PermissionSeeder
+    public abstract class PermissionSeeder : IService
     {
-        public abstract Task SyncAsync();
+        public abstract Task RunAsync();
     }
 
     /// <summary>
@@ -35,8 +36,10 @@ namespace Noppes.Fluffle.Api.AccessControl
             _logger = logger;
         }
 
-        public override async Task SyncAsync()
+        public override async Task RunAsync()
         {
+            _logger.LogInformation("Synchronizing permissions...");
+
             using var scope = _services.CreateScope();
             var permissionManager = scope.ServiceProvider
                 .GetRequiredService<AccessManager<TApiKey, TPermission, TApiKeyPermission>>();
@@ -91,6 +94,8 @@ namespace Noppes.Fluffle.Api.AccessControl
                 _logger.LogInformation("Removing redundant permission {redundantPermission}.", redundantPermission);
                 await permissionManager.RemovePermissionAsync(redundantPermission);
             }
+
+            _logger.LogInformation("Finished synchronizing permissions.");
         }
     }
 }
