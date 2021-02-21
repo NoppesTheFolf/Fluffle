@@ -1,4 +1,5 @@
 ﻿using Flurl.Http;
+using Flurl.Http.Content;
 using MessagePack;
 using System.Net.Http;
 using System.Threading;
@@ -28,6 +29,26 @@ namespace Noppes.Fluffle.Http
             var responseStream = await request.GetStreamAsync(cancellationToken);
 
             return await MessagePackSerializer.DeserializeAsync<T>(responseStream, Options, cancellationToken);
+        }
+
+        /// <summary>
+        /// Make a DELETE request with the data serialized as JSON. Deserialize the response using JSON.
+        /// </summary>
+        public static async Task<T> DeleteJsonReceiveJsonAsync<T>(this IFlurlRequest request, object data, CancellationToken cancellationToken = default)
+        {
+            var response = await request.DeleteJsonAsync(data, cancellationToken);
+
+            return await response.GetJsonAsync<T>();
+        }
+
+        /// <summary>
+        /// Make a DELETE request with the data serialized as JSON.
+        /// </summary>
+        public static Task<IFlurlResponse> DeleteJsonAsync(this IFlurlRequest request, object data, CancellationToken cancellationToken = default)
+        {
+            var content = new CapturedJsonContent(request.Settings.JsonSerializer.Serialize(data));
+
+            return request.SendAsync(HttpMethod.Delete, content, cancellationToken);
         }
 
         /// <summary>

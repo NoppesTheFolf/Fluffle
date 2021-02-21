@@ -15,7 +15,7 @@ namespace Noppes.Fluffle.Api.Controllers
         public const string BaseUrl = "api/v{version:apiVersion}/";
 
         [NonAction]
-        public IActionResult HandleV1<T>(SR<T> result, Func<T, IActionResult> onSuccess = null) where T : class
+        public IActionResult HandleV1<T>(SR<T> result, Func<T, IActionResult> onSuccess = null)
         {
             return result.Handle(HandleV1, r => onSuccess == null ? Ok(r) : onSuccess(r));
         }

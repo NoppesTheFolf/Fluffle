@@ -6,7 +6,7 @@ namespace Noppes.Fluffle.Api.Services
     /// The result produced by a <see cref="Service"/>. SR is an abbreviation for ServiceResult to
     /// improve readability due to common usage.
     /// </summary>
-    public class SR<TOutput> where TOutput : class
+    public class SR<TOutput>
     {
         protected SE Error { get; set; }
 

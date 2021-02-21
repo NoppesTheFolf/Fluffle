@@ -21,6 +21,7 @@ using Noppes.Fluffle.Configuration;
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Noppes.Fluffle.Utils;
 
 namespace Noppes.Fluffle.Api
 {
@@ -126,6 +127,7 @@ namespace Noppes.Fluffle.Api
             }).AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.IgnoreNullValues = false;
+                options.JsonSerializerOptions.Converters.Add(new TimeSpanConverter());
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
 
                 AspNetJsonSerializer.Options = options.JsonSerializerOptions;
