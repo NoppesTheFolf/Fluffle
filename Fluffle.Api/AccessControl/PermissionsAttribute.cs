@@ -19,7 +19,7 @@ namespace Noppes.Fluffle.Api.AccessControl
             // A user's permissions are stored in their claims. These claims are prefixed and
             // therefore the permissions in our hashset need to be prefixed too
             _permissions = permissions
-                .Select(p => Permissions.Prefix + p)
+                .Select(p => Permissions.ClaimPrefix + p)
                 .ToImmutableHashSet();
         }
 

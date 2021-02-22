@@ -61,7 +61,7 @@ namespace Noppes.Fluffle.Api.AccessControl
             // Add the permissions attached to the API key as claims
             var permissionClaims = apiKey.ApiKeyPermissions
                 .Select(akp => akp.Permission)
-                .Select(p => Permissions.Prefix + p.Name)
+                .Select(p => Permissions.ClaimPrefix + p.Name)
                 .Select(p => new Claim(p, string.Empty));
 
             // Also add information about the API key itself

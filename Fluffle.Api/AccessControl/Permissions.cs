@@ -8,6 +8,6 @@
         /// <summary>
         /// The prefix used for permission claims.
         /// </summary>
-        public const string Prefix = "PERMISSION_";
+        public const string ClaimPrefix = "PERMISSION_";
     }
 }
