@@ -1,4 +1,5 @@
 ﻿using FluentValidation.AspNetCore;
+using Humanizer;
 using MessagePack;
 using MessagePack.AspNetCoreMvcFormatter;
 using MessagePack.Resolvers;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -18,13 +20,29 @@ using Noppes.Fluffle.Api.Mapping;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.Api.Services;
 using Noppes.Fluffle.Configuration;
+using Noppes.Fluffle.Utils;
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Noppes.Fluffle.Utils;
 
 namespace Noppes.Fluffle.Api
 {
+    public abstract class ApiStartup<TConfiguration, TContext> : ApiStartup<TConfiguration> where TConfiguration : class where TContext : DbContext
+    {
+        public override void BeforeConfigure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            using var scope = app.ApplicationServices.CreateScope();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<TContext>>();
+            using var context = scope.ServiceProvider.GetRequiredService<TContext>();
+            context.Database.SetCommandTimeout(10.Minutes());
+
+            logger.LogInformation("Applying migrations...");
+            context.Database.Migrate();
+
+            base.BeforeConfigure(app, env);
+        }
+    }
+
     public abstract class ApiStartup<TConfiguration> : ApiStartup where TConfiguration : class
     {
         public override FluffleConfiguration GetConfiguration()
