@@ -60,9 +60,9 @@ namespace Noppes.Fluffle.Main.Client
                 .GetJsonAsync<PlatformModel>();
         }
 
-        public Task PutPlatformSyncAsync(string platformName, SyncTypeConstant syncType)
+        public Task SignalPlatformSyncAsync(string platformName, SyncTypeConstant syncType)
         {
-            return Request(Endpoints.PutPlatformSync(platformName, syncType))
+            return Request(Endpoints.SignalPlatformSync(platformName, syncType))
                 .PutAsync();
         }
 

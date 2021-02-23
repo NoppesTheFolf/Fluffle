@@ -21,7 +21,7 @@ namespace Noppes.Fluffle.Main.Communication
         public static object[] GetPlatformSync(string platformName) =>
             V1.Url(PlatformRoute(platformName, "sync"));
 
-        public static object[] PutPlatformSync(string platformName, SyncTypeConstant syncType) =>
+        public static object[] SignalPlatformSync(string platformName, SyncTypeConstant syncType) =>
             V1.Url(PlatformRoute(platformName, "sync", syncType));
     }
 }
