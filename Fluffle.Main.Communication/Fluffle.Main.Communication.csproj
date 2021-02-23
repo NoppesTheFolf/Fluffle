@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<RootNamespace>Noppes.Fluffle.Main.Communication</RootNamespace>
+		<AssemblyName>Noppes.Fluffle.Main.Communication</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Fluffle.Api.Communication\Fluffle.Api.Communication.csproj" />
+		<ProjectReference Include="..\Fluffle.Constants\Fluffle.Constants.csproj" />
+	</ItemGroup>
+
+</Project>

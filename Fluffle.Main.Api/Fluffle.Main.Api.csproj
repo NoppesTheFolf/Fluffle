@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<AssemblyName>Noppes.Fluffle.Main.Api</AssemblyName>
+		<RootNamespace>Noppes.Fluffle.Main.Api</RootNamespace>
+		<UserSecretsId>c344b214-e437-47e5-a817-7bad0ef8c3cb</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="morelinq" Version="3.3.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Fluffle.Api\Fluffle.Api.csproj" />
+		<ProjectReference Include="..\Fluffle.B2\Fluffle.B2.csproj" />
+		<ProjectReference Include="..\Fluffle.Main.Database\Fluffle.Main.Database.csproj" />
+		<ProjectReference Include="..\Fluffle.Main.Communication\Fluffle.Main.Communication.csproj" />
+		<ProjectReference Include="..\Fluffle.PerceptualHashing\Fluffle.PerceptualHashing.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,13 @@
+﻿namespace Noppes.Fluffle.Main.Communication
+{
+    public static partial class Endpoints
+    {
+        public const string Sync = "sync";
+
+        public static object[] GetSyncImages(long afterChangeId) =>
+            V1.Url(Sync, "images", afterChangeId);
+
+        public static object[] GetSyncCreditableEntities(long afterChangeId) =>
+            V1.Url(Sync, "creditable-entities", afterChangeId);
+    }
+}

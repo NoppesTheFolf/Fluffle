@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<AssemblyName>Noppes.Fluffle.Main.Client</AssemblyName>
+		<RootNamespace>Noppes.Fluffle.Main.Client</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Fluffle.Http\Fluffle.Http.csproj" />
+		<ProjectReference Include="..\Fluffle.Main.Communication\Fluffle.Main.Communication.csproj" />
+	</ItemGroup>
+
+</Project>
