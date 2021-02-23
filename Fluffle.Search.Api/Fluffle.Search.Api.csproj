@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<AssemblyName>Noppes.Fluffle.Search.Api</AssemblyName>
+		<RootNamespace>Noppes.Fluffle.Search.Api</RootNamespace>
+		<UserSecretsId>c344b214-e437-47e5-a817-7bad0ef8c3cb</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Fluffle.Api\Fluffle.Api.csproj" />
+		<ProjectReference Include="..\Fluffle.Main.Client\Fluffle.Main.Client.csproj" />
+		<ProjectReference Include="..\Fluffle.PerceptualHashing\Fluffle.PerceptualHashing.csproj" />
+		<ProjectReference Include="..\Fluffle.Search.Database\Fluffle.Search.Database.csproj" />
+	</ItemGroup>
+
+</Project>
