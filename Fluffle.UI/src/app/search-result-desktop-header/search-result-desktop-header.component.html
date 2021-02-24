@@ -2,7 +2,7 @@
     <div class="d-flex align-items-center">
         <img class="rounded mb-2 me-2 shadow" [src]="searchService.result.imageUrl" style="max-width: 50%; height: 100%; max-height: 300px;" />
         <div class="d-flex flex-column ms-3" style="max-width: 620px;">
-            <span class="text-muted">Searched {{ searchService.result.count }} images in {{ searchService.result.elapsedMilliseconds }}ms.</span>
+            <span class="text-muted">Searched {{ searchService.result.count.toLocaleString() }} images in {{ searchService.result.elapsedMilliseconds }}ms.</span>
             <h1 [ngSwitch]="searchService.excellentImages.length">
                 <span *ngSwitchCase="0">Oh noes! Looks like we couldn't find what you're looking for</span>
                 <span *ngSwitchCase="1">Jolly good! We found an image similar to the one you submitted</span>

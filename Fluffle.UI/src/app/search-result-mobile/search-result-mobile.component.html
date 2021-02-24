@@ -4,7 +4,7 @@
             <img [src]="searchService.result.imageUrl" class="mobile-search-result-searched-image rounded mt-2">
         </div>
         <div class="mx-2 my-3">
-            <div class="text-muted text-center">Searched {{ searchService.result.count }} images in {{
+            <div class="text-muted text-center">Searched {{ searchService.result.count.toLocaleString() }} images in {{
                 searchService.result.elapsedMilliseconds }} ms</div>
             <h1 class="text-center" [ngSwitch]="searchService.excellentImages.length">
                 <span *ngSwitchCase="0">Oh noes! Couldn't find what you're looking for</span>

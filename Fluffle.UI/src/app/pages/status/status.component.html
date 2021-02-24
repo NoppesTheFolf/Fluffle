@@ -8,15 +8,15 @@
                     <img class="d-block" [src]="'/assets/img/' + result.name +'.svg'" height="160" />
                     <div class="ms-4 d-flex flex-column justify-content-center">
                         <p *ngIf="!result.isComplete">
-                            Estimated number of images: {{result.estimatedCount}}
+                            Estimated number of images: {{result.estimatedCount.toLocaleString()}}
                         </p>
                         <p>
                             <span *ngIf="!result.isComplete">Of which have been scraped:</span>
                             <span *ngIf="result.isComplete">Number of images:</span>
-                            <span> {{result.storedCount}}</span>
+                            <span> {{result.storedCount.toLocaleString()}}</span>
                         </p>
                         <p>
-                            Of which have been indexed: {{result.indexedCount}}
+                            Of which have been indexed: {{result.indexedCount.toLocaleString()}}
                         </p>
                     </div>
                 </div>
