@@ -1,0 +1,10 @@
+.git/
+.vs/
+.vscode/
+
+*/bin/
+*/obj/
+*/.vscode/
+
+*/node_modules/
+Fluffle.UI/dist/
