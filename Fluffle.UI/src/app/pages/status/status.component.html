@@ -20,11 +20,11 @@
                         </p>
                     </div>
                 </div>
-                <div class="progress bg-dark mt-3">
-                    <div class="progress-bar bg-warning" role="progressbar"
-                        [ngStyle]="{'width.%': result.indexedPercentage}"></div>
-                    <div class="progress-bar bg-info" role="progressbar"
+                <div class="progress bg-dark mt-3 position-relative">
+                    <div class="progress-bar bg-info position-absolute h-100" role="progressbar"
                         [ngStyle]="{'width.%': result.scrapedPercentage}"></div>
+                    <div class="progress-bar bg-warning position-absolute h-100" role="progressbar"
+                        [ngStyle]="{'width.%': result.indexedPercentage}"></div>
                 </div>
             </div>
         </div>
