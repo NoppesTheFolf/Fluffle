@@ -1,6 +1,6 @@
 @import "../../../variables.scss";
 
-@include media-breakpoint-down(md) {
+@include media-breakpoint-down(lg) {
     .search-page-container {
         width: 100%;
     }
