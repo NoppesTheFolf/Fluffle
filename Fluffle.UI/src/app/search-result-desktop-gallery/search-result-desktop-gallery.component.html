@@ -1,0 +1,6 @@
+<div class="my-2">
+    <div class="d-flex justify-content-between align-middle my-2" *ngFor="let row of render">
+        <app-search-result-desktop-gallery-image *ngFor="let image of row.images" [image]="image">
+        </app-search-result-desktop-gallery-image>
+    </div>
+</div>

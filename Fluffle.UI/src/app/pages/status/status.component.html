@@ -1,0 +1,32 @@
+<h1 class="text-center">Indexing status</h1>
+
+<div class="d-flex flex-wrap justify-content-around">
+    <div class="w-50 p-2" *ngFor="let result of results">
+        <div class="d-flex justify-content-around flex-wrap bg-dark rounded">
+            <div class="p-4">
+                <div class="d-flex">
+                    <img class="d-block" [src]="'/assets/img/' + result.name +'.svg'" height="160" />
+                    <div class="ms-4 d-flex flex-column justify-content-center">
+                        <p *ngIf="!result.isComplete">
+                            Estimated number of images: {{result.estimatedCount}}
+                        </p>
+                        <p>
+                            <span *ngIf="!result.isComplete">Of which have been scraped:</span>
+                            <span *ngIf="result.isComplete">Number of images:</span>
+                            <span> {{result.storedCount}}</span>
+                        </p>
+                        <p>
+                            Of which have been indexed: {{result.indexedCount}}
+                        </p>
+                    </div>
+                </div>
+                <div class="progress bg-dark mt-3">
+                    <div class="progress-bar bg-warning" role="progressbar"
+                        [ngStyle]="{'width.%': result.indexedPercentage}"></div>
+                    <div class="progress-bar bg-info" role="progressbar"
+                        [ngStyle]="{'width.%': result.scrapedPercentage}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

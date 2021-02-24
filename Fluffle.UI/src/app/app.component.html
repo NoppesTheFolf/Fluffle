@@ -1,0 +1,14 @@
+<div class="d-flex flex-column" style="min-height: 100%;">
+  <app-navbar></app-navbar>
+
+  <div class="d-flex flex-grow-1 my-3" [ngClass]="{'align-items-center': contentCenterService}">
+    <div class="container position-relative">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+
+  <div id="f-navbar-dummy"></div>
+  <app-navbar-mobile></app-navbar-mobile>
+</div>
+
+<app-cookie-consent></app-cookie-consent>

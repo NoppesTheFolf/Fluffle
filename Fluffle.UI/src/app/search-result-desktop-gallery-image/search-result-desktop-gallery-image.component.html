@@ -1,0 +1,26 @@
+<div>
+    <a target="_blank" [href]="image.data.viewLocation">
+        <div class="position-relative rounded shadow gallery-image-container" (mouseover)="hasHover = true"
+            (mouseout)="hasHover = false" [ngStyle]="{ width: image.width + 'px', height: image.height + 'px' }">
+            <div class="position-relative">
+                <div class="w-100 h-100 bg-darkest rounded position-relative overflow-hidden">
+                    <img [ngClass]="{blur: hasBlur}" [src]="image.data.thumbnail.location"
+                        class="gallery-image">
+                    <div [ngStyle]="{opacity: hasHover ? '0.12' : '0'}" class="gallery-image-hover"></div>
+                </div>
+
+                <div [ngClass]="ImageHelper.getLabel(image.data)" class="search-result-score-label shadow"
+                    style="height: 26px; padding: 0.15em 0.3em 0.15em 0.2em;">
+                    <img class="h-100 me-1" [src]="ImageHelper.getLogoLocation(image.data)"
+                        style="vertical-align: top;">
+                    <span>{{ image.data.scoreFixed }}%</span>
+                </div>
+
+                <div [ngStyle]="{opacity: hasHover ? 1 : 0}" class="gallery-image-artist">
+                    <b *ngIf="image.data.credits.length === 0">Unknown artist</b>
+                    <span *ngIf="image.data.credits.length !== 0">By <b>{{ image.data.creditsString }}</b></span>
+                </div>
+            </div>
+        </div>
+    </a>
+</div>

@@ -1,0 +1,30 @@
+<div class="container d-none d-md-block mb-3">
+    <nav class="navbar navbar-expand-md navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" routerLink="/" appReload>
+                <img src="/assets/img/fluffle-tail.svg" height="30" class="d-inline-block align-top me-1" alt="">
+                Fluffle
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav flex-grow-1 justify-content-end">
+                    <li class="nav-item">
+                        <a class="nav-link" routerLink="/" appReload routerLinkActive="nav-link-active"
+                            [routerLinkActiveOptions]="{exact: true}">
+                            <i class="fas fa-undo me-2 d-none d-md-inline-block"></i>Reverse search
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" routerLink="/about" routerLinkActive="nav-link-active">
+                            <i class="fas fa-info me-2 d-none d-md-inline-block"></i>About
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" routerLink="/contact" routerLinkActive="nav-link-active">
+                            <i class="fas fa-envelope me-2 d-none d-md-inline-block"></i>Contact
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>

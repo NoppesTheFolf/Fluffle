@@ -1,0 +1,34 @@
+<div class="d-lg-none">
+    <div class="d-flex flex-column mt-3 bg-dark rounded overflow-hidden position-relative shadow-sm">
+        <div class="position-relative text-center">
+            <img [src]="searchService.result.imageUrl" class="mobile-search-result-searched-image rounded mt-2">
+        </div>
+        <div class="mx-2 my-3">
+            <div class="text-muted text-center">Searched {{ searchService.result.count }} images in {{
+                searchService.result.elapsedMilliseconds }} ms</div>
+            <h1 class="text-center" [ngSwitch]="searchService.excellentImages.length">
+                <span *ngSwitchCase="0">Oh noes! Couldn't find what you're looking for</span>
+                <span *ngSwitchCase="1">Jolly good! We found a similar image</span>
+                <span *ngSwitchDefault>Jolly good! We found similar images</span>
+            </h1>
+        </div>
+        <div>
+            <div class="d-flex flex-wrap justify-content-between">
+                <a class="mobile-item" *ngFor="let image of images" [href]="image.viewLocation" target="_blank">
+                    <div class="mobile-search-result-gallery-image-holder">
+                        <div class="position-relative h-100 w-100">
+                            <img [src]="ImageHelper.getLogoLocation(image)" class="mobile-item-site"
+                                [ngClass]="ImageHelper.getLabel(image)" width="26" height="26">
+                            <img class="mobile-search-result-gallery-image rounded" [src]="image.thumbnail.location"
+                                [ngStyle]="{objectPosition: image.thumbnail.centerX + '% ' + image.thumbnail.centerY + '%'}">
+                            <div class="mobile-result-artist">
+                                <b *ngIf="image.credits.length === 0">Unknown artist</b>
+                                <span *ngIf="image.credits.length !== 0">By <b>{{ image.creditsString }}</b></span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

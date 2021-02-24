@@ -1,0 +1,52 @@
+<div class="about-container">
+    <h1 class="text-center my-5">
+        <img class="fluffle-banner d-inline-block align-top me-1" src="/assets/img/fluffle-banner.svg" height="100"
+            alt="Fluffle">
+    </h1>
+
+    <p>
+        Fluffle is an initiative taken by me, <a routerLink="/contact">Noppes</a>, with the goal to eventually create a single
+        unified platform for fellow furries with which they can reverse search artwork from a variety of sources. However, at
+        the moment Fluffle only has support for e621 due to them providing an easy way for developers to integrate with their
+        service.
+    </p>
+    <p>
+        In its early stages Fluffle will remain closed source, but I might decide to make it public domain under the GPLv3 (The
+        GNU General Public License v3.0) license in the future.
+    </p>
+    <a name="privacy">
+        <h2>Privacy</h2>
+    </a>
+    <p>
+        Fluffle has been created with privacy in mind from the start. Due to Fluffle its scope being limited – after
+        all, you can only reverse search images – we can ensure Fluffle respects your privacy.
+    </p>
+    <p>
+        When you reverse search an image on Fluffle, the image gets stored temporarily on our servers for processing.
+        Processing only contains fingerprinting the image. That is creating an identifier which can be used to compare
+        indexed images. Once the fingerprint is created, the submitted image gets permanently deleted immediately. The
+        aforementioned fingerprint also doesn’t get stored and neither do the settings used for reverse searching.
+    </p>
+    <p>
+        Said settings, from here on called preferences, are stored in your browser its so-called local storage. You can
+        think of this as a small place in which websites can store a small amount of data. These preferences are only
+        sent to Fluffle whenever you submit an image for reverse searching, and as said before, are immediately
+        discarded when they are not required anymore for fulfilling your request.
+    </p>
+    <a name="cookies">
+        <h2>Cookies</h2>
+    </a>
+    <p>
+        The only cookies Fluffle makes use of, are those required for the services provided by Cloudflare. At this
+        moment, Cloudflare only requires the use of the <code>__cfduid</code> cookie. Despite its misleading name, it
+        is only used
+        by Cloudflare for detecting malicious visitors. So, you are not being tracked in any way. In fact, from the May
+        10 they are going to <a href="https://blog.cloudflare.com/deprecating-cfduid-cookie/" target="_blank">stop using it altogether</a>.
+    </p>
+    <p>
+        If you would like to learn more about Cloudflare its cookie usage, we kindly refer you to <a
+            href="https://support.cloudflare.com/hc/en-us/articles/200170156-Understanding-the-Cloudflare-Cookies"
+            target="_blank">Cloudflare its website</a>
+        where they are thoroughly explained.
+    </p>
+</div>

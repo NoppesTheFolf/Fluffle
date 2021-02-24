@@ -1,0 +1,28 @@
+@import "../../../variables.scss";
+
+$btn-social-font-size: 2rem;
+
+.btn-social {
+    margin: 0 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: calc(#{$btn-social-font-size} + 28px);
+    min-height: calc(#{$btn-social-font-size} + 28px);
+    border-radius: 50%;
+    border: solid $text-color 0.125rem;
+    transition: all ease-in 0.1s;
+    background: $darkest;
+    color: $text-color;
+    text-decoration: none;
+
+    &:hover {
+        background: $text-color;
+        color: $darkest !important;
+        text-decoration: none;
+    }
+
+    > span {
+        font-size: $btn-social-font-size;
+    }
+}
