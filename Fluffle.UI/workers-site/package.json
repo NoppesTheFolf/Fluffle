@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "@cloudflare/kv-asset-handler": "~0.0.11"
+  }
+}
