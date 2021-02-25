@@ -32,11 +32,6 @@ namespace Noppes.Fluffle.Configuration
 
         private IConfigurationRoot Root { get; set; }
 
-        /// <summary>
-        /// Version of Fluffle.
-        /// </summary>
-        public string Version { get; private set; }
-
         private FluffleConfiguration()
         {
         }
@@ -70,8 +65,6 @@ namespace Noppes.Fluffle.Configuration
                 .AddJsonFile(Location, true, false)
                 .AddUserSecrets(forType.GetTypeInfo().Assembly, true)
                 .Build();
-
-            configuration.Version = configuration.Root.GetValue<string>("Version");
 
             return configuration;
         }

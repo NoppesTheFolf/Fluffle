@@ -5,6 +5,7 @@ using Noppes.Fluffle.Sync;
 using Serilog;
 using System;
 using System.Threading.Tasks;
+using Noppes.Fluffle.Constants;
 
 namespace Noppes.Fluffle.E621Sync
 {
@@ -20,7 +21,7 @@ namespace Noppes.Fluffle.E621Sync
             var e621Configuration = Configuration.Get<E621Configuration>();
 
             var e621Client = new E621ClientBuilder()
-                .WithUserAgent(productName, Configuration.Version, contactConfiguration.Username, contactConfiguration.Platform)
+                .WithUserAgent(productName, Project.Version, contactConfiguration.Username, contactConfiguration.Platform)
                 .WithBaseUrl(Imageboard.E621)
                 .WithMaximumConnections(1)
                 .WithRequestInterval(E621Client.RecommendedRequestInterval)
