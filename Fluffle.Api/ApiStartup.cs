@@ -159,6 +159,7 @@ namespace Noppes.Fluffle.Api
                 options.RunDefaultMvcValidationAfterFluentValidationExecutes = false;
             });
 
+            services.AddHostedService<ServiceShutdownSignaler>();
             services.AddSingleton<ServiceBuilder>();
 
             services.AddApiVersioning();
@@ -181,7 +182,7 @@ namespace Noppes.Fluffle.Api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            var serviceManager = app.ApplicationServices.GetRequiredService<ServiceBuilder>();
+            var serviceBuilder = app.ApplicationServices.GetRequiredService<ServiceBuilder>();
             var logger = app.ApplicationServices.GetRequiredService<ILogger<ApiStartup>>();
 
             BeforeConfigure(app, env);
@@ -207,7 +208,7 @@ namespace Noppes.Fluffle.Api
                 app.UseAuthentication();
                 app.UseAuthorization();
 
-                serviceManager.AddStartup<PermissionSeeder>();
+                serviceBuilder.AddStartup<PermissionSeeder>();
 
                 logger.LogInformation("Enabled access control.");
             }
@@ -217,8 +218,8 @@ namespace Noppes.Fluffle.Api
                 endpoints.MapControllers();
             });
 
-            AfterConfigure(app, env, serviceManager);
-            serviceManager.StartAsync().Wait();
+            AfterConfigure(app, env, serviceBuilder);
+            serviceBuilder.StartAsync().Wait();
         }
 
         public virtual void BeforeConfigure(IApplicationBuilder app, IWebHostEnvironment env)

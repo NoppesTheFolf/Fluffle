@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Api.RunnableServices
@@ -9,7 +10,9 @@ namespace Noppes.Fluffle.Api.RunnableServices
     /// </summary>
     public class TransientServiceRunner : ServiceRunner
     {
-        public TransientServiceRunner(IServiceProvider services, Type serviceType, TimeSpan interval) : base(services, serviceType, interval)
+        public TransientServiceRunner(IServiceProvider services, Type serviceType,
+            TimeSpan interval, CancellationToken cancellationToken)
+            : base(services, serviceType, interval, cancellationToken)
         {
         }
 

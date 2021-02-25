@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Api.RunnableServices
@@ -30,15 +31,24 @@ namespace Noppes.Fluffle.Api.RunnableServices
             public bool IsSingleton { get; set; }
         }
 
+        private static readonly ManualResetEventSlim ShutdownEvent = new();
+        private static readonly ICollection<ServiceBuilder> ServiceBuilders = new List<ServiceBuilder>();
+
         private readonly IServiceProvider _services;
         private readonly ICollection<ServiceInfo> _serviceInfos;
         private readonly ICollection<Type> _startupServiceTypes;
+        private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly ICollection<(ServiceRunner runner, Task task)> _serviceRunners;
 
         public ServiceBuilder(IServiceProvider services)
         {
             _services = services;
             _serviceInfos = new List<ServiceInfo>();
             _startupServiceTypes = new List<Type>();
+            _cancellationTokenSource = new CancellationTokenSource();
+            _serviceRunners = new List<(ServiceRunner runner, Task task)>();
+
+            ServiceBuilders.Add(this);
         }
 
         /// <summary>
@@ -69,10 +79,6 @@ namespace Noppes.Fluffle.Api.RunnableServices
         public void AddStartup<TService>() where TService : IService =>
             _startupServiceTypes.Add(typeof(TService));
 
-        /// <summary>
-        /// Starts all the services. First startup services get ran. After that tasks will get
-        /// started for singleton and transient services.
-        /// </summary>
         public async Task StartAsync()
         {
             foreach (var startupType in _startupServiceTypes)
@@ -88,8 +94,8 @@ namespace Noppes.Fluffle.Api.RunnableServices
 
             foreach (var singleton in singletonInfos)
             {
-                var runner = new SingletonServiceRunner(_services, singleton.Type, singleton.Interval);
-                _ = Task.Run(runner.RunAsync);
+                var runner = new SingletonServiceRunner(_services, singleton.Type, singleton.Interval, _cancellationTokenSource.Token);
+                _serviceRunners.Add((runner, Task.Run(runner.RunAsync)));
             }
 
             var transientTypes = _serviceInfos
@@ -97,9 +103,30 @@ namespace Noppes.Fluffle.Api.RunnableServices
 
             foreach (var transient in transientTypes)
             {
-                var runner = new TransientServiceRunner(_services, transient.Type, transient.Interval);
-                _ = Task.Run(runner.RunAsync);
+                var runner = new TransientServiceRunner(_services, transient.Type, transient.Interval, _cancellationTokenSource.Token);
+                _serviceRunners.Add((runner, Task.Run(runner.RunAsync)));
             }
+        }
+
+        public static async Task Shutdown()
+        {
+            foreach (var serviceBuilder in ServiceBuilders)
+                await serviceBuilder.StopAsync();
+        }
+
+        private async Task StopAsync()
+        {
+            _cancellationTokenSource.Cancel();
+
+            foreach (var startupType in _startupServiceTypes.Where(t => typeof(IShutdownable).IsAssignableFrom(t)))
+            {
+                using var scope = _services.CreateScope();
+                var singleRunService = (IShutdownable)scope.ServiceProvider.GetRequiredService(startupType);
+                await singleRunService.ShutdownAsync();
+            }
+
+            var tasks = _serviceRunners.Select(x => x.task).ToArray();
+            await Task.WhenAll(tasks);
         }
     }
 }
