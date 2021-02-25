@@ -22,17 +22,19 @@ namespace Noppes.Fluffle.Main.Api.Services
         private readonly FluffleContext _context;
         private readonly TagBlacklistCollection _tagBlacklist;
         private readonly IThumbnailService _thumbnailService;
+        private readonly IndexStatisticsService _indexStatisticsService;
         private readonly ChangeIdIncrementer<Content> _contentCii;
         private readonly ChangeIdIncrementer<CreditableEntity> _creditableEntityCii;
         private readonly ClaimsPrincipal _user;
 
         public ContentService(FluffleContext context, TagBlacklistCollection tagBlacklist, IThumbnailService thumbnailService,
-            ChangeIdIncrementer<Content> contentCii, ChangeIdIncrementer<CreditableEntity> creditableEntityCii,
-            ClaimsPrincipal user)
+            IndexStatisticsService indexStatisticsService, ChangeIdIncrementer<Content> contentCii,
+            ChangeIdIncrementer<CreditableEntity> creditableEntityCii, ClaimsPrincipal user)
         {
             _context = context;
             _tagBlacklist = tagBlacklist;
             _thumbnailService = thumbnailService;
+            _indexStatisticsService = indexStatisticsService;
             _contentCii = contentCii;
             _creditableEntityCii = creditableEntityCii;
             _user = user;
@@ -77,6 +79,8 @@ namespace Noppes.Fluffle.Main.Api.Services
 
         public async Task<SE> DeleteAsync(string platformName, string idOnPlatform)
         {
+            using var _ = await _indexStatisticsService.LockAsync();
+
             var query = _context.Content.Where(c => !c.IsDeleted)
                 .Include(c => c.Platform)
                 .IncludeIndexStatistics()
@@ -334,6 +338,8 @@ namespace Noppes.Fluffle.Main.Api.Services
                     if (contentPiece.ChangeId != null && isContentChanged)
                         await _contentCii.NextAsync(contentPiece);
                 }
+
+                using var _ = await _indexStatisticsService.LockAsync();
 
                 var indexStatisticsLookup = await _context.IndexStatistics
                     .Where(s => s.PlatformId == platform.Id)

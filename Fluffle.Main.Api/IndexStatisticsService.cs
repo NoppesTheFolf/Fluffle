@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Nito.AsyncEx;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.Main.Database.Models;
 using System;
@@ -13,11 +14,13 @@ namespace Noppes.Fluffle.Main.Api
     {
         private readonly IServiceProvider _services;
         private readonly ILogger<IndexStatisticsService> _logger;
+        private readonly AsyncLock _mutex;
 
         public IndexStatisticsService(IServiceProvider services, ILogger<IndexStatisticsService> logger)
         {
             _services = services;
             _logger = logger;
+            _mutex = new AsyncLock();
         }
 
         public async Task RunAsync()
@@ -76,5 +79,7 @@ namespace Noppes.Fluffle.Main.Api
             await context.SaveChangesAsync();
             _logger.LogInformation("Updated indexing statistics.");
         }
+
+        public AwaitableDisposable<IDisposable> LockAsync() => _mutex.LockAsync();
     }
 }
