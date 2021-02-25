@@ -26,7 +26,20 @@ export class SearchResultGalleryComponent implements OnInit {
   renderGallery(): GalleryRow<SearchResultImage>[] {
     let gallery = new Gallery<SearchResultImage>(this.targetHeight, this.maximumHeight);
     this.images.forEach(r => {
-      gallery.addImage(r.thumbnail.width, r.thumbnail.height, r);
+      let aspectRatio = r.thumbnail.width / r.thumbnail.height;
+
+      let width = r.thumbnail.width;
+      let height = r.thumbnail.height;
+
+      // Images which are either very tall or wide, can screw with the gallery's
+      // ability to fit them nicely in the grid. So, in order to fix that, we
+      // force those images to be displayed as squares instead, just like on the mobile UI.
+      if (aspectRatio < 0.5 || aspectRatio > 2) {
+        width = 250;
+        height = 250;
+      }
+
+      gallery.addImage(width, height, r);
     });
     let render = gallery.render(this.element.clientWidth - 16, 4);
 

@@ -1,12 +1,13 @@
 <div>
     <a target="_blank" [href]="image.data.viewLocation">
-        <div class="position-relative rounded shadow gallery-image-container" (mouseover)="hasHover = true"
+        <div class="gallery-image-container rounded shadow" (mouseover)="hasHover = true"
             (mouseout)="hasHover = false" [ngStyle]="{ width: image.width + 'px', height: image.height + 'px' }">
-            <div class="position-relative">
+            <div class="position-relative w-100 h-100">
                 <div class="w-100 h-100 bg-darkest rounded position-relative overflow-hidden">
-                    <img [ngClass]="{blur: hasBlur}" [src]="image.data.thumbnail.location"
-                        class="gallery-image">
-                    <div [ngStyle]="{opacity: hasHover ? '0.12' : '0'}" class="gallery-image-hover"></div>
+                    <img class="gallery-image"
+                        [ngClass]="{blur: hasBlur, objectPosition: image.data.thumbnail.centerX + '% ' + image.data.thumbnail.centerY + '%'}"
+                        [src]="image.data.thumbnail.location">
+                    <div class="gallery-image-hover" [ngStyle]="{opacity: hasHover ? '0.12' : '0'}"></div>
                 </div>
 
                 <div [ngClass]="ImageHelper.getLabel(image.data)" class="search-result-score-label shadow"
