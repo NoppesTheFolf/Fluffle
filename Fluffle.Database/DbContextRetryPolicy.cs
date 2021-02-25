@@ -48,7 +48,7 @@ namespace Noppes.Fluffle.Database
         /// Whether or not the provided <see cref="NpgsqlException"/> should be considered transient
         /// or not.
         /// </summary>
-        private static bool IsTransient(NpgsqlException exception)
+        public static bool IsTransient(this NpgsqlException exception)
         {
             if (exception.IsTransient)
                 return true;

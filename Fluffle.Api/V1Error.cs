@@ -9,6 +9,11 @@
 
         public string Message { get; set; }
 
+
+        public V1Error()
+        {
+        }
+
         public V1Error(string code, string message)
         {
             Code = code;
@@ -27,6 +32,10 @@
         public TracedV1Error(string code, string traceId, string message) : base(code, message)
         {
             TraceId = traceId;
+        }
+
+        public TracedV1Error()
+        {
         }
     }
 }

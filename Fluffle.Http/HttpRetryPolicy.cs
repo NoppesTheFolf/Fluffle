@@ -46,30 +46,7 @@ namespace Noppes.Fluffle.Http
                         return true;
                     }
 
-                    var httpStatusCode = exception.Call.Response.StatusCode;
-
-                    // 408: The server decided the request took too long to send, who knows, might
-                    // be the servers fault
-
-                    // 522: Cloudflare returns a 522 Origin Connection Timeout if the requests from
-                    // Cloudflare its edge servers timeout.
-
-                    // 502: If the origin server is not properly configured, Cloudflare returns a
-                    // 502. However, this might simply be because of a restart, so worth retrying.
-
-                    // 520: If the origin server did something unexpected with the response sent
-                    // Cloudflare its servers, Cloudflare returns a 520, however, this generally
-                    // solves itself.
-
-                    // 521: Sometimes Cloudflare isn't able to connect to the origin server because the
-                    // server has lost connection to the internet. This should solve itself
-                    // eventually, most of the time...
-
-                    return httpStatusCode == 408
-                           || httpStatusCode == 522
-                           || httpStatusCode == 502
-                           || httpStatusCode == 520
-                           || httpStatusCode == 521;
+                    return exception.IsTransient();
                 })
                 .WaitAndRetryForeverAsync(retryAttempt =>
                 {
@@ -83,6 +60,41 @@ namespace Noppes.Fluffle.Http
 
                     return timeout;
                 }).ExecuteAsync;
+        }
+
+        /// <summary>
+        /// Whether the failed request should be considered transient or not.
+        /// </summary>
+        public static bool IsTransient(this FlurlHttpException exception)
+        {
+            // Handle any network related exceptions
+            if (exception.InnerException is HttpRequestException)
+                return true;
+
+            var httpStatusCode = exception.Call.Response.StatusCode;
+
+            // 408: The server decided the request took too long to send, who knows, might
+            // be the servers fault
+
+            // 522: Cloudflare returns a 522 Origin Connection Timeout if the requests from
+            // Cloudflare its edge servers timeout.
+
+            // 502: If the origin server is not properly configured, Cloudflare returns a
+            // 502. However, this might simply be because of a restart, so worth retrying.
+
+            // 520: If the origin server did something unexpected with the response sent
+            // Cloudflare its servers, Cloudflare returns a 520, however, this generally
+            // solves itself.
+
+            // 521: Sometimes Cloudflare isn't able to connect to the origin server because the
+            // server has lost connection to the internet. This should solve itself
+            // eventually, most of the time...
+
+            return httpStatusCode == 408
+                   || httpStatusCode == 522
+                   || httpStatusCode == 502
+                   || httpStatusCode == 520
+                   || httpStatusCode == 521;
         }
     }
 }
