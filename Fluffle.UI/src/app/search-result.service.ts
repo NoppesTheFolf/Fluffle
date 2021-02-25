@@ -18,7 +18,13 @@ export class SearchResultService {
 
   constructor(private api: ApiService) { }
 
-  search(croppedImage: Blob, image: Blob) {
+  search(file: Blob, image: Blob) {
+    if (file.size > 4_194_304) {
+      this.state = SearchState.Error;
+      this.errorMessage = "The selected file is over the 4 MiB limit.";
+      return;
+    }
+
     this.result = null;
     this.excellentImages = null;
     this.otherImages = null;
@@ -27,7 +33,7 @@ export class SearchResultService {
     this.progress = 0;
     this.hideImprobable = true;
 
-    this.api.search(croppedImage, image).subscribe(event => {
+    this.api.search(file, image).subscribe(event => {
       if (event.http.type === HttpEventType.UploadProgress) {
         this.progress = Math.round((event.http.loaded / event.http.total * 100));
       }
