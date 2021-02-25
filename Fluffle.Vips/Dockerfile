@@ -92,4 +92,5 @@ RUN dotnet restore
 COPY . ./
 
 # Compile interop library 
-RUN cd ./Fluffle.Vips && ./FluffleVips.sh
+RUN cd ./Fluffle.Vips && \
+    g++ -O3 -shared -o LibFluffleVips.so -Wall -fPIC FluffleVips.cpp `pkg-config vips-cpp --cflags --libs`
