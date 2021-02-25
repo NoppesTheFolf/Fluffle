@@ -19,12 +19,20 @@
 }
 
 .drop-zone {
+    position: relative;
     border-radius: 10px;
     background-color: $darker;
+    cursor: pointer;
 }
 
 @include media-breakpoint-up(md) {
     .drop-zone {
         border: 2px dashed $light;
+        transition: all 0.15s;
+    }
+
+    .drop-zone-drag {
+        border: 2px dashed $primary;
+        box-shadow: 0 0 10px rgba($color: $primary, $alpha: 0.6);
     }
 }

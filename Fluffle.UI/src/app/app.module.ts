@@ -23,6 +23,7 @@ import { SearchResultDesktopGalleryImageComponent } from './search-result-deskto
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { CookieConsentComponent } from './cookie-consent/cookie-consent.component';
 import { NavbarMobileComponent } from './navbar-mobile/navbar-mobile.component';
+import { DragClassDirective } from './drop-class.directive';
 
 @NgModule({
   declarations: [
@@ -41,7 +42,8 @@ import { NavbarMobileComponent } from './navbar-mobile/navbar-mobile.component';
     SearchResultDesktopGalleryImageComponent,
     NotFoundComponent,
     CookieConsentComponent,
-    NavbarMobileComponent
+    NavbarMobileComponent,
+    DragClassDirective
   ],
   imports: [
     BrowserModule,

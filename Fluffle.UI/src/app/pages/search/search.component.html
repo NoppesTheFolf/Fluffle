@@ -28,39 +28,43 @@
     </div>
 
     <div class="d-flex justify-content-center">
-        <form *ngIf="searchResultService.state !== SearchState.Uploading" (dragover)="onDragover($event)"
-            (drop)="onDrop($event)"
-            class="search-page-container drop-zone d-flex flex-column justify-content-center py-5 px-3">
-            <input class="d-none" type="file" (change)="onSelect($event)" name="image" id="file" multiple />
-            <p class="text-center mt-4 mb-0 d-none d-md-inline" style="font-size: 3rem">
-                Drag 'n drop a fluffy critter here
-            </p>
-            <p class="text-center mt-3 mb-4 d-none d-md-inline">
-                Or
-            </p>
-            <label class="text-center mb-4 mb-0" for="file">
-                <span class="btn btn-primary d-none d-md-inline-block">
-                    <i class="fas fa-image fa-lg me-2"></i>
-                    Select a floof
+        <input class="d-none" type="file" (change)="onSelect($event)" name="image" id="file" />
+        <label *ngIf="searchResultService.state !== SearchState.Uploading"
+            class="search-page-container drop-zone py-5 px-3" (dragover)="onDragover($event)"
+            appDragClass="drop-zone-drag" (drop)="onDrop($event)" for="file">
+            <div class="d-flex flex-column justify-content-center">
+                <p class="text-center mt-4 mb-0 d-none d-md-inline" style="font-size: 3rem">
+                    Drag 'n drop a fluffy critter here
+                </p>
+                <p class="text-center mt-3 mb-4 d-none d-md-inline">
+                    Or
+                </p>
+                <span class="text-center mb-4 mb-0">
+                    <label for="file">
+                        <span class="btn btn-primary d-none d-md-inline-block">
+                            <i class="fas fa-image fa-lg me-2"></i>
+                            Select a floof
+                        </span>
+                        <span class="btn btn-primary btn-lg w-100 d-sm-block d-md-none mb-3">
+                            <i class="fas fa-image fa-lg me-2"></i>
+                            Select a fluffy critter
+                        </span>
+                    </label>
+                    <span class="btn-group" role="group">
+                        <button type="button" class="btn ms-2"
+                            [ngClass]="config.imageRating === ImageRating.Safe ? 'btn-info' : 'btn-secondary'"
+                            (click)="config.imageRating = ImageRating.Safe" style="box-shadow: none;">SFW</button>
+                        <button type="button" class="btn"
+                            [ngClass]="config.imageRating === ImageRating.Explicit ? 'btn-danger' : 'btn-secondary'"
+                            (click)="config.imageRating = ImageRating.Explicit" style="box-shadow: none;">NSFW</button>
+                    </span>
                 </span>
-                <span class="btn btn-primary btn-lg w-100 d-sm-block d-md-none mb-3">
-                    <i class="fas fa-image fa-lg me-2"></i>
-                    Select a fluffy critter
+                <span class="text-center text-muted">
+                    Concerned about what happens to your data? Take a look at the
+                    <a href="#" routerLink="/about" fragment="privacy">about page</a>.
                 </span>
-                <span class="btn-group" role="group" aria-label="Basic example">
-                    <button type="button" class="btn ms-2"
-                        [ngClass]="config.imageRating === ImageRating.Safe ? 'btn-info' : 'btn-secondary'"
-                        (click)="config.imageRating = ImageRating.Safe" style="box-shadow: none;">SFW</button>
-                    <button type="button" class="btn"
-                        [ngClass]="config.imageRating === ImageRating.Explicit ? 'btn-danger' : 'btn-secondary'"
-                        (click)="config.imageRating = ImageRating.Explicit" style="box-shadow: none;">NSFW</button>
-                </span>
-            </label>
-            <span class="text-center text-muted" routerLink="/about">
-                Concerned about what happens to your data? Take a look at the <a href="#" routerLink="/about"
-                    fragment="privacy">about page</a>.
-            </span>
-        </form>
+            </div>
+        </label>
 
         <div class="search-page-container" *ngIf="searchResultService.state === SearchState.Uploading">
             <div class="progress mb-3">
