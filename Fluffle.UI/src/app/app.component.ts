@@ -32,7 +32,7 @@ export class AppComponent implements AfterViewInit {
     // This is needed for Chrome its annoying URL bar
     document.body.style.minHeight = `${window.innerHeight}px`;
 
-    let mobileNavbar = document.getElementById("m-navbar");
-    document.getElementById("f-navbar-dummy").style.height = `${mobileNavbar.clientHeight}px`;
+    let mobileNavbar = document.getElementById("mobile-navbar");
+    document.getElementById("mobile-navbar-dummy").style.height = `${mobileNavbar.clientHeight}px`;
   }
 }
