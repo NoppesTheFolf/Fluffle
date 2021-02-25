@@ -80,6 +80,9 @@ namespace Noppes.Fluffle.Api
             // Register add the services
             services.AddServices();
 
+            // Add in-memory caching
+            services.AddMemoryCache();
+
             services.AddCors(options =>
             {
                 // Use a lax CORS policy in development to prevent issues where the browsers starts

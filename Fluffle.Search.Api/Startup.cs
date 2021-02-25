@@ -37,6 +37,8 @@ namespace Noppes.Fluffle.Search.Api
         {
             serviceBuilder.AddSingleton<HashRefresher>(60.Seconds());
             serviceBuilder.AddSingleton<SyncService>(2.Minutes());
+
+            base.AfterConfigure(app, env, serviceBuilder);
         }
     }
 }
