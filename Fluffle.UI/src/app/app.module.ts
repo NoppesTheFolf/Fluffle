@@ -24,6 +24,7 @@ import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { CookieConsentComponent } from './cookie-consent/cookie-consent.component';
 import { NavbarMobileComponent } from './navbar-mobile/navbar-mobile.component';
 import { DragClassDirective } from './drop-class.directive';
+import { GalleryThumbnailComponent } from './gallery-thumbnail/gallery-thumbnail.component';
 
 @NgModule({
   declarations: [
@@ -43,7 +44,8 @@ import { DragClassDirective } from './drop-class.directive';
     NotFoundComponent,
     CookieConsentComponent,
     NavbarMobileComponent,
-    DragClassDirective
+    DragClassDirective,
+    GalleryThumbnailComponent
   ],
   imports: [
     BrowserModule,

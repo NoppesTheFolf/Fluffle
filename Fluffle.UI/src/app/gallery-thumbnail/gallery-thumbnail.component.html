@@ -1,0 +1,10 @@
+<div class="position-relative w-100 h-100 overflow-hidden">
+    <img class="gallery-image" [ngClass]="{
+            blur: hasBlur
+        }" [ngStyle]="{
+            objectPosition: thumbnail.centerX + '% ' + thumbnail.centerY + '%',
+            opacity: hasBeenLoaded ? '1' : '0'
+        }" #imageElement>
+
+    <div class="skeleton" [ngClass]="{'d-none': hasBeenLoaded}"></div>
+</div>
