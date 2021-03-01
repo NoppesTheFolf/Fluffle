@@ -1,6 +1,6 @@
 <div>
     <a target="_blank" [href]="image.data.viewLocation">
-        <div class="gallery-image-container rounded shadow" (mouseover)="hasHover = true" (mouseout)="hasHover = false"
+        <div class="position-relative rounded shadow" (mouseover)="hasHover = true" (mouseout)="hasHover = false"
             [ngStyle]="{ width: image.width + 'px', height: image.height + 'px' }">
             <div class="w-100 h-100 rounded position-relative overflow-hidden">
                 <app-gallery-thumbnail [thumbnail]="image.data.thumbnail" [hasBlur]="hasBlur"></app-gallery-thumbnail>

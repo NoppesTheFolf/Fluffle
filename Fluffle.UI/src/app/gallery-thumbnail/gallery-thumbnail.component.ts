@@ -13,6 +13,11 @@ export class GalleryThumbnailComponent implements AfterViewInit {
   @ViewChild("imageElement") image: ElementRef<HTMLImageElement>;
 
   hasBeenLoaded: boolean;
+  error: string;
+
+  get hasError(): boolean {
+    return this.error != null;
+  }
 
   constructor() { }
 
@@ -25,8 +30,8 @@ export class GalleryThumbnailComponent implements AfterViewInit {
     };
 
     dlImage.onerror = () => {
-      this.hasBeenLoaded = true;
-    }
+      this.error = "Fluffle offline";
+    };
 
     dlImage.src = this.thumbnail.location;
   }

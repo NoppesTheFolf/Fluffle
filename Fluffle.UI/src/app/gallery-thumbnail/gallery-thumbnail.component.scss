@@ -1,3 +1,5 @@
+@import "../../variables.scss";
+
 .gallery-image {
     position: absolute;
     will-change: transform; /* Browsers needs this to render correctly */
@@ -14,14 +16,20 @@
     transform: scale(1.1);
 }
 
+.error-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    color: $text-color;
+    font-size: 1.5rem;
+}
+
 .skeleton {
     position: absolute;
     width: 100%;
     height: 100%;
     top: 0;
     left: 0;
-    z-index: 1;
-
     background: linear-gradient(
         135deg,
         rgba(0, 0, 0, 0) 0%,
@@ -32,7 +40,6 @@
         rgba(0, 0, 0, 0) 100%
     );
     background-size: 400% 400%;
-
     animation: Skeleton 1.2s linear infinite;
     animation-delay: 0.8s;
 }

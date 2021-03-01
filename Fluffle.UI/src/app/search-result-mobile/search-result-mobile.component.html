@@ -18,9 +18,11 @@
                     <div class="mobile-search-result-gallery-image-holder">
                         <div class="position-relative h-100 w-100">
                             <img [src]="ImageHelper.getLogoLocation(image)" class="mobile-item-site"
-                                [ngClass]="ImageHelper.getLabel(image)" width="26" height="26">
-                            <img class="mobile-search-result-gallery-image rounded" [src]="image.thumbnail.location"
-                                [ngStyle]="{objectPosition: image.thumbnail.centerX + '% ' + image.thumbnail.centerY + '%'}">
+                                [ngClass]="ImageHelper.getLabel(image)">
+                            <div class="h-100 w-100 rounded overflow-hidden">
+                                <app-gallery-thumbnail [thumbnail]="image.thumbnail" [hasBlur]="false">
+                                </app-gallery-thumbnail>
+                            </div>
                             <div class="mobile-result-artist">
                                 <b *ngIf="image.credits.length === 0">Unknown artist</b>
                                 <span *ngIf="image.credits.length !== 0">By <b>{{ image.creditsString }}</b></span>
