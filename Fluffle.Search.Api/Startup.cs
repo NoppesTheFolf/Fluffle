@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Api;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.Configuration;
@@ -26,7 +27,14 @@ namespace Noppes.Fluffle.Search.Api
             var mainConf = Configuration.Get<MainConfiguration>();
             services.AddSingleton(new FluffleClient(mainConf.Url, mainConf.ApiKey));
 
-            services.AddSingleton<FluffleHash>();
+            var fluffleHash = new FluffleHash();
+            services.AddSingleton(fluffleHash);
+            services.AddSingleton(services => new FluffleHashSelfTestRunner(fluffleHash)
+            {
+                Log = message => services
+                    .GetRequiredService<ILogger<FluffleHashSelfTestRunner>>()
+                    .LogInformation(message)
+            });
             services.AddSingleton<PlatformSearchService>();
 
             services.AddTransient<HashRefresher>();
@@ -35,6 +43,8 @@ namespace Noppes.Fluffle.Search.Api
 
         public override void AfterConfigure(IApplicationBuilder app, IWebHostEnvironment env, ServiceBuilder serviceBuilder)
         {
+            app.ApplicationServices.GetRequiredService<FluffleHashSelfTestRunner>().Run();
+
             serviceBuilder.AddSingleton<HashRefresher>(60.Seconds());
             serviceBuilder.AddSingleton<SyncService>(2.Minutes());
 

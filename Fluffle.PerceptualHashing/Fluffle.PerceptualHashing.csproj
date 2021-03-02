@@ -17,4 +17,8 @@
 		<ProjectReference Include="..\Fluffle.Utils\Fluffle.Utils.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<None Include="FluffleHashTests\**" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
 </Project>

@@ -27,7 +27,12 @@ namespace Noppes.Fluffle.Index
             var fluffleClient = new FluffleClient(mainConf.Url, mainConf.ApiKey);
             services.AddSingleton(fluffleClient);
 
-            services.AddSingleton(new FluffleHash());
+            var fluffleHash = new FluffleHash();
+            services.AddSingleton(fluffleHash);
+            services.AddSingleton(_ => new FluffleHashSelfTestRunner(fluffleHash)
+            {
+                Log = Log.Information
+            });
 
             var thumbConf = configuration.Get<ThumbnailConfiguration>();
             var b2Conf = configuration.Get<BackblazeB2Configuration>();
@@ -60,6 +65,9 @@ namespace Noppes.Fluffle.Index
 
         protected override async Task RunAsync()
         {
+            var testRunner = Services.GetRequiredService<FluffleHashSelfTestRunner>();
+            testRunner.Run();
+
             var fluffleClient = Services.GetRequiredService<FluffleClient>();
 
             var manager = new ProducerConsumerManager<ChannelImage>(Services, 20);

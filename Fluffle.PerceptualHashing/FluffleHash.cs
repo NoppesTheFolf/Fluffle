@@ -44,7 +44,7 @@ namespace Noppes.Fluffle.PerceptualHashing
 
         private static PHash Create(ImagingProviderFactory imagingProviderFactory, int size)
         {
-            return new PHash
+            return new()
             {
                 Size = size,
                 Channel = Channel.Average,
