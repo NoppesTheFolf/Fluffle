@@ -31,7 +31,7 @@ namespace Noppes.Fluffle.Main.Api.Services
 
         public Task<SE> PutContentAsync(string platformName, IList<PutContentModel> contentModels);
 
-        public Task<SR<IEnumerable<UnprocessedContentModel>>> GetUnprocessedImages(string platformName);
+        public Task<SR<IEnumerable<UnprocessedImageModel>>> GetUnprocessedImages(string platformName);
 
         public Task<SR<int?>> GetMaxIdOnPlatform(string platformName);
     }

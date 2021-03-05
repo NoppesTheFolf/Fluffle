@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.Mapping;
 using Noppes.Fluffle.Api.Services;
@@ -12,13 +13,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-
 using static MoreLinq.Extensions.DistinctByExtension;
 
 namespace Noppes.Fluffle.Main.Api.Services
 {
     public class ContentService : Service, IContentService
     {
+        private const string TransparentBackgroundTag = "transparent-background";
+
         private readonly FluffleContext _context;
         private readonly TagBlacklistCollection _tagBlacklist;
         private readonly IThumbnailService _thumbnailService;
@@ -26,10 +28,11 @@ namespace Noppes.Fluffle.Main.Api.Services
         private readonly ChangeIdIncrementer<Content> _contentCii;
         private readonly ChangeIdIncrementer<CreditableEntity> _creditableEntityCii;
         private readonly ClaimsPrincipal _user;
+        private readonly ILogger<ContentService> _logger;
 
         public ContentService(FluffleContext context, TagBlacklistCollection tagBlacklist, IThumbnailService thumbnailService,
             IndexStatisticsService indexStatisticsService, ChangeIdIncrementer<Content> contentCii,
-            ChangeIdIncrementer<CreditableEntity> creditableEntityCii, ClaimsPrincipal user)
+            ChangeIdIncrementer<CreditableEntity> creditableEntityCii, ClaimsPrincipal user, ILogger<ContentService> logger)
         {
             _context = context;
             _tagBlacklist = tagBlacklist;
@@ -38,6 +41,7 @@ namespace Noppes.Fluffle.Main.Api.Services
             _contentCii = contentCii;
             _creditableEntityCii = creditableEntityCii;
             _user = user;
+            _logger = logger;
         }
 
         public async Task<SE> MarkForDeletionAsync(string platformName, string idOnPlatform, bool saveChanges = true)
@@ -334,9 +338,28 @@ namespace Noppes.Fluffle.Main.Api.Services
                     var synchronizeTagsResult = await _context.SynchronizeContentTagsAsync(contentPiece.ContentTags, contentTags);
 
                     var isContentChanged = synchronizeResult.HasChanges || synchronizeFilesResult.HasChanges || synchronizeCredits.HasChanges;
-
                     if (contentPiece.ChangeId != null && isContentChanged)
                         await _contentCii.NextAsync(contentPiece);
+
+                    // Transparency fix, this is only required for e621 due to them being the only
+                    // one flattening their images with a black background. This causes problems
+                    // when, for example, the background of a sketch is transparent.
+                    if (contentPiece.PlatformId == (int)PlatformConstant.E621 && contentPiece is Image image)
+                    {
+                        var hasTransparency = contentTags.Any(ct => ct.Tag.Name == TransparentBackgroundTag);
+
+                        // The image has transparency and has already been indexed, yet was not
+                        // marked as having transparency when it got indexed.
+                        if (hasTransparency && image.IsIndexed && !image.HasTransparency)
+                        {
+                            image.RequiresIndexing = true;
+
+                            _logger.LogInformation("Applied transparency fix to image with ID {idOnPlatform} on {platform}",
+                                image.IdOnPlatform, platform.Name);
+                        }
+
+                        image.HasTransparency = hasTransparency;
+                    }
                 }
 
                 using var _ = await _indexStatisticsService.LockAsync();
@@ -361,13 +384,31 @@ namespace Noppes.Fluffle.Main.Api.Services
             });
         }
 
-        public async Task<SR<IEnumerable<UnprocessedContentModel>>> GetUnprocessedImages(string platformName)
+        public async Task<SR<IEnumerable<UnprocessedImageModel>>> GetUnprocessedImages(string platformName)
         {
             return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
-                var models = await _context.GetUnprocessedAsync(c => c.Images, platform);
+                var models = await _context.GetUnprocessedAsync<Image, UnprocessedImageModel>(c => c.Images, platform, mapModel:
+                   (image, model) =>
+                   {
+                       // If the image to be indexed has transparency, we should only provide the
+                       // indexer with formats that support transparency to ensure correct processing
+                       if (image.HasTransparency)
+                       {
+                           model.Files = image.Files
+                               .Where(f => ((FileFormatConstant)f.FileFormatId).SupportsTransparency())
+                               .Select(sc => new UnprocessedContentModel.FileModel
+                               {
+                                   Width = sc.Width,
+                                   Height = sc.Height,
+                                   Location = sc.Location
+                               });
+                       }
 
-                return new SR<IEnumerable<UnprocessedContentModel>>(models);
+                       model.HasTransparency = image.HasTransparency;
+                   });
+
+                return new SR<IEnumerable<UnprocessedImageModel>>(models);
             });
         }
 

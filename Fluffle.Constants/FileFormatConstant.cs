@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Constants
 {
@@ -17,6 +18,18 @@ namespace Noppes.Fluffle.Constants
 
     public static class FileFormatHelper
     {
+        private static readonly HashSet<FileFormatConstant> SupportTransparency = new HashSet<FileFormatConstant>
+        {
+            FileFormatConstant.Png,
+            FileFormatConstant.WebM,
+            FileFormatConstant.WebP
+        };
+
+        /// <summary>
+        /// Whether the file format supports transparency (an alpha channel) or not.
+        /// </summary>
+        public static bool SupportsTransparency(this FileFormatConstant fileFormat) => SupportTransparency.Contains(fileFormat);
+
         /// <summary>
         /// Maps the provided extension to a <see cref="FileFormatConstant"/>.
         /// </summary>

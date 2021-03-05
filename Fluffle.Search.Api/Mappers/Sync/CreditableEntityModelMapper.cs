@@ -8,7 +8,9 @@ namespace Noppes.Fluffle.Search.Api.Mappers
     {
         public void MapFrom(CreditableEntitiesSyncModel.CreditableEntityModel src, CreditableEntity dest)
         {
-            dest.Id = dest.Id == default ? src.Id : dest.Id;
+            if (dest.Id != src.Id)
+                dest.Id = src.Id;
+
             dest.Name = src.Name;
             dest.Type = src.Type;
             dest.ChangeId = src.ChangeId;

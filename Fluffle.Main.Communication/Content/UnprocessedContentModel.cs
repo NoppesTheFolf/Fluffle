@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using MessagePack;
+﻿using MessagePack;
 using Noppes.Fluffle.Constants;
+using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Main.Communication
 {
@@ -34,5 +34,12 @@ namespace Noppes.Fluffle.Main.Communication
 
         [Key(4)]
         public IEnumerable<FileModel> Files { get; set; }
+    }
+
+    [MessagePackObject]
+    public class UnprocessedImageModel : UnprocessedContentModel
+    {
+        [Key(5)]
+        public bool HasTransparency { get; set; }
     }
 }

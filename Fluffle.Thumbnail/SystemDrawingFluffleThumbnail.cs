@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 
 namespace Noppes.Fluffle.Thumbnail
@@ -20,7 +21,25 @@ namespace Noppes.Fluffle.Thumbnail
 
             using var image = Image.FromFile(sourceLocation);
 
-            using var thumbnailImage = image.GetThumbnailImage(width, height, null, IntPtr.Zero);
+            // Some images have transparent backgrounds. For creating JPEG thumbnails, we want to
+            // flatten the background to be white as this is standard
+            using var flattenedImage = new Bitmap(image.Width, image.Height, image.PixelFormat);
+            flattenedImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+            using (var graphics = Graphics.FromImage(flattenedImage))
+            {
+                graphics.SmoothingMode = SmoothingMode.None;
+                graphics.CompositingMode = CompositingMode.SourceOver;
+                graphics.CompositingQuality = CompositingQuality.HighSpeed;
+                graphics.PixelOffsetMode = PixelOffsetMode.HighSpeed;
+
+                using var imageAttributes = new ImageAttributes();
+                imageAttributes.SetWrapMode(WrapMode.TileFlipXY);
+
+                graphics.Clear(Color.White);
+                graphics.DrawImage(image, new Rectangle(0, 0, image.Width, image.Height), 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, imageAttributes);
+            }
+
+            using var thumbnailImage = flattenedImage.GetThumbnailImage(width, height, null, IntPtr.Zero);
             thumbnailImage.Save(destinationLocation, ImageFormat.Jpeg);
 
             var result = new FluffleThumbnailResult

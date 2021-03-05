@@ -21,9 +21,11 @@ namespace Noppes.Fluffle.Main.Api.Services
 
         private static readonly AsyncLock Mutex = new();
 
-        public static async Task<IEnumerable<UnprocessedContentModel>> GetUnprocessedAsync<TContent>(
+        public static async Task<IEnumerable<TUnprocessedContentModel>> GetUnprocessedAsync<TContent, TUnprocessedContentModel>(
             this FluffleContext context, Func<FluffleContext, DbSet<TContent>> selectSet, Platform platform,
-            Func<IQueryable<TContent>, IQueryable<TContent>> buildQuery = null) where TContent : Content
+            Func<IQueryable<TContent>, IQueryable<TContent>> buildQuery = null, Action<TContent, TUnprocessedContentModel> mapModel = null)
+            where TContent : Content
+            where TUnprocessedContentModel : UnprocessedContentModel, new()
         {
             using var _ = await Mutex.LockAsync();
 
@@ -48,18 +50,24 @@ namespace Noppes.Fluffle.Main.Api.Services
             foreach (var unprocessedImage in unprocessedImages)
                 unprocessedImage.ReservedUntil = DateTimeOffset.Now.Add(ReservationTime).ToUnixTimeSeconds();
 
-            var models = unprocessedImages.Select(i => new UnprocessedContentModel
+            var models = unprocessedImages.Select(c =>
             {
-                ContentId = i.Id,
-                Platform = (PlatformConstant)platform.Id,
-                PlatformName = platform.Name,
-                IdOnPlatform = i.IdOnPlatform,
-                Files = i.Files.Select(sc => new UnprocessedContentModel.FileModel
+                var model = new TUnprocessedContentModel
                 {
-                    Width = sc.Width,
-                    Height = sc.Height,
-                    Location = sc.Location,
-                })
+                    ContentId = c.Id,
+                    Platform = (PlatformConstant)platform.Id,
+                    PlatformName = platform.Name,
+                    IdOnPlatform = c.IdOnPlatform,
+                    Files = c.Files.Select(sc => new UnprocessedContentModel.FileModel
+                    {
+                        Width = sc.Width,
+                        Height = sc.Height,
+                        Location = sc.Location,
+                    })
+                };
+                mapModel?.Invoke(c, model);
+
+                return model;
             });
 
             await context.SaveChangesAsync();

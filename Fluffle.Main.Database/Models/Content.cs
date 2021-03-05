@@ -180,11 +180,13 @@ namespace Noppes.Fluffle.Main.Database.Models
 
     public partial class Image : Content, IConfigurable<Image>
     {
+        public bool HasTransparency { get; set; }
+
         public virtual ImageHash ImageHash { get; set; }
 
         public void Configure(EntityTypeBuilder<Image> entity)
         {
-
+            entity.Property(e => e.HasTransparency);
         }
     }
 }

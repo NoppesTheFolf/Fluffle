@@ -72,10 +72,10 @@ namespace Noppes.Fluffle.Main.Client
                 .GetJsonAsync<IList<PlatformModel>>();
         }
 
-        public Task<IList<UnprocessedContentModel>> GetUnprocessedImagesAsync(string platformName)
+        public Task<IList<UnprocessedImageModel>> GetUnprocessedImagesAsync(string platformName)
         {
             return Request(Endpoints.GetUnprocessedImages(platformName))
-                .GetMessagePackAsync<IList<UnprocessedContentModel>>();
+                .GetMessagePackAsync<IList<UnprocessedImageModel>>();
         }
 
         public Task<IList<StatusModel>> GetStatusAsync()
