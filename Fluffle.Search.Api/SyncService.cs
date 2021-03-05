@@ -4,12 +4,14 @@ using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Api.Mapping;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.Database;
+using Noppes.Fluffle.Database.Synchronization;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -77,18 +79,21 @@ namespace Noppes.Fluffle.Search.Api
                     _logger.LogInformation("Retrieving creditable entities after change ID {changeId}...", afterChangeId);
                     return _client.GetSyncCreditableEntitiesAsync(afterChangeId);
                 },
-                async (context, model) =>
+                async (context, models) =>
                 {
-                    var creditableEntity = await context.CreditableEntities
-                        .FirstOrDefaultAsync(ce => ce.Id == model.Id);
+                    var creditableEntities = models.Select(m => m.MapTo<CreditableEntity>()).ToList();
 
-                    if (creditableEntity == null)
-                    {
-                        await context.CreditableEntities.AddAsync(model.MapTo<CreditableEntity>());
-                        return;
-                    }
+                    var existingCreditableEntities = await context.CreditableEntities
+                        .Where(ce => creditableEntities.Select(ce => ce.Id).Contains(ce.Id))
+                        .ToListAsync();
 
-                    model.MapTo(creditableEntity);
+                    await context.SynchronizeAsync(c => c.CreditableEntities, existingCreditableEntities, creditableEntities,
+                        (ce1, ce2) => ce1.Id == ce2.Id, onUpdateAsync: (src, dest) =>
+                        {
+                            src.MapTo(dest);
+
+                            return Task.CompletedTask;
+                        });
                 });
         }
 
@@ -97,53 +102,129 @@ namespace Noppes.Fluffle.Search.Api
             await RefreshAsync<Image, ImagesSyncModel, ImagesSyncModel.ImageModel>(c => c.Images, afterChangeId =>
                 {
                     _logger.LogInformation("Retrieving images after change ID {changeId}...", afterChangeId);
+
                     return _client.GetSyncImagesAsync(afterChangeId);
                 },
-                async (context, model) =>
+                async (context, models) =>
                 {
-                    var image = await context.Images
+                    var modelLookup = models.ToDictionary(m => m.Id);
+
+                    // First we check if we have all the credits defined in the model
+                    var creditsInModels = modelLookup.Values
+                        .Where(m => !m.IsDeleted) // Deleted content doesn't contain credits
+                        .SelectMany(m => m.Credits)
+                        .Distinct()
+                        .ToList();
+
+                    var numberOfExistingCredits = await context.CreditableEntities
+                        .CountAsync(ce => creditsInModels.Contains(ce.Id));
+
+                    // We're missing credits! So we're going to sync those first
+                    if (creditsInModels.Count != numberOfExistingCredits)
+                        await RefreshCreditableEntitiesAsync();
+
+                    // Then we sync the base content entities
+                    var imagesInModel = modelLookup.Values
+                        .Select(m => m.MapTo<Image>())
+                        .ToList();
+
+                    var existingImages = await context.Images
                         .IncludeThumbnails()
                         .Include(i => i.ContentCreditableEntities)
                         .Include(i => i.Files)
                         .Include(i => i.ImageHash)
-                        .FirstOrDefaultAsync(i => i.Id == model.Id);
+                        .Where(i => imagesInModel.Select(m => m.Id).Contains(i.Id))
+                        .ToListAsync();
 
-                    if (image == null)
+                    // Skip the deleted content pieces which are also not in the database
+                    var existingImageIds = existingImages.Select(i => i.Id).ToHashSet();
+                    imagesInModel = imagesInModel
+                        .Except(imagesInModel.Where(m => m.IsDeleted && !existingImageIds.Contains(m.Id)))
+                        .ToList();
+
+                    // Syncronize the images themselves (so not the hash etc)
+                    var imageSyncResult = await context.SynchronizeAsync(c => c.Images, existingImages, imagesInModel, (i1, i2) =>
                     {
-                        // If the image is deleted, but also hasn't been synchronized before, we can
-                        // simply ignore it
-                        if (model.IsDeleted)
-                            return;
-
-                        await context.Images.AddAsync(model.MapTo<Image>());
-                        return;
-                    }
-
-                    // Entity Framework really hates it if we replace a collection, so instead to
-                    // just delete all the existing thumbnails etc so that we can then safely insert
-                    // them again
-                    context.Thumbnails.Remove(image.Thumbnail);
-                    context.ContentCreditableEntities.RemoveRange(image.ContentCreditableEntities);
-                    context.ContentFiles.RemoveRange(image.Files);
-                    context.ImageHashes.Remove(image.ImageHash);
-
-                    // The model doesn't contain credits if the content is deleted
-                    if (!model.IsDeleted)
+                        return i1.Id == i2.Id;
+                    }, onUpdateAsync: (src, dest) =>
                     {
-                        var numberOfExistingCredits = await context.CreditableEntities
-                            .CountAsync(ce => model.Credits.Contains(ce.Id));
+                        dest.IdOnPlatform = src.IdOnPlatform;
+                        dest.PlatformId = src.PlatformId;
+                        dest.IsDeleted = src.IsDeleted;
+                        dest.ViewLocation = src.ViewLocation;
+                        dest.IsSfw = src.IsSfw;
 
-                        // We're missing credits! So we're going to sync those first
-                        if (model.Credits.Count() != numberOfExistingCredits)
-                            await RefreshCreditableEntitiesAsync();
+                        return Task.CompletedTask;
+                    }, updateAnywayAsync: (src, dest) =>
+                    {
+                        dest.ChangeId = src.ChangeId;
+
+                        return Task.CompletedTask;
+                    });
+                    var syncedImages = imageSyncResult.Results().Select(r => r.Entity).ToList();
+
+                    // Synchronize the images their attribute
+                    foreach (var image in syncedImages.Where(i => !i.IsDeleted))
+                    {
+                        var model = modelLookup[image.Id];
+
+                        // Synchronize the image its hash
+                        if (image.ImageHash == null)
+                            await context.ImageHashes.AddAsync(model.MapTo<ImageHash>());
+                        else
+                            model.MapTo(image.ImageHash);
+
+                        // Synchronize the image its thumbnail
+                        if (image.Thumbnail == null)
+                        {
+                            image.Thumbnail = model.Thumbnail.MapTo<Thumbnail>();
+                            await context.Thumbnails.AddAsync(image.Thumbnail);
+                        }
+                        else
+                        {
+                            model.Thumbnail.MapTo(image.Thumbnail);
+                        }
+
+                        // Synchronize the image its credits
+                        var modelCredits = model.Credits.Select(cei => new ContentCreditableEntity
+                        {
+                            ContentId = image.Id,
+                            CreditableEntityId = cei
+                        }).ToList();
+
+                        await context.SynchronizeAsync(c => c.ContentCreditableEntities, image.ContentCreditableEntities, modelCredits,
+                            (ce1, ce2) =>
+                            {
+                                return (ce1.ContentId, ce1.CreditableEntityId) == (ce2.ContentId, ce2.CreditableEntityId);
+                            });
+
+                        // Synchronize the image its files
+                        var modelFiles = model.Files.Select(f => new ContentFile
+                        {
+                            ContentId = model.Id,
+                            Location = f.Location,
+                            Format = f.Format,
+                            Width = f.Width,
+                            Height = f.Height
+                        }).ToList();
+
+                        await context.SynchronizeAsync(c => c.ContentFiles, image.Files, modelFiles, (c1, c2) =>
+                        {
+                            return (c1.ContentId, c1.Location) == (c2.ContentId, c2.Location);
+                        }, onUpdateAsync: (src, dest) =>
+                        {
+                            dest.Format = src.Format;
+                            dest.Width = src.Width;
+                            dest.Height = src.Height;
+
+                            return Task.CompletedTask;
+                        });
                     }
-
-                    model.MapTo(image);
                 });
         }
 
         public async Task RefreshAsync<TEntity, TModel, TModelData>(Func<FluffleSearchContext, DbSet<TEntity>> getSet,
-            Func<long, Task<TModel>> getModel, Func<FluffleSearchContext, TModelData, Task> processAsync)
+            Func<long, Task<TModel>> getModel, Func<FluffleSearchContext, IEnumerable<TModelData>, Task> processAsync)
             where TEntity : class, ITrackable where TModel : ITrackableModel<TModelData>
         {
             long afterChangeId = 0;
@@ -165,8 +246,7 @@ namespace Noppes.Fluffle.Search.Api
 
                 await UseContextResilientAsync(async context =>
                 {
-                    foreach (var modelData in model.Results)
-                        await processAsync(context, modelData);
+                    await processAsync(context, model.Results);
 
                     await context.SaveChangesAsync();
                 });
