@@ -28,7 +28,7 @@
 @include media-breakpoint-up(md) {
     .drop-zone {
         border: 2px dashed $light;
-        transition: all 0.15s;
+        transition: border 0.15s, box-shadow 0.15s;
     }
 
     .drop-zone-drag {

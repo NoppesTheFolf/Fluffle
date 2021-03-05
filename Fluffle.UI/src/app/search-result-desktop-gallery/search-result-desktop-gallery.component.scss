@@ -1,0 +1,15 @@
+$margin: 4px;
+
+.gallery-row {
+    :first-child {
+        margin-right: $margin;
+    }
+
+    :not(:first-child):not(:last-child) {
+        margin: 0 $margin;
+    }
+
+    :last-child {
+        margin-left: $margin;
+    }
+}

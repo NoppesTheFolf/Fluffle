@@ -47,7 +47,7 @@ export class SearchResultGalleryComponent implements OnInit {
 
       gallery.addImage(width, height, r);
     });
-    let render = gallery.render(newRenderWidth - 16, 4);
+    let render = gallery.render(newRenderWidth, 6);
 
     let minNumberOfImages = 12;
     let minNumberOfRows = 3;

@@ -40,14 +40,20 @@ export class Gallery<TSrc> {
             }
         }
 
+        if (rows.length > 0) {
+            rows[rows.length - 1].isLast = true;
+        }
+
         return rows;
     }
 }
 
 export class GalleryRow<TSrc> {
     public images: GalleryRowImage<TSrc>[] = [];
+    public couldFit: boolean;
 
-    constructor(private _targetWidth: number, private _targetHeight: number, private _maximumHeight: number, private _targetMargin: number) {
+    constructor(private _targetWidth: number, private _targetHeight: number,
+        private _maximumHeight: number, private _targetMargin: number, public isLast: boolean = false) {
     }
 
     public tryAddImage(image: GalleryImage<TSrc>): boolean {
@@ -94,6 +100,8 @@ export class GalleryRow<TSrc> {
     }
 
     public fit() {
+        this.couldFit = true;
+
         let spaceLeft = this.calculateSpaceLeft();
 
         let totalAspectRatio = 0;
@@ -111,6 +119,7 @@ export class GalleryRow<TSrc> {
 
             if (image.height + extraHeight >= this._maximumHeight) {
                 this.fitMaximumHeight();
+                this.couldFit = false;
                 break;
             }
 
