@@ -119,7 +119,9 @@ export class GalleryRow<TSrc> {
 
             if (image.height + extraHeight >= this._maximumHeight) {
                 this.fitMaximumHeight();
-                this.couldFit = false;
+
+                let percentageLeft = this.calculateSpaceLeft() / this._targetWidth * 100;
+                this.couldFit = percentageLeft <= 10;
                 break;
             }
 
