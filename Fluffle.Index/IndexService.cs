@@ -3,6 +3,7 @@ using Noppes.Fluffle.B2;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.E621Sync;
+using Noppes.Fluffle.FurryNetworkSync;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.PerceptualHashing;
@@ -19,6 +20,8 @@ namespace Noppes.Fluffle.Index
 {
     public class IndexService : Service.Service
     {
+        private const string UserAgent = "fluffle-index";
+
         private Dictionary<PlatformConstant, DownloadClient> DownloadClients { get; set; }
 
         private static async Task Main() => await Service<IndexService>.RunAsync(async (client, configuration, services) =>
@@ -51,10 +54,12 @@ namespace Noppes.Fluffle.Index
                 return new VipsFluffleThumbnail();
             });
 
-            var e621Client = await new E621ClientFactory(configuration).CreateAsync("fluffle-index");
+            var e621Client = await new E621ClientFactory(configuration).CreateAsync(UserAgent);
+            var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(UserAgent);
             client.DownloadClients = new Dictionary<PlatformConstant, DownloadClient>
             {
-                { PlatformConstant.E621, new E621DownloadClient(e621Client) }
+                { PlatformConstant.E621, new DownloadClient((url, _) => e621Client.GetStreamAsync(url)) },
+                { PlatformConstant.FurryNetwork, new DownloadClient((url, _) => furryNetworkClient.GetStreamAsync(url)) },
             };
 
             services.AddTransient<ImageHasher>();
@@ -75,15 +80,14 @@ namespace Noppes.Fluffle.Index
             var platforms = await HttpResiliency.RunAsync(() => fluffleClient.GetPlatformsAsync());
             foreach (var platform in platforms)
             {
-                Log.Information("[{platformName}] Starting indexing...", platform.Name);
-
                 var sourceConstant = (PlatformConstant)platform.Id;
                 if (!DownloadClients.TryGetValue(sourceConstant, out var downloadClient))
                 {
-                    Log.Fatal("There exists no download client for {platformName}.", platform.Name);
-                    Environment.Exit(-1);
+                    Log.Warning("There exists no download client for {platformName}.", platform.Name);
+                    continue;
                 }
 
+                Log.Information("[{platformName}] Starting indexing...", platform.Name);
                 manager.AddProducer(1, () => new ImageDownloader(fluffleClient, platform, downloadClient));
             }
 

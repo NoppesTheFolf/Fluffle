@@ -33,8 +33,10 @@ namespace Noppes.Fluffle.Constants
         /// <summary>
         /// Maps the provided extension to a <see cref="FileFormatConstant"/>.
         /// </summary>
-        public static FileFormatConstant GetFileFormat(string extension)
+        public static FileFormatConstant GetFileFormatFromExtension(string extension)
         {
+            extension = extension.Trim();
+
             // Remove the '.' before the file extension
             if (extension.StartsWith("."))
                 extension = extension[1..];
@@ -55,6 +57,22 @@ namespace Noppes.Fluffle.Constants
                 "gif" => FileFormatConstant.Gif,
                 "webp" => FileFormatConstant.WebP,
                 _ => throw new InvalidOperationException($"Extension `{extension}` could not be found")
+            };
+        }
+
+        public static FileFormatConstant GetFileFormatFromMimeType(string mimeType)
+        {
+            mimeType = mimeType.ToLowerInvariant().Trim();
+
+            return mimeType switch
+            {
+                "image/jpeg" => FileFormatConstant.Jpeg,
+                "image/png" => FileFormatConstant.Png,
+                "image/webp" => FileFormatConstant.WebP,
+                "image/gif" => FileFormatConstant.Gif,
+                "video/webm" => FileFormatConstant.WebM,
+                "application/x-shockwave-flash" => FileFormatConstant.Swf,
+                _ => throw new InvalidOperationException($"MIME type `{mimeType}` could not be found")
             };
         }
     }

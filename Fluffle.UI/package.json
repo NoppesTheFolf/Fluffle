@@ -38,6 +38,7 @@
     "karma-coverage": "~2.0.3",
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "^1.5.0",
+    "param-case": "^3.0.4",
     "protractor": "~7.0.0",
     "ts-node": "~9.1.1",
     "tslint": "~6.1.0",

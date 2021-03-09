@@ -85,7 +85,7 @@ namespace Noppes.Fluffle.E621Sync
                 return new()
                 {
                     Location = postImage.Location.OriginalString,
-                    Format = FileFormatHelper.GetFileFormat(postImage.FileExtension),
+                    Format = FileFormatHelper.GetFileFormatFromExtension(postImage.FileExtension),
                     Width = postImage.Width,
                     Height = postImage.Height
                 };
@@ -107,7 +107,7 @@ namespace Noppes.Fluffle.E621Sync
 
         public override MediaTypeConstant GetMediaType(Post src)
         {
-            var fileFormat = FileFormatHelper.GetFileFormat(src.File.FileExtension);
+            var fileFormat = FileFormatHelper.GetFileFormatFromExtension(src.File.FileExtension);
 
             // We can't centralize this as the mappings below might not be valid for all platforms
             return fileFormat switch

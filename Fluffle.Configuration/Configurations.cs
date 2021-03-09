@@ -179,6 +179,23 @@ namespace Noppes.Fluffle.Configuration
     }
 
     /// <summary>
+    /// Configuration regarding furrynetwork.com.
+    /// </summary>
+    [ConfigurationSection("FurryNetwork")]
+    public class FurryNetworkConfiguration : FluffleConfigurationPart<FurryNetworkConfiguration>
+    {
+        /// <summary>
+        /// Refresh token which can be used to get an OAuth bearer token with.
+        /// </summary>
+        public string Token { get; set; }
+
+        public FurryNetworkConfiguration()
+        {
+            RuleFor(o => o.Token).NotNull().Length(40);
+        }
+    }
+
+    /// <summary>
     /// Configuration regarding the main server as a client.
     /// </summary>
     [ConfigurationSection("Main")]

@@ -37,9 +37,11 @@ namespace Noppes.Fluffle.Main.Database.Models
             entity.HasKey(e => e.Id);
 
             entity.Property(e => e.IdOnPlatform).IsRequired();
-            entity.HasIndex(e => e.IdOnPlatform).IsUnique();
+            entity.HasIndex(e => e.IdOnPlatform);
 
             entity.Property(e => e.Name).IsRequired();
+
+            entity.HasIndex(e => new { e.PlatformId, e.IdOnPlatform });
 
             entity.Property(e => e.ChangeId);
             entity.HasIndex(e => e.ChangeId).IsUnique();

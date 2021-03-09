@@ -17,6 +17,7 @@
 		<ProjectReference Include="..\Fluffle.B2\Fluffle.B2.csproj" />
 		<ProjectReference Include="..\Fluffle.Configuration\Fluffle.Configuration.csproj" />
 		<ProjectReference Include="..\Fluffle.E621Sync\Fluffle.E621Sync.csproj" />
+		<ProjectReference Include="..\Fluffle.FurryNetworkSync\Fluffle.FurryNetworkSync.csproj" />
 		<ProjectReference Include="..\Fluffle.Main.Client\Fluffle.Main.Client.csproj" />
 		<ProjectReference Include="..\Fluffle.PerceptualHashing\Fluffle.PerceptualHashing.csproj" />
 		<ProjectReference Include="..\Fluffle.Service\Fluffle.Service.csproj" />

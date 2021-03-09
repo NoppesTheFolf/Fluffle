@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Nito.AsyncEx;
 using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.Mapping;
 using Noppes.Fluffle.Api.Services;
@@ -20,6 +21,8 @@ namespace Noppes.Fluffle.Main.Api.Services
     public class ContentService : Service, IContentService
     {
         private const string TransparentBackgroundTag = "transparent-background";
+
+        private static readonly AsyncLock _putMutex = new();
 
         private readonly FluffleContext _context;
         private readonly TagBlacklistCollection _tagBlacklist;
@@ -166,6 +169,8 @@ namespace Noppes.Fluffle.Main.Api.Services
 
         public async Task<SE> PutContentAsync(string platformName, IList<PutContentModel> contentModels)
         {
+            using var _ = await _putMutex.LockAsync();
+
             return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
                 // Substitute null values for empty collections as those are easier to work with

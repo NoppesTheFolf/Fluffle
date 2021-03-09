@@ -5,6 +5,7 @@
     /// </summary>
     public enum PlatformConstant
     {
-        E621 = 1
+        E621 = 1,
+        FurryNetwork = 2
     }
 }

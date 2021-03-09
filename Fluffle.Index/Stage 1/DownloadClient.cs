@@ -1,14 +1,20 @@
 ﻿using Nitranium.PerceptualHashing.Utils;
 using Noppes.Fluffle.Http;
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Index
 {
-    public abstract class DownloadClient
+    public class DownloadClient
     {
-        protected abstract Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default);
+        private readonly Func<string, CancellationToken, Task<Stream>> _getStreamAsync;
+
+        public DownloadClient(Func<string, CancellationToken, Task<Stream>> getStreamAsync)
+        {
+            _getStreamAsync = getStreamAsync;
+        }
 
         public async Task<TemporaryFile> DownloadAsync(string url, CancellationToken cancellationToken = default)
         {
@@ -18,7 +24,7 @@ namespace Noppes.Fluffle.Index
             try
             {
                 await using var httpStream = await HttpResiliency.RunAsync(() =>
-                    GetStreamAsync(url, cancellationToken));
+                    _getStreamAsync(url, cancellationToken));
 
                 await httpStream.CopyToAsync(temporaryFileStream, cancellationToken);
             }

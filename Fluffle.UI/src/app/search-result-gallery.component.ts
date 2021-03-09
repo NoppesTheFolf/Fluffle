@@ -3,6 +3,7 @@ import { environment } from "src/environments/environment";
 import { SearchResultImage, SearchResultImageMatch } from "./api.service";
 import { Gallery, GalleryRow } from "./gallery";
 import { SearchResultService } from "./search-result.service";
+import { paramCase } from "param-case";
 
 @Directive()
 export class SearchResultGalleryComponent implements OnInit {
@@ -80,7 +81,7 @@ export class ImageHelper {
     return "bg-danger";
   }
 
-  static getLogoLocation(image: SearchResultImage): string {
-    return '/assets/img/' + image.platform + '.svg';
+  static getLogoLocation(platformName: string): string {
+    return '/assets/img/' + paramCase(platformName) + '.svg';
   }
 }

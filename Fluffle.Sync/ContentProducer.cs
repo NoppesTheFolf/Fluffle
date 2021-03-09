@@ -105,9 +105,9 @@ namespace Noppes.Fluffle.Sync
 
         public abstract int GetPriority(TContent src);
 
-        protected async Task FlagRangeForDeletionAsync(int exclusiveStart, int inclusiveEnd, ICollection<TContent> posts)
+        protected async Task FlagRangeForDeletionAsync(int exclusiveStart, int inclusiveEnd, ICollection<TContent> content)
         {
-            var platformContentIds = posts
+            var platformContentIds = content
                 .Select(GetId)
                 .Select(int.Parse)
                 .ToList();

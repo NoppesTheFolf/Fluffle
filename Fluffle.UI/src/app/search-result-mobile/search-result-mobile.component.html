@@ -17,7 +17,7 @@
                 <a class="mobile-item" *ngFor="let image of images" [href]="image.viewLocation" target="_blank">
                     <div class="mobile-search-result-gallery-image-holder">
                         <div class="position-relative h-100 w-100">
-                            <img [src]="ImageHelper.getLogoLocation(image)" class="mobile-item-site"
+                            <img [src]="ImageHelper.getLogoLocation(image.platform)" class="mobile-item-site"
                                 [ngClass]="ImageHelper.getLabel(image)">
                             <div class="h-100 w-100 rounded overflow-hidden">
                                 <app-gallery-thumbnail [thumbnail]="image.thumbnail" [hasBlur]="false">
