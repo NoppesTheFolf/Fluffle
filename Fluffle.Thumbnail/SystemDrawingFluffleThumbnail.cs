@@ -23,7 +23,7 @@ namespace Noppes.Fluffle.Thumbnail
 
             // Some images have transparent backgrounds. For creating JPEG thumbnails, we want to
             // flatten the background to be white as this is standard
-            using var flattenedImage = new Bitmap(image.Width, image.Height, image.PixelFormat);
+            using var flattenedImage = new Bitmap(image.Width, image.Height);
             flattenedImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
             using (var graphics = Graphics.FromImage(flattenedImage))
             {
