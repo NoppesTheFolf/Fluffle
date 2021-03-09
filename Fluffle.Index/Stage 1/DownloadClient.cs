@@ -9,15 +9,20 @@ namespace Noppes.Fluffle.Index
 {
     public class DownloadClient
     {
+        private readonly RequestRateLimiter _rateLimiter;
         private readonly Func<string, CancellationToken, Task<Stream>> _getStreamAsync;
 
-        public DownloadClient(Func<string, CancellationToken, Task<Stream>> getStreamAsync)
+        public DownloadClient(TimeSpan? interval, Func<string, CancellationToken, Task<Stream>> getStreamAsync)
         {
+            _rateLimiter = interval == null ? null : new RequestRateLimiter((TimeSpan)interval);
             _getStreamAsync = getStreamAsync;
         }
 
         public async Task<TemporaryFile> DownloadAsync(string url, CancellationToken cancellationToken = default)
         {
+            if (_rateLimiter != null)
+                await _rateLimiter.InterceptAsync(null);
+
             var temporaryFile = new TemporaryFile();
             var temporaryFileStream = temporaryFile.OpenFileStream();
 

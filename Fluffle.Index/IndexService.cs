@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Humanizer;
+using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.B2;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
@@ -58,8 +59,8 @@ namespace Noppes.Fluffle.Index
             var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(UserAgent);
             client.DownloadClients = new Dictionary<PlatformConstant, DownloadClient>
             {
-                { PlatformConstant.E621, new DownloadClient((url, _) => e621Client.GetStreamAsync(url)) },
-                { PlatformConstant.FurryNetwork, new DownloadClient((url, _) => furryNetworkClient.GetStreamAsync(url)) },
+                { PlatformConstant.E621, new DownloadClient(null, (url, _) => e621Client.GetStreamAsync(url)) },
+                { PlatformConstant.FurryNetwork, new DownloadClient(3.Seconds(), (url, _) => furryNetworkClient.GetStreamAsync(url)) },
             };
 
             services.AddTransient<ImageHasher>();
