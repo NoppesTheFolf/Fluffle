@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.Controllers;
-using Noppes.Fluffle.Main.Communication;
-using Noppes.Fluffle.Main.Api.Services;
-using System.Threading.Tasks;
 using Noppes.Fluffle.Constants;
+using Noppes.Fluffle.Main.Api.Services;
+using Noppes.Fluffle.Main.Communication;
+using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Main.Api.Controllers
 {
