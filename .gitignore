@@ -351,3 +351,9 @@ MigrationBackup/
 
 # Ignore folder created by Visual Studio Code
 .vscode/
+
+# For whatever reason these unnecessary launch settings are generated for console projects 
+Fluffle.Api/Properties/launchSettings.json
+Fluffle.E621Sync/Properties/launchSettings.json
+Fluffle.FurryNetworkSync/Properties/launchSettings.json
+Fluffle.Index/Properties/launchSettings.json
