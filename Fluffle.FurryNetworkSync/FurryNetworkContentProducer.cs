@@ -114,11 +114,10 @@ namespace Noppes.Fluffle.FurryNetworkSync
             {
                 FileFormatConstant.Png => MediaTypeConstant.Image,
                 FileFormatConstant.Jpeg => MediaTypeConstant.Image,
-                FileFormatConstant.WebM => MediaTypeConstant.Video,
-                FileFormatConstant.Swf => MediaTypeConstant.Other,
-                FileFormatConstant.Gif => MediaTypeConstant.AnimatedImage,
                 FileFormatConstant.WebP => MediaTypeConstant.Image,
-                _ => throw new ArgumentOutOfRangeException()
+                FileFormatConstant.Gif => MediaTypeConstant.AnimatedImage,
+                FileFormatConstant.WebM => MediaTypeConstant.Video,
+                _ => MediaTypeConstant.Other,
             };
         }
 

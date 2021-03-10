@@ -13,7 +13,8 @@ namespace Noppes.Fluffle.Constants
         WebM = 3,
         Swf = 4,
         Gif = 5,
-        WebP = 6
+        WebP = 6,
+        Html = 7
     }
 
     public static class FileFormatHelper
@@ -72,6 +73,7 @@ namespace Noppes.Fluffle.Constants
                 "image/gif" => FileFormatConstant.Gif,
                 "video/webm" => FileFormatConstant.WebM,
                 "application/x-shockwave-flash" => FileFormatConstant.Swf,
+                "text/html" => FileFormatConstant.Html,
                 _ => throw new InvalidOperationException($"MIME type `{mimeType}` could not be found")
             };
         }

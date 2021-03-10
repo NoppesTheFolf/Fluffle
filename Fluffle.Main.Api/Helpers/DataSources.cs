@@ -96,6 +96,12 @@ namespace Noppes.Fluffle.Main.Api.Helpers
                     Abbreviation = "WebP",
                     Extension = "webp"
                 },
+                FileFormatConstant.Html => new FileFormat
+                {
+                    Name = "Hypertext Markup Language",
+                    Abbreviation = "HTML",
+                    Extension = "html"
+                },
                 _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
             };
         }
