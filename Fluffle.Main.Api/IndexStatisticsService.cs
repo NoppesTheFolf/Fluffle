@@ -31,6 +31,7 @@ namespace Noppes.Fluffle.Main.Api
             _logger.LogInformation("Updating indexing statistics...");
 
             var calculatedIss = context.Content
+                .Where(c => !c.IsDeleted)
                 .GroupBy(c => new { c.PlatformId, c.MediaTypeId })
                 .Select(c => new
                 {

@@ -122,7 +122,7 @@ namespace Noppes.Fluffle.Main.Database.Models
             entity.HasIndex(e => new { e.IsDeleted, e.IsMarkedForDeletion });
 
             // Speeds up indexing statistics count
-            entity.HasIndex(e => new { e.PlatformId, e.MediaTypeId, e.IsIndexed });
+            entity.HasIndex(e => new { e.IsDeleted, e.PlatformId, e.MediaTypeId, e.IsIndexed });
 
             entity.Property(e => e.MediaTypeId);
             entity.HasOne(e => e.MediaType)
