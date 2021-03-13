@@ -7,8 +7,10 @@ using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Search.Api.Models;
 using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
+using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Intrinsics.X86;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Search.Api.Services
@@ -33,52 +35,69 @@ namespace Noppes.Fluffle.Search.Api.Services
         {
             var stopwatch = Stopwatch.StartNew();
 
-            // Open temporary file
+            // Write the content embedded in the request to a temporary file
             using var temporaryFile = new TemporaryFile();
             await using (var temporaryFileStream = temporaryFile.OpenFileStream())
             {
-                // Check if the uploaded file contains a signature of a web safe image type
                 await model.Image.CopyToAsync(temporaryFileStream);
                 temporaryFileStream.Position = 0;
 
+                // Check if the uploaded file contains a signature of a web safe image type
                 if (!SafeFileSignatures.TryMatch(temporaryFileStream, out _))
                     return new SR<SearchResultModel>(SearchError.UnsupportedFileType());
             }
 
-            byte[] hashBytes;
+            // We need to compute a more granular hash too as the 64-bit averaged hash is unable to
+            // differentiate between alternate version. We do this asynchronously to computing the
+            // simple hash and comparing that. We can assume that awaiting this task doesn't throw
+            // any exceptions as this process is pretty much identical to computing the simple hash
+            // (of which we handle the exceptions explicitly).
+            var hash256Task = Task.Run(() =>
+            {
+                using var image = _hash.Size256.For(temporaryFile.Location);
+                var redHash = image.ComputeHash(Channel.Red);
+                var greenHash = image.ComputeHash(Channel.Green);
+                var blueHash = image.ComputeHash(Channel.Blue);
+
+                return (FluffleHash.ToInt64(redHash), FluffleHash.ToInt64(greenHash), FluffleHash.ToInt64(blueHash));
+            });
+
+            ulong hash;
             using (var image = _hash.Size64.For(temporaryFile.Location))
             {
                 try
                 {
-                    hashBytes = image.ComputeHash(Channel.Average);
+                    var hashBytes = image.ComputeHash(Channel.Average);
+
+                    hash = FluffleHash.ToUInt64(hashBytes);
                 }
                 catch (ConvertException)
                 {
                     return new SR<SearchResultModel>(SearchError.CorruptImage());
                 }
             }
-            var hash = FluffleHash.ToUInt64(hashBytes);
 
-            // TODO: Automatically determine degree of parallelism
-            var searchResult = _compareService.Compare(hash, !model.IncludeNsfw, model.Limit, 1);
+            // TODO: Automatically determine degree of parallelism based on the hardware Fluffle is running on
+            var searchResult = _compareService.Compare(hash, !model.IncludeNsfw, model.Limit * 2);
 
-            var mismatchDictionary = searchResult.Images
-                .ToDictionary(r => r.Id, r => r.MismatchCount);
-
-            var resultsInDb = _context.Images.AsNoTracking()
+            var images = _context.Images.AsNoTracking()
                 .IncludeThumbnails()
+                .Include(i => i.ImageHash)
                 .Include(i => i.Platform)
                 .Include(i => i.Credits)
-                .Where(i => searchResult.Images.Select(r => r.Id).Contains(i.Id));
+                .Where(i => searchResult.Images.Select(r => r.Id).Contains(i.Id) && !i.IsDeleted);
 
-            var combined = resultsInDb
+            var (red, green, blue) = await hash256Task;
+
+            var models = images
+                .AsEnumerable()
                 .Select(r => new SearchResultModel.ImageModel
                 {
                     Id = r.Id,
                     IsSfw = r.IsSfw,
                     Platform = r.Platform.Name,
                     ViewLocation = r.ViewLocation,
-                    Score = (64 - mismatchDictionary[r.Id]) / (double)64 * 100,
+                    Score = CompareRgb(r.ImageHash, red, green, blue),
                     Thumbnail = ThumbnailModel(r.Thumbnail),
                     Credits = r.Credits.Select(c => new SearchResultModel.ImageModel.CreditModel
                     {
@@ -86,20 +105,42 @@ namespace Noppes.Fluffle.Search.Api.Services
                         Role = c.Type
                     })
                 })
-                .AsEnumerable()
                 .OrderByDescending(r => r.Score)
                 .Take(model.Limit)
                 .ToList();
 
             return new SR<SearchResultModel>(new SearchResultModel
             {
-                Results = combined,
+                Results = models,
                 Stats = new SearchResultModel.StatsModel
                 {
                     Count = searchResult.Count,
                     ElapsedMilliseconds = (int)stopwatch.ElapsedMilliseconds,
                 }
             });
+        }
+
+        private static double CompareRgb(ImageHash hashes, ReadOnlySpan<ulong> red, ReadOnlySpan<ulong> green, ReadOnlySpan<ulong> blue)
+        {
+            static int Compare(ReadOnlySpan<ulong> hash, ReadOnlySpan<ulong> otherHash)
+            {
+                ulong mismatchCount = 0;
+
+                for (var i = 0; i < hash.Length; i++)
+                    mismatchCount += Popcnt.X64.PopCount(hash[i] ^ otherHash[i]);
+
+                return (int)mismatchCount;
+            }
+
+            // Compare all channels and select the one with the worst match
+            var worstMismatchCount = new[]
+            {
+                Compare(red, FluffleHash.ToInt64(hashes.PhashRed256)),
+                Compare(green, FluffleHash.ToInt64(hashes.PhashGreen256)),
+                Compare(blue, FluffleHash.ToInt64(hashes.PhashBlue256)),
+            }.Max();
+
+            return (256 - worstMismatchCount) / (double)256 * 100;
         }
 
         private static SearchResultModel.ImageModel.ThumbnailModel ThumbnailModel(Thumbnail thumbnail)
