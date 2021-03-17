@@ -4,7 +4,6 @@ using Microsoft.Extensions.Hosting;
 using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Main.Api.Helpers;
 using Noppes.Fluffle.Main.Database.Models;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Main.Api
@@ -34,10 +33,6 @@ namespace Noppes.Fluffle.Main.Api
             _context.SyncWithDataSources();
             await _context.SaveChangesAsync();
 
-            // Sync indexing statistics with media types
-            await InitializeIndexStatisticsAsync();
-            await _context.SaveChangesAsync();
-
             if (!_environment.IsDevelopment())
                 return;
 
@@ -48,31 +43,6 @@ namespace Noppes.Fluffle.Main.Api
 
             foreach (var permission in permissions)
                 await _accessManager.GrantPermission(DevelopmentApiKey, permission);
-        }
-
-        public async Task InitializeIndexStatisticsAsync()
-        {
-            var mediaTypes = await _context.MediaTypes.ToListAsync();
-            var platforms = await _context.Platforms.ToListAsync();
-
-            foreach (var mediaType in mediaTypes)
-            {
-                foreach (var platform in platforms)
-                {
-                    var exists = await _context.IndexStatistics
-                        .Where(s => s.PlatformId == platform.Id && s.MediaTypeId == mediaType.Id)
-                        .AnyAsync();
-
-                    if (exists)
-                        continue;
-
-                    await _context.IndexStatistics.AddAsync(new IndexStatistic
-                    {
-                        MediaType = mediaType,
-                        Platform = platform
-                    });
-                }
-            }
         }
     }
 }

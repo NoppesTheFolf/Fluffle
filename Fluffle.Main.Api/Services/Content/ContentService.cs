@@ -27,20 +27,18 @@ namespace Noppes.Fluffle.Main.Api.Services
         private readonly FluffleContext _context;
         private readonly TagBlacklistCollection _tagBlacklist;
         private readonly IThumbnailService _thumbnailService;
-        private readonly IndexStatisticsService _indexStatisticsService;
         private readonly ChangeIdIncrementer<Content> _contentCii;
         private readonly ChangeIdIncrementer<CreditableEntity> _creditableEntityCii;
         private readonly ClaimsPrincipal _user;
         private readonly ILogger<ContentService> _logger;
 
         public ContentService(FluffleContext context, TagBlacklistCollection tagBlacklist, IThumbnailService thumbnailService,
-            IndexStatisticsService indexStatisticsService, ChangeIdIncrementer<Content> contentCii,
-            ChangeIdIncrementer<CreditableEntity> creditableEntityCii, ClaimsPrincipal user, ILogger<ContentService> logger)
+            ChangeIdIncrementer<Content> contentCii, ChangeIdIncrementer<CreditableEntity> creditableEntityCii,
+            ClaimsPrincipal user, ILogger<ContentService> logger)
         {
             _context = context;
             _tagBlacklist = tagBlacklist;
             _thumbnailService = thumbnailService;
-            _indexStatisticsService = indexStatisticsService;
             _contentCii = contentCii;
             _creditableEntityCii = creditableEntityCii;
             _user = user;
@@ -86,23 +84,14 @@ namespace Noppes.Fluffle.Main.Api.Services
 
         public async Task<SE> DeleteAsync(string platformName, string idOnPlatform)
         {
-            using var _ = await _indexStatisticsService.LockAsync();
-
             var query = _context.Content.Where(c => !c.IsDeleted)
                 .Include(c => c.Platform)
-                .IncludeIndexStatistics()
                 .IncludeThumbnails();
 
             return await query.GetContentAsync(_context.Platforms, platformName, idOnPlatform, async content =>
             {
                 var thumbnails = content.EnumerateThumbnails();
                 await _thumbnailService.DeleteAsync(thumbnails, false);
-
-                var statsForContentType = content.Stats();
-                statsForContentType.Count--;
-
-                if (content.IsIndexed)
-                    statsForContentType.IndexedCount--;
 
                 // Remove the image hash if the content happens to be an image
                 if (content is Image image)
@@ -147,7 +136,6 @@ namespace Noppes.Fluffle.Main.Api.Services
         public async Task<SE> PutErrorAsync(string platformName, string platformContentId, PutErrorModel model)
         {
             var query = _context.Content
-                .IncludeIndexStatistics()
                 .Include(i => i.Platform);
 
             return await query.GetContentAsync(_context.Platforms, platformName, platformContentId, async content =>
@@ -365,22 +353,6 @@ namespace Noppes.Fluffle.Main.Api.Services
 
                         image.HasTransparency = hasTransparency;
                     }
-                }
-
-                using var _ = await _indexStatisticsService.LockAsync();
-
-                var indexStatisticsLookup = await _context.IndexStatistics
-                    .Where(s => s.PlatformId == platform.Id)
-                    .ToDictionaryAsync(s => s.MediaTypeId, s => s);
-
-                var nonDeletedMediaTypeGroups = contentSynchronizeResult.Added
-                    .GroupBy(c => c.Entity.MediaTypeId);
-
-                foreach (var mediaTypeGrouping in nonDeletedMediaTypeGroups)
-                {
-                    var statistic = indexStatisticsLookup[mediaTypeGrouping.Key];
-
-                    statistic.Count += mediaTypeGrouping.Count();
                 }
 
                 await _context.SaveChangesAsync();

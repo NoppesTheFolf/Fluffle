@@ -29,7 +29,6 @@ namespace Noppes.Fluffle.Main.Database.Models
         public virtual DbSet<Content> Content { get; set; }
         public virtual DbSet<ContentFile> ContentFiles { get; set; }
         public virtual DbSet<Image> Images { get; set; }
-        public virtual DbSet<IndexStatistic> IndexStatistics { get; set; }
         public virtual DbSet<FileFormat> FileFormats { get; set; }
         public virtual DbSet<ImageHash> ImageHashes { get; set; }
         public virtual DbSet<ContentRating> ImageRatings { get; set; }

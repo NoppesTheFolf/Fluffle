@@ -15,13 +15,11 @@ namespace Noppes.Fluffle.Main.Api.Services
     {
         private readonly FluffleContext _context;
         private readonly ChangeIdIncrementer<Content> _contentCii;
-        private readonly IndexStatisticsService _indexStatisticsService;
 
-        public IndexService(FluffleContext context, ChangeIdIncrementer<Content> contentCii, IndexStatisticsService indexStatisticsService)
+        public IndexService(FluffleContext context, ChangeIdIncrementer<Content> contentCii)
         {
             _context = context;
             _contentCii = contentCii;
-            _indexStatisticsService = indexStatisticsService;
         }
 
         public Task<SE> Index(string platformName, string idOnPlatform, PutImageIndexModel model)
@@ -50,11 +48,8 @@ namespace Noppes.Fluffle.Main.Api.Services
             Func<IQueryable<TContent>, IQueryable<TContent>> buildQuery, Func<TContent, Task> upsertHashAsync)
             where TModel : PutContentIndexModel where TContent : Content
         {
-            using var _ = await _indexStatisticsService.LockAsync();
-
             var query = selectSet(_context)
                 .IncludeThumbnails()
-                .IncludeIndexStatistics()
                 .Include(i => i.Platform)
                 .AsQueryable();
 
@@ -87,10 +82,8 @@ namespace Noppes.Fluffle.Main.Api.Services
                 await upsertHashAsync(content);
 
                 if (!content.IsIndexed)
-                {
                     content.IsIndexed = true;
-                    content.Stats().IndexedCount++;
-                }
+
                 await _contentCii.NextAsync(content);
                 content.RequiresIndexing = false;
 

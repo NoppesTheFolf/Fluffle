@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.Controllers;
 using Noppes.Fluffle.Constants;
@@ -14,26 +13,32 @@ namespace Noppes.Fluffle.Main.Api.Controllers
         private const string Singular = "status";
 
         private readonly FluffleContext _context;
+        private IndexStatisticsService _iss;
 
-        public StatusController(FluffleContext context)
+        public StatusController(FluffleContext context, IndexStatisticsService iss)
         {
             _context = context;
+            _iss = iss;
         }
 
         [HttpGet(Singular), Permissions(StatusPermissions.View)]
         public IActionResult GetStatus()
         {
             var statusModels = _context.Platforms
-                .Include(p => p.IndexStatistics)
-                .Select(p => new StatusModel
-                {
-                    Name = p.Name,
-                    EstimatedCount = p.EstimatedContentCount,
-                    StoredCount = p.IndexStatistics.Where(iss => iss.MediaTypeId == (int)MediaTypeConstant.Image).Sum(s => s.Count),
-                    IndexedCount = p.IndexStatistics.Where(iss => iss.MediaTypeId == (int)MediaTypeConstant.Image).Sum(s => s.IndexedCount),
-                    IsComplete = p.IsComplete
-                }).OrderBy(s => s.Name)
                 .AsEnumerable()
+                .Select(p =>
+                {
+                    var (total, indexed) = _iss.Get(p.Id, (int)MediaTypeConstant.Image);
+
+                    return new StatusModel
+                    {
+                        Name = p.Name,
+                        EstimatedCount = p.EstimatedContentCount,
+                        StoredCount = total,
+                        IndexedCount = indexed,
+                        IsComplete = p.IsComplete
+                    };
+                }).OrderBy(s => s.Name)
                 .Select(s =>
                 {
                     if (s.StoredCount > s.EstimatedCount)

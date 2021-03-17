@@ -65,7 +65,7 @@ namespace Noppes.Fluffle.Main.Api
 
             app.ApplicationServices.InitializeChangeIdIncrementers();
 
-            serviceBuilder.AddStartup<IndexStatisticsService>();
+            serviceBuilder.AddSingleton<IndexStatisticsService>(2.Minutes());
             serviceBuilder.AddTransient<DeletionService>(5.Minutes());
         }
     }

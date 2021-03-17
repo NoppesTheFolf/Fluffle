@@ -12,7 +12,6 @@ namespace Noppes.Fluffle.Main.Database.Models
         {
             Content = new HashSet<Content>();
             PlatformSyncs = new HashSet<PlatformSync>();
-            IndexStatistics = new HashSet<IndexStatistic>();
             CreditableEntities = new HashSet<CreditableEntity>();
         }
 
@@ -25,7 +24,6 @@ namespace Noppes.Fluffle.Main.Database.Models
 
         public virtual ICollection<Content> Content { get; set; }
         public virtual ICollection<PlatformSync> PlatformSyncs { get; set; }
-        public virtual ICollection<IndexStatistic> IndexStatistics { get; set; }
         public virtual ICollection<CreditableEntity> CreditableEntities { get; set; }
 
         public void Configure(EntityTypeBuilder<Platform> entity)

@@ -36,13 +36,6 @@ namespace Noppes.Fluffle.Main.Database
             return content.Where(c => !c.IsMarkedForDeletion && !c.IsDeleted);
         }
 
-        public static IQueryable<TContent> IncludeIndexStatistics<TContent>(this IQueryable<TContent> content) where TContent : Content
-        {
-            return content
-                .Include(c => c.MediaType)
-                .ThenInclude(c => c.IndexStatistics);
-        }
-
         public static IQueryable<TContent> IncludeThumbnails<TContent>(this IQueryable<TContent> content) where TContent : Content
         {
             return content
@@ -56,8 +49,5 @@ namespace Noppes.Fluffle.Main.Database
                 .Where(i => i.ChangeId > afterChangeId)
                 .OrderBy(i => i.ChangeId);
         }
-
-        public static IndexStatistic Stats(this Content content) =>
-            content.MediaType.IndexStatistics.First(s => s.PlatformId == content.PlatformId);
     }
 }

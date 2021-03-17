@@ -12,7 +12,6 @@ namespace Noppes.Fluffle.Main.Database.Models
         {
             FileFormats = new HashSet<FileFormat>();
             Content = new HashSet<Content>();
-            IndexStatistics = new HashSet<IndexStatistic>();
         }
 
         public int Id { get; set; }
@@ -20,7 +19,6 @@ namespace Noppes.Fluffle.Main.Database.Models
 
         public virtual ICollection<FileFormat> FileFormats { get; set; }
         public virtual ICollection<Content> Content { get; set; }
-        public virtual ICollection<IndexStatistic> IndexStatistics { get; set; }
 
         public void Configure(EntityTypeBuilder<MediaType> entity)
         {

@@ -5,23 +5,34 @@ using Nito.AsyncEx;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.Main.Database.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Main.Api
 {
-    public class IndexStatisticsService : IService
+    public class IndexStatisticsService : IService, IInitializable
     {
         private readonly IServiceProvider _services;
         private readonly ILogger<IndexStatisticsService> _logger;
-        private readonly AsyncLock _mutex;
+        private IDictionary<(int, int), (int, int)> _statistics;
+        private readonly AsyncReaderWriterLock _mutex;
 
         public IndexStatisticsService(IServiceProvider services, ILogger<IndexStatisticsService> logger)
         {
             _services = services;
             _logger = logger;
-            _mutex = new AsyncLock();
+            _mutex = new AsyncReaderWriterLock();
         }
+
+        public (int total, int indexed) Get(int platformId, int mediaTypeId)
+        {
+            using var _ = _mutex.ReaderLock();
+
+            return _statistics.TryGetValue((platformId, mediaTypeId), out var statistics) ? statistics : (0, 0);
+        }
+
+        public Task InitializeAsync() => RunAsync();
 
         public async Task RunAsync()
         {
@@ -30,7 +41,7 @@ namespace Noppes.Fluffle.Main.Api
 
             _logger.LogInformation("Updating indexing statistics...");
 
-            var calculatedIss = context.Content
+            var statistics = await context.Content
                 .Where(c => !c.IsDeleted)
                 .GroupBy(c => new { c.PlatformId, c.MediaTypeId })
                 .Select(c => new
@@ -39,48 +50,12 @@ namespace Noppes.Fluffle.Main.Api
                     c.Key.MediaTypeId,
                     Count = c.Count(),
                     IndexedCount = c.Count(c => c.IsIndexed)
-                }).ToDictionary(c => (c.PlatformId, c.MediaTypeId));
+                }).ToDictionaryAsync(c => (c.PlatformId, c.MediaTypeId), c => (c.Count, c.IndexedCount));
 
-            var currentIss = context.IndexStatistics
-                .Include(iss => iss.Platform)
-                .Include(iss => iss.MediaType);
+            using var _ = await _mutex.WriterLockAsync();
+            _statistics = statistics;
 
-            foreach (var currentIs in currentIss)
-            {
-                if (!calculatedIss.TryGetValue((currentIs.PlatformId, currentIs.MediaTypeId), out var calculatedIs))
-                {
-                    calculatedIs = new
-                    {
-                        currentIs.PlatformId,
-                        currentIs.MediaTypeId,
-                        Count = 0,
-                        IndexedCount = 0
-                    };
-                }
-
-                if (currentIs.Count != calculatedIs.Count)
-                {
-                    _logger.LogWarning(
-                        "Calculated total indexing statistic differs (current: {current}, calculated: {calculated}) for platform {platformName} and {mediaTypeName}.",
-                        currentIs.Count, calculatedIs.Count, currentIs.Platform.Name, currentIs.MediaType.Name);
-
-                    currentIs.Count = calculatedIs.Count;
-                }
-
-                if (currentIs.IndexedCount != calculatedIs.IndexedCount)
-                {
-                    _logger.LogWarning(
-                        "Calculated total indexing statistic differs (current: {current}, calculated: {calculated}) for platform {platformName} and {mediaTypeName}.",
-                        currentIs.IndexedCount, calculatedIs.IndexedCount, currentIs.Platform.Name, currentIs.MediaType.Name);
-
-                    currentIs.IndexedCount = calculatedIs.IndexedCount;
-                }
-            }
-
-            await context.SaveChangesAsync();
             _logger.LogInformation("Updated indexing statistics.");
         }
-
-        public AwaitableDisposable<IDisposable> LockAsync() => _mutex.LockAsync();
     }
 }
