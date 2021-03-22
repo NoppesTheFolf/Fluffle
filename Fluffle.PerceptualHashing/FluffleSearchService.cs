@@ -90,7 +90,7 @@ namespace Noppes.Fluffle.PerceptualHashing
                 _nsfwCount--;
         }
 
-        public SearchResult Compare(ulong hash, bool sfwOnly, int limit, int degreeOfParallelism)
+        public SearchResult Compare(ulong hash, bool sfwOnly, int limit, int degreeOfParallelism = 1)
         {
             using var _ = _mutex.ReaderLock();
 
