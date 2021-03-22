@@ -22,6 +22,15 @@
 
 $mobile-search-result-gallery-image-padding: 5px;
 
+.thumbnail-container {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    border-radius: $border-radius;
+    // For whatever reason, Safari iOS needs this to handle the rounded corners with overflow correctly
+    will-change: transform;
+}
+
 .mobile-item-site {
     position: absolute;
     height: 28px;
