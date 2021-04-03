@@ -72,7 +72,7 @@ namespace Noppes.Fluffle.FurryNetworkSync
             {
                 Id = src.Character.Id.ToString(),
                 Name = src.Character.DisplayName ?? src.Character.Name,
-                Type = CreditableEntityType.Submitter
+                Type = CreditableEntityType.Owner
             };
         }
 
@@ -138,5 +138,9 @@ namespace Noppes.Fluffle.FurryNetworkSync
         public override IEnumerable<string> GetTags(FnSubmission src) => src.Tags;
 
         public override string GetViewLocation(FnSubmission src) => $"https://furrynetwork.com/{src.RecordType}/{src.Id}";
+
+        public override string GetTitle(FnSubmission src) => src.Title;
+
+        public override string GetDescription(FnSubmission src) => src.Description;
     }
 }

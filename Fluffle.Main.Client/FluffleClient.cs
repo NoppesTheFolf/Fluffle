@@ -84,6 +84,12 @@ namespace Noppes.Fluffle.Main.Client
                 .GetJsonAsync<IList<StatusModel>>();
         }
 
+        public Task<int?> GetMinId(string platformName)
+        {
+            return Request(Endpoints.GetMinId(platformName))
+                .GetJsonAsync<int?>();
+        }
+
         public Task<int?> GetMaxId(string platformName)
         {
             return Request(Endpoints.GetMaxId(platformName))

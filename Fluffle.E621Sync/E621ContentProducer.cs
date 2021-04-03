@@ -27,7 +27,7 @@ namespace Noppes.Fluffle.E621Sync
 
         protected override async Task QuickSyncAsync()
         {
-            var maxId = await HttpResiliency.RunAsync(() => FluffleClient.GetMaxId(Platform.NormalizedName));
+            var maxId = await HttpResiliency.RunAsync(() => FluffleClient.GetMaxId(Platform));
 
             var id = maxId ?? 0;
             id -= 15 * E621Client.PostsMaximumLimit - 1; // Move back 4801 IDs
@@ -118,7 +118,7 @@ namespace Noppes.Fluffle.E621Sync
                 FileFormatConstant.Swf => MediaTypeConstant.Other,
                 FileFormatConstant.Gif => MediaTypeConstant.AnimatedImage,
                 FileFormatConstant.WebP => MediaTypeConstant.Image,
-                _ => throw new ArgumentOutOfRangeException()
+                _ => throw new ArgumentOutOfRangeException(nameof(src))
             };
         }
 
@@ -158,5 +158,9 @@ namespace Noppes.Fluffle.E621Sync
                 _ => throw new ArgumentOutOfRangeException(nameof(src))
             };
         }
+
+        public override string GetTitle(Post src) => null;
+
+        public override string GetDescription(Post src) => src.Description;
     }
 }

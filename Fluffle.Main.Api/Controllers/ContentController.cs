@@ -20,6 +20,15 @@ namespace Noppes.Fluffle.Main.Api.Controllers
             _contentService = contentService;
         }
 
+        [HttpGet(PluralRoute + "/min-id")]
+        [Permissions(ContentPermissions.ReadMinId)]
+        public async Task<IActionResult> GetMinId(string platformName)
+        {
+            var result = await _contentService.GetMinIdOnPlatform(platformName);
+
+            return HandleV1(result);
+        }
+
         [HttpGet(PluralRoute + "/max-id")]
         [Permissions(ContentPermissions.ReadMaxId)]
         public async Task<IActionResult> GetMaxId(string platformName)
@@ -99,5 +108,8 @@ namespace Noppes.Fluffle.Main.Api.Controllers
 
         [Permission]
         public const string ReadMaxId = Prefix + "READ_MAX_ID";
+
+        [Permission]
+        public const string ReadMinId = Prefix + "READ_MIN_ID";
     }
 }

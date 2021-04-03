@@ -13,12 +13,12 @@ namespace Noppes.Fluffle.Sync
 {
     public abstract class ContentProducer<TContent> : SyncProducer
     {
-        protected readonly PlatformModel Platform;
+        protected readonly string Platform;
         protected readonly FluffleClient FluffleClient;
 
         protected ContentProducer(PlatformModel platform, FluffleClient fluffleClient)
         {
-            Platform = platform;
+            Platform = platform.Name;
             FluffleClient = fluffleClient;
         }
 
@@ -43,13 +43,13 @@ namespace Noppes.Fluffle.Sync
             await syncMethodAsync();
 
             await HttpResiliency.RunAsync(() =>
-                FluffleClient.SignalPlatformSyncAsync(Platform.NormalizedName, syncType));
+                FluffleClient.SignalPlatformSyncAsync(Platform, syncType));
         }
 
         protected async Task<(SyncTypeConstant syncType, TimeSpan timeToWait)> GetSyncInfoAsync()
         {
             var syncInfo = await HttpResiliency.RunAsync(() =>
-                FluffleClient.GetPlatformSync(Platform.NormalizedName));
+                FluffleClient.GetPlatformSync(Platform));
 
             if (syncInfo.Next == null)
             {
@@ -81,6 +81,8 @@ namespace Noppes.Fluffle.Sync
         {
             dest.IdOnPlatform = GetId(src);
             dest.Rating = GetRating(src);
+            dest.Title = GetTitle(src);
+            dest.Description = GetDescription(src);
             dest.CreditableEntities = GetCredits(src).ToList();
             dest.ViewLocation = GetViewLocation(src);
             dest.Files = GetFiles(src).ToList();
@@ -105,6 +107,10 @@ namespace Noppes.Fluffle.Sync
 
         public abstract int GetPriority(TContent src);
 
+        public abstract string GetTitle(TContent src);
+
+        public abstract string GetDescription(TContent src);
+
         protected async Task FlagRangeForDeletionAsync(int exclusiveStart, int inclusiveEnd, ICollection<TContent> content)
         {
             var platformContentIds = content
@@ -120,7 +126,7 @@ namespace Noppes.Fluffle.Sync
             };
 
             var deletedContentIds = await HttpResiliency.RunAsync(() =>
-                FluffleClient.DeleteContentRangeAsync(Platform.NormalizedName, model));
+                FluffleClient.DeleteContentRangeAsync(Platform, model));
 
             foreach (var deletedContentId in deletedContentIds)
                 Log.Information("Flagged content with ID {deletedContentId} for deletion", deletedContentId);

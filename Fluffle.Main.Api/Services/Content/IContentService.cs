@@ -33,6 +33,8 @@ namespace Noppes.Fluffle.Main.Api.Services
 
         public Task<SR<IEnumerable<UnprocessedImageModel>>> GetUnprocessedImages(string platformName);
 
+        public Task<SR<int?>> GetMinIdOnPlatform(string platformName);
+
         public Task<SR<int?>> GetMaxIdOnPlatform(string platformName);
     }
 }

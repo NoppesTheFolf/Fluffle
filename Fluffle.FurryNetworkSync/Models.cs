@@ -42,6 +42,8 @@ namespace Noppes.Fluffle.FurryNetworkSync
 
         public string Title { get; set; }
 
+        public string Description { get; set; }
+
         public string RecordType { get; set; }
 
         public string ContentType { get; set; }

@@ -13,6 +13,8 @@ namespace Noppes.Fluffle.Main.Api.Mappers
             if (int.TryParse(src.IdOnPlatform, out var idOnPlatformAsInteger))
                 dest.IdOnPlatformAsInteger = idOnPlatformAsInteger;
 
+            dest.Title = src.Title;
+            dest.Description = src.Description;
             dest.ViewLocation = src.ViewLocation;
             dest.RatingId = (int)src.Rating;
             dest.MediaTypeId = (int)src.MediaType;

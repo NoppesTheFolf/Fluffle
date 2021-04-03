@@ -27,6 +27,9 @@ namespace Noppes.Fluffle.Main.Communication
         public static object[] PutContentError(string platformName, string platformContentId) =>
             V1.Url(ContentRoute(platformName, platformContentId, "error"));
 
+        public static object[] GetMinId(string platformName) =>
+            V1.Url(ContentRoute(platformName, "min-id"));
+
         public static object[] GetMaxId(string platformName) =>
             V1.Url(ContentRoute(platformName, "max-id"));
     }

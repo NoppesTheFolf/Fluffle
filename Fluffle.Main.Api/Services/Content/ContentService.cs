@@ -284,7 +284,6 @@ namespace Noppes.Fluffle.Main.Api.Services
                         dest.IdOnPlatformAsInteger = src.IdOnPlatformAsInteger;
                         dest.ViewLocation = src.ViewLocation;
                         dest.RatingId = src.RatingId;
-                        dest.Title = src.Title;
                         dest.MediaTypeId = src.MediaTypeId;
 
                         // Some images might have failed to be downloaded. We therefore need to
@@ -295,6 +294,8 @@ namespace Noppes.Fluffle.Main.Api.Services
                         return Task.CompletedTask;
                     }, updateAnywayAsync: (src, dest) =>
                     {
+                        dest.Title = src.Title;
+                        dest.Description = src.Description;
                         dest.Priority = src.Priority;
                         dest.LastEditedById = _user.GetApiKeyId();
 
@@ -386,6 +387,18 @@ namespace Noppes.Fluffle.Main.Api.Services
                    });
 
                 return new SR<IEnumerable<UnprocessedImageModel>>(models);
+            });
+        }
+
+        public async Task<SR<int?>> GetMinIdOnPlatform(string platformName)
+        {
+            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
+            {
+                var minId = await _context.Content
+                    .Where(i => i.Platform.Id == platform.Id)
+                    .MinAsync(i => i.IdOnPlatformAsInteger);
+
+                return new SR<int?>(minId);
             });
         }
 

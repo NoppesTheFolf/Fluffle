@@ -37,6 +37,7 @@ namespace Noppes.Fluffle.Main.Database.Models
         public string ViewLocation { get; set; }
         public int RatingId { get; set; }
         public string Title { get; set; }
+        public string Description { get; set; }
         public int Priority { get; set; }
         public long? ChangeId { get; set; }
         public int MediaTypeId { get; set; }
@@ -109,8 +110,8 @@ namespace Noppes.Fluffle.Main.Database.Models
             entity.Property(e => e.Priority);
             entity.HasIndex(e => e.Priority);
 
-            entity.Property(e => e.Title)
-                .HasColumnType("character varying");
+            entity.Property(e => e.Title);
+            entity.Property(e => e.Description);
 
             entity.Property(e => e.IsMarkedForDeletion);
             entity.HasIndex(e => e.IsMarkedForDeletion);
