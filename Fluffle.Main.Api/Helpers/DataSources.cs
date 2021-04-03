@@ -102,6 +102,60 @@ namespace Noppes.Fluffle.Main.Api.Helpers
                     Abbreviation = "HTML",
                     Extension = "html"
                 },
+                FileFormatConstant.Pdf => new FileFormat
+                {
+                    Name = "Portable Document Format",
+                    Abbreviation = "PDF",
+                    Extension = "pdf"
+                },
+                FileFormatConstant.Rtf => new FileFormat
+                {
+                    Name = "Rich Text Format",
+                    Abbreviation = "RTF",
+                    Extension = "rtf"
+                },
+                FileFormatConstant.Txt => new FileFormat
+                {
+                    Name = "Text",
+                    Abbreviation = "Text",
+                    Extension = "txt"
+                },
+                FileFormatConstant.Doc => new FileFormat
+                {
+                    Name = "Document",
+                    Abbreviation = "DOC",
+                    Extension = "doc"
+                },
+                FileFormatConstant.Docx => new FileFormat
+                {
+                    Name = "Office Open XML",
+                    Abbreviation = "DOCX",
+                    Extension = "docx"
+                },
+                FileFormatConstant.Odt => new FileFormat
+                {
+                    Name = "OpenDocument Text",
+                    Abbreviation = "ODT",
+                    Extension = "odt"
+                },
+                FileFormatConstant.Mp3 => new FileFormat
+                {
+                    Name = "MPEG-1 Audio Layer III",
+                    Abbreviation = "MP3",
+                    Extension = "mp3"
+                },
+                FileFormatConstant.Wav => new FileFormat
+                {
+                    Name = "Waveform Audio File Format",
+                    Abbreviation = "WAV",
+                    Extension = ".wav"
+                },
+                FileFormatConstant.Mid => new FileFormat
+                {
+                    Name = "Standard MIDI",
+                    Abbreviation = "MID",
+                    Extension = ".mid"
+                },
                 _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
             };
         }

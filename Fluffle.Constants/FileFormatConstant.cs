@@ -14,7 +14,16 @@ namespace Noppes.Fluffle.Constants
         Swf = 4,
         Gif = 5,
         WebP = 6,
-        Html = 7
+        Html = 7,
+        Pdf = 8,
+        Rtf = 9,
+        Txt = 10,
+        Doc = 11,
+        Docx = 12,
+        Odt = 13,
+        Mp3 = 14,
+        Wav = 15,
+        Mid = 16
     }
 
     public static class FileFormatHelper
@@ -57,6 +66,17 @@ namespace Noppes.Fluffle.Constants
                 "swf" => FileFormatConstant.Swf,
                 "gif" => FileFormatConstant.Gif,
                 "webp" => FileFormatConstant.WebP,
+                "html" => FileFormatConstant.Html,
+                "htm" => FileFormatConstant.Html,
+                "pdf" => FileFormatConstant.Pdf,
+                "rtf" => FileFormatConstant.Rtf,
+                "txt" => FileFormatConstant.Txt,
+                "doc" => FileFormatConstant.Doc,
+                "docx" => FileFormatConstant.Docx,
+                "odt" => FileFormatConstant.Odt,
+                "mp3" => FileFormatConstant.Mp3,
+                "wav" => FileFormatConstant.Wav,
+                "mid" => FileFormatConstant.Mid,
                 _ => throw new InvalidOperationException($"Extension `{extension}` could not be found")
             };
         }
