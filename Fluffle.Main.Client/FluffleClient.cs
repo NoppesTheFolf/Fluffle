@@ -18,6 +18,12 @@ namespace Noppes.Fluffle.Main.Client
             _apiKey = apiKey;
         }
 
+        public Task<bool> GetFaBotsAllowed()
+        {
+            return Request(Endpoints.GetFaBotsAllowed())
+                .GetJsonAsync<bool>();
+        }
+
         public Task PutContentAsync(string platformName, IEnumerable<PutContentModel> models)
         {
             return Request(Endpoints.PutContent(platformName))

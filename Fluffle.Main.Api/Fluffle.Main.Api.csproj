@@ -14,6 +14,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Fluffle.Api\Fluffle.Api.csproj" />
 		<ProjectReference Include="..\Fluffle.B2\Fluffle.B2.csproj" />
+		<ProjectReference Include="..\Fluffle.FurAffinityClient\Fluffle.FurAffinityClient.csproj" />
 		<ProjectReference Include="..\Fluffle.Main.Database\Fluffle.Main.Database.csproj" />
 		<ProjectReference Include="..\Fluffle.Main.Communication\Fluffle.Main.Communication.csproj" />
 		<ProjectReference Include="..\Fluffle.PerceptualHashing\Fluffle.PerceptualHashing.csproj" />

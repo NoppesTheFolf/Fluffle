@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<RootNamespace>Noppes.Fluffle.FurAffinity</RootNamespace>
+		<AssemblyName>Noppes.Fluffle.FurAffinity</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Fluffle.Http\Fluffle.Http.csproj" />
+	</ItemGroup>
+
+</Project>

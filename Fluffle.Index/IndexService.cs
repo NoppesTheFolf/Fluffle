@@ -1,9 +1,9 @@
-﻿using Humanizer;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.B2;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.E621Sync;
+using Noppes.Fluffle.FurAffinitySync;
 using Noppes.Fluffle.FurryNetworkSync;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
@@ -57,10 +57,12 @@ namespace Noppes.Fluffle.Index
 
             var e621Client = await new E621ClientFactory(configuration).CreateAsync(UserAgent);
             var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(UserAgent);
+            var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(UserAgent);
             client.DownloadClients = new Dictionary<PlatformConstant, DownloadClient>
             {
-                { PlatformConstant.E621, new DownloadClient(null, (url, _) => e621Client.GetStreamAsync(url)) },
-                { PlatformConstant.FurryNetwork, new DownloadClient(3.Seconds(), (url, _) => furryNetworkClient.GetStreamAsync(url)) },
+                { PlatformConstant.E621, new E621DownloadClient(e621Client) },
+                { PlatformConstant.FurryNetwork, new FurryNetworkDownloadClient(furryNetworkClient) },
+                { PlatformConstant.FurAffinity, new FurAffinityDownloadClient(furAffinityClient, fluffleClient) }
             };
 
             services.AddTransient<ImageHasher>();

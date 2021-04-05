@@ -9,6 +9,8 @@ using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.B2;
 using Noppes.Fluffle.Configuration;
+using Noppes.Fluffle.Constants;
+using Noppes.Fluffle.FurAffinity;
 using Noppes.Fluffle.Main.Api.Helpers;
 using Noppes.Fluffle.Main.Database.Models;
 using ApiKey = Noppes.Fluffle.Main.Database.Models.ApiKey;
@@ -39,6 +41,14 @@ namespace Noppes.Fluffle.Main.Api
             var bucket = b2Client.GetBucketAsync().Result;
             services.AddSingleton(bucket);
 
+            var faConf = Configuration.Get<FurAffinityConfiguration>();
+            var contactConf = Configuration.Get<ContactConfiguration>();
+            var faClient = new FurAffinityClient(
+                "https://www.furaffinity.net",
+                $"fluffle-main/{Project.Version} (by {contactConf.Username} at {contactConf.Platform})",
+                faConf.A, faConf.B);
+            services.AddSingleton(faClient);
+
             services.AddSingleton(Configuration);
 
             services.RegisterChangeIdIncrementers();
@@ -65,8 +75,8 @@ namespace Noppes.Fluffle.Main.Api
 
             app.ApplicationServices.InitializeChangeIdIncrementers();
 
-            serviceBuilder.AddSingleton<IndexStatisticsService>(2.Minutes());
-            serviceBuilder.AddTransient<DeletionService>(5.Minutes());
+            serviceBuilder.AddSingleton<IndexStatisticsService>(5.Minutes());
+            serviceBuilder.AddTransient<DeletionService>(10.Minutes());
         }
     }
 }

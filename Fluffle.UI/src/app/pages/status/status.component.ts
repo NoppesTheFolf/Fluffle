@@ -18,7 +18,7 @@ export class StatusComponent implements OnInit, OnDestroy {
 
     this.interval = window.setInterval(() => {
       this.refreshStatus();
-    }, 5000);
+    }, 5 * 60 * 1000);
   }
 
   ngOnInit(): void {

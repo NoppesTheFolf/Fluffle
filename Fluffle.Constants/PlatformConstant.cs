@@ -6,6 +6,7 @@
     public enum PlatformConstant
     {
         E621 = 1,
-        FurryNetwork = 2
+        FurryNetwork = 2,
+        FurAffinity = 3
     }
 }

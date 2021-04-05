@@ -196,6 +196,29 @@ namespace Noppes.Fluffle.Configuration
     }
 
     /// <summary>
+    /// Configuration regarding furaffinity.net.
+    /// </summary>
+    [ConfigurationSection("FurAffinity")]
+    public class FurAffinityConfiguration : FluffleConfigurationPart<FurAffinityConfiguration>
+    {
+        /// <summary>
+        /// Confusing authentication token named 'A'.
+        /// </summary>
+        public string A { get; set; }
+
+        /// <summary>
+        /// Confusing authentication token named 'B'.
+        /// </summary>
+        public string B { get; set; }
+
+        public FurAffinityConfiguration()
+        {
+            RuleFor(o => o.A).NotEmpty().Length(36);
+            RuleFor(o => o.B).NotEmpty().Length(36);
+        }
+    }
+
+    /// <summary>
     /// Configuration regarding the main server as a client.
     /// </summary>
     [ConfigurationSection("Main")]

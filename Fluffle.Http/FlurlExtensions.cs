@@ -1,5 +1,6 @@
 ﻿using Flurl.Http;
 using Flurl.Http.Content;
+using HtmlAgilityPack;
 using MessagePack;
 using System.Net.Http;
 using System.Threading;
@@ -70,6 +71,19 @@ namespace Noppes.Fluffle.Http
             var response = await request.PostAsync(content, cancellationToken);
 
             return await response.GetJsonAsync<T>();
+        }
+
+        /// <summary>
+        /// Make a GET request and parse the response as a HTML document.
+        /// </summary>
+        public static async Task<HtmlDocument> GetHtmlAsync(this IFlurlRequest request)
+        {
+            var response = await request.GetStreamAsync();
+
+            var document = new HtmlDocument();
+            document.Load(response);
+
+            return document;
         }
     }
 }
