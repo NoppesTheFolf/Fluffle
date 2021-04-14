@@ -10,6 +10,7 @@ using Noppes.Fluffle.Main.Api.Helpers;
 using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.Main.Database;
 using Noppes.Fluffle.Main.Database.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -22,7 +23,10 @@ namespace Noppes.Fluffle.Main.Api.Services
     {
         private const string TransparentBackgroundTag = "transparent-background";
 
-        private static readonly AsyncLock _putMutex = new();
+        private static readonly AsyncLock TagsSyncMutex = new();
+        private static readonly IDictionary<PlatformConstant, AsyncLock> PlatformSyncMutexes =
+            Enum.GetValues<PlatformConstant>()
+            .ToDictionary(p => p, _ => new AsyncLock());
 
         private readonly FluffleContext _context;
         private readonly TagBlacklistCollection _tagBlacklist;
@@ -157,8 +161,6 @@ namespace Noppes.Fluffle.Main.Api.Services
 
         public async Task<SE> PutContentAsync(string platformName, IList<PutContentModel> contentModels)
         {
-            using var _ = await _putMutex.LockAsync();
-
             return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
                 // Substitute null values for empty collections as those are easier to work with
@@ -169,9 +171,51 @@ namespace Noppes.Fluffle.Main.Api.Services
                     contentModel.Tags ??= new List<string>();
                 }
 
+                // We'll mark it as deleted at a later time to prevent saving these changes before
+                // the tag synchronization lock has been released.
                 var blacklistedContent = contentModels
                     .Where(cm => _tagBlacklist.Any(cm.Tags, cm.Rating))
                     .ToList();
+
+                // Get all of the models which don't contained blacklisted tags
+                contentModels = contentModels.Except(blacklistedContent).ToList();
+
+                var modelLookup = contentModels
+                    .ToDictionary(c => c.IdOnPlatform, c => c);
+
+                // First we synchronize the tags. Some different tags might be normalized to the same
+                // string. To prevent constraint violations, we remove duplicates
+                foreach (var model in contentModels)
+                    model.Tags = model.Tags.Select(TagHelper.Normalize).Distinct().ToList();
+
+                var tags = contentModels
+                    .SelectMany(c => c.Tags)
+                    .Distinct()
+                    .Select(t => new Tag
+                    {
+                        Name = t
+                    })
+                    .ToList();
+
+                SynchronizeResult<Tag> tagsSynchronizeResult;
+                using (var tagsLock = await TagsSyncMutex.LockAsync())
+                {
+                    var existingTags = await _context.Tags
+                        .Where(t => tags.Select(t => t.Name).Contains(t.Name))
+                        .ToDictionaryAsync(t => t.Name);
+
+                    foreach (var tag in tags)
+                        if (existingTags.TryGetValue(tag.Name, out var dbTag))
+                            tag.Id = dbTag.Id;
+
+                    tagsSynchronizeResult = await _context.SynchronizeTagsAsync(existingTags.Values, tags);
+                    await _context.SaveChangesAsync();
+                }
+
+                var tagEntitiesLookup = tagsSynchronizeResult.Entities()
+                    .ToDictionary(t => t.Name);
+
+                using var platformLock = await PlatformSyncMutexes[(PlatformConstant)platform.Id].LockAsync();
 
                 // Mark existing blacklisted content for deletion. Content which hasn't been added
                 // will simply by ignored
@@ -183,13 +227,7 @@ namespace Noppes.Fluffle.Main.Api.Services
                     if (!existingBlacklistedContentPiece.IsDeleted)
                         existingBlacklistedContentPiece.IsMarkedForDeletion = true;
 
-                // Get all of the models which don't contained blacklisted tags
-                contentModels = contentModels.Except(blacklistedContent).ToList();
-
-                var modelLookup = contentModels
-                    .ToDictionary(c => c.IdOnPlatform, c => c);
-
-                // First we synchronize creditable entities
+                // Then we synchronize creditable entities
                 var creditableEntities = contentModels
                     .Where(c => c.CreditableEntities != null)
                     .SelectMany(c => c.CreditableEntities)
@@ -217,33 +255,6 @@ namespace Noppes.Fluffle.Main.Api.Services
 
                 var creditableEntitiesLookup = creditableEntitiesSynchronizeResult.Entities()
                     .ToDictionary(ce => ce.IdOnPlatform);
-
-                // Then we synchronize the tags. Some different tags might be normalized to the same
-                // string. To prevent constraint violations, we remove duplicates
-                foreach (var model in contentModels)
-                    model.Tags = model.Tags.Select(TagHelper.Normalize).Distinct().ToList();
-
-                var tags = contentModels
-                    .SelectMany(c => c.Tags)
-                    .Distinct()
-                    .Select(t => new Tag
-                    {
-                        Name = t
-                    })
-                    .ToList();
-
-                var existingTags = await _context.Tags
-                    .Where(t => tags.Select(t => t.Name).Contains(t.Name))
-                    .ToDictionaryAsync(t => t.Name);
-
-                foreach (var tag in tags)
-                    if (existingTags.TryGetValue(tag.Name, out var dbTag))
-                        tag.Id = dbTag.Id;
-
-                var tagsSynchronizeResult = await _context.SynchronizeTagsAsync(existingTags.Values, tags);
-
-                var tagEntitiesLookup = tagsSynchronizeResult.Entities()
-                    .ToDictionary(t => t.Name);
 
                 // And at last we synchronize the actual content
                 var content = contentModels.Select(c => c.MediaType switch
