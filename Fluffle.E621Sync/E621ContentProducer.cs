@@ -15,9 +15,9 @@ namespace Noppes.Fluffle.E621Sync
 {
     internal class E621ContentProducer : ContentProducer<Post>
     {
-        private readonly E621Client _e621Client;
+        private readonly IE621Client _e621Client;
 
-        public E621ContentProducer(PlatformModel platform, FluffleClient fluffleClient, E621Client e621Client)
+        public E621ContentProducer(PlatformModel platform, FluffleClient fluffleClient, IE621Client e621Client)
             : base(platform, fluffleClient)
         {
             _e621Client = e621Client;
@@ -30,7 +30,7 @@ namespace Noppes.Fluffle.E621Sync
             var maxId = await HttpResiliency.RunAsync(() => FluffleClient.GetMaxId(Platform));
 
             var id = maxId ?? 0;
-            id -= 15 * E621Client.PostsMaximumLimit - 1; // Move back 4801 IDs
+            id -= 15 * E621Constants.PostsMaximumLimit - 1; // Move back 4801 IDs
             id = id < 0 ? 0 : id;
 
             await SyncFromId(id);
@@ -57,7 +57,7 @@ namespace Noppes.Fluffle.E621Sync
                 var posts = await LogEx.TimeAsync(async () =>
                 {
                     return await HttpResiliency.RunAsync(() =>
-                        _e621Client.GetPostsAsync(currentId, Position.After, E621Client.PostsMaximumLimit));
+                        _e621Client.GetPostsAsync(currentId, Position.After, E621Constants.PostsMaximumLimit));
                 }, "Retrieving posts after ID {afterId}", currentId);
 
                 if (!posts.Any())
@@ -69,7 +69,7 @@ namespace Noppes.Fluffle.E621Sync
                 var maxId = posts.Max(p => p.Id);
                 yield return (posts, currentId, maxId);
 
-                if (posts.Count != E621Client.PostsMaximumLimit)
+                if (posts.Count != E621Constants.PostsMaximumLimit)
                     break;
 
                 currentId = maxId;

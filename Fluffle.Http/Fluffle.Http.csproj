@@ -10,9 +10,9 @@
 		<PackageReference Include="Flurl.Http" Version="3.0.1" />
 		<PackageReference Include="MessagePack" Version="2.2.85" />
 		<PackageReference Include="MessagePackAnalyzer" Version="2.2.85" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.31" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.32" />
 		<PackageReference Include="Nito.AsyncEx" Version="5.1.0" />
-		<PackageReference Include="Polly" Version="7.2.1" />
+		<PackageReference Include="Polly" Version="7.2.2" />
 	</ItemGroup>
 
 </Project>

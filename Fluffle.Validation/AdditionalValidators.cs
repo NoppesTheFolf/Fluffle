@@ -25,7 +25,7 @@ namespace Noppes.Fluffle.Validation
         /// Defines a length validator on the current rule builder. The validator will fail if the
         /// provided array isn't of the specified length.
         /// </summary>
-        public static IRuleBuilderOptions<T, Array> Length<T>(this IRuleBuilder<T, Array> ruleBuilder, int length)
+        public static IRuleBuilderOptions<T, TProperty[]> Length<T, TProperty>(this IRuleBuilder<T, TProperty[]> ruleBuilder, int length)
         {
             return ruleBuilder
                 .NotEmpty()

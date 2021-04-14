@@ -9,13 +9,13 @@ using Noppes.Fluffle.Constants;
 
 namespace Noppes.Fluffle.E621Sync
 {
-    public class E621ClientFactory : ClientFactory<E621Client>
+    public class E621ClientFactory : ClientFactory<IE621Client>
     {
         public E621ClientFactory(FluffleConfiguration configuration) : base(configuration)
         {
         }
 
-        public override async Task<E621Client> CreateAsync(string productName)
+        public override async Task<IE621Client> CreateAsync(string productName)
         {
             var contactConfiguration = Configuration.Get<ContactConfiguration>();
             var e621Configuration = Configuration.Get<E621Configuration>();
@@ -24,7 +24,7 @@ namespace Noppes.Fluffle.E621Sync
                 .WithUserAgent(productName, Project.Version, contactConfiguration.Username, contactConfiguration.Platform)
                 .WithBaseUrl(Imageboard.E621)
                 .WithMaximumConnections(1)
-                .WithRequestInterval(E621Client.RecommendedRequestInterval)
+                .WithRequestInterval(E621Constants.RecommendedRequestInterval)
                 .Build();
 
             var loginSuccess = await HttpResiliency.RunAsync(() =>

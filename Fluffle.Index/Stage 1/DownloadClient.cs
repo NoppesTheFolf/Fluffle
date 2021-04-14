@@ -70,9 +70,9 @@ namespace Noppes.Fluffle.Index
 
     public class E621DownloadClient : DownloadClient
     {
-        private readonly E621Client _client;
+        private readonly IE621Client _client;
 
-        public E621DownloadClient(E621Client client) : base(null)
+        public E621DownloadClient(IE621Client client) : base(null)
         {
             _client = client;
         }
