@@ -93,6 +93,7 @@ namespace Noppes.Fluffle.Sync
             dest.Tags = GetTags(src).ToList();
             dest.MediaType = GetMediaType(src);
             dest.Priority = GetPriority(src);
+            dest.ShouldBeIndexed = ShouldBeIndexed(src);
 
             if (typeof(TContent).GetCustomAttribute<MessagePackObjectAttribute>() == null)
                 return;
@@ -127,6 +128,8 @@ namespace Noppes.Fluffle.Sync
         public abstract string GetTitle(TContent src);
 
         public abstract string GetDescription(TContent src);
+
+        public abstract bool ShouldBeIndexed(TContent src);
 
         public virtual int SourceVersion => 0;
 

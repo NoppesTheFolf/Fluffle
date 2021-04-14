@@ -69,24 +69,7 @@ namespace Noppes.Fluffle.FurAffinitySync
                     continue;
 
                 var submission = getSubmissionResult.Result;
-
-                var isDisallowed = false;
-                if (DisallowedCategories.Contains(submission.Category))
-                {
-                    Log.Information("Skipping submission with ID {id} due to its category ({category})",
-                        submission.Id, submission.Category);
-                    isDisallowed = true;
-                }
-
-                if (!isDisallowed && DisallowedTypes.Contains(submission.Type))
-                {
-                    Log.Information("Skipping submission with ID {id} due to its type ({category})",
-                        submission.Id, submission.Type);
-                    isDisallowed = true;
-                }
-
-                if (!isDisallowed)
-                    await SubmitContentAsync(new List<FaSubmission> { submission });
+                await SubmitContentAsync(new List<FaSubmission> { submission });
 
                 if (getSubmissionResult.Stats.Registered < FurAffinityClient.BotThreshold)
                     continue;
@@ -182,5 +165,22 @@ namespace Noppes.Fluffle.FurAffinitySync
         public override string GetTitle(FaSubmission src) => src.Title;
 
         public override string GetDescription(FaSubmission src) => src.Description;
+
+        public override bool ShouldBeIndexed(FaSubmission src)
+        {
+            if (DisallowedCategories.Contains(src.Category))
+            {
+                Log.Information("Not indexing submission with ID {id} due to its category ({category})", src.Id, src.Category);
+                return false;
+            }
+
+            if (DisallowedTypes.Contains(src.Type))
+            {
+                Log.Information("Not indexing submission with ID {id} due to its type ({category})", src.Id, src.Type);
+                return false;
+            }
+
+            return true;
+        }
     }
 }

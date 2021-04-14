@@ -162,5 +162,7 @@ namespace Noppes.Fluffle.E621Sync
         public override string GetTitle(Post src) => null;
 
         public override string GetDescription(Post src) => src.Description;
+
+        public override bool ShouldBeIndexed(Post src) => true;
     }
 }

@@ -21,6 +21,7 @@ namespace Noppes.Fluffle.Main.Api.Mappers
             dest.Priority = src.Priority;
             dest.SourceVersion = src.SourceVersion ?? 0;
             dest.Source = src.Source;
+            dest.RequiresIndexing = src.ShouldBeIndexed;
         }
     }
 

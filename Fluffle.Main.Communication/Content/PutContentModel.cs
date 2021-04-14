@@ -48,5 +48,7 @@ namespace Noppes.Fluffle.Main.Communication
         public byte[] Source { get; set; }
 
         public int? SourceVersion { get; set; }
+
+        public bool ShouldBeIndexed { get; set; }
     }
 }

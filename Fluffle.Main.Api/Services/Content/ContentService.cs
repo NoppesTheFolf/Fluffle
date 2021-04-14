@@ -274,7 +274,6 @@ namespace Noppes.Fluffle.Main.Api.Services
                         return c1.Id == c2.Id;
                     }, newContent =>
                     {
-                        newContent.RequiresIndexing = true;
                         newContent.LastEditedById = _user.GetApiKeyId();
 
                         return Task.CompletedTask;
