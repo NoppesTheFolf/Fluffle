@@ -90,7 +90,13 @@ namespace Noppes.Fluffle.Search.Api
                     await context.SynchronizeAsync(c => c.CreditableEntities, existingCreditableEntities, creditableEntities,
                         (ce1, ce2) => ce1.Id == ce2.Id, onUpdateAsync: (src, dest) =>
                         {
-                            src.MapTo(dest);
+                            dest.Name = src.Name;
+                            dest.Type = src.Type;
+
+                            return Task.CompletedTask;
+                        }, updateAnywayAsync: (src, dest) =>
+                        {
+                            dest.ChangeId = src.ChangeId;
 
                             return Task.CompletedTask;
                         });
