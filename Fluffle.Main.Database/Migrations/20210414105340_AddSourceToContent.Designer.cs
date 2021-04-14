@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Noppes.Fluffle.Main.Database.Models;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -9,9 +10,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Noppes.Fluffle.Main.Database.Migrations
 {
     [DbContext(typeof(FluffleContext))]
-    partial class FluffleContextModelSnapshot : ModelSnapshot
+    [Migration("20210414105340_AddSourceToContent")]
+    partial class AddSourceToContent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -163,10 +165,6 @@ namespace Noppes.Fluffle.Main.Database.Migrations
                     b.Property<byte[]>("Source")
                         .HasColumnType("bytea")
                         .HasColumnName("source");
-
-                    b.Property<int>("SourceVersion")
-                        .HasColumnType("integer")
-                        .HasColumnName("source_version");
 
                     b.Property<int?>("ThumbnailId")
                         .HasColumnType("integer")

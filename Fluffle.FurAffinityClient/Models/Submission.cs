@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using MessagePack;
 
 namespace Noppes.Fluffle.FurAffinity
 {
@@ -207,38 +208,55 @@ namespace Noppes.Fluffle.FurAffinity
         }
     }
 
+    [MessagePackObject]
     public class FaSubmission
     {
+        [Key(0)]
         public int Id { get; set; }
 
+        [Key(1)]
         public FaArtist Owner { get; set; }
 
+        [Key(2)]
         public string Title { get; set; }
 
+        [Key(3)]
         public string Description { get; set; }
 
+        [Key(4)]
         public FaSubmissionStats Stats { get; set; }
 
+        [Key(5)]
         public FaSubmissionRating Rating { get; set; }
 
+        [Key(6)]
         public ICollection<string> Tags { get; set; }
 
+        [Key(7)]
         public FaSubmissionCategory Category { get; set; }
 
+        [Key(8)]
         public FaSubmissionType Type { get; set; }
 
+        [Key(9)]
         public string Species { get; set; }
 
+        [Key(10)]
         public string Gender { get; set; }
 
+        [Key(11)]
         public Uri ViewLocation { get; set; }
 
+        [Key(12)]
         public Uri FileLocation { get; set; }
 
+        [Key(13)]
         public int Width { get; set; }
 
+        [Key(14)]
         public int Height { get; set; }
 
+        [Key(15)]
         public DateTimeOffset When { get; set; }
 
         public FaThumbnail GetThumbnail(int targetMax)
@@ -269,19 +287,26 @@ namespace Noppes.Fluffle.FurAffinity
         }
     }
 
+    [MessagePackObject]
     public class FaArtist
     {
+        [Key(0)]
         public string Id { get; set; }
 
+        [Key(1)]
         public string Name { get; set; }
     }
 
+    [MessagePackObject]
     public class FaSubmissionStats
     {
+        [Key(0)]
         public int Views { get; set; }
 
+        [Key(1)]
         public int Comments { get; set; }
 
+        [Key(2)]
         public int Favorites { get; set; }
     }
 

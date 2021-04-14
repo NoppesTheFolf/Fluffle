@@ -49,6 +49,8 @@ namespace Noppes.Fluffle.Main.Database.Models
         public string Discriminator { get; set; }
         public bool IsMarkedForDeletion { get; set; }
         public bool IsDeleted { get; set; }
+        public byte[] Source { get; set; }
+        public int SourceVersion { get; set; }
 
         public virtual ApiKey LastEditedBy { get; set; }
         public virtual ContentRating Rating { get; set; }
@@ -115,6 +117,9 @@ namespace Noppes.Fluffle.Main.Database.Models
 
             entity.Property(e => e.IsMarkedForDeletion);
             entity.HasIndex(e => e.IsMarkedForDeletion);
+
+            entity.Property(e => e.Source);
+            entity.Property(e => e.SourceVersion);
 
             entity.Property(e => e.IsDeleted);
             entity.HasIndex(e => e.IsDeleted);

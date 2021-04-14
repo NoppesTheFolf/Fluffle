@@ -43,6 +43,8 @@ namespace Noppes.Fluffle.FurAffinitySync
         private static readonly TimeSpan CheckInterval = 5.Minutes();
         private readonly FurAffinityClient _client;
 
+        public override int SourceVersion => 1;
+
         public FurAffinityContentProducer(PlatformModel platform, FluffleClient fluffleClient, FurAffinityClient client)
             : base(platform, fluffleClient)
         {

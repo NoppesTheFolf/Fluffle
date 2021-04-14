@@ -1,4 +1,5 @@
 ﻿using Humanizer;
+using MessagePack;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
@@ -6,7 +7,10 @@ using Noppes.Fluffle.Main.Communication;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Sync
@@ -89,6 +93,19 @@ namespace Noppes.Fluffle.Sync
             dest.Tags = GetTags(src).ToList();
             dest.MediaType = GetMediaType(src);
             dest.Priority = GetPriority(src);
+
+            if (typeof(TContent).GetCustomAttribute<MessagePackObjectAttribute>() == null)
+                return;
+
+            if (SourceVersion < 1)
+                throw new InvalidOperationException("Specify a source version greater than 0.");
+
+            using var sourceStream = new MemoryStream();
+            using (var compressionStream = new BrotliStream(sourceStream, CompressionLevel.Optimal))
+                compressionStream.Write(MessagePackSerializer.Serialize(src));
+
+            dest.Source = sourceStream.ToArray();
+            dest.SourceVersion = SourceVersion;
         }
 
         public abstract string GetId(TContent src);
@@ -110,6 +127,8 @@ namespace Noppes.Fluffle.Sync
         public abstract string GetTitle(TContent src);
 
         public abstract string GetDescription(TContent src);
+
+        public virtual int SourceVersion => 0;
 
         protected async Task FlagRangeForDeletionAsync(int exclusiveStart, int inclusiveEnd, ICollection<TContent> content)
         {

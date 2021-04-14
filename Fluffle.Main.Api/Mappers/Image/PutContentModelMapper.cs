@@ -19,6 +19,8 @@ namespace Noppes.Fluffle.Main.Api.Mappers
             dest.RatingId = (int)src.Rating;
             dest.MediaTypeId = (int)src.MediaType;
             dest.Priority = src.Priority;
+            dest.SourceVersion = src.SourceVersion ?? 0;
+            dest.Source = src.Source;
         }
     }
 
