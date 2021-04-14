@@ -10,7 +10,7 @@
         </h1>
     </div>
     <i class="text-muted text-center d-block">
-        A possibly still very unstable reverse image search engine for furry content
+        A lickety-split reverse image search service tailored to the furry community
     </i>
 </div>
 <div class="d-flex justify-content-center flex-column">
@@ -29,7 +29,8 @@
 
     <div class="d-flex justify-content-center">
         <input class="d-none" type="file" (change)="onSelect($event)" name="image" id="file" />
-        <label *ngIf="searchResultService.state !== SearchState.Uploading && searchResultService.state !== SearchState.Preparing"
+        <label
+            *ngIf="searchResultService.state !== SearchState.Uploading && searchResultService.state !== SearchState.Preparing"
             class="search-page-container drop-zone py-5 px-3" (dragover)="onDragover($event)"
             appDragClass="drop-zone-drag" (drop)="onDrop($event)" for="file">
             <div class="d-flex flex-column justify-content-center">
@@ -66,10 +67,12 @@
             </div>
         </label>
 
-        <div class="search-page-container" *ngIf="searchResultService.state === SearchState.Uploading || searchResultService.state === SearchState.Preparing">
+        <div class="search-page-container"
+            *ngIf="searchResultService.state === SearchState.Uploading || searchResultService.state === SearchState.Preparing">
             <div class="progress mb-3">
                 <div class="progress-bar progress-bar-striped bg-primary progress-bar-animated" role="progressbar"
-                    [ngStyle]="{width: searchResultService.state === SearchState.Preparing ? 0 : searchResultService.progress + '%'}"></div>
+                    [ngStyle]="{width: searchResultService.state === SearchState.Preparing ? 0 : searchResultService.progress + '%'}">
+                </div>
             </div>
             <div class="text-center">
                 <span *ngIf="searchResultService.state === SearchState.Preparing">
