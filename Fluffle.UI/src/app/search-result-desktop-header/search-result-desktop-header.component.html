@@ -1,6 +1,6 @@
 <div class="d-flex justify-content-center">
     <div class="d-flex align-items-center">
-        <img class="rounded mb-2 me-2 shadow" [src]="searchService.result.imageUrl" style="max-width: 50%; height: 100%; max-height: 300px;" />
+        <img class="rounded mb-2 me-2 shadow" [src]="searchService.result.imageUrl" style="max-width: 50%; height: 100%; max-height: 300px;">
         <div class="d-flex flex-column ms-3" style="max-width: 620px;">
             <span class="text-muted">Searched {{ searchService.result.count.toLocaleString() }} images in {{ searchService.result.elapsedMilliseconds }}ms.</span>
             <h1 [ngSwitch]="searchService.excellentImages.length">

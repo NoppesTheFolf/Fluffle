@@ -12,8 +12,8 @@ export class GalleryThumbnailComponent implements AfterViewInit {
 
   @ViewChild("imageElement") image: ElementRef<HTMLImageElement>;
 
-  hasBeenLoaded: boolean;
-  error: string;
+  hasBeenLoaded: boolean = false;
+  error: string = null;
 
   get hasError(): boolean {
     return this.error != null;

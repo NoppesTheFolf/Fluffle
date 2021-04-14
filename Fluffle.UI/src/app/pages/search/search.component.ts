@@ -34,7 +34,7 @@ export class SearchComponent implements OnInit, AfterViewChecked {
         this.container.nativeElement.scrollIntoView({
           behavior: 'smooth'
         });
-      }, 150);
+      }, 250);
     }
 
     this.previousState = this.searchResultService.state;
@@ -77,9 +77,9 @@ export class SearchComponent implements OnInit, AfterViewChecked {
     }
     let file = files[0];
 
-    this.searchResultService.state = SearchState.DownScaling;
-    const image = new Image();
+    this.searchResultService.state = SearchState.Preparing;
 
+    const image = new Image();
     image.onload = () => {
       const target = 256;
       let thumbnailSize = this.calculateThumbnailSize(image.width, image.height, target);

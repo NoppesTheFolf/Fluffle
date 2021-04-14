@@ -29,7 +29,7 @@
 
     <div class="d-flex justify-content-center">
         <input class="d-none" type="file" (change)="onSelect($event)" name="image" id="file" />
-        <label *ngIf="searchResultService.state !== SearchState.Uploading"
+        <label *ngIf="searchResultService.state !== SearchState.Uploading && searchResultService.state !== SearchState.Preparing"
             class="search-page-container drop-zone py-5 px-3" (dragover)="onDragover($event)"
             appDragClass="drop-zone-drag" (drop)="onDrop($event)" for="file">
             <div class="d-flex flex-column justify-content-center">
@@ -66,14 +66,19 @@
             </div>
         </label>
 
-        <div class="search-page-container" *ngIf="searchResultService.state === SearchState.Uploading">
+        <div class="search-page-container" *ngIf="searchResultService.state === SearchState.Uploading || searchResultService.state === SearchState.Preparing">
             <div class="progress mb-3">
                 <div class="progress-bar progress-bar-striped bg-primary progress-bar-animated" role="progressbar"
-                    [ngStyle]="{width: searchResultService.progress + '%'}"></div>
+                    [ngStyle]="{width: searchResultService.state === SearchState.Preparing ? 0 : searchResultService.progress + '%'}"></div>
             </div>
             <div class="text-center">
-                <span *ngIf="searchResultService.progress !== 100">Uploading...</span>
-                <span *ngIf="searchResultService.progress === 100">Processing...</span>
+                <span *ngIf="searchResultService.state === SearchState.Preparing">
+                    <span>Preparing...</span>
+                </span>
+                <span *ngIf="searchResultService.state === SearchState.Uploading">
+                    <span *ngIf="searchResultService.progress !== 100">Uploading...</span>
+                    <span *ngIf="searchResultService.progress === 100">Processing...</span>
+                </span>
             </div>
         </div>
     </div>

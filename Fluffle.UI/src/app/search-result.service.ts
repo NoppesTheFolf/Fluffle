@@ -79,7 +79,7 @@ export class V1ApiError {
 
 export enum SearchState {
   Idle,
-  DownScaling,
+  Preparing,
   Uploading,
   Finished,
   Error
