@@ -44,12 +44,12 @@ namespace Noppes.Fluffle.Main.Api
             var statistics = await context.Content
                 .Where(c => !c.IsDeleted)
                 .GroupBy(c => new { c.PlatformId, c.MediaTypeId })
-                .Select(c => new
+                .Select(cg => new
                 {
-                    c.Key.PlatformId,
-                    c.Key.MediaTypeId,
-                    Count = c.Count(),
-                    IndexedCount = c.Count(c => c.IsIndexed)
+                    cg.Key.PlatformId,
+                    cg.Key.MediaTypeId,
+                    Count = cg.Count(c => c.RequiresIndexing || c.IsIndexed),
+                    IndexedCount = cg.Count(c => c.IsIndexed)
                 }).ToDictionaryAsync(c => (c.PlatformId, c.MediaTypeId), c => (c.Count, c.IndexedCount));
 
             using var _ = await _mutex.WriterLockAsync();
