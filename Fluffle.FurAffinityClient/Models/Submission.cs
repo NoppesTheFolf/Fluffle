@@ -1,6 +1,6 @@
-﻿using System;
+﻿using MessagePack;
+using System;
 using System.Collections.Generic;
-using MessagePack;
 
 namespace Noppes.Fluffle.FurAffinity
 {
@@ -251,12 +251,9 @@ namespace Noppes.Fluffle.FurAffinity
         public Uri FileLocation { get; set; }
 
         [Key(13)]
-        public int Width { get; set; }
+        public FaSize Size { get; set; }
 
         [Key(14)]
-        public int Height { get; set; }
-
-        [Key(15)]
         public DateTimeOffset When { get; set; }
 
         public FaThumbnail GetThumbnail(int targetMax)
@@ -266,6 +263,12 @@ namespace Noppes.Fluffle.FurAffinity
                 Location = new Uri($"https://t.furaffinity.net/{Id}@{targetMax}-{When.ToUnixTimeSeconds()}.jpg")
             };
 
+            if (Size == null)
+            {
+                (thumbnail.Width, thumbnail.Height) = (-1, -1);
+                return thumbnail;
+            }
+
             static int DetermineSize(int sizeOne, int sizeTwo, int sizeOneTarget)
             {
                 var aspectRatio = (double)sizeOneTarget / sizeOne;
@@ -273,17 +276,37 @@ namespace Noppes.Fluffle.FurAffinity
                 return (int)Math.Round(aspectRatio * sizeTwo);
             }
 
-            if (Width == Height)
+            if (Size.Width == Size.Height)
             {
                 (thumbnail.Width, thumbnail.Height) = (targetMax, targetMax);
                 return thumbnail;
             }
 
-            (thumbnail.Width, thumbnail.Height) = Width > Height
-                ? (DetermineSize(Width, Height, targetMax), targetMax)
-                : (targetMax, DetermineSize(Height, Width, targetMax));
+            (thumbnail.Width, thumbnail.Height) = Size.Width > Size.Height
+                ? (DetermineSize(Size.Width, Size.Height, targetMax), targetMax)
+                : (targetMax, DetermineSize(Size.Height, Size.Width, targetMax));
 
             return thumbnail;
+        }
+    }
+
+    [MessagePackObject]
+    public class FaSize
+    {
+        [Key(1)]
+        public int Width { get; set; }
+
+        [Key(2)]
+        public int Height { get; set; }
+
+        public FaSize()
+        {
+        }
+
+        public FaSize(int width, int height)
+        {
+            Width = width;
+            Height = height;
         }
     }
 

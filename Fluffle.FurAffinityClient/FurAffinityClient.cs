@@ -98,8 +98,12 @@ namespace Noppes.Fluffle.FurAffinity
             submission.Species = info["Species"];
             submission.Gender = info["Gender"];
 
-            var size = info["Size"].Split("x").Select(int.Parse).ToArray();
-            (submission.Width, submission.Height) = (size[0], size[1]);
+            // Not all submission have a size (Flash files for example)
+            if (info.TryGetValue("Size", out var infoSize))
+            {
+                var size = info["Size"].Split("x").Select(int.Parse).ToArray();
+                submission.Size = new FaSize(size[0], size[1]);
+            }
 
             // Extract the submission its download URL and time
             var buttonsNode = sidebar.SelectSingleNode("./section[contains(@class, 'buttons')]");

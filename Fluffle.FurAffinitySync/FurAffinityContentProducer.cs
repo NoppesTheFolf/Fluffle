@@ -43,7 +43,7 @@ namespace Noppes.Fluffle.FurAffinitySync
         private static readonly TimeSpan CheckInterval = 5.Minutes();
         private readonly FurAffinityClient _client;
 
-        public override int SourceVersion => 1;
+        public override int SourceVersion => 2;
 
         public FurAffinityContentProducer(PlatformModel platform, FluffleClient fluffleClient, FurAffinityClient client)
             : base(platform, fluffleClient)
@@ -131,8 +131,8 @@ namespace Noppes.Fluffle.FurAffinitySync
                 new()
                 {
                     Location = src.FileLocation.AbsoluteUri,
-                    Width = src.Width,
-                    Height = src.Height,
+                    Width = src.Size?.Width ?? -1,
+                    Height = src.Size?.Height ?? -1,
                     Format = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(src.FileLocation.AbsoluteUri))
                 },
                 Thumbnail(200),
