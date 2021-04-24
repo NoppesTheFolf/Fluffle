@@ -30,7 +30,7 @@ namespace Noppes.Fluffle.Database
         {
         }
 
-        protected sealed override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasAnnotation("Relational:Collation", "en_US.utf8");
 
@@ -75,6 +75,7 @@ namespace Noppes.Fluffle.Database
                     EntityType = et,
                     Depth = et.ClrType.Depth()
                 })
+                .Where(et => !et.EntityType.IsKeyless)
                 .OrderByDescending(et => et.Depth)
                 .Select(et => et.EntityType);
 

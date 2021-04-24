@@ -24,6 +24,20 @@ namespace Noppes.Fluffle.Main.Database.Models
         {
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<FaPopularArtist>(e =>
+            {
+                e.HasNoKey();
+                e.ToView("fa_popular_artists");
+                e.Property(e => e.ArtistId).HasColumnName("artist_id");
+                e.Property(e => e.AverageScore).HasColumnName("average_score");
+            });
+
+            base.OnModelCreating(modelBuilder);
+        }
+
+        public virtual DbSet<FaPopularArtist> FaPopularArtists { get; set; }
         public virtual DbSet<CreditableEntity> CreditableEntities { get; set; }
         public virtual DbSet<ContentCreditableEntity> ContentCreditableEntities { get; set; }
         public virtual DbSet<Content> Content { get; set; }

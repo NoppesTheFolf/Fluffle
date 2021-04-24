@@ -52,7 +52,7 @@ namespace Noppes.Fluffle.Index
                 if (_newCheckAt == -1 || now.ToUnixTimeSeconds() >= _newCheckAt)
                 {
                     Log.Information("[{platform}] Checking if bots allowed...", "Fur Affinity");
-                    _botsAllowed = await HttpResiliency.RunAsync(_fluffleClient.GetFaBotsAllowed);
+                    _botsAllowed = await HttpResiliency.RunAsync(_fluffleClient.GetFaBotsAllowedAsync);
                     _newCheckAt = now.Add(CheckInternal).ToUnixTimeSeconds();
                 }
 

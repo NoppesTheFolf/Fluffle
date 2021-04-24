@@ -6,5 +6,8 @@
 
         public static object[] GetFaBotsAllowed() =>
             V1.Url(FurAffinity, "bots-allowed");
+
+        public static object[] GetFaPopularArtists() =>
+            V1.Url(FurAffinity, "popular-artists");
     }
 }

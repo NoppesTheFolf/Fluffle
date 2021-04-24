@@ -80,7 +80,7 @@ namespace Noppes.Fluffle.FurAffinitySync
                     Log.Information("No bots allowed at this moment. Waiting for {time} before checking again.", CheckInterval.Humanize());
                     await Task.Delay(CheckInterval);
 
-                    allowedToContinue = await FluffleClient.GetFaBotsAllowed();
+                    allowedToContinue = await FluffleClient.GetFaBotsAllowedAsync();
                 } while (!allowedToContinue);
                 Log.Information("Bots allowed again, continuing full sync...");
             }
