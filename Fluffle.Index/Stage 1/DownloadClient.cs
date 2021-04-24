@@ -1,4 +1,5 @@
 ﻿using Humanizer;
+using Microsoft.Extensions.Hosting;
 using Nitranium.PerceptualHashing.Utils;
 using Noppes.E621;
 using Noppes.Fluffle.FurAffinity;
@@ -32,14 +33,16 @@ namespace Noppes.Fluffle.Index
 
         private readonly FurAffinityClient _faClient;
         private readonly FluffleClient _fluffleClient;
+        private readonly IHostEnvironment _environment;
 
         private long _newCheckAt;
         private bool _botsAllowed;
 
-        public FurAffinityDownloadClient(FurAffinityClient faClient, FluffleClient fluffleClient) : base(1.Seconds())
+        public FurAffinityDownloadClient(FurAffinityClient faClient, FluffleClient fluffleClient, IHostEnvironment environment) : base(1.Seconds())
         {
             _faClient = faClient;
             _fluffleClient = fluffleClient;
+            _environment = environment;
             _newCheckAt = -1;
             _botsAllowed = false;
         }
@@ -48,6 +51,9 @@ namespace Noppes.Fluffle.Index
         {
             do
             {
+                if (_environment.IsDevelopment())
+                    break;
+
                 var now = DateTimeOffset.UtcNow;
                 if (_newCheckAt == -1 || now.ToUnixTimeSeconds() >= _newCheckAt)
                 {

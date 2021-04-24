@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
 namespace Noppes.Fluffle.E621Sync
 {
@@ -17,8 +18,8 @@ namespace Noppes.Fluffle.E621Sync
     {
         private readonly IE621Client _e621Client;
 
-        public E621ContentProducer(PlatformModel platform, FluffleClient fluffleClient, IE621Client e621Client)
-            : base(platform, fluffleClient)
+        public E621ContentProducer(PlatformModel platform, FluffleClient fluffleClient,
+            IHostEnvironment environment, IE621Client e621Client) : base(platform, fluffleClient, environment)
         {
             _e621Client = e621Client;
         }

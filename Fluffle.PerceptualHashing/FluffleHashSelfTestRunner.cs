@@ -1,6 +1,5 @@
 ﻿using Nitranium.PerceptualHashing;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 
@@ -27,13 +26,7 @@ namespace Noppes.Fluffle.PerceptualHashing
 
         public void Run()
         {
-            if (Debugger.IsAttached)
-            {
-                Log("Detected attached debugger. Skipping self test.");
-                return;
-            }
-
-            Log("Running self test..");
+            Log("Running self test...");
 
             foreach (var jsonFile in Directory.GetFiles(TestsLocation, "*.json"))
             {

@@ -1,5 +1,6 @@
 ﻿using Humanizer;
 using MessagePack;
+using Microsoft.Extensions.Hosting;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
@@ -19,11 +20,13 @@ namespace Noppes.Fluffle.Sync
     {
         protected readonly string Platform;
         protected readonly FluffleClient FluffleClient;
+        protected readonly IHostEnvironment Environment;
 
-        protected ContentProducer(PlatformModel platform, FluffleClient fluffleClient)
+        protected ContentProducer(PlatformModel platform, FluffleClient fluffleClient, IHostEnvironment environment)
         {
-            Platform = platform.Name;
+            Platform = platform.NormalizedName;
             FluffleClient = fluffleClient;
+            Environment = environment;
         }
 
         public override async Task WorkAsync()
@@ -58,7 +61,7 @@ namespace Noppes.Fluffle.Sync
             if (syncInfo.Next == null)
             {
                 Log.Fatal("Platform doesn't have any ways to sync.");
-                Environment.Exit(-1);
+                System.Environment.Exit(-1);
             }
 
             return (syncInfo.Next.Type, syncInfo.Next.TimeToWait);

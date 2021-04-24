@@ -8,41 +8,55 @@ using Noppes.Fluffle.Utils;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Sync
 {
-    public class SyncClient<TService, TSyncService, TContent> : Service<TService>
-        where TService : SyncClient<TService, TSyncService, TContent>
-        where TSyncService : ContentProducer<TContent>
+    public class SyncClient<TService, TContentProducer, TContent> : Service<TService>
+        where TService : SyncClient<TService, TContentProducer, TContent>
+        where TContentProducer : ContentProducer<TContent>
     {
-        private PlatformModel Platform { get; set; }
+        protected PlatformModel Platform;
+        protected FluffleClient FluffleClient;
 
-        public static async Task RunAsync(string platformName, Func<FluffleConfiguration, IServiceCollection, Task> configureAsync = null)
+        public SyncClient(IServiceProvider services) : base(services)
         {
-            await RunAsync(async (client, configuration, services) =>
+        }
+
+        public static void Run(string[] args, string platformName, Action<FluffleConfiguration, IServiceCollection> configure = null)
+        {
+            Run(args, (configuration, services) =>
             {
                 var mainConfiguration = configuration.Get<MainConfiguration>();
                 var fluffleClient = new FluffleClient(mainConfiguration.Url, mainConfiguration.ApiKey);
                 services.AddSingleton(fluffleClient);
 
-                client.Platform = await HttpResiliency.RunAsync(async () => await fluffleClient.GetPlatformAsync(platformName));
-                services.AddSingleton(client.Platform);
+                var platformModel = HttpResiliency.RunAsync(
+                    async () => await fluffleClient.GetPlatformAsync(platformName)).Result;
+                services.AddSingleton(platformModel);
 
                 services.AddTransient<ContentSubmitter>();
-                services.AddTransient<TSyncService>();
+                services.AddTransient<TContentProducer>();
 
-                if (configureAsync != null)
-                    await configureAsync(configuration, services);
+                configure?.Invoke(configuration, services);
             });
         }
 
-        protected override async Task RunAsync()
+        public override Task StartAsync(CancellationToken cancellationToken)
+        {
+            Platform = Services.GetRequiredService<PlatformModel>();
+            FluffleClient = Services.GetRequiredService<FluffleClient>();
+
+            return base.StartAsync(cancellationToken);
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             Log.Information($"Starting {Platform.Name} syncing client...");
 
             var manager = new ProducerConsumerManager<ICollection<PutContentModel>>(Services, 20);
-            manager.AddProducer<TSyncService>(1);
+            manager.AddProducer<TContentProducer>(1);
             manager.AddFinalConsumer<ContentSubmitter>(1);
 
             await manager.RunAsync();

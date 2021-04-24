@@ -1,39 +1,52 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Noppes.Fluffle.Configuration;
 using Serilog;
 using System;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Noppes.Fluffle.Service
 {
-    public abstract class Service
+    public abstract class Service : BackgroundService
     {
-        protected internal IServiceProvider Services { get; set; } = null!;
+        public IServiceProvider Services { get; internal set; }
+        public IHostEnvironment Environment { get; }
 
-        protected internal abstract Task RunAsync();
+        protected Service(IServiceProvider services)
+        {
+            Services = services;
+            Environment = services.GetRequiredService<IHostEnvironment>();
+        }
     }
 
     public abstract class Service<TService> : Service where TService : Service
     {
-        public static async Task RunAsync(Func<TService, FluffleConfiguration, IServiceCollection, Task> configureServicesAsync = null, Func<TService, Task> configureAsync = null)
+        protected Service(IServiceProvider services) : base(services)
         {
-            var service = Activator.CreateInstance<TService>();
+        }
 
-            var configuration = FluffleConfiguration.Load<TService>();
+        public static void Run(string[] args, Action<FluffleConfiguration, IServiceCollection> configureServices = null)
+        {
+            var hostBuilder = Host.CreateDefaultBuilder(args)
+                .ConfigureServices(services =>
+                {
+                    services.AddHostedService<TService>();
+                });
 
-            var serviceCollection = new ServiceCollection();
+            hostBuilder.ConfigureServices(serviceCollection =>
+            {
+                var configuration = FluffleConfiguration.Load<TService>();
+                serviceCollection.AddSingleton(configuration);
 
-            if (configureServicesAsync != null)
-                await configureServicesAsync(service, configuration, serviceCollection);
+                configureServices?.Invoke(configuration, serviceCollection);
+            }).UseSerilog();
 
-            service.Services = serviceCollection.BuildServiceProvider();
-
-            if (configureAsync != null)
-                await configureAsync(service);
+            if (Debugger.IsAttached)
+                hostBuilder.UseEnvironment("Development");
 
             try
             {
-                await service.RunAsync();
+                hostBuilder.Build().Run();
             }
             catch (Exception exception)
             {

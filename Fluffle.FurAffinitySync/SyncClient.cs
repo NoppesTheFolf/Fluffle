@@ -1,15 +1,20 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.FurAffinity;
 using Noppes.Fluffle.Sync;
-using System.Threading.Tasks;
+using System;
 
 namespace Noppes.Fluffle.FurAffinitySync
 {
     internal class SyncClient : SyncClient<SyncClient, FurAffinityContentProducer, FaSubmission>
     {
-        private static async Task Main() => await RunAsync("Fur Affinity", async (configuration, services) =>
+        public SyncClient(IServiceProvider services) : base(services)
         {
-            var client = await new FurAffinityClientFactory(configuration).CreateAsync("fluffle-fur-affinity-sync");
+        }
+
+        private static void Main(string[] args) => Run(args, "Fur Affinity", (configuration, services) =>
+        {
+            var client = new FurAffinityClientFactory(configuration)
+                .CreateAsync("fluffle-fur-affinity-sync").Result;
 
             services.AddSingleton(client);
         });

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Noppes.Fluffle.B2;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
@@ -15,6 +16,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Index
@@ -25,7 +27,11 @@ namespace Noppes.Fluffle.Index
 
         private Dictionary<PlatformConstant, DownloadClient> DownloadClients { get; set; }
 
-        private static async Task Main() => await Service<IndexService>.RunAsync(async (client, configuration, services) =>
+        public IndexService(IServiceProvider services) : base(services)
+        {
+        }
+
+        private static void Main(string[] args) => Service<IndexService>.Run(args, (configuration, services) =>
         {
             var mainConf = configuration.Get<MainConfiguration>();
             var fluffleClient = new FluffleClient(mainConf.Url, mainConf.ApiKey);
@@ -55,26 +61,37 @@ namespace Noppes.Fluffle.Index
                 return new VipsFluffleThumbnail();
             });
 
-            var e621Client = await new E621ClientFactory(configuration).CreateAsync(UserAgent);
-            var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(UserAgent);
-            var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(UserAgent);
-            client.DownloadClients = new Dictionary<PlatformConstant, DownloadClient>
-            {
-                { PlatformConstant.E621, new E621DownloadClient(e621Client) },
-                { PlatformConstant.FurryNetwork, new FurryNetworkDownloadClient(furryNetworkClient) },
-                { PlatformConstant.FurAffinity, new FurAffinityDownloadClient(furAffinityClient, fluffleClient) }
-            };
-
             services.AddTransient<ImageHasher>();
             services.AddTransient<Thumbnailer>();
             services.AddTransient<ThumbnailPublisher>();
             services.AddTransient<IndexPublisher>();
         });
 
-        protected override async Task RunAsync()
+        public override async Task StartAsync(CancellationToken cancellationToken)
         {
-            var testRunner = Services.GetRequiredService<FluffleHashSelfTestRunner>();
-            testRunner.Run();
+            var configuration = Services.GetRequiredService<FluffleConfiguration>();
+            var fluffleClient = Services.GetRequiredService<FluffleClient>();
+
+            var e621Client = await new E621ClientFactory(configuration).CreateAsync(UserAgent);
+            var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(UserAgent);
+            var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(UserAgent);
+            DownloadClients = new Dictionary<PlatformConstant, DownloadClient>
+            {
+                { PlatformConstant.E621, new E621DownloadClient(e621Client) },
+                { PlatformConstant.FurryNetwork, new FurryNetworkDownloadClient(furryNetworkClient) },
+                { PlatformConstant.FurAffinity, new FurAffinityDownloadClient(furAffinityClient, fluffleClient, Environment) }
+            };
+
+            await base.StartAsync(cancellationToken);
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            if (Environment.IsProduction())
+            {
+                var testRunner = Services.GetRequiredService<FluffleHashSelfTestRunner>();
+                testRunner.Run();
+            }
 
             var fluffleClient = Services.GetRequiredService<FluffleClient>();
 

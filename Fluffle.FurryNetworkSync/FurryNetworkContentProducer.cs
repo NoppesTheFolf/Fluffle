@@ -1,4 +1,5 @@
-﻿using Noppes.Fluffle.Configuration;
+﻿using Microsoft.Extensions.Hosting;
+using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
@@ -16,7 +17,8 @@ namespace Noppes.Fluffle.FurryNetworkSync
     {
         private readonly FurryNetworkClient _client;
 
-        public FurryNetworkContentProducer(PlatformModel platform, FluffleClient fluffleClient, FurryNetworkClient client) : base(platform, fluffleClient)
+        public FurryNetworkContentProducer(PlatformModel platform, FluffleClient fluffleClient,
+            IHostEnvironment environment, FurryNetworkClient client) : base(platform, fluffleClient, environment)
         {
             _client = client;
         }

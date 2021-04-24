@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
 namespace Noppes.Fluffle.FurAffinitySync
 {
@@ -45,8 +46,8 @@ namespace Noppes.Fluffle.FurAffinitySync
 
         public override int SourceVersion => 2;
 
-        public FurAffinityContentProducer(PlatformModel platform, FluffleClient fluffleClient, FurAffinityClient client)
-            : base(platform, fluffleClient)
+        public FurAffinityContentProducer(PlatformModel platform, FluffleClient fluffleClient,
+            IHostEnvironment environment, FurAffinityClient client) : base(platform, fluffleClient, environment)
         {
             _client = client;
         }
@@ -72,6 +73,9 @@ namespace Noppes.Fluffle.FurAffinitySync
                 await SubmitContentAsync(new List<FaSubmission> { submission });
 
                 if (getSubmissionResult.Stats.Registered < FurAffinityClient.BotThreshold)
+                    continue;
+
+                if (Environment.IsDevelopment())
                     continue;
 
                 bool allowedToContinue;

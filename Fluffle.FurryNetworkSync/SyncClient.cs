@@ -1,14 +1,19 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.Sync;
-using System.Threading.Tasks;
+using System;
 
 namespace Noppes.Fluffle.FurryNetworkSync
 {
     internal class SyncClient : SyncClient<SyncClient, FurryNetworkContentProducer, FnSubmission>
     {
-        private static async Task Main() => await RunAsync("Furry Network", async (configuration, services) =>
+        public SyncClient(IServiceProvider services) : base(services)
         {
-            var client = await new FurryNetworkClientFactory(configuration).CreateAsync("fluffle-furry-network-sync");
+        }
+
+        private static void Main(string[] args) => Run(args, "Furry Network", (configuration, services) =>
+        {
+            var client = new FurryNetworkClientFactory(configuration)
+                .CreateAsync("fluffle-furry-network-sync").Result;
 
             services.AddSingleton(client);
         });

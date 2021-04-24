@@ -1,8 +1,6 @@
 ﻿using Humanizer;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Hosting;
 using Nito.AsyncEx;
 using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.Controllers;
@@ -27,23 +25,18 @@ namespace Noppes.Fluffle.Main.Api.Controllers
         private readonly FluffleContext _context;
         private readonly FurAffinityClient _client;
         private readonly IMemoryCache _cache;
-        private readonly IWebHostEnvironment _environment;
 
-        public FurAffinityController(FluffleContext context, FurAffinityClient client, IMemoryCache cache, IWebHostEnvironment environment)
+        public FurAffinityController(FluffleContext context, FurAffinityClient client, IMemoryCache cache)
         {
             _context = context;
             _client = client;
             _cache = cache;
-            _environment = environment;
         }
 
         [HttpGet(SingularRoute + "/bots-allowed")]
         [Permissions(FurAffinityPermissions.ViewBotsAllowed)]
         public async Task<IActionResult> GetStatus()
         {
-            if (_environment.IsDevelopment())
-                return Ok(true);
-
             using var _ = await Mutex.LockAsync();
 
             if (!_cache.TryGetValue<int>(RegisteredUsersKey, out var registeredUsers))

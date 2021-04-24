@@ -1,16 +1,20 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Noppes.E621;
 using Noppes.Fluffle.Sync;
-using System.Threading.Tasks;
+using System;
 
 namespace Noppes.Fluffle.E621Sync
 {
     internal class SyncClient : SyncClient<SyncClient, E621ContentProducer, Post>
     {
-        private static async Task Main() => await RunAsync("e621", async (configuration, services) =>
+        public SyncClient(IServiceProvider services) : base(services)
         {
-            var e621Client = await new E621ClientFactory(configuration)
-                .CreateAsync("fluffle-e621sync");
+        }
+
+        private static void Main(string[] args) => Run(args, "e621", (configuration, services) =>
+        {
+            var e621Client = new E621ClientFactory(configuration)
+                .CreateAsync("fluffle-e621sync").Result;
 
             services.AddSingleton(e621Client);
         });
