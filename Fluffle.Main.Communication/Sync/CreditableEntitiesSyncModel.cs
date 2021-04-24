@@ -14,12 +14,15 @@ namespace Noppes.Fluffle.Main.Communication
             public int Id { get; set; }
 
             [Key(1)]
-            public long ChangeId { get; set; }
+            public int PlatformId { get; set; }
 
             [Key(2)]
-            public CreditableEntityType Type { get; set; }
+            public long ChangeId { get; set; }
 
             [Key(3)]
+            public CreditableEntityType Type { get; set; }
+
+            [Key(4)]
             public string Name { get; set; }
         }
 

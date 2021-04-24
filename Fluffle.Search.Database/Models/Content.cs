@@ -43,7 +43,7 @@ namespace Noppes.Fluffle.Search.Database.Models
                 .HasMaxLength(32);
 
             entity.Property(e => e.ChangeId);
-            entity.HasIndex(e => e.ChangeId).IsUnique();
+            entity.HasIndex(e => new { e.PlatformId, e.ChangeId }).IsUnique();
 
             entity.Property(e => e.IsSfw);
             entity.HasIndex(e => e.IsSfw);

@@ -9,6 +9,7 @@ namespace Noppes.Fluffle.Search.Database.Models
         public Platform()
         {
             Content = new HashSet<Content>();
+            CreditableEntities = new HashSet<CreditableEntity>();
         }
 
         public int Id { get; set; }
@@ -16,6 +17,7 @@ namespace Noppes.Fluffle.Search.Database.Models
         public string NormalizedName { get; set; }
 
         public virtual ICollection<Content> Content { get; set; }
+        public virtual ICollection<CreditableEntity> CreditableEntities { get; set; }
 
         public void Configure(EntityTypeBuilder<Platform> entity)
         {

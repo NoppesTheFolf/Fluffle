@@ -10,25 +10,29 @@ namespace Noppes.Fluffle.Main.Api.Services
     {
         public static async Task<SynchronizeResult<CreditableEntity>> SynchronizeCreditableEntitiesAsync(
             this FluffleContext context, ICollection<CreditableEntity> currentCreditableEntities,
-            ICollection<CreditableEntity> newCreditableEntities, ChangeIdIncrementer<CreditableEntity> cid)
+            ICollection<CreditableEntity> newCreditableEntities, ChangeIdIncrementerLock<CreditableEntity> cid)
         {
             return await context.SynchronizeAsync(c => c.CreditableEntities, currentCreditableEntities,
                 newCreditableEntities, (f1, f2) =>
                 {
                     return f1.Id == f2.Id;
-                }, async entity =>
-                {
-                    await cid.NextAsync(entity);
-                }, (src, dest) =>
-                {
-                    dest.Name = src.Name;
-                    dest.Type = src.Type;
+                }, entity =>
+               {
+                   cid.Next(entity);
 
-                    return Task.CompletedTask;
-                }, async (src, dest) =>
-                {
-                    await cid.NextAsync(dest);
-                }
+                   return Task.CompletedTask;
+               }, (src, dest) =>
+               {
+                   dest.Name = src.Name;
+                   dest.Type = src.Type;
+
+                   return Task.CompletedTask;
+               }, (src, dest) =>
+               {
+                   cid.Next(dest);
+
+                   return Task.CompletedTask;
+               }
             );
         }
     }

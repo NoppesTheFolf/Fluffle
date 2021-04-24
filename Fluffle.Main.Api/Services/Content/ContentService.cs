@@ -109,8 +109,10 @@ namespace Noppes.Fluffle.Main.Api.Services
                 content.IsIndexed = false;
                 content.RequiresIndexing = true;
 
+                using var _ = _contentCii.Lock((PlatformConstant)content.PlatformId, out var contentCii);
+
                 if (content.ChangeId != null)
-                    await _contentCii.NextAsync(content);
+                    contentCii.Next(content);
 
                 // Switch for marked for deletion to actually deleted
                 content.IsMarkedForDeletion = false;
@@ -250,8 +252,9 @@ namespace Noppes.Fluffle.Main.Api.Services
                     if (existingCreditableEntities.TryGetValue(creditableEntity.IdOnPlatform, out var existingCreditableEntity))
                         creditableEntity.Id = existingCreditableEntity.Id;
 
+                using var creditableEntityCiiLock = _creditableEntityCii.Lock((PlatformConstant)platform.Id, out var creditableEntityCii);
                 var creditableEntitiesSynchronizeResult = await _context.SynchronizeCreditableEntitiesAsync(
-                    existingCreditableEntities.Values, creditableEntities, _creditableEntityCii);
+                    existingCreditableEntities.Values, creditableEntities, creditableEntityCii);
 
                 var creditableEntitiesLookup = creditableEntitiesSynchronizeResult.Entities()
                     .ToDictionary(ce => ce.IdOnPlatform);
@@ -314,6 +317,7 @@ namespace Noppes.Fluffle.Main.Api.Services
                         return Task.CompletedTask;
                     });
 
+                using var contentCiiLock = _contentCii.Lock((PlatformConstant)platform.Id, out var contentCii);
                 foreach (var synchronizeResult in contentSynchronizeResult.Results())
                 {
                     var contentPiece = synchronizeResult.Entity;
@@ -345,7 +349,7 @@ namespace Noppes.Fluffle.Main.Api.Services
 
                     var isContentChanged = synchronizeResult.HasChanges || synchronizeFilesResult.HasChanges || synchronizeCredits.HasChanges;
                     if (contentPiece.ChangeId != null && isContentChanged)
-                        await _contentCii.NextAsync(contentPiece);
+                        contentCii.Next(contentPiece);
 
                     // Transparency fix, this is only required for e621 due to them being the only
                     // one flattening their images with a black background. This causes problems

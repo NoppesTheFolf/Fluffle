@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.Controllers;
 using Noppes.Fluffle.Api.Mapping;
+using Noppes.Fluffle.Api.Services;
+using Noppes.Fluffle.Main.Api.Services;
 using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.Main.Database;
 using Noppes.Fluffle.Main.Database.Models;
@@ -25,47 +27,57 @@ namespace Noppes.Fluffle.Main.Api.Controllers
             _context = context;
         }
 
-        [HttpGet(SyncRoute + "/images/{afterChangeId}")]
+        [HttpGet(SyncRoute + "/images/{platformName}/{afterChangeId}")]
         [Permissions(SyncPermissions.ReadImages)]
-        public async Task<IActionResult> GetImages(int afterChangeId)
+        public async Task<IActionResult> GetImages(string platformName, int afterChangeId)
         {
-            var changes = await _context.Images
-                .AsNoTracking()
-                .IncludeThumbnails()
-                .Include(i => i.Rating)
-                .Include(i => i.ImageHash)
-                .Include(i => i.Credits)
-                .Include(i => i.Files)
-                .AfterChangeId(afterChangeId)
-                .Take(ImagesLimit)
-                .ToListAsync();
-
-            var maxId = changes.Max(i => i.ChangeId) ?? afterChangeId;
-
-            return Ok(new ImagesSyncModel
+            var result = await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
-                NextChangeId = maxId,
-                Results = changes.MapEnumerableTo<ImagesSyncModel.ImageModel>()
+                var changes = await _context.Images
+                    .AsNoTracking()
+                    .IncludeThumbnails()
+                    .Include(i => i.Rating)
+                    .Include(i => i.ImageHash)
+                    .Include(i => i.Credits)
+                    .Include(i => i.Files)
+                    .AfterChangeId(platform.Id, afterChangeId)
+                    .Take(ImagesLimit)
+                    .ToListAsync();
+
+                var maxId = changes.Max(i => i.ChangeId) ?? afterChangeId;
+
+                return new SR<ImagesSyncModel>(new ImagesSyncModel
+                {
+                    NextChangeId = maxId,
+                    Results = changes.MapEnumerableTo<ImagesSyncModel.ImageModel>()
+                });
             });
+
+            return HandleV1(result);
         }
 
-        [HttpGet(SyncRoute + "/creditable-entities/{afterChangeId}")]
+        [HttpGet(SyncRoute + "/creditable-entities/{platformName}/{afterChangeId}")]
         [Permissions(SyncPermissions.ReadCreditableEntities)]
-        public async Task<IActionResult> GetCreditableEntities(int afterChangeId)
+        public async Task<IActionResult> GetCreditableEntities(string platformName, int afterChangeId)
         {
-            var changes = await _context.CreditableEntities
-                .AsNoTracking()
-                .AfterChangeId(afterChangeId)
-                .Take(CreditableEntitiesLimit)
-                .ToListAsync();
-
-            var maxId = changes.Max(i => i.ChangeId) ?? afterChangeId;
-
-            return Ok(new CreditableEntitiesSyncModel
+            var result = await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
-                NextChangeId = maxId,
-                Results = changes.MapEnumerableTo<CreditableEntitiesSyncModel.CreditableEntityModel>()
+                var changes = await _context.CreditableEntities
+                    .AsNoTracking()
+                    .AfterChangeId(platform.Id, afterChangeId)
+                    .Take(CreditableEntitiesLimit)
+                    .ToListAsync();
+
+                var maxId = changes.Max(i => i.ChangeId) ?? afterChangeId;
+
+                return new SR<CreditableEntitiesSyncModel>(new CreditableEntitiesSyncModel
+                {
+                    NextChangeId = maxId,
+                    Results = changes.MapEnumerableTo<CreditableEntitiesSyncModel.CreditableEntityModel>()
+                });
             });
+
+            return HandleV1(result);
         }
     }
 

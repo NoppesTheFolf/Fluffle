@@ -10,6 +10,8 @@ namespace Noppes.Fluffle.Main.Database.Models
     public interface ITrackable
     {
         public long? ChangeId { get; set; }
+
+        public int PlatformId { get; set; }
     }
 
     public partial class Content : TrackedBaseEntity, ITrackable, IConfigurable<Content>
@@ -95,10 +97,10 @@ namespace Noppes.Fluffle.Main.Database.Models
             entity.HasIndex(e => e.IdOnPlatformAsInteger);
 
             entity.Property(e => e.ChangeId);
-            entity.HasIndex(e => e.ChangeId).IsUnique();
+            entity.HasIndex(e => new { e.PlatformId, e.ChangeId }).IsUnique();
 
             // This speeds up image synchronization
-            entity.HasIndex(e => new { e.Discriminator, e.ChangeId });
+            entity.HasIndex(e => new { e.Discriminator, e.PlatformId, e.ChangeId });
 
             entity.Property(e => e.ViewLocation)
                 .IsRequired()

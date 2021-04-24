@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Noppes.Fluffle.Api.Mapping;
 using Noppes.Fluffle.Api.Services;
+using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Main.Api.Helpers;
 using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.Main.Database;
@@ -84,7 +85,8 @@ namespace Noppes.Fluffle.Main.Api.Services
                 if (!content.IsIndexed)
                     content.IsIndexed = true;
 
-                await _contentCii.NextAsync(content);
+                using var _ = _contentCii.Lock((PlatformConstant)content.PlatformId, out var contentCii);
+                contentCii.Next(content);
                 content.RequiresIndexing = false;
 
                 await _context.SaveChangesAsync();

@@ -11,6 +11,7 @@ namespace Noppes.Fluffle.Search.Api.Mappers
             if (dest.Id != src.Id)
                 dest.Id = src.Id;
 
+            dest.PlatformId = src.PlatformId;
             dest.Name = src.Name;
             dest.Type = src.Type;
             dest.ChangeId = src.ChangeId;

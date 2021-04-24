@@ -32,14 +32,18 @@ namespace Noppes.Fluffle.Search.Api
 
         public async Task RunAsync()
         {
-            _logger.LogInformation("Synchronizing with main...");
+            _logger.LogInformation("Synchronizing platforms...");
+            var platforms = await RefreshPlatformsAsync();
 
-            await RefreshPlatformsAsync();
-            await RefreshCreditableEntitiesAsync();
-            await RefreshImagesAsync();
+            foreach (var platform in platforms)
+            {
+                _logger.LogInformation("Synchronizing for {platform}...", platform);
+                await RefreshCreditableEntitiesAsync(platform);
+                await RefreshImagesAsync(platform);
+            }
         }
 
-        public async Task RefreshPlatformsAsync()
+        public async Task<IEnumerable<PlatformModel>> RefreshPlatformsAsync()
         {
             var platforms = await HttpResiliency.RunAsync(() => _client.GetPlatformsAsync(), onRetry: _ =>
             {
@@ -69,15 +73,17 @@ namespace Noppes.Fluffle.Search.Api
 
                 await context.SaveChangesAsync();
             });
+
+            return platforms;
         }
 
-        public async Task RefreshCreditableEntitiesAsync()
+        public async Task RefreshCreditableEntitiesAsync(PlatformModel platform)
         {
             await RefreshAsync<CreditableEntity, CreditableEntitiesSyncModel, CreditableEntitiesSyncModel.CreditableEntityModel>(
-                c => c.CreditableEntities, afterChangeId =>
+                platform.Id, c => c.CreditableEntities, afterChangeId =>
                 {
                     _logger.LogInformation("Retrieving creditable entities after change ID {changeId}...", afterChangeId);
-                    return _client.GetSyncCreditableEntitiesAsync(afterChangeId);
+                    return _client.GetSyncCreditableEntitiesAsync(platform.NormalizedName, afterChangeId);
                 },
                 async (context, models) =>
                 {
@@ -88,14 +94,11 @@ namespace Noppes.Fluffle.Search.Api
                         .ToListAsync();
 
                     await context.SynchronizeAsync(c => c.CreditableEntities, existingCreditableEntities, creditableEntities,
-                        (ce1, ce2) => ce1.Id == ce2.Id, onUpdateAsync: (src, dest) =>
+                        (ce1, ce2) => ce1.Id == ce2.Id, updateAnywayAsync: (src, dest) =>
                         {
+                            dest.PlatformId = src.PlatformId;
                             dest.Name = src.Name;
                             dest.Type = src.Type;
-
-                            return Task.CompletedTask;
-                        }, updateAnywayAsync: (src, dest) =>
-                        {
                             dest.ChangeId = src.ChangeId;
 
                             return Task.CompletedTask;
@@ -103,13 +106,13 @@ namespace Noppes.Fluffle.Search.Api
                 });
         }
 
-        public async Task RefreshImagesAsync()
+        public async Task RefreshImagesAsync(PlatformModel platform)
         {
-            await RefreshAsync<Image, ImagesSyncModel, ImagesSyncModel.ImageModel>(c => c.Images, afterChangeId =>
+            await RefreshAsync<Image, ImagesSyncModel, ImagesSyncModel.ImageModel>(platform.Id, c => c.Images, afterChangeId =>
                 {
                     _logger.LogInformation("Retrieving images after change ID {changeId}...", afterChangeId);
 
-                    return _client.GetSyncImagesAsync(afterChangeId);
+                    return _client.GetSyncImagesAsync(platform.NormalizedName, afterChangeId);
                 },
                 async (context, models) =>
                 {
@@ -127,7 +130,7 @@ namespace Noppes.Fluffle.Search.Api
 
                     // We're missing credits! So we're going to sync those first
                     if (creditsInModels.Count != numberOfExistingCredits)
-                        await RefreshCreditableEntitiesAsync();
+                        await RefreshCreditableEntitiesAsync(platform);
 
                     // Then we sync the base content entities
                     var imagesInModel = modelLookup.Values
@@ -229,15 +232,17 @@ namespace Noppes.Fluffle.Search.Api
                 });
         }
 
-        public async Task RefreshAsync<TEntity, TModel, TModelData>(Func<FluffleSearchContext, DbSet<TEntity>> getSet,
+        public async Task RefreshAsync<TEntity, TModel, TModelData>(int platformId, Func<FluffleSearchContext, DbSet<TEntity>> getSet,
             Func<long, Task<TModel>> getModel, Func<FluffleSearchContext, IEnumerable<TModelData>, Task> processAsync)
             where TEntity : class, ITrackable where TModel : ITrackableModel<TModelData>
         {
             long afterChangeId = 0;
             await UseContextResilientAsync(async context =>
             {
-                if (await getSet(context).AnyAsync())
-                    afterChangeId = await getSet(context).MaxAsync(i => i.ChangeId);
+                var baseQuery = getSet(context).Where(i => i.PlatformId == platformId);
+
+                if (await baseQuery.AnyAsync())
+                    afterChangeId = await baseQuery.MaxAsync(i => i.ChangeId);
             });
 
             while (true)

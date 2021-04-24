@@ -11,6 +11,7 @@ namespace Noppes.Fluffle.Main.Api.Mappers
             dest.Id = src.Id;
             dest.Name = src.Name;
             dest.Type = src.Type;
+            dest.PlatformId = src.PlatformId;
             dest.ChangeId = (long)src.ChangeId;
         }
     }

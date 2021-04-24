@@ -4,10 +4,10 @@
     {
         public const string Sync = "sync";
 
-        public static object[] GetSyncImages(long afterChangeId) =>
-            V1.Url(Sync, "images", afterChangeId);
+        public static object[] GetSyncImages(string platformName, long afterChangeId) =>
+            V1.Url(Sync, "images", platformName, afterChangeId);
 
-        public static object[] GetSyncCreditableEntities(long afterChangeId) =>
-            V1.Url(Sync, "creditable-entities", afterChangeId);
+        public static object[] GetSyncCreditableEntities(string platformName, long afterChangeId) =>
+            V1.Url(Sync, "creditable-entities", platformName, afterChangeId);
     }
 }

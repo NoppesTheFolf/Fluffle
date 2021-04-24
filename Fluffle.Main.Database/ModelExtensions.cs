@@ -43,9 +43,10 @@ namespace Noppes.Fluffle.Main.Database
         }
 
         public static IQueryable<TTrackable> AfterChangeId<TTrackable>(this IQueryable<TTrackable> queryable,
-            long afterChangeId) where TTrackable : ITrackable
+            int platformId, long afterChangeId) where TTrackable : ITrackable
         {
             return queryable.Where(i => i.ChangeId != null)
+                .Where(i => i.PlatformId == platformId)
                 .Where(i => i.ChangeId > afterChangeId)
                 .OrderBy(i => i.ChangeId);
         }

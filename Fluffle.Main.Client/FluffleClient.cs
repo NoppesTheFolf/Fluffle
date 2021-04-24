@@ -114,15 +114,15 @@ namespace Noppes.Fluffle.Main.Client
                 .GetJsonAsync<PlatformSyncModel>();
         }
 
-        public Task<ImagesSyncModel> GetSyncImagesAsync(long afterChangeId)
+        public Task<ImagesSyncModel> GetSyncImagesAsync(string platformName, long afterChangeId)
         {
-            return Request(Endpoints.GetSyncImages(afterChangeId))
+            return Request(Endpoints.GetSyncImages(platformName, afterChangeId))
                 .GetMessagePackAsync<ImagesSyncModel>();
         }
 
-        public Task<CreditableEntitiesSyncModel> GetSyncCreditableEntitiesAsync(long afterChangeId)
+        public Task<CreditableEntitiesSyncModel> GetSyncCreditableEntitiesAsync(string platformName, long afterChangeId)
         {
-            return Request(Endpoints.GetSyncCreditableEntities(afterChangeId))
+            return Request(Endpoints.GetSyncCreditableEntities(platformName, afterChangeId))
                 .GetMessagePackAsync<CreditableEntitiesSyncModel>();
         }
 

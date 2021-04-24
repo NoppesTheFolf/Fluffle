@@ -1,4 +1,5 @@
 ﻿using Humanizer;
+using Microsoft.Extensions.Hosting;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.FurAffinity;
@@ -11,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
 
 namespace Noppes.Fluffle.FurAffinitySync
 {

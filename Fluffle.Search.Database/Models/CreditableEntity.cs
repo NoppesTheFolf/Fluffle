@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Database;
 using System.Collections.Generic;
@@ -15,11 +16,15 @@ namespace Noppes.Fluffle.Search.Database.Models
 
         public int Id { get; set; }
 
+        public int PlatformId { get; set; }
+
         public string Name { get; set; }
 
         public long ChangeId { get; set; }
 
         public CreditableEntityType Type { get; set; }
+
+        public virtual Platform Platform { get; set; }
 
         public virtual ICollection<Content> Content { get; set; }
         public virtual ICollection<ContentCreditableEntity> ContentCreditableEntity { get; set; }
@@ -32,9 +37,14 @@ namespace Noppes.Fluffle.Search.Database.Models
             entity.Property(e => e.Name).IsRequired();
 
             entity.Property(e => e.ChangeId);
-            entity.HasIndex(e => e.ChangeId).IsUnique();
+            entity.HasIndex(e => new { e.PlatformId, e.ChangeId });
 
             entity.Property(e => e.Type);
+
+            entity.HasOne(d => d.Platform)
+                .WithMany(p => p.CreditableEntities)
+                .HasForeignKey(d => d.PlatformId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
