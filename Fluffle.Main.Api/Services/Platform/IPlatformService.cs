@@ -27,5 +27,9 @@ namespace Noppes.Fluffle.Main.Api.Services
         Task<SR<PlatformSyncModel>> GetSync(string platformName);
 
         Task<SE> SignalSync(string platformName, SyncTypeConstant syncType);
+
+        Task<SR<SyncStateModel>> GetSyncState(string platformName);
+
+        Task<SE> PutSyncState(string platformName, SyncStateModel model);
     }
 }

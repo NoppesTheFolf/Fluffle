@@ -22,6 +22,8 @@ namespace Noppes.Fluffle.Main.Database.Models
         [Sync] public int EstimatedContentCount { get; set; }
         [Sync] public string HomeLocation { get; set; }
 
+        public virtual SyncState SyncState { get; set; }
+
         public virtual ICollection<Content> Content { get; set; }
         public virtual ICollection<PlatformSync> PlatformSyncs { get; set; }
         public virtual ICollection<CreditableEntity> CreditableEntities { get; set; }

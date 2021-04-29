@@ -92,5 +92,35 @@ namespace Noppes.Fluffle.Main.Api.Services
                 return null;
             });
         }
+
+        public async Task<SR<SyncStateModel>> GetSyncState(string platformName)
+        {
+            return await _context.Platforms.Include(p => p.SyncState).GetPlatformAsync(platformName, async platform =>
+            {
+                var model = platform.SyncState == null ? null : new SyncStateModel
+                {
+                    Version = platform.SyncState.Version,
+                    Document = platform.SyncState.Document
+                };
+
+                return new SR<SyncStateModel>(model);
+            });
+        }
+
+        public async Task<SE> PutSyncState(string platformName, SyncStateModel model)
+        {
+            return await _context.Platforms.Include(p => p.SyncState).GetPlatformAsync(platformName, async platform =>
+            {
+                platform.SyncState ??= new SyncState
+                {
+                    Id = platform.Id
+                };
+                platform.SyncState.Document = model.Document;
+                platform.SyncState.Version = model.Version;
+
+                await _context.SaveChangesAsync();
+                return null;
+            });
+        }
     }
 }

@@ -55,6 +55,24 @@ namespace Noppes.Fluffle.Main.Api.Controllers
 
             return HandleV1(error);
         }
+
+        [HttpGet(SingularRoute + "/sync-state")]
+        [Permissions(PlatformPermissions.ReadSyncState)]
+        public async Task<IActionResult> GetSyncState(string platformName)
+        {
+            var result = await _platformService.GetSyncState(platformName);
+
+            return HandleV1(result);
+        }
+
+        [HttpPut(SingularRoute + "/sync-state")]
+        [Permissions(PlatformPermissions.PutSyncState)]
+        public async Task<IActionResult> PutSyncState(string platformName, SyncStateModel model)
+        {
+            var error = await _platformService.PutSyncState(platformName, model);
+
+            return HandleV1(error);
+        }
     }
 
     public class PlatformPermissions : Permissions
@@ -69,5 +87,11 @@ namespace Noppes.Fluffle.Main.Api.Controllers
 
         [Permission]
         public const string UpdateSync = Prefix + "SYNC_UPDATE";
+
+        [Permission]
+        public const string ReadSyncState = Prefix + "READ_SYNC_STATE";
+
+        [Permission]
+        public const string PutSyncState = Prefix + "PUT_SYNC_STATE";
     }
 }
