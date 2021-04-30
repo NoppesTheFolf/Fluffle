@@ -7,8 +7,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="FluentValidation" Version="10.0.4" />
-		<PackageReference Include="Humanizer.Core" Version="2.8.26" />
+		<PackageReference Include="FluentValidation" Version="10.1.0" />
+		<PackageReference Include="Humanizer.Core" Version="2.9.9" />
 		<PackageReference Include="MessagePack" Version="2.2.85" />
 		<PackageReference Include="MessagePackAnalyzer" Version="2.2.85" />
 	</ItemGroup>
