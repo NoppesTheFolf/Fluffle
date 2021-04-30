@@ -138,15 +138,26 @@ namespace Noppes.Fluffle.FurAffinity
             };
         }
 
-        public async Task<FaResult<FaGallery>> GetGalleryAsync(string artistId, int page = 1, FaFolder folder = null)
+        public Task<FaResult<FaGallery>> GetScrapsAsync(string artistId, int page = 1)
         {
-            var url = "gallery/" + artistId;
+            var url = $"scraps/{artistId}";
+
+            return GetGalleryAsync(artistId, url, page);
+        }
+
+        public Task<FaResult<FaGallery>> GetGalleryAsync(string artistId, int page = 1, FaFolder folder = null)
+        {
+            var url = $"gallery/{artistId}";
 
             if (folder != null)
                 url += $"/folder/{folder.Id}/{folder.NormalizedTitle}";
 
-            url += $"/{page}";
+            return GetGalleryAsync(artistId, url, page);
+        }
 
+        private async Task<FaResult<FaGallery>> GetGalleryAsync(string artistId, string url, int page)
+        {
+            url += $"/{page}";
             var response = await Request(url).GetHtmlAsync();
 
             if (!HasLogin(response))
@@ -155,7 +166,7 @@ namespace Noppes.Fluffle.FurAffinity
             var gallery = new FaGallery
             {
                 ArtistId = artistId,
-                Page = 1
+                Page = page
             };
             var root = response.GetElementbyId("columnpage");
 

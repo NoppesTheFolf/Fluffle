@@ -36,6 +36,7 @@ namespace Noppes.Fluffle.Sync
                     async () => await fluffleClient.GetPlatformAsync(platformName)).Result;
                 services.AddSingleton(platformModel);
 
+                services.AddTransient(typeof(SyncStateService<>));
                 services.AddTransient<ContentSubmitter>();
                 services.AddTransient<TContentProducer>();
 

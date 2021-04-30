@@ -42,13 +42,21 @@ namespace Noppes.Fluffle.FurAffinitySync
         };
 
         private static readonly TimeSpan CheckInterval = 5.Minutes();
+        private readonly SyncStateService<FurAffinitySyncClientState> _syncStateService;
+
+        private ArchiveStrategy _archiveStrategy;
+        private PopularArtistsStrategy _popularArtistsStrategy;
+        private FurAffinityContentProducerStrategy _strategy;
+
+        private FurAffinitySyncClientState _syncState;
         private readonly FurAffinityClient _client;
 
         public override int SourceVersion => 2;
 
         public FurAffinityContentProducer(PlatformModel platform, FluffleClient fluffleClient,
-            IHostEnvironment environment, FurAffinityClient client) : base(platform, fluffleClient, environment)
+            IHostEnvironment environment, SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client) : base(platform, fluffleClient, environment)
         {
+            _syncStateService = syncStateService;
             _client = client;
         }
 
@@ -56,23 +64,58 @@ namespace Noppes.Fluffle.FurAffinitySync
 
         protected override async Task FullSyncAsync()
         {
-            var maxId = await FluffleClient.GetMinId(Platform);
-            var id = maxId ?? 38_000_001;
-
-            for (var i = id - 1; i > 0; i--)
+            _syncState = await _syncStateService.InitializeAsync(async state =>
             {
-                var getSubmissionResult = await LogEx.TimeAsync(async () =>
+                state.Version = 1;
+                state.ArchiveEndId = await FluffleClient.GetMinId(Platform) ?? 38_000_001;
+                state.ArchiveStartId = await FluffleClient.GetMaxId(Platform) ?? 38_000_000;
+            });
+            _archiveStrategy = new ArchiveStrategy(FluffleClient, _client, _syncState);
+            _popularArtistsStrategy = new PopularArtistsStrategy(FluffleClient, _client, _syncState);
+            _strategy = _archiveStrategy;
+
+            for (var i = 1; ; i++)
+            {
+                var result = await _strategy.NextAsync();
+
+                if (result?.FaResult != null)
+                    await SubmitContentAsync(new List<FaSubmission> { result.FaResult.Result });
+
+                if (i % 10 == 0)
                 {
-                    return await HttpResiliency.RunAsync(() => _client.GetSubmissionAsync(i));
-                }, "Retrieving submission with ID {id}", i);
+                    await LogEx.TimeAsync(async () =>
+                    {
+                        await HttpResiliency.RunAsync(() => _syncStateService.SyncAsync());
+                    }, "Stored sync state");
+                }
 
-                if (getSubmissionResult == null)
+                if (result == null)
+                {
+                    if (_strategy is PopularArtistsStrategy)
+                    {
+                        await LogEx.TimeAsync(async () =>
+                        {
+                            await HttpResiliency.RunAsync(() => _syncStateService.SyncAsync());
+                        }, "Stored sync state");
+
+                        Log.Information("Switching back to archive strategy");
+                        _strategy = _archiveStrategy;
+
+                        continue;
+                    }
+
+                    Log.Information("Nothing more to do, waiting...");
+                    await Task.Delay(15.Minutes());
                     continue;
+                }
 
-                var submission = getSubmissionResult.Result;
-                await SubmitContentAsync(new List<FaSubmission> { submission });
+                if (i % 7000 == 0 && _strategy is ArchiveStrategy)
+                {
+                    Log.Information("Switching to popular artists strategy");
+                    _strategy = _popularArtistsStrategy;
+                }
 
-                if (getSubmissionResult.Stats.Registered < FurAffinityClient.BotThreshold)
+                if (result.FaResult != null && result.FaResult.Stats.Registered < FurAffinityClient.BotThreshold)
                     continue;
 
                 if (Environment.IsDevelopment())
