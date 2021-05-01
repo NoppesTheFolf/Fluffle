@@ -115,7 +115,7 @@ namespace Noppes.Fluffle.FurAffinitySync
                     _strategy = _popularArtistsStrategy;
                 }
 
-                if (result.FaResult != null && result.FaResult.Stats.Registered < FurAffinityClient.BotThreshold)
+                if (result.FaResult == null || result.FaResult.Stats.Registered < FurAffinityClient.BotThreshold)
                     continue;
 
                 if (Environment.IsDevelopment())
