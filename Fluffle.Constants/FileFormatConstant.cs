@@ -23,7 +23,8 @@ namespace Noppes.Fluffle.Constants
         Odt = 13,
         Mp3 = 14,
         Wav = 15,
-        Mid = 16
+        Mid = 16,
+        Binary = 17
     }
 
     public static class FileFormatHelper
@@ -77,6 +78,8 @@ namespace Noppes.Fluffle.Constants
                 "mp3" => FileFormatConstant.Mp3,
                 "wav" => FileFormatConstant.Wav,
                 "mid" => FileFormatConstant.Mid,
+                "bin" => FileFormatConstant.Binary,
+                "" => FileFormatConstant.Binary,
                 _ => throw new InvalidOperationException($"Extension `{extension}` could not be found")
             };
         }

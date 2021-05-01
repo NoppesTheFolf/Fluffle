@@ -162,6 +162,12 @@ namespace Noppes.Fluffle.Main.Api.Helpers
                     Abbreviation = "MID",
                     Extension = ".mid"
                 },
+                FileFormatConstant.Binary => new FileFormat
+                {
+                    Name = "Binary",
+                    Abbreviation = "Binary",
+                    Extension = ".bin"
+                },
                 _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
             };
         }
