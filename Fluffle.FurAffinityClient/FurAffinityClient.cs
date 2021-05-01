@@ -111,7 +111,10 @@ namespace Noppes.Fluffle.FurAffinity
             var downloadUrl = "https:" + downloadButton.FirstChild.Attributes["href"].Value;
             submission.FileLocation = new Uri(downloadUrl);
 
-            var when = long.Parse(string.Concat(Path.GetFileName(Path.GetDirectoryName(downloadUrl)).TakeWhile(char.IsDigit)));
+            var thumbnailWhen = long.Parse(string.Concat(Path.GetFileName(Path.GetDirectoryName(downloadUrl)).TakeWhile(char.IsDigit)));
+            submission.ThumbnailWhen = DateTimeOffset.FromUnixTimeSeconds(thumbnailWhen);
+
+            var when = long.Parse(Regex.Match(downloadUrl, "(?<=\\/)[0-9]*?(?=\\.)").Value);
             submission.When = DateTimeOffset.FromUnixTimeSeconds(when);
 
             // Extract title

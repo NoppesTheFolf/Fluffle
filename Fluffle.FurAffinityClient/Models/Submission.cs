@@ -254,13 +254,16 @@ namespace Noppes.Fluffle.FurAffinity
         public FaSize Size { get; set; }
 
         [Key(14)]
+        public DateTimeOffset ThumbnailWhen { get; set; }
+
+        [Key(15)]
         public DateTimeOffset When { get; set; }
 
         public FaThumbnail GetThumbnail(int targetMax)
         {
             var thumbnail = new FaThumbnail
             {
-                Location = new Uri($"https://t.furaffinity.net/{Id}@{targetMax}-{When.ToUnixTimeSeconds()}.jpg")
+                Location = new Uri($"https://t.furaffinity.net/{Id}@{targetMax}-{ThumbnailWhen.ToUnixTimeSeconds()}.jpg")
             };
 
             if (Size == null)
