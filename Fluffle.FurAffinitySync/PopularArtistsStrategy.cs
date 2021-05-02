@@ -16,7 +16,7 @@ namespace Noppes.Fluffle.FurAffinitySync
     public class PopularArtistsStrategy : FurAffinityContentProducerStrategy
     {
         private string _artist;
-        private Queue<int> _submissionIds;
+        private Stack<int> _submissionIds;
 
         public PopularArtistsStrategy(FluffleClient fluffleClient, FurAffinityClient faClient,
             FurAffinitySyncClientState state) : base(fluffleClient, faClient, state)
@@ -33,7 +33,7 @@ namespace Noppes.Fluffle.FurAffinitySync
                 } : null;
             }
 
-            if (!_submissionIds.TryDequeue(out var id))
+            if (!_submissionIds.TryPop(out var id))
             {
                 _artist = null;
                 _submissionIds = null;
@@ -67,12 +67,12 @@ namespace Noppes.Fluffle.FurAffinitySync
                 return false;
 
             _artist = artists.First().Artist;
-            _submissionIds = new Queue<int>();
+            var submissionIds = new HashSet<int>();
             var gallery = await LogEx.TimeAsync(async () =>
             {
                 return await HttpResiliency.RunAsync(() => FaClient.GetGalleryAsync(_artist));
             }, "Retrieved main gallery of artist {artist} from page {page}", _artist, 1);
-            gallery.Result.SubmissionIds.ForEach(_submissionIds.Enqueue);
+            gallery.Result.SubmissionIds.ForEach(id => submissionIds.Add(id));
 
             var galleryParts = new List<(Func<int, Task<FaResult<FaGallery>>> getAsync, string messageTemplate, object[] args)>
             {
@@ -92,7 +92,7 @@ namespace Noppes.Fluffle.FurAffinitySync
                     {
                         return await HttpResiliency.RunAsync(() => galleryPart.getAsync(page));
                     }, galleryPart.messageTemplate, galleryPart.args.Concat(new object[] { _artist, page }).ToArray());
-                    gallery.Result.SubmissionIds.ForEach(_submissionIds.Enqueue);
+                    gallery.Result.SubmissionIds.ForEach(id => submissionIds.Add(id));
 
                     page++;
                     hasNextPage = gallery.Result.HasNextPage;
@@ -102,6 +102,8 @@ namespace Noppes.Fluffle.FurAffinitySync
                 hasNextPage = true;
             }
 
+            _submissionIds = new Stack<int>();
+            submissionIds.ForEach(_submissionIds.Push);
             return true;
         }
     }
