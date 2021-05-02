@@ -166,6 +166,10 @@ namespace Noppes.Fluffle.FurAffinity
             if (!HasLogin(response))
                 throw new InvalidOperationException();
 
+            var noticeMessage = response.DocumentNode.SelectSingleNode("//section[contains(@class, 'notice-message')]");
+            if (noticeMessage != null && noticeMessage.InnerText.Contains("has voluntarily disabled access to their account"))
+                return null;
+
             var gallery = new FaGallery
             {
                 ArtistId = artistId,

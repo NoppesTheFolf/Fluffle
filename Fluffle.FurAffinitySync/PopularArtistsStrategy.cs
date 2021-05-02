@@ -3,11 +3,11 @@ using Noppes.Fluffle.FurAffinity;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.Main.Communication;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
 using static MoreLinq.Extensions.ExceptByExtension;
 using static MoreLinq.Extensions.ForEachExtension;
 
@@ -72,6 +72,15 @@ namespace Noppes.Fluffle.FurAffinitySync
             {
                 return await HttpResiliency.RunAsync(() => FaClient.GetGalleryAsync(_artist));
             }, "Retrieved main gallery of artist {artist} from page {page}", _artist, 1);
+
+            if (gallery == null)
+            {
+                Log.Warning("The gallery of {artist} couldn't be retrieved because they have disabled their account.", _artist);
+                State.ProcessedArtists.Add(_artist);
+                _artist = null;
+                return false;
+            }
+
             gallery.Result.SubmissionIds.ForEach(id => submissionIds.Add(id));
 
             var galleryParts = new List<(Func<int, Task<FaResult<FaGallery>>> getAsync, string messageTemplate, object[] args)>
