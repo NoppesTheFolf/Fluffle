@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Noppes.Fluffle.Search.Api.Models;
 using Noppes.Fluffle.Search.Api.Services;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace Noppes.Fluffle.Search.Api.Controllers
             _searchService = searchService;
         }
 
+        [AllowAnonymous]
         [HttpPost("search")]
         public async Task<IActionResult> Search([FromForm] SearchModel model)
         {

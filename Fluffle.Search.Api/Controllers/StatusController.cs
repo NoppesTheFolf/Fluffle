@@ -1,4 +1,5 @@
 ﻿using Humanizer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Nito.AsyncEx;
@@ -25,6 +26,7 @@ namespace Noppes.Fluffle.Search.Api.Controllers
             _cache = cache;
         }
 
+        [AllowAnonymous]
         [HttpGet("status")]
         public async Task<IActionResult> GetStatus()
         {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Database;
 using System;
@@ -9,7 +10,7 @@ namespace Noppes.Fluffle.Search.Database.Models
     {
     }
 
-    public partial class FluffleSearchContext : BaseContext
+    public partial class FluffleSearchContext : ApiKeyContext<ApiKey, Permission, ApiKeyPermission>
     {
         public override Type ConfigurationType => typeof(SearchDatabaseConfiguration);
 

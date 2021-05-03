@@ -121,10 +121,7 @@ namespace Noppes.Fluffle.Api
             // We can't put this in the lambda expression passed to the AddControllers call because
             // it's called after the service provider has been built
             if (EnableAccessControl)
-            {
-                services.AddTransient(s => s
-                    .GetRequiredService<IHttpContextAccessor>().HttpContext?.User);
-            }
+                services.AddTransient(s => s.GetRequiredService<IHttpContextAccessor>().HttpContext?.User);
 
             services.AddControllers(options =>
             {
