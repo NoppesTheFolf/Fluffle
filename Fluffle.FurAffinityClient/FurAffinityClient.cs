@@ -155,10 +155,10 @@ namespace Noppes.Fluffle.FurAffinity
             if (folder != null)
                 url += $"/folder/{folder.Id}/{folder.NormalizedTitle}";
 
-            return GetGalleryAsync(artistId, url, page);
+            return GetGalleryAsync(artistId, url, page, folder);
         }
 
-        private async Task<FaResult<FaGallery>> GetGalleryAsync(string artistId, string url, int page)
+        private async Task<FaResult<FaGallery>> GetGalleryAsync(string artistId, string url, int page, FaFolder folder = null)
         {
             url += $"/{page}";
             var response = await Request(url).GetHtmlAsync();
@@ -186,17 +186,31 @@ namespace Noppes.Fluffle.FurAffinity
             else
             {
                 var folderNodes = foldersNode.SelectNodes(".//a[contains(@href, '/folder/')]");
-                gallery.Folders = folderNodes.Select(n =>
-                {
-                    var match = Regex.Match(n.Attributes["href"].Value, ".*\\/([0-9]*)\\/(.*)");
 
-                    return new FaFolder
+                if (folderNodes == null && folder == null)
+                    throw new InvalidOperationException("There were folders, but we couldn't scrape them for whatever reason. This likely means Fur Affinity has changed their HTML-markup.");
+
+                var folders = folder == null
+                    ? new List<FaFolder>()
+                    : new List<FaFolder> { folder };
+
+                if (folderNodes != null)
+                {
+                    var scrapedFolders = folderNodes.Select(n =>
                     {
-                        Id = int.Parse(match.Groups[1].Value),
-                        NormalizedTitle = match.Groups[2].Value,
-                        Title = n.InnerText
-                    };
-                }).ToList();
+                        var match = Regex.Match(n.Attributes["href"].Value, ".*\\/([0-9]*)\\/(.*)");
+
+                        return new FaFolder
+                        {
+                            Id = int.Parse(match.Groups[1].Value),
+                            NormalizedTitle = match.Groups[2].Value,
+                            Title = n.InnerText
+                        };
+                    });
+                    folders.AddRange(scrapedFolders);
+                }
+
+                gallery.Folders = folders;
             }
 
             // Extract navigation 
