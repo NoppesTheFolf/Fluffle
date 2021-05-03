@@ -37,7 +37,7 @@ namespace Noppes.Fluffle.Search.Api
 
             foreach (var platform in platforms)
             {
-                _logger.LogInformation("Synchronizing for {platform}...", platform);
+                _logger.LogInformation("Synchronizing for {platform}...", platform.Name);
                 await RefreshCreditableEntitiesAsync(platform);
                 await RefreshImagesAsync(platform);
             }
