@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { SearchResultImage } from '../api.service';
-import { ImageHelper, SearchResultGalleryComponent } from '../search-result-gallery.component';
+import { PlatformHelperService } from '../platform-helper.service';
+import { SearchResultGalleryComponent } from '../search-result-gallery.component';
 import { SearchResultService } from '../search-result.service';
 
 @Component({
@@ -9,15 +10,11 @@ import { SearchResultService } from '../search-result.service';
   styleUrls: ['./search-result-mobile.component.scss']
 })
 export class SearchResultMobileComponent extends SearchResultGalleryComponent implements OnInit {
-  ImageHelper;
-
   images: SearchResultImage[];
 
-  constructor(searchService: SearchResultService) {
+  constructor(searchService: SearchResultService, public platformHelper: PlatformHelperService) {
     super(searchService);
     
-    this.ImageHelper = ImageHelper;
-
     this.images = searchService.result.images.slice(0, 12);
   }
 

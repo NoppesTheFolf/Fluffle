@@ -7,9 +7,9 @@
                 <div class="gallery-image-hover" [ngStyle]="{opacity: hasHover ? '0.12' : '0'}"></div>
             </div>
 
-            <div [ngClass]="ImageHelper.getLabel(image.data)" class="search-result-score-label shadow"
+            <div [ngClass]="platformHelper.getLabel(image.data)" class="search-result-score-label shadow"
                 style="height: 26px; padding: 0.15em 0.3em 0.15em 0.2em;">
-                <img class="h-100 me-1" [src]="ImageHelper.getLogoLocation(image.data.platform)" style="vertical-align: top;">
+                <img class="h-100 me-1" [src]="platformHelper.getLogo(image.data.platform)" style="vertical-align: top;">
                 <span>{{ image.data.scoreFixed }}%</span>
             </div>
 

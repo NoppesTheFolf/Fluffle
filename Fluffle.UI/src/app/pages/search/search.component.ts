@@ -2,6 +2,7 @@ import { AfterViewChecked, Component, ElementRef, OnInit, ViewChild } from '@ang
 import { ContentCenterService } from 'src/app/content-center.service';
 import { ImageRating, SearchConfigService } from 'src/app/search-config.service';
 import { SearchResultService, SearchState } from 'src/app/search-result.service';
+import { SvgService } from 'src/app/svg.service';
 import { TitleService } from 'src/app/title.service';
 import { environment } from '../../../environments/environment';
 
@@ -20,7 +21,7 @@ export class SearchComponent implements OnInit, AfterViewChecked {
   previousState: SearchState;
 
   constructor(titleService: TitleService, private contentCenterService: ContentCenterService,
-    public searchResultService: SearchResultService, public config: SearchConfigService) {
+    public searchResultService: SearchResultService, public config: SearchConfigService, public svg: SvgService) {
     titleService.title = "Reverse search";
     this.contentCenterService.center();
   }

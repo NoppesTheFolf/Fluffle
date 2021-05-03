@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { SvgService } from '../svg.service';
 
 @Component({
   selector: 'app-navbar',
@@ -7,6 +8,6 @@ import { Component } from '@angular/core';
 })
 export class NavbarComponent {
 
-  constructor() { }
+  constructor(public svg: SvgService) { }
 
 }

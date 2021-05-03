@@ -2,7 +2,7 @@
     <div class="text-body">
         <h1 class="text-center position-relative mb-3">
             <a routerLink="/" appReload>
-                <img class="fluffle-banner d-inline-block me-1" src="/assets/img/fluffle-banner.svg"
+                <img class="fluffle-banner d-inline-block me-1" [src]="svg.get('banner')"
                     alt="Fluffle banner">
             </a>
             <span class=" text-muted d-none d-md-inline-block position-absolute text-uppercase"

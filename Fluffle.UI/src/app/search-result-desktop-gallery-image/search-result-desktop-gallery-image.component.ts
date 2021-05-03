@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { SearchResultImage, SearchResultImageMatch } from '../api.service';
 import { GalleryImage } from '../gallery';
-import { ImageHelper } from '../search-result-gallery.component';
+import { PlatformHelperService } from '../platform-helper.service';
 import { SearchResultService } from '../search-result.service';
 
 @Component({
@@ -12,7 +12,6 @@ import { SearchResultService } from '../search-result.service';
 export class SearchResultDesktopGalleryImageComponent {
   @Input() image: GalleryImage<SearchResultImage>;
   SearchResultImageMatch = SearchResultImageMatch;
-  ImageHelper = ImageHelper;
 
   hasHover: boolean = false;
 
@@ -28,6 +27,6 @@ export class SearchResultDesktopGalleryImageComponent {
     return !this.hasHover;
   }
 
-  constructor(private searchResultService: SearchResultService) {
+  constructor(private searchResultService: SearchResultService, public platformHelper: PlatformHelperService) {
   }
 }

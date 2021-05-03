@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ApiService, StatusResult } from 'src/app/api.service';
-import { ImageHelper } from 'src/app/search-result-gallery.component';
+import { PlatformHelperService } from 'src/app/platform-helper.service';
 
 @Component({
   selector: 'app-status',
@@ -8,12 +8,10 @@ import { ImageHelper } from 'src/app/search-result-gallery.component';
   styleUrls: ['./status.component.scss']
 })
 export class StatusComponent implements OnInit, OnDestroy {
-  ImageHelper = ImageHelper;
-
   results: StatusResult[];
   interval: number;
 
-  constructor(private api: ApiService) {
+  constructor(private api: ApiService, public platformHelper: PlatformHelperService) {
     this.refreshStatus();
 
     this.interval = window.setInterval(() => {

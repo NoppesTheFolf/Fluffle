@@ -5,7 +5,7 @@
         <div class="d-flex justify-content-around flex-wrap bg-dark rounded">
             <div class="p-4">
                 <div class="d-flex">
-                    <img class="d-block" [src]="ImageHelper.getLogoLocation(result.name)" height="160" />
+                    <img class="d-block" [src]="platformHelper.getLogo(result.name)" height="160" />
                     <div class="ms-4 d-flex flex-column justify-content-center">
                         <p *ngIf="!result.isComplete">
                             Estimated number of images: {{result.estimatedCount.toLocaleString()}}

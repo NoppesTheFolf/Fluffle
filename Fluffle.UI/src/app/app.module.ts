@@ -25,6 +25,8 @@ import { CookieConsentComponent } from './cookie-consent/cookie-consent.componen
 import { NavbarMobileComponent } from './navbar-mobile/navbar-mobile.component';
 import { DragClassDirective } from './drop-class.directive';
 import { GalleryThumbnailComponent } from './gallery-thumbnail/gallery-thumbnail.component';
+import { SvgService } from './svg.service';
+import { PlatformHelperService } from './platform-helper.service';
 
 @NgModule({
   declarations: [
@@ -56,6 +58,8 @@ import { GalleryThumbnailComponent } from './gallery-thumbnail/gallery-thumbnail
     TitleService,
     ContentCenterService,
     SearchConfigService,
+    SvgService,
+    PlatformHelperService,
     ApiService
   ],
   bootstrap: [
