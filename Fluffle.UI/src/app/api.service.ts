@@ -81,7 +81,7 @@ export class ApiService {
       reportProgress: true,
       observe: 'events'
     }).pipe(
-      timeout(5000)
+      timeout(15000)
     ).subscribe(event => {
       if (event.type === HttpEventType.Response && event.ok) {
         searchEvent.result = {
