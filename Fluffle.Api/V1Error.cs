@@ -1,4 +1,6 @@
-﻿namespace Noppes.Fluffle.Api
+﻿using System.Collections.Generic;
+
+namespace Noppes.Fluffle.Api
 {
     /// <summary>
     /// The error response returned by version 1 of the API.
@@ -9,7 +11,6 @@
 
         public string Message { get; set; }
 
-
         public V1Error()
         {
         }
@@ -18,6 +19,25 @@
         {
             Code = code;
             Message = message;
+        }
+    }
+
+    public class V1ValidationError : V1Error
+    {
+        public IDictionary<string, IEnumerable<string>> Errors { get; set; }
+
+        public V1ValidationError()
+        {
+        }
+
+        public V1ValidationError(IDictionary<string, IEnumerable<string>> errors)
+        {
+            Errors = errors;
+        }
+
+        public V1ValidationError(string code, string message, IDictionary<string, IEnumerable<string>> errors) : base(code, message)
+        {
+            Errors = errors;
         }
     }
 

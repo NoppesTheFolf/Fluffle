@@ -1,4 +1,5 @@
-﻿using FluentValidation.AspNetCore;
+﻿using FluentValidation;
+using FluentValidation.AspNetCore;
 using Humanizer;
 using MessagePack;
 using MessagePack.AspNetCoreMvcFormatter;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +24,7 @@ using Noppes.Fluffle.Api.Services;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Utils;
 using System;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -142,6 +145,22 @@ namespace Noppes.Fluffle.Api
 
                 var messagePackOptions = ContractlessStandardResolver.Options.WithSecurity(MessagePackSecurity.UntrustedData);
                 options.OutputFormatters.Add(new MessagePackOutputFormatter(messagePackOptions));
+            }).ConfigureApiBehaviorOptions(options =>
+            {
+                options.InvalidModelStateResponseFactory = context =>
+                {
+                    var errors = context.ModelState.Keys
+                        .Zip(context.ModelState.Values, (key, value) => (k: key, e: value.Errors))
+                        .Where(x => x.e.Any())
+                        .ToDictionary(x => x.k.Camelize(), x => x.e.Select(e => e.ErrorMessage));
+
+                    return new BadRequestObjectResult(new V1ValidationError
+                    {
+                        Code = "VALIDATION_FAILED",
+                        Message = "One or more validation errors occurred.",
+                        Errors = errors
+                    });
+                };
             }).AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.IgnoreNullValues = false;
@@ -151,9 +170,11 @@ namespace Noppes.Fluffle.Api
                 AspNetJsonSerializer.Options = options.JsonSerializerOptions;
             }).AddFluentValidation(options =>
             {
-                options.RegisterValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+                options.ValidatorOptions.PropertyNameResolver = (_, member, _) => member != null ? member.Name : null;
+                options.ValidatorOptions.DisplayNameResolver = (_, member, _) => member != null ? member.Name : null;
 
-                options.RunDefaultMvcValidationAfterFluentValidationExecutes = false;
+                options.RegisterValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+                options.DisableDataAnnotationsValidation = true;
             });
 
             services.AddHostedService<ServiceShutdownSignaler>();
