@@ -111,10 +111,20 @@ namespace Noppes.Fluffle.FurryNetworkSync
             if (_bearerToken != null && !force && DateTimeOffset.UtcNow < _refreshAt)
                 return;
 
-            var token = await GetTokenAsync();
-            _bearerToken = token.AccessToken;
-            // Multiply the expiration time by 0.9 to force the token to refresh before expiring
-            _refreshAt = DateTimeOffset.UtcNow.AddSeconds(token.ExpiresInSeconds * 0.9);
+            try
+            {
+                var token = await GetTokenAsync();
+                _bearerToken = token.AccessToken;
+                // Multiply the expiration time by 0.9 to force the token to refresh before expiring
+                _refreshAt = DateTimeOffset.UtcNow.AddSeconds(token.ExpiresInSeconds * 0.9);
+            }
+            catch (FlurlHttpException e)
+            {
+                if (e.StatusCode == 400)
+                    throw new InvalidOperationException("Authorization refresh token has expired.");
+
+                throw;
+            }
         }
 
         private Task<FnToken> GetTokenAsync()
