@@ -1,6 +1,6 @@
 ﻿using Nitranium.PerceptualHashing;
 using Nitranium.PerceptualHashing.Imaging;
-using Nitranium.PerceptualHashing.Imaging.Ppm;
+using Nitranium.PerceptualHashing.Imaging.Netpbm;
 using Nitranium.PerceptualHashing.Utils;
 using Noppes.Fluffle.Vips;
 using System.Collections.Generic;
@@ -35,7 +35,7 @@ namespace Noppes.Fluffle.PerceptualHashing
                     _cache[resolution] = temporaryFile;
                 }
 
-                return new PpmReader(temporaryFile.Location);
+                return NetpbmReader.Get(temporaryFile.Location);
             }
             finally
             {

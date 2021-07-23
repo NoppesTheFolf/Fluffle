@@ -8,8 +8,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="Nito.AsyncEx" Version="5.1.0" />
-		<PackageReference Include="Nitranium.PerceptualHashing" Version="0.0.1" />
-		<PackageReference Include="Nitranium.PerceptualHashing.SystemDrawingImagingProvider" Version="0.0.1" />
+		<PackageReference Include="Nitranium.PerceptualHashing" Version="0.1.1" />
+		<PackageReference Include="Nitranium.PerceptualHashing.SystemDrawingImagingProvider" Version="0.1.1" />
 	</ItemGroup>
 
 	<ItemGroup>
