@@ -8,8 +8,8 @@ import { TitleService } from 'src/app/title.service';
   styleUrls: ['./contact.component.scss']
 })
 export class ContactComponent implements OnInit {
-  constructor(titleService: TitleService, contentCenterService: ContentCenterService) {
-    titleService.title = "Contact";
+  constructor(title: TitleService, contentCenterService: ContentCenterService) {
+    title.set("Contact");
     contentCenterService.center();
   }
 

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { TitleService } from 'src/app/title.service';
 
 @Component({
   selector: 'app-not-found',
@@ -6,7 +7,7 @@ import { Component } from '@angular/core';
   styleUrls: ['./not-found.component.scss']
 })
 export class NotFoundComponent {
-
-  constructor() { }
-
+  constructor(title: TitleService) {
+    title.set("Not found");
+  }
 }

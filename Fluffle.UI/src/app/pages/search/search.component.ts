@@ -20,9 +20,14 @@ export class SearchComponent implements OnInit, AfterViewChecked {
   SearchState = SearchState;
   previousState: SearchState;
 
-  constructor(titleService: TitleService, private contentCenterService: ContentCenterService,
-    public searchResultService: SearchResultService, public config: SearchConfigService, public svg: SvgService) {
-    titleService.title = "Reverse search";
+  constructor(
+    title: TitleService,
+    private contentCenterService: ContentCenterService,
+    public searchResultService: SearchResultService,
+    public config: SearchConfigService,
+    public svg: SvgService
+  ) {
+    title.set("Reverse search");
     this.contentCenterService.center();
   }
 

@@ -9,8 +9,8 @@ import { TitleService } from 'src/app/title.service';
   styleUrls: ['./about.component.scss']
 })
 export class AboutComponent {
-  constructor(titleService: TitleService, contentCenterService: ContentCenterService, public svg: SvgService) {
-    titleService.title = "About";
+  constructor(title: TitleService, contentCenterService: ContentCenterService, public svg: SvgService) {
+    title.set("About");
     contentCenterService.center();
   }
 }
