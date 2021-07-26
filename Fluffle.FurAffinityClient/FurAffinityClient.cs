@@ -101,7 +101,7 @@ namespace Noppes.Fluffle.FurAffinity
             // Not all submission have a size (Flash files for example)
             if (info.TryGetValue("Size", out var infoSize))
             {
-                var size = info["Size"].Split("x").Select(int.Parse).ToArray();
+                var size = infoSize.Split("x").Select(int.Parse).ToArray();
                 submission.Size = new FaSize(size[0], size[1]);
             }
 
@@ -114,7 +114,11 @@ namespace Noppes.Fluffle.FurAffinity
             var thumbnailWhen = long.Parse(string.Concat(Path.GetFileName(Path.GetDirectoryName(downloadUrl)).TakeWhile(char.IsDigit)));
             submission.ThumbnailWhen = DateTimeOffset.FromUnixTimeSeconds(thumbnailWhen);
 
-            var when = long.Parse(Regex.Match(downloadUrl, "(?<=\\/)[0-9]*?(?=\\.)").Value);
+            var match = Regex.Match(downloadUrl, "(?<=\\/)[0-9]*?(?=\\.)");
+            if (!match.Success)
+                match = Regex.Match(downloadUrl, "(?<=_)[0-9]*?(?=_)");
+
+            var when = match.Success ? long.Parse(match.Value) : thumbnailWhen;
             submission.When = DateTimeOffset.FromUnixTimeSeconds(when);
 
             // Extract title
