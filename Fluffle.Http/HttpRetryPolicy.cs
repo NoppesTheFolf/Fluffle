@@ -82,6 +82,9 @@ namespace Noppes.Fluffle.Http
             // 502: If the origin server is not properly configured, Cloudflare returns a
             // 502. However, this might simply be because of a restart, so worth retrying.
 
+            // 503: For whatever reason the server is unable to process requests at this moment.
+            // However, it is safe to assume this is a temporary failure.
+
             // 520: If the origin server did something unexpected with the response sent
             // Cloudflare its servers, Cloudflare returns a 520, however, this generally
             // solves itself.
@@ -93,6 +96,7 @@ namespace Noppes.Fluffle.Http
             return httpStatusCode == 408
                    || httpStatusCode == 522
                    || httpStatusCode == 502
+                   || httpStatusCode == 503
                    || httpStatusCode == 520
                    || httpStatusCode == 521;
         }
