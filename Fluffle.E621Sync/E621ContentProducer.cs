@@ -1,4 +1,5 @@
-﻿using Noppes.E621;
+﻿using Microsoft.Extensions.Hosting;
+using Noppes.E621;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
@@ -10,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
 
 namespace Noppes.Fluffle.E621Sync
 {
@@ -42,7 +42,7 @@ namespace Noppes.Fluffle.E621Sync
             await foreach (var (posts, afterId, maxId) in EnumeratePostsAsync(startId))
             {
                 var approvedPosts = posts
-                    .Where(p => !p.Flags.IsPending)
+                    .Where(p => !p.Flags.IsPending && !p.Flags.IsDeleted)
                     .ToList();
 
                 await SubmitContentAsync(approvedPosts);
@@ -93,7 +93,7 @@ namespace Noppes.Fluffle.E621Sync
             }
 
             if (src.File == null)
-                throw new InvalidOperationException("The e621 API returned a response in which the file attribute was null.");
+                throw new InvalidOperationException($"The e621 API returned a post ({src.Id}) for which the file attribute was null.");
 
             yield return PostFileToModel(src.File);
 
