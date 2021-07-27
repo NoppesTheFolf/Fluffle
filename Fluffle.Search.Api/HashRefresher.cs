@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.PerceptualHashing;
+using Noppes.Fluffle.Search.Api.Filters;
 using Noppes.Fluffle.Search.Database.Models;
 using System;
 using System.Collections.Generic;
@@ -78,6 +79,7 @@ namespace Noppes.Fluffle.Search.Api
                 }
             }
 
+            StartupFilter.IsStarting = false;
             _logger.LogInformation("Hashes refreshed in {elapsedMilliseconds} ms", stopwatch.ElapsedMilliseconds);
         }
     }

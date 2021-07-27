@@ -52,16 +52,23 @@ export class SearchResultService {
       this.errorMessage = "Something went horribly wrong and we're not quite sure what.";
 
       if (response.name === "TimeoutError") {
-        this.errorMessage = "Fluffle seems to be partially offline, please try again later."
+        this.errorMessage = "Fluffle seems to be partially offline, please try again later.";
+        return;
       }
 
-      if (response.error as V1ApiError) {
-        let code = response.error.code;
-        if (code === "UNSUPPORTED_FILE_TYPE") {
+      switch (response.status) {
+        case 403:
+          this.errorMessage = "The submitted file is too large to process.";
+          break;
+        case 415:
           this.errorMessage = "The file you submitted was of an unsupported file type.";
-        } else if (code === "CORRUPT_IMAGE") {
-          this.errorMessage = "The image you submitted seems to be corrupt."
-        }
+          break;
+        case 422:
+          this.errorMessage = "The image you submitted seems to be corrupt.";
+          break;
+        case 503:
+          this.errorMessage = "Fluffle is still starting up. Please try again in a bit."
+          break;
       }
     });
   }

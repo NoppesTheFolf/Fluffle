@@ -49,9 +49,9 @@ namespace Noppes.Fluffle.Api.Filters
                 return;
             }
 
-            error.Code = "UNKNOWN";
-            error.Message = "Welp, a non-transient error occurred at Fluffle's side. " +
-                            "If you can reproduce this issue and think it's a bug, then please contact us.";
+            error.Code = "KABOOM";
+            error.Message = "A non-transient error occurred at Fluffle's side. " +
+                            "If you can reproduce this issue, then please consider contacting us so that we can resolve the issue (see https://fluffle.xyz/contact).";
 
             Handle(context, error, 500); // 500 Internal server error
         }
