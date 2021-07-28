@@ -12,6 +12,7 @@
 		<ProjectReference Include="..\Fluffle.Main.Client\Fluffle.Main.Client.csproj" />
 		<ProjectReference Include="..\Fluffle.PerceptualHashing\Fluffle.PerceptualHashing.csproj" />
 		<ProjectReference Include="..\Fluffle.Search.Database\Fluffle.Search.Database.csproj" />
+		<ProjectReference Include="..\Fluffle.Thumbnail\Fluffle.Thumbnail.csproj" />
 	</ItemGroup>
 
 </Project>

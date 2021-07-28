@@ -50,16 +50,7 @@ namespace Noppes.Fluffle.Index
             services.AddSingleton(b2Client);
             services.AddSingleton(new B2ThumbnailStorage(b2Client, thumbConf.Salt));
 
-            services.AddSingleton<FluffleThumbnail>(_ =>
-            {
-                if (Debugger.IsAttached && OperatingSystem.IsWindows())
-                    return new SystemDrawingFluffleThumbnail();
-
-                if (!OperatingSystem.IsLinux())
-                    throw new InvalidOperationException("Can't run in a non-Linux environment in production.");
-
-                return new VipsFluffleThumbnail();
-            });
+            services.AddFluffleThumbnail();
 
             services.AddTransient<ImageHasher>();
             services.AddTransient<Thumbnailer>();

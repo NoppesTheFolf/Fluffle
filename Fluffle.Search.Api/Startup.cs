@@ -13,6 +13,7 @@ using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Search.Database.Models;
+using Noppes.Fluffle.Thumbnail;
 
 namespace Noppes.Fluffle.Search.Api
 {
@@ -29,6 +30,8 @@ namespace Noppes.Fluffle.Search.Api
 
             var mainConf = Configuration.Get<MainConfiguration>();
             services.AddSingleton(new FluffleClient(mainConf.Url, mainConf.ApiKey));
+
+            services.AddFluffleThumbnail();
 
             var fluffleHash = new FluffleHash();
             services.AddSingleton(fluffleHash);
