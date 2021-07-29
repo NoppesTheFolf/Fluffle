@@ -94,11 +94,14 @@ namespace Noppes.Fluffle.Http
             // eventually, most of the time...
 
             return httpStatusCode == 408
-                   || httpStatusCode == 522
                    || httpStatusCode == 502
                    || httpStatusCode == 503
+                   || httpStatusCode == 504
                    || httpStatusCode == 520
-                   || httpStatusCode == 521;
+                   || httpStatusCode == 521
+                   || httpStatusCode == 522
+                   || httpStatusCode == 523
+                   || httpStatusCode == 524;
         }
     }
 }
