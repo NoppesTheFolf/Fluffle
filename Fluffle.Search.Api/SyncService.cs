@@ -82,7 +82,7 @@ namespace Noppes.Fluffle.Search.Api
             await RefreshAsync<CreditableEntity, CreditableEntitiesSyncModel, CreditableEntitiesSyncModel.CreditableEntityModel>(
                 platform.Id, c => c.CreditableEntities, afterChangeId =>
                 {
-                    _logger.LogInformation("Retrieving creditable entities after change ID {changeId}...", afterChangeId);
+                    _logger.LogInformation("Retrieving creditable entities after change ID {changeId} for platform {platform}...", afterChangeId, platform.Name);
                     return _client.GetSyncCreditableEntitiesAsync(platform.NormalizedName, afterChangeId);
                 },
                 async (context, models) =>
@@ -110,7 +110,7 @@ namespace Noppes.Fluffle.Search.Api
         {
             await RefreshAsync<Image, ImagesSyncModel, ImagesSyncModel.ImageModel>(platform.Id, c => c.Images, afterChangeId =>
                 {
-                    _logger.LogInformation("Retrieving images after change ID {changeId}...", afterChangeId);
+                    _logger.LogInformation("Retrieving images after change ID {changeId} for platform {platform}...", afterChangeId, platform.Name);
 
                     return _client.GetSyncImagesAsync(platform.NormalizedName, afterChangeId);
                 },
@@ -186,7 +186,7 @@ namespace Noppes.Fluffle.Search.Api
                         // Synchronize the image its thumbnail
                         if (image.Thumbnail == null)
                         {
-                            image.Thumbnail = model.Thumbnail.MapTo<Thumbnail>();
+                            image.Thumbnail = model.Thumbnail.MapTo<Database.Models.Thumbnail>();
                             await context.Thumbnails.AddAsync(image.Thumbnail);
                         }
                         else
