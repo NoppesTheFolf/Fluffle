@@ -170,8 +170,8 @@ namespace Noppes.Fluffle.Api
                 AspNetJsonSerializer.Options = options.JsonSerializerOptions;
             }).AddFluentValidation(options =>
             {
-                options.ValidatorOptions.PropertyNameResolver = (_, member, _) => member != null ? member.Name : null;
-                options.ValidatorOptions.DisplayNameResolver = (_, member, _) => member != null ? member.Name : null;
+                options.ValidatorOptions.PropertyNameResolver = (_, member, _) => member?.Name;
+                options.ValidatorOptions.DisplayNameResolver = (_, member, _) => member?.Name;
 
                 options.RegisterValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
                 options.DisableDataAnnotationsValidation = true;
