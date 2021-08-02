@@ -54,5 +54,6 @@ namespace Noppes.Fluffle.Main.Database.Models
         public virtual DbSet<Thumbnail> Thumbnails { get; set; }
         public virtual DbSet<Tag> Tags { get; set; }
         public virtual DbSet<ContentTag> ContentTags { get; set; }
+        public virtual DbSet<ContentError> ContentErrors { get; set; }
     }
 }

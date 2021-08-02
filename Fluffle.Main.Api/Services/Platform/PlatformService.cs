@@ -63,8 +63,10 @@ namespace Noppes.Fluffle.Main.Api.Services
                     .ThenBy(m => m.Type)
                     .ToList();
 
-                var model = new PlatformSyncModel();
-                model.Next = models.FirstOrDefault();
+                var model = new PlatformSyncModel
+                {
+                    Next = models.FirstOrDefault()
+                };
                 model.Other = models.Where(m => m != model.Next).ToList();
 
                 var result = new SR<PlatformSyncModel>(model);
@@ -95,7 +97,7 @@ namespace Noppes.Fluffle.Main.Api.Services
 
         public async Task<SR<SyncStateModel>> GetSyncState(string platformName)
         {
-            return await _context.Platforms.Include(p => p.SyncState).GetPlatformAsync(platformName, async platform =>
+            return await _context.Platforms.Include(p => p.SyncState).GetPlatformAsync(platformName, platform =>
             {
                 var model = platform.SyncState == null ? null : new SyncStateModel
                 {
@@ -103,7 +105,7 @@ namespace Noppes.Fluffle.Main.Api.Services
                     Document = platform.SyncState.Document
                 };
 
-                return new SR<SyncStateModel>(model);
+                return Task.FromResult(new SR<SyncStateModel>(model));
             });
         }
 

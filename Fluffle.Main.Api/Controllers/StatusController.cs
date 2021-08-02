@@ -13,7 +13,7 @@ namespace Noppes.Fluffle.Main.Api.Controllers
         private const string Singular = "status";
 
         private readonly FluffleContext _context;
-        private IndexStatisticsService _iss;
+        private readonly IndexStatisticsService _iss;
 
         public StatusController(FluffleContext context, IndexStatisticsService iss)
         {
@@ -24,30 +24,32 @@ namespace Noppes.Fluffle.Main.Api.Controllers
         [HttpGet(Singular), Permissions(StatusPermissions.View)]
         public IActionResult GetStatus()
         {
-            var statusModels = _context.Platforms
+            using var scope = _iss.Scope();
+
+            var models = _context.Platforms
                 .AsEnumerable()
                 .Select(p =>
                 {
-                    var (total, indexed) = _iss.Get(p.Id, (int)MediaTypeConstant.Image);
+                    var (total, indexed, historyLast30Days, historyLast24Hours) =
+                        scope.Get(p.Id, (int) MediaTypeConstant.Image);
 
-                    return new StatusModel
+                    var model = new StatusModel
                     {
                         Name = p.Name,
-                        EstimatedCount = p.EstimatedContentCount,
+                        EstimatedCount = total > p.EstimatedContentCount ? total : p.EstimatedContentCount,
                         StoredCount = total,
                         IndexedCount = indexed,
-                        IsComplete = p.IsComplete
+                        IsComplete = p.IsComplete,
+                        HistoryLast30Days = historyLast30Days,
+                        HistoryLast24Hours = historyLast24Hours
                     };
-                }).OrderBy(s => s.Name)
-                .Select(s =>
-                {
-                    if (s.StoredCount > s.EstimatedCount)
-                        s.EstimatedCount = s.StoredCount;
 
-                    return s;
-                });
+                    return model;
+                })
+                .OrderBy(m => m.Name)
+                .ToList();
 
-            return Ok(statusModels);
+            return Ok(models);
         }
     }
 
