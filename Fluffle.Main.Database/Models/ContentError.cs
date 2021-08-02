@@ -25,6 +25,9 @@ namespace Noppes.Fluffle.Main.Database.Models
 
             entity.Property(e => e.IsFatal);
 
+            // Speeds up calculating error history in index service
+            entity.HasIndex(e => e.CreatedAt);
+
             entity.Property(e => e.ContentId);
             entity.HasOne(d => d.Content)
                 .WithMany(p => p.Errors)

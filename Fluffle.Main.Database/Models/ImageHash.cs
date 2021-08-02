@@ -48,6 +48,9 @@ namespace Noppes.Fluffle.Main.Database.Models
             entity.Property(e => e.PhashGreen1024).IsRequired();
             entity.Property(e => e.PhashBlue1024).IsRequired();
             entity.Property(e => e.PhashAverage1024).IsRequired();
+
+            // Speeds up calculating indexing history in index service
+            entity.HasIndex(e => e.CreatedAt);
         }
     }
 }

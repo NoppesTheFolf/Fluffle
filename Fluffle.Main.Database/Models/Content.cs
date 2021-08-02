@@ -106,8 +106,8 @@ namespace Noppes.Fluffle.Main.Database.Models
                 .IsRequired()
                 .HasMaxLength(2048);
 
-            entity.Property(e => e.IsIndexed);
             entity.Property(e => e.RequiresIndexing);
+            entity.Property(e => e.IsIndexed);
 
             entity.Property(e => e.ReservedUntil);
 
@@ -131,6 +131,12 @@ namespace Noppes.Fluffle.Main.Database.Models
 
             // Speeds up indexing statistics count
             entity.HasIndex(e => new { e.IsDeleted, e.PlatformId, e.MediaTypeId, e.IsIndexed });
+
+            // Speeds up calculating scraping history in index service
+            entity.HasIndex(e => new { e.CreatedAt, e.PlatformId });
+
+            // Speeds up calculating indexing history in index service
+            entity.HasIndex(e => new { e.Discriminator, e.Id, e.PlatformId });
 
             entity.Property(e => e.MediaTypeId);
             entity.HasOne(e => e.MediaType)
