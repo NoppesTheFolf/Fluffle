@@ -15,7 +15,7 @@ namespace Noppes.Fluffle.Main.Api.Helpers
                 PlatformConstant.E621 => new Platform
                 {
                     Name = "e621",
-                    EstimatedContentCount = 2100000,
+                    EstimatedContentCount = 2_100_000,
                     HomeLocation = "https://e621.net"
                 },
                 PlatformConstant.FurryNetwork => new Platform

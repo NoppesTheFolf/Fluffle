@@ -12,6 +12,11 @@
         /// </summary>
         public int Height { get; set; }
 
+        /// <summary>
+        /// The image its area (width * height).
+        /// </summary>
+        public int Area => Width * Height;
+
         public ImageDimensions(int width, int height)
         {
             Width = width;

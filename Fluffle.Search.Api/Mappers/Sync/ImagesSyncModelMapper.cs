@@ -5,7 +5,7 @@ using Noppes.Fluffle.Search.Database.Models;
 namespace Noppes.Fluffle.Search.Api.Mappers
 {
     public class ImagesSyncModelMapper : IMapper<ImagesSyncModel.ImageModel, Image>, IMapper<ImagesSyncModel.ImageModel, ImageHash>,
-        IMapper<ImagesSyncModel.ImageModel.ThumbnailModel, Thumbnail>
+        IMapper<ImagesSyncModel.ImageModel.ThumbnailModel, Database.Models.Thumbnail>
     {
         public void MapFrom(ImagesSyncModel.ImageModel src, Image dest)
         {
@@ -41,7 +41,7 @@ namespace Noppes.Fluffle.Search.Api.Mappers
             dest.PhashAverage1024 = src.Hash.PhashAverage1024;
         }
 
-        public void MapFrom(ImagesSyncModel.ImageModel.ThumbnailModel src, Thumbnail dest)
+        public void MapFrom(ImagesSyncModel.ImageModel.ThumbnailModel src, Database.Models.Thumbnail dest)
         {
             dest.Width = src.Width;
             dest.CenterX = src.CenterX;

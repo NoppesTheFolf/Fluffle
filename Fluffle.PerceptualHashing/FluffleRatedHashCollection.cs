@@ -25,23 +25,9 @@ namespace Noppes.Fluffle.PerceptualHashing
             return hashes.Add(image);
         }
 
-        public bool Remove(int imageId, out RemovedImage image)
+        public bool Remove(int imageId)
         {
-            image = default;
-
-            if (_sfwHashes.Remove(imageId, out var removedImage))
-            {
-                image = new RemovedImage(removedImage, true);
-                return true;
-            }
-
-            if (_nsfwHashes.Remove(imageId, out removedImage))
-            {
-                image = new RemovedImage(removedImage, false);
-                return true;
-            }
-
-            return false;
+            return _sfwHashes.Remove(imageId) || _nsfwHashes.Remove(imageId);
         }
 
         public IEnumerable<Memory<HashedImage>> AsMemories(bool sfwOnly)

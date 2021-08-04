@@ -42,7 +42,6 @@ namespace Noppes.Fluffle.PerceptualHashing
     {
         private const int Threshold = 20;
 
-        private int _sfwCount, _nsfwCount;
         private readonly AsyncReaderWriterLock _mutex;
         private readonly IDictionary<TPlatform, FluffleRatedHashCollection> _hashesLookup;
 
@@ -62,16 +61,7 @@ namespace Noppes.Fluffle.PerceptualHashing
                 _hashesLookup.Add(platform, hashes);
             }
 
-            // If the image didn't get added, it got replaced replaced instead, no need to update
-            // the count then
-            var gotAdded = hashes.Add(image, isSfw);
-            if (!gotAdded)
-                return;
-
-            if (isSfw)
-                _sfwCount++;
-            else
-                _nsfwCount++;
+            hashes.Add(image, isSfw);
         }
 
         public void Remove(TPlatform platform, int imageId)
@@ -81,23 +71,17 @@ namespace Noppes.Fluffle.PerceptualHashing
             if (!_hashesLookup.TryGetValue(platform, out var hashes))
                 return;
 
-            if (!hashes.Remove(imageId, out var removedImage))
-                return;
-
-            if (removedImage.IsSfw)
-                _sfwCount--;
-            else
-                _nsfwCount--;
+            hashes.Remove(imageId);
         }
 
-        public SearchResult Compare(ulong hash, bool sfwOnly, int limit, int degreeOfParallelism = 1)
+        public SearchResult Compare(ulong hash, bool sfwOnly, int limit, ICollection<TPlatform> platforms, int degreeOfParallelism = 1)
         {
             using var _ = _mutex.ReaderLock();
 
             if (degreeOfParallelism < 1)
                 throw new ArgumentOutOfRangeException(nameof(degreeOfParallelism));
 
-            var hashes = Hashes(sfwOnly);
+            var hashes = Hashes(sfwOnly, platforms);
             var memories = new MemoryCollection<HashedImage>(hashes);
 
             using var compareResult = new CompareResult(degreeOfParallelism);
@@ -108,7 +92,7 @@ namespace Noppes.Fluffle.PerceptualHashing
             if (degreeOfParallelism == 1)
             {
                 Compare(compareResult.Images[0], memories.Batch(1).First(), hash);
-                return HandleComparisonResult(compareResult, sfwOnly, limit);
+                return HandleComparisonResult(compareResult, limit, memories.Length);
             }
 
             var buckets = memories.Batch(degreeOfParallelism);
@@ -125,10 +109,10 @@ namespace Noppes.Fluffle.PerceptualHashing
 
             Task.WaitAll(tasks);
 
-            return HandleComparisonResult(compareResult, sfwOnly, limit);
+            return HandleComparisonResult(compareResult, limit, memories.Length);
         }
 
-        private SearchResult HandleComparisonResult(CompareResult compareResult, bool sfwOnly, int limit)
+        private SearchResult HandleComparisonResult(CompareResult compareResult, int limit, int count)
         {
             var images = compareResult.Images
                 .SelectMany(i => i.Take(limit))
@@ -137,20 +121,16 @@ namespace Noppes.Fluffle.PerceptualHashing
             return new SearchResult
             {
                 Images = images,
-                Count = Count(sfwOnly)
+                Count = count
             };
         }
 
-        private IEnumerable<Memory<HashedImage>> Hashes(bool sfwOnly)
+        private IEnumerable<Memory<HashedImage>> Hashes(bool sfwOnly, IEnumerable<TPlatform> platforms)
         {
-            foreach (var hashes in _hashesLookup.Values)
-                foreach (var memory in hashes.AsMemories(sfwOnly))
-                    yield return memory;
-        }
-
-        private int Count(bool sfwOnly)
-        {
-            return sfwOnly ? _sfwCount : _nsfwCount + _sfwCount;
+            foreach (var platform in platforms)
+                if (_hashesLookup.TryGetValue(platform, out var hashes))
+                    foreach (var memory in hashes.AsMemories(sfwOnly))
+                        yield return memory;
         }
 
         private static void Compare(DiscardingCollection<ComparedImage> comparedImages, IEnumerable<Memory<HashedImage>> hashMemories, ulong otherHash)

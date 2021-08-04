@@ -48,16 +48,14 @@ namespace Noppes.Fluffle.PerceptualHashing
         /// Removes the image with the given ID. Returns false if no image with said ID exists in
         /// the collection.
         /// </summary>
-        public bool Remove(int imageId, out HashedImage removedImage)
+        public bool Remove(int imageId)
         {
-            removedImage = default;
-
             var foundIndex = Find(imageId);
 
             if (foundIndex == -1)
                 return false;
 
-            removedImage = RemoveAt(foundIndex);
+            RemoveAt(foundIndex);
             return true;
         }
 

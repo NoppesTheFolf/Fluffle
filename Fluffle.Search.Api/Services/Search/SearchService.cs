@@ -1,14 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Nitranium.PerceptualHashing;
 using Nitranium.PerceptualHashing.Exceptions;
-using Nitranium.PerceptualHashing.Utils;
 using Noppes.Fluffle.Api.Services;
+using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Search.Api.Models;
 using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
+using Noppes.Fluffle.Utils;
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Intrinsics.X86;
 using System.Threading.Tasks;
@@ -17,9 +18,6 @@ namespace Noppes.Fluffle.Search.Api.Services
 {
     public class SearchService : Service, ISearchService
     {
-        private static readonly FileSignatureMatcher SafeFileSignatures =
-            new(new JpegSignature(), new PngSignature(), new WebPSignature());
-
         private readonly PlatformSearchService _compareService;
         private readonly FluffleHash _hash;
         private readonly FluffleSearchContext _context;
@@ -31,39 +29,33 @@ namespace Noppes.Fluffle.Search.Api.Services
             _context = context;
         }
 
-        public async Task<SR<SearchResultModel>> SearchAsync(SearchModel model)
+        public async Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ICollection<PlatformConstant> platforms, CheckpointStopwatchScope<SearchRequest> scope)
         {
-            var stopwatch = Stopwatch.StartNew();
-
-            // Write the content embedded in the request to a temporary file
-            using var temporaryFile = new TemporaryFile();
-            await using (var temporaryFileStream = temporaryFile.OpenFileStream())
-            {
-                await model.Image.CopyToAsync(temporaryFileStream);
-                temporaryFileStream.Position = 0;
-
-                // Check if the uploaded file contains a signature of a web safe image type
-                if (!SafeFileSignatures.TryMatch(temporaryFileStream, out _))
-                    return new SR<SearchResultModel>(SearchError.UnsupportedFileType());
-            }
-
             // We need to compute a more granular hash too as the 64-bit averaged hash is unable to
             // differentiate between alternate version. We do this asynchronously to computing the
             // simple hash and comparing that. We can assume that awaiting this task doesn't throw
             // any exceptions as this process is pretty much identical to computing the simple hash
             // (of which we handle the exceptions explicitly).
+            scope.Next(t => t.Start256RgbComputation);
             var hash256Task = Task.Run(() =>
             {
-                using var image = _hash.Size256.For(temporaryFile.Location);
+                using var image = _hash.Size256.For(imageLocation);
+
+                using var taskScope = scope.Stopwatch.ForCheckpoint(t => t.Compute256Red);
                 var redHash = image.ComputeHash(Channel.Red);
+
+                taskScope.Next(t => t.Compute256Green);
                 var greenHash = image.ComputeHash(Channel.Green);
+
+                taskScope.Next(t => t.Compute256Blue);
                 var blueHash = image.ComputeHash(Channel.Blue);
 
                 return (FluffleHash.ToInt64(redHash), FluffleHash.ToInt64(greenHash), FluffleHash.ToInt64(blueHash));
             });
 
+            scope.Next(t => t.Compute64Average);
             ulong hash;
-            using (var image = _hash.Size64.For(temporaryFile.Location))
+            using (var image = _hash.Size64.For(imageLocation))
             {
                 try
                 {
@@ -78,19 +70,23 @@ namespace Noppes.Fluffle.Search.Api.Services
             }
 
             // TODO: Automatically determine degree of parallelism based on the hardware Fluffle is running on
-            var searchResult = _compareService.Compare(hash, !model.IncludeNsfw, model.Limit * 2);
+            scope.Next(t => t.Compare64Average);
+            var searchResult = _compareService.Compare(hash, !includeNsfw, limit * 2, platforms);
 
-            var images = _context.Images.AsNoTracking()
+            scope.Next(t => t.ComplementComparisonResults);
+            var images = await _context.Images.AsNoTracking()
                 .IncludeThumbnails()
                 .Include(i => i.ImageHash)
                 .Include(i => i.Platform)
                 .Include(i => i.Credits)
-                .Where(i => searchResult.Images.Select(r => r.Id).Contains(i.Id) && !i.IsDeleted);
+                .Where(i => searchResult.Images.Select(r => r.Id).Contains(i.Id) && !i.IsDeleted)
+                .ToListAsync();
 
+            scope.Next(t => t.WaitFor256RgbComputation);
             var (red, green, blue) = await hash256Task;
 
+            scope.Next(t => t.CreateAndRefineOutput);
             var models = images
-                .AsEnumerable()
                 .Select(r => new SearchResultModel.ImageModel
                 {
                     Id = r.Id,
@@ -106,7 +102,7 @@ namespace Noppes.Fluffle.Search.Api.Services
                     })
                 })
                 .OrderByDescending(r => r.Score)
-                .Take(model.Limit)
+                .Take(limit)
                 .ToList();
 
             return new SR<SearchResultModel>(new SearchResultModel
@@ -115,7 +111,7 @@ namespace Noppes.Fluffle.Search.Api.Services
                 Stats = new SearchResultModel.StatsModel
                 {
                     Count = searchResult.Count,
-                    ElapsedMilliseconds = (int)stopwatch.ElapsedMilliseconds,
+                    ElapsedMilliseconds = (int)scope.Stopwatch.ElapsedMilliseconds
                 }
             });
         }
@@ -143,7 +139,7 @@ namespace Noppes.Fluffle.Search.Api.Services
             return (256 - worstMismatchCount) / (double)256 * 100;
         }
 
-        private static SearchResultModel.ImageModel.ThumbnailModel ThumbnailModel(Thumbnail thumbnail)
+        private static SearchResultModel.ImageModel.ThumbnailModel ThumbnailModel(Database.Models.Thumbnail thumbnail)
         {
             return new()
             {
