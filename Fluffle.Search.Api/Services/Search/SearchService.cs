@@ -89,17 +89,12 @@ namespace Noppes.Fluffle.Search.Api.Services
             var models = images
                 .Select(r => new SearchResultModel.ImageModel
                 {
-                    Id = r.Id,
                     IsSfw = r.IsSfw,
                     Platform = r.Platform.Name,
                     ViewLocation = r.ViewLocation,
                     Score = CompareRgb(r.ImageHash, red, green, blue),
                     Thumbnail = ThumbnailModel(r.Thumbnail),
-                    Credits = r.Credits.Select(c => new SearchResultModel.ImageModel.CreditModel
-                    {
-                        Name = c.Name,
-                        Role = c.Type
-                    })
+                    Credits = r.Credits.OrderBy(c => c.Type).Select(c => c.Name)
                 })
                 .OrderByDescending(r => r.Score)
                 .Take(limit)

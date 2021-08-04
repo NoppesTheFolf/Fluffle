@@ -16,8 +16,6 @@ namespace Noppes.Fluffle.Search.Api.Models
 
         public class ImageModel
         {
-            public int Id { get; set; }
-
             public double Score { get; set; }
 
             public string Platform { get; set; }
@@ -41,14 +39,7 @@ namespace Noppes.Fluffle.Search.Api.Models
 
             public ThumbnailModel Thumbnail { get; set; }
 
-            public class CreditModel
-            {
-                public string Name { get; set; }
-
-                public CreditableEntityType Role { get; set; }
-            }
-
-            public IEnumerable<CreditModel> Credits { get; set; }
+            public IEnumerable<string> Credits { get; set; }
         }
 
         public IEnumerable<ImageModel> Results { get; set; }
