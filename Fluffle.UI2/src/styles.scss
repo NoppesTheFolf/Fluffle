@@ -1,3 +1,34 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import './variables.scss';
+
+html, body, #___gatsby, #gatsby-focus-wrapper {
+    @apply h-full min-h-full;
+}
+
+body {
+    @apply text-light-100 bg-dark-400;
+}
+
+@each $state, $color-dark, $color-light in $gradients {
+    .btn-#{$state} {
+        background: $color-light;
+        background: linear-gradient($gradient-degree, $color-light $gradient-start, $color-dark $gradient-end);
+    }
+
+    .btn-#{$state}:hover {
+        background: $color-dark;
+        background: linear-gradient(
+            $gradient-degree,
+            $color-light $gradient-hover-start,
+            $color-dark $gradient-hover-end
+        );
+    }
+
+    .bg-gradient-#{$state} {
+        background: $color-light;
+        background: linear-gradient($gradient-degree, $color-light $gradient-start, $color-dark $gradient-end);
+    }
+}

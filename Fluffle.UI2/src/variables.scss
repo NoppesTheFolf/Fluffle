@@ -1,0 +1,26 @@
+$dark-100: #5e5e64;
+$dark-200: #36393f;
+
+$primary: #d35400;
+$primary-light: #e67e22;
+
+$success: #239e57;
+$success-light: #27af61;
+
+$warning: #d35400;
+$warning-light: #e67e22;
+
+$danger: #c0392b;
+$danger-light: #e74c3c;
+
+$info: #2980b9;
+$info-light: #3498db;
+
+$gradient-degree: 135deg;
+$gradient-start: 0%;
+$gradient-end: 100%;
+$gradient-hover-start: 0%;
+$gradient-hover-end: 60%;
+
+$gradients: 'primary' $primary $primary-light, 'success' $success $success-light, 'warning' $warning $warning-light,
+    'danger' $danger $danger-light, 'info' $info $info-light, 'secondary' #505055 #5e5e64;

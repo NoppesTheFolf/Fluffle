@@ -1,0 +1,24 @@
+@import '../variables.scss';
+
+.navbar-item {
+    @apply relative flex items-center p-2 cursor-pointer select-none text-light-100 hover:text-light-200;
+}
+
+$nav-link-active-height: 2px;
+
+.navbar-item-active::after {
+    position: absolute;
+    content: '';
+    bottom: 0;
+    left: 0;
+    height: $nav-link-active-height;
+    width: 100%;
+    background: $primary-light;
+    background: linear-gradient($gradient-degree, $primary-light $gradient-start, $primary $gradient-end);
+    border-radius: $nav-link-active-height;
+}
+
+.navbar-item-icon {
+    @apply mr-2;
+    font-size: 1.4em !important;
+}
