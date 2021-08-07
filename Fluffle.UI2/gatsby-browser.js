@@ -1,1 +1,2 @@
-import './src/styles.scss';
+import './src/styles.scss'
+import 'axios'
