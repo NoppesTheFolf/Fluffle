@@ -32,3 +32,8 @@ body {
         background: linear-gradient($gradient-degree, $color-light $gradient-start, $color-dark $gradient-end);
     }
 }
+
+.icon {
+    font-size: 24px;
+    display: inline-block;
+}

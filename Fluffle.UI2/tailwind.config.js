@@ -5,10 +5,13 @@ module.exports = {
   darkMode: false,
   theme: {
     colors: variables.colors,
+    fill: variables.colors,
     extend: {},
   },
   variants: {
-    extend: {},
+    extend: {
+      fill: ['hover']
+    },
   },
   plugins: [],
 }

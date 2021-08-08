@@ -7,6 +7,7 @@ import ProgressBar from '../components/progressBar'
 import ProgressBarPart from '../components/progressBarPart'
 import { Chart, TimeScale, LinearScale, LineController, PointElement, LineElement, Tooltip } from 'chart.js'
 import 'chartjs-adapter-date-fns'
+import Icon from '../components/icon'
 const variables = require('../variables')
 
 Chart.register([
@@ -89,9 +90,11 @@ const Status = ({ status }) => {
 
     return (
         <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-6 w-full max-w-4xl bg-dark-300 rounded p-3 lg:p-8">
-            <div className="flex flex-col justify-center items-center gap-y-6">
+            <div className="flex-grow flex flex-col justify-center items-center gap-y-6">
                 <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-6">
-                    <img className="h-32" src={Svg.get(status.name)} />
+                    <div className="w-32 fill-light-100">
+                        <Icon name={status.name} />
+                    </div>
                     <div className="sm:flex-grow flex flex-col gap-2 sm:whitespace-nowrap text-sm lg:text-base">
                         {!status.isComplete &&
                             <span>Estimated number of images: {status.estimatedCount.toLocaleString()}</span>
