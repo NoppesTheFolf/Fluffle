@@ -2,14 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-@import './variables.scss';
+@import "./variables.scss";
 
-html, body, #___gatsby, #gatsby-focus-wrapper {
+html,
+body,
+#___gatsby,
+#gatsby-focus-wrapper {
     @apply h-full min-h-full;
 }
 
 body {
     @apply text-light-100 bg-dark-400;
+}
+
+a {
+    @apply text-info hover:text-info-light;
 }
 
 @each $state, $color-dark, $color-light in $gradients {
@@ -34,6 +41,6 @@ body {
 }
 
 .icon {
-    font-size: 24px;
     display: inline-block;
+    shape-rendering: geometricPrecision;
 }
