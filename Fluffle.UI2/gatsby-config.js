@@ -1,4 +1,4 @@
-require("dotenv").config({
+require('dotenv').config({
   path: `.env.${process.env.NODE_ENV}`,
 })
 
@@ -17,6 +17,13 @@ module.exports = {
       resolve: 'gatsby-plugin-manifest',
       options: {
         icon: 'src/images/icon.png',
+        name: 'Fluffle',
+        short_name: 'Fluffle',
+        description: 'A reverse image search service tailored to the furry community.',
+        start_url: '/',
+        background_color: '#212121',
+        theme_color: '#e67e22',
+        display: 'standalone',
       },
     },
     'gatsby-plugin-sharp',
