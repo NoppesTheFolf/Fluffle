@@ -19,10 +19,10 @@ const NavbarMobile = ({ isDummy }) => {
     return (
         <nav className={classNames("flex justify-center sm:hidden pb-2 pt-4 bg-dark-300 bottom-0 left-0 w-full border-t border-dark-500 gap-x-6", { fixed: !isDummy })}>
             <NavbarItemMobile href="/" icon="youtube-searched-for">Search</NavbarItemMobile>
-            <NavbarItemMobile href="/about" icon="info">About</NavbarItemMobile>
-            {/* <NavbarItemMobile href="/status" icon="dns">Status</NavbarItemMobile> */}
-            <NavbarItemMobile href="/api" icon="code">API</NavbarItemMobile>
-            <NavbarItemMobile href="/contact" icon="mail">Contact</NavbarItemMobile>
+            <NavbarItemMobile href="/about/" icon="info">About</NavbarItemMobile>
+            {/* <NavbarItemMobile href="/status/" icon="dns">Status</NavbarItemMobile> */}
+            <NavbarItemMobile href="/api/" icon="code">API</NavbarItemMobile>
+            <NavbarItemMobile href="/contact/" icon="mail">Contact</NavbarItemMobile>
         </nav>
     )
 }

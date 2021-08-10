@@ -17,6 +17,7 @@
     "classnames": "^2.3.1",
     "date-fns": "^2.23.0",
     "gatsby": "^3.11.0",
+    "gatsby-plugin-force-trailing-slashes": "^1.0.5",
     "gatsby-plugin-image": "^1.11.0",
     "gatsby-plugin-manifest": "^3.11.0",
     "gatsby-plugin-postcss": "^4.11.0",

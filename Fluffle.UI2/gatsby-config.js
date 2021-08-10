@@ -29,5 +29,6 @@ module.exports = {
       },
       __key: 'images',
     },
+    'gatsby-plugin-force-trailing-slashes'
   ],
 }
