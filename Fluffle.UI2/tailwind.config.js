@@ -6,12 +6,42 @@ module.exports = {
   theme: {
     colors: variables.colors,
     fill: variables.colors,
-    extend: {},
+    extend: {
+      typography: {
+        DEFAULT: {
+          css: {
+            color: variables.colors.light['100'],
+            lineHeight: 1.6,
+            a: {
+              color: variables.colors.info.DEFAULT,
+              textDecoration: null,
+              '&:hover': {
+                color: variables.colors.info.light
+              },
+            },
+            h1: {
+              color: variables.colors.light['100'],
+            },
+            h2: {
+              color: variables.colors.light['100'],
+              marginTop: '2rem',
+              marginBottom: '0.5rem'
+            },
+            p: {
+              marginTop: '0.5rem',
+              marginBottom: '1rem'
+            }
+          },
+        },
+      }
+    },
   },
   variants: {
     extend: {
       fill: ['hover']
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography')
+  ],
 }

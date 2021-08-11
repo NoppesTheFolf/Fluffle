@@ -17,7 +17,7 @@ const Navbar = () => {
     return (
         <header className="hidden sm:flex justify-between items-center py-2 w-full">
             <Link to="/" className="flex items-center text-light-100 hover:text-light-200 cursor-pointer select-none">
-                <img className="h-8 mr-2" src={Svg.get("tail")}></img>
+                <img className="h-8 mr-2" src={Svg.get("tail")} alt="Fluffle brand logo"></img>
                 <span className="block text-xl">Fluffle</span>
             </Link>
             <nav>
