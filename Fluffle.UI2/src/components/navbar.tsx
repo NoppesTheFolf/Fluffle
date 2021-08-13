@@ -2,11 +2,11 @@ import { Link } from 'gatsby'
 import * as React from 'react'
 import Svg from '../services/svg'
 import Icon from './icon'
-import './navbar.scss'
+import { navbarItem, navbarItemActive } from './navbar.module.scss'
 
 const NavbarItem = ({ href, icon, children }) => {
     return (
-        <Link to={href} activeClassName="navbar-item-active" className="navbar-item select-none gap-1.5">
+        <Link to={href} activeClassName={navbarItemActive} className={navbarItem}>
             <span className="hidden md:inline"><Icon name={icon} /></span>
             <span>{children}</span>
         </Link>
@@ -25,7 +25,7 @@ const Navbar = () => {
                     <NavbarItem href="/" icon="youtube-searched-for">Reverse search</NavbarItem>
                     <NavbarItem href="/about/" icon="info">About</NavbarItem>
                     {/* <NavbarItem href="/status/" icon="dns">Status</NavbarItem> */}
-                    <NavbarItem href="/api/" icon="code">API</NavbarItem>
+                    {/* <NavbarItem href="/api/" icon="code">API</NavbarItem> */}
                     <NavbarItem href="/contact/" icon="mail">Contact</NavbarItem>
                 </div>
             </nav>

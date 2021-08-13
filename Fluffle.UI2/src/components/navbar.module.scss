@@ -1,10 +1,10 @@
 @import "../variables.scss";
 
-.navbar-item {
-    @apply relative flex items-center p-2 cursor-pointer select-none text-light-100 fill-light-100 hover:text-light-200 hover:fill-light-200;
-}
-
 $nav-link-active-height: 2px;
+
+.navbar-item {
+    @apply relative flex items-center space-x-1.5 p-2 cursor-pointer select-none text-light-100 fill-light-100 hover:text-light-200 hover:fill-light-200;
+}
 
 .navbar-item-active::after {
     position: absolute;

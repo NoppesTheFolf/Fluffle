@@ -1,7 +1,7 @@
-.navbar-item-mobile {
+.navbar-item {
     @apply inline-block text-muted hover:text-light-200 fill-muted hover:fill-light-200;
 }
 
-.navbar-item-active-mobile {
+.navbar-item-active {
     @apply text-light-100 fill-light-100;
 }
