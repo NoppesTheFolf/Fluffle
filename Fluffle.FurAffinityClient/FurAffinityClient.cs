@@ -49,6 +49,10 @@ namespace Noppes.Fluffle.FurAffinity
             if (response.DocumentNode.InnerText.Contains("The page you are trying to reach has been deactivated by the owner."))
                 return null;
 
+            // Submission marked for deletion by owner
+            if (response.DocumentNode.InnerText.Contains("The page you are trying to reach is currently pending deletion by a request from its owner."))
+                return null;
+
             // FA doesn't return a 404 response
             if (response.DocumentNode.InnerText.Contains("The submission you are trying to find is not in our database."))
                 return null;
