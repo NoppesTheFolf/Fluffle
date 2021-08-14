@@ -1,6 +1,5 @@
 import { Link } from 'gatsby'
 import * as React from 'react'
-import classNames from 'classnames'
 import { navbarItem, navbarItemActive } from './navbar-mobile.module.scss'
 import Icon from './icon'
 
@@ -15,9 +14,9 @@ const NavbarItemMobile = ({ href, icon, children }) => {
     )
 }
 
-const NavbarMobile = ({ isDummy }) => {
+const NavbarMobile = React.forwardRef((_, ref) => {
     return (
-        <nav className={classNames("flex justify-center sm:hidden pb-2 pt-4 bg-dark-300 bottom-0 left-0 w-full border-t border-dark-500 space-x-8 z-50", { fixed: !isDummy })}>
+        <nav ref={ref} className="fixed bottom-0 left-0 flex justify-center sm:hidden pb-2 pt-4 bg-dark-300 w-full border-t border-dark-500 space-x-8 z-50">
             <NavbarItemMobile href="/" icon="youtube-searched-for">Search</NavbarItemMobile>
             <NavbarItemMobile href="/about/" icon="info">About</NavbarItemMobile>
             {/* <NavbarItemMobile href="/status/" icon="dns">Status</NavbarItemMobile> */}
@@ -25,6 +24,6 @@ const NavbarMobile = ({ isDummy }) => {
             <NavbarItemMobile href="/contact/" icon="mail">Contact</NavbarItemMobile>
         </nav>
     )
-}
+})
 
 export default NavbarMobile

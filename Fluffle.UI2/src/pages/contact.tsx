@@ -23,7 +23,7 @@ const SocialBadge = ({ social }) => {
 const ContactPage = () => {
     return (
         <Layout center={true} title="Contact">
-            <div className="flex flex-col space-y-6 text-center">
+            <div className="flex flex-col items-center space-y-6 text-center">
                 <div>
                     <a href={artUrl} target="_blank" rel="noreferrer">
                         <StaticImage alt={`NoppesTheFolf icon by ${artistName}`} className="w-64 rounded-full" src="../images/noppes.jpg" />

@@ -12,8 +12,21 @@ export const LayoutWidth = {
 const Layout = ({ center, title, maxWidth, requireBrowser, children }) => {
     const [hasBrowser, setHasBrowser] = React.useState(false);
 
+    const navbarRef: React.RefObject<HTMLElement> = React.useRef();
+    const [dummyHeight, setDummyHeight] = React.useState(0);
+
+    function onResize() {
+        setDummyHeight(navbarRef.current?.clientHeight ?? 0);
+    }
+
     React.useEffect(() => {
         setHasBrowser(true);
+        onResize();
+        window.addEventListener('resize', onResize);
+
+        return () => {
+            window.removeEventListener('resize', onResize);
+        };
     }, [])
 
     return (
@@ -22,7 +35,7 @@ const Layout = ({ center, title, maxWidth, requireBrowser, children }) => {
                 <title>{title} - Fluffle</title>
             </Helmet>
             <div className="flex-grow container px-3 pb-3 mx-auto flex flex-col items-center justify-center">
-                <Navbar></Navbar>
+                <Navbar />
                 <main className={classNames(`overflow-hidden ${LayoutWidth[maxWidth]} w-full pt-3 flex-grow flex flex-col items-center`, { "justify-center": center })} >
                     {(!requireBrowser || (requireBrowser && hasBrowser)) &&
                         <div className="w-full">
@@ -30,9 +43,9 @@ const Layout = ({ center, title, maxWidth, requireBrowser, children }) => {
                         </div>
                     }
                 </main>
+                <div style={{ height: dummyHeight }}></div>
             </div>
-            <NavbarMobile isDummy={true}></NavbarMobile>
-            <NavbarMobile isDummy={false}></NavbarMobile>
+            <NavbarMobile ref={navbarRef} />
         </div>
     )
 }
