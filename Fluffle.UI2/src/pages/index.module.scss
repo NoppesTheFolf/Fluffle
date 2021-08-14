@@ -1,0 +1,11 @@
+@import "../variables.scss";
+
+.drop-zone {
+    @apply border-dark-100 flex flex-col text-center items-center bg-dark-300 p-6 sm:p-12 space-y-6 rounded-xl border-0 sm:border-2 border-dashed cursor-pointer select-none;
+    transition: border 0.15s, box-shadow 0.15s;
+}
+
+.drop-zone-active {
+    border-color: $primary;
+    box-shadow: 0 0 10px rgba($color: $primary, $alpha: 0.6);
+}

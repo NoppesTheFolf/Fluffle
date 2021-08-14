@@ -40,7 +40,7 @@ const AboutPage = () => {
                     <li>If your request caused the server to error out for whatever reason, the corresponding stack trace of the occurred exception gets logged. We can use this information to determine what caused your request to fail if you decide to contact us and provide us with a trace ID, the used image and the settings used.</li>
                     <li>The format in which the image is encoded and its width and height. These three image attributes correlate highly with the time needed to process your request. It is therefore used to assess server performance. Its also used to identify API clients that don’t follow the guidelines put up by Fluffle.</li>
                     <li>The moment at which the server started processing your request. This can be used to assess server performance in scenarios where there are a lot of request being processed in parallel.</li>
-                    <li>The how manyth request this is since the start of the server. Used to assess server performance.</li>
+                    <li>The how manyth request it is since the start of the server. Used to assess server performance.</li>
                     <li>A bunch of timings. You can compare this to having a stopwatch and tracking laps, but in application code. How long did it take to create the fingerprint? How long did it take to check if the submitted file was an image? How long did it take to compare the fingerprint? Etc. Used to assess server performance.</li>
                     <li>The number of images compared against. Used to assess server performance.</li>
                 </ul>

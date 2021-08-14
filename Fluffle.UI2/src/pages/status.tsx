@@ -131,7 +131,7 @@ const StatusPage = () => {
     return (
         <Layout center={true} title="Status">
             {status == null &&
-                <div>
+                <div className="w-full flex justify-center items-center">
                     <Loader />
                 </div>
             }

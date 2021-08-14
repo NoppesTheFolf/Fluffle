@@ -3,7 +3,7 @@ import svg from "../services/svg"
 
 const Banner = () => {
     return (
-        <img className="h-24 inline-block select-none" style={{ maxWidth: "90%" }} src={svg.get("banner")} alt="Fluffle banner" />
+        <img className="h-28 inline-block select-none" style={{ maxWidth: "90%" }} src={svg.get("banner")} alt="Fluffle banner" />
     )
 }
 

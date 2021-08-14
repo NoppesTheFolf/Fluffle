@@ -12,7 +12,7 @@ body,
 }
 
 body {
-    @apply text-light-100 bg-dark-400;
+    @apply text-light-100 fill-light-100 bg-dark-400;
 }
 
 a {
@@ -40,7 +40,54 @@ a {
     }
 }
 
+.btn {
+    @apply flex justify-center items-center rounded p-2;
+}
+
+.btn-sm {
+    @apply text-sm p-1;
+}
+
+.btn-group {
+    > :not(:only-child):first-child {
+        @apply rounded-r-none;
+    }
+
+    > :not(:only-child):not(:first-child):not(:last-child) {
+        @apply rounded-none;
+    }
+
+    > :not(:only-child):last-child {
+        @apply rounded-l-none;
+    }
+}
+
+.p-inherit {
+    padding: inherit;
+}
+
 .icon {
     display: inline-block;
     shape-rendering: geometricPrecision;
+}
+
+.square:after {
+    content: "";
+    display: block;
+    padding-bottom: 100%;
+}
+
+// Disables the blue highlight color on Chrome Android (also outlines are ugly)
+input,
+textarea,
+select,
+a,
+label {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+// Fixes the dumb Safari browser bug not knowing how to round things...
+*[class*="rounded"] {
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
 }

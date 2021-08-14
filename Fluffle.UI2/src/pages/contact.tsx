@@ -14,7 +14,7 @@ const socials = [
 
 const SocialBadge = ({ social }) => {
     return (
-        <a className="transition-colors text-4xl fill-light-100 hover:fill-dark-400 hover:bg-light-100 p-3 rounded-full border-2" href={social.url} target="_blank" rel="noreferrer">
+        <a className="transition-colors m-2 text-4xl fill-light-100 hover:fill-dark-400 hover:bg-light-100 p-3 rounded-full border-2" href={social.url} target="_blank" rel="noreferrer">
             <Icon inheritSize={true} name={social.icon} />
         </a>
     )
@@ -23,7 +23,7 @@ const SocialBadge = ({ social }) => {
 const ContactPage = () => {
     return (
         <Layout center={true} title="Contact">
-            <div className="flex flex-col gap-y-6 text-center">
+            <div className="flex flex-col space-y-6 text-center">
                 <div>
                     <a href={artUrl} target="_blank" rel="noreferrer">
                         <StaticImage alt={`NoppesTheFolf icon by ${artistName}`} className="w-64 rounded-full" src="../images/noppes.jpg" />
@@ -38,7 +38,7 @@ const ContactPage = () => {
                         Found a bug? Got a feature request? Contact a folf.
                     </div>
                 </div>
-                <div className="flex flex-wrap justify-center gap-12">
+                <div className="flex flex-wrap justify-center items-center">
                     {socials.map(s => (
                         <SocialBadge key={s.name} social={s}></SocialBadge>
                     ))}

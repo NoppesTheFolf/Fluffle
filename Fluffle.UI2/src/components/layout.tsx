@@ -9,7 +9,13 @@ export const LayoutWidth = {
     '7xl': 'sm:max-w-7xl'
 }
 
-const Layout = ({ center, title, maxWidth, children }) => {
+const Layout = ({ center, title, maxWidth, requireBrowser, children }) => {
+    const [hasBrowser, setHasBrowser] = React.useState(false);
+
+    React.useEffect(() => {
+        setHasBrowser(true);
+    }, [])
+
     return (
         <div className="w-full min-h-full flex flex-col">
             <Helmet>
@@ -18,7 +24,11 @@ const Layout = ({ center, title, maxWidth, children }) => {
             <div className="flex-grow container px-3 pb-3 mx-auto flex flex-col items-center justify-center">
                 <Navbar></Navbar>
                 <main className={classNames(`overflow-hidden ${LayoutWidth[maxWidth]} w-full pt-3 flex-grow flex flex-col items-center`, { "justify-center": center })} >
-                    {children}
+                    {(!requireBrowser || (requireBrowser && hasBrowser)) &&
+                        <div className="w-full">
+                            {children}
+                        </div>
+                    }
                 </main>
             </div>
             <NavbarMobile isDummy={true}></NavbarMobile>
@@ -28,7 +38,8 @@ const Layout = ({ center, title, maxWidth, children }) => {
 }
 
 Layout.defaultProps = {
-    maxWidth: '7xl'
+    maxWidth: '7xl',
+    requireBrowser: false,
 };
 
 export default Layout
