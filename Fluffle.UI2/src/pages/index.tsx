@@ -2,8 +2,8 @@ import * as React from 'react'
 import Layout from '../components/layout'
 import Banner from '../components/banner'
 import { Link } from 'gatsby'
-import ProgressBar from '../components/progressBar'
-import ProgressBarPart from '../components/progressBarPart'
+import ProgressBar from '../components/progress-bar'
+import ProgressBarPart from '../components/progress-bar-part'
 import Api, { SearchResult } from '../services/api'
 import SearchResultDesktop from '../components/search-result-desktop'
 import { Helmet } from 'react-helmet'
@@ -112,6 +112,10 @@ const SearchPage = () => {
                 const progress = Math.round(e.loaded / e.total * 100);
 
                 setProgress(progress);
+
+                if (progress === 100) {
+                    setState(State.PROCESSING);
+                }
             }
         }).then(data => {
             setData(data);
@@ -214,7 +218,7 @@ const SearchPage = () => {
                 {[State.PREPROCESSING, State.UPLOADING, State.PROCESSING].includes(state) &&
                     <div className="w-full max-w-xl flex flex-col space-y-3 items-center">
                         <ProgressBar>
-                            <ProgressBarPart color="primary" percentage={progress}></ProgressBarPart>
+                            <ProgressBarPart color="primary" isStriped={true} isAnimated={true} percentage={progress}></ProgressBarPart>
                         </ProgressBar>
                         <span>{state === State.PREPROCESSING ? "Preprocessing" : state === State.UPLOADING ? "Uploading" : "Processing"}...</span>
                     </div>
