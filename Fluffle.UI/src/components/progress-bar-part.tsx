@@ -14,7 +14,7 @@ const ProgressBarPart = ({ color, percentage, isStriped, isAnimated }: ProgressB
         progressBar,
         ...isStriped ? [progressBarStriped] : [],
         ...isAnimated ? [progressBarAnimated] : [],
-        `bg-${color}`
+        color
     ]
 
     return (

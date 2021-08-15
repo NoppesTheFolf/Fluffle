@@ -108,8 +108,8 @@ const Status = ({ status }) => {
                 </div>
                 <div className="w-64 sm:w-full">
                     <ProgressBar>
-                        <ProgressBarPart color="info" percentage={status.scrapedPercentage} />
-                        <ProgressBarPart color="primary" percentage={status.indexedPercentage} />
+                        <ProgressBarPart color="bg-info" percentage={status.scrapedPercentage} />
+                        <ProgressBarPart color="bg-primary" percentage={status.indexedPercentage} />
                     </ProgressBar>
                 </div>
             </div>

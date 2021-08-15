@@ -218,7 +218,7 @@ const SearchPage = () => {
                 {[State.PREPROCESSING, State.UPLOADING, State.PROCESSING].includes(state) &&
                     <div className="w-full max-w-xl flex flex-col space-y-3 items-center">
                         <ProgressBar>
-                            <ProgressBarPart color="primary" isStriped={true} isAnimated={true} percentage={progress}></ProgressBarPart>
+                            <ProgressBarPart color="bg-primary" isStriped={true} isAnimated={true} percentage={progress}></ProgressBarPart>
                         </ProgressBar>
                         <span>{state === State.PREPROCESSING ? "Preprocessing" : state === State.UPLOADING ? "Uploading" : "Processing"}...</span>
                     </div>
