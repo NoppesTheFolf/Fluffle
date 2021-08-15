@@ -1,4 +1,23 @@
-@import "variables";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "./variables.scss";
+
+html,
+body,
+#___gatsby,
+#gatsby-focus-wrapper {
+    @apply h-full min-h-full;
+}
+
+body {
+    @apply text-light-100 fill-light-100 bg-dark-400;
+}
+
+a {
+    @apply text-info hover:text-info-light;
+}
 
 @each $state, $color-dark, $color-light in $gradients {
     .btn-#{$state} {
@@ -15,34 +34,60 @@
         );
     }
 
-    .bg-#{$state} {
+    .bg-gradient-#{$state} {
         background: $color-light;
         background: linear-gradient($gradient-degree, $color-light $gradient-start, $color-dark $gradient-end);
     }
 }
 
-@import "../node_modules/bootstrap/scss/bootstrap.scss";
-
-.fluffle-banner {
-    height: 100px;
-    max-width: 90%;
+.btn {
+    @apply flex justify-center items-center rounded p-2;
 }
 
-a {
-    text-decoration: none !important;
+.btn-sm {
+    @apply text-sm p-1;
+}
+
+.btn-group {
+    > :not(:only-child):first-child {
+        @apply rounded-r-none;
+    }
+
+    > :not(:only-child):not(:first-child):not(:last-child) {
+        @apply rounded-none;
+    }
+
+    > :not(:only-child):last-child {
+        @apply rounded-l-none;
+    }
+}
+
+.p-inherit {
+    padding: inherit;
+}
+
+.icon {
+    display: inline-block;
+    shape-rendering: geometricPrecision;
+}
+
+.square:after {
+    content: "";
+    display: block;
+    padding-bottom: 100%;
+}
+
+// Disables the blue highlight color on Chrome Android (also outlines are ugly)
+input,
+textarea,
+select,
+a,
+label {
     outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
 }
 
-.bg-dark {
-    background: $darker !important;
-}
-
-.bg-darkest {
-    background: $darkest !important;
-}
-
-html,
-body {
-    width: 100%;
-    height: 100%;
+// Fixes the dumb Safari browser bug not knowing how to round things...
+*[class*="rounded"] {
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
 }

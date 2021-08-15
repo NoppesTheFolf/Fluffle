@@ -1,23 +1,11 @@
-@import "../node_modules/bootstrap/scss/functions";
-@import "../node_modules/bootstrap/scss/mixins";
+$light-100: #dcdcdc;
+$light-200: #c6c6c6;
 
-$light: #5e5e64;
-$dark: #36393f;
-$darker: #202024;
-$darkest: #16161a;
-$even-darker: #0e0e11;
-
-/* === COLORS === */
-$min-contrast-ratio: 4.0;
+$dark-100: #5e5e64;
+$dark-200: #36393f;
 
 $primary: #d35400;
 $primary-light: #e67e22;
-
-$info: #2980b9;
-$info-light: #3498db;
-
-$danger: #c0392b;
-$danger-light: #e74c3c;
 
 $success: #239e57;
 $success-light: #27af61;
@@ -25,9 +13,11 @@ $success-light: #27af61;
 $warning: #d35400;
 $warning-light: #e67e22;
 
-$alert-bg-level: -6;
-$alert-border-level: -6;
-$alert-color-level: 10;
+$danger: #c0392b;
+$danger-light: #e74c3c;
+
+$info: #2980b9;
+$info-light: #3498db;
 
 $gradient-degree: 135deg;
 $gradient-start: 0%;
@@ -35,43 +25,5 @@ $gradient-end: 100%;
 $gradient-hover-start: 0%;
 $gradient-hover-end: 60%;
 
-/* TEXT */
-$text-color: #dcdcdc;
-$text-muted: #969696;
-
-$link-color: $info;
-$link-hover-color: $info-light;
-
-/* === PROGRESS BAR === */
-$progress-bg: $darker;
-
-/* === INPUT === */
-$input-color: $text-color;
-$input-bg: $darker;
-$input-border-color: $darkest;
-
-$input-focus-border-color: $darkest;
-
-/* === CODE === */
-$code-color: $primary-light;
-
-/* === BODY === */
-$body-bg: $darkest;
-$body-color: $text-color;
-
-/* === BORDER === */
-$border-color: $darkest;
-
-/* === NAVIGATION BAR === */
-$navbar-dark-color: $text-color;
-$navbar-dark-hover-color: darken($text-color, 15%);
-$navbar-dark-active-color: $navbar-dark-hover-color;
-$navbar-dark-brand-color: $text-color;
-
-/* === BUTTON === */
-$btn-border-width: 0;
-
 $gradients: "primary" $primary $primary-light, "success" $success $success-light, "warning" $warning $warning-light,
-    "danger" $danger $danger-light, "info" $info $info-light;
-
-@import "../node_modules/bootstrap/scss/variables";
+    "danger" $danger $danger-light, "info" $info $info-light, "secondary" #505055 #5e5e64;

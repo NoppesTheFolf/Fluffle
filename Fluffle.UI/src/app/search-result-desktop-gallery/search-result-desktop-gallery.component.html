@@ -1,7 +1,0 @@
-<div class="my-2">
-    <div class="gallery-row d-flex align-middle my-2" *ngFor="let row of render"
-        [ngClass]="row.isLast && !row.couldFit ? 'justify-content-start' : 'justify-content-between'">
-        <app-search-result-desktop-gallery-image *ngFor="let image of row.images" [image]="image">
-        </app-search-result-desktop-gallery-image>
-    </div>
-</div>
