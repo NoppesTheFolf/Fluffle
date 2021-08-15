@@ -68,41 +68,41 @@ RUN wget -qq https://deac-ams.dl.sourceforge.net/project/giflib/giflib-5.2.1.tar
     cd .. && \
     rm -rf giflib-5.2.1.tar.gz giflib-5.2.1
 
-RUN wget -qq https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.2.0.tar.gz && \
-    tar xf libwebp-1.2.0.tar.gz && \
-    cd libwebp-1.2.0 && \
+RUN wget -qq https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.2.1.tar.gz && \
+    tar xf libwebp-1.2.1.tar.gz && \
+    cd libwebp-1.2.1 && \
     ./configure --enable-libwebpmux --enable-libwebpdecoder --enable-libwebpextras && \
     make -j$(nproc) && \
     make install && \
     cd .. && \
-    rm -rf libwebp-1.2.0.tar.gz libwebp-1.2.0
+    rm -rf libwebp-1.2.1.tar.gz libwebp-1.2.1
 
 RUN git clone https://aomedia.googlesource.com/aom && \
     cd aom && \
-    git checkout v3.0.0 && \
+    git checkout v3.1.2 && \
     mkdir build/linux && cd build/linux && cmake -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DAOM_TARGET_CPU=generic -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE ../../ && \
     make -j$(nproc) && \
     make install && \
     cd ../../.. && \
     rm -rf aom
 
-RUN wget -qq https://github.com/strukturag/libheif/releases/download/v1.11.0/libheif-1.11.0.tar.gz && \
-    tar xf libheif-1.11.0.tar.gz && \
-    cd libheif-1.11.0 && \
+RUN wget -qq https://github.com/strukturag/libheif/releases/download/v1.12.0/libheif-1.12.0.tar.gz && \
+    tar xf libheif-1.12.0.tar.gz && \
+    cd libheif-1.12.0 && \
     ./configure --disable-examples --disable-go && \
     make -j$(nproc) && \
     make install && \
     cd .. && \
-    rm -rf libheif-1.11.0.tar.gz libheif-1.11.0
+    rm -rf libheif-1.12.0.tar.gz libheif-1.12.0
 
-RUN wget -qq https://github.com/libvips/libvips/releases/download/v8.10.6/vips-8.10.6.tar.gz && \
-    tar xf vips-8.10.6.tar.gz && \
-    cd vips-8.10.6 && \
+RUN wget -qq https://github.com/libvips/libvips/releases/download/v8.11.3/vips-8.11.3.tar.gz && \
+    tar xf vips-8.11.3.tar.gz && \
+    cd vips-8.11.3 && \
     CFLAGS=-O3 CXXFLAGS=-O3 ./configure && \
     make -j$(nproc) && \
     make install && \
     cd .. && \
-    rm -rf vips-8.10.6.tar.gz vips-8.10.6 && \
+    rm -rf vips-8.11.3.tar.gz vips-8.11.3 && \
     ldconfig
 
 # Install .NET Core SDK
