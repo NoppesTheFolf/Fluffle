@@ -22,7 +22,6 @@
     "gatsby": "^3.11.1",
     "gatsby-plugin-force-trailing-slashes": "^1.0.5",
     "gatsby-plugin-image": "^1.11.0",
-    "gatsby-plugin-manifest": "^3.11.0",
     "gatsby-plugin-mdx": "^2.11.0",
     "gatsby-plugin-postcss": "^4.11.0",
     "gatsby-plugin-react-helmet": "^4.11.0",
