@@ -1,7 +1,7 @@
 const variables = require('./src/variables')
 
 module.exports = {
-  purge: ['./src/**/*.{js,jsx,ts,tsx}'],
+  purge: ['./src/**/*.{js,jsx,ts,tsx,md,mdx}'],
   darkMode: false,
   theme: {
     colors: variables.colors,
