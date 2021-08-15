@@ -20,7 +20,7 @@ const NavbarMobile = React.forwardRef((_, ref) => {
             <NavbarItemMobile href="/" icon="youtube-searched-for">Search</NavbarItemMobile>
             <NavbarItemMobile href="/about/" icon="info">About</NavbarItemMobile>
             {/* <NavbarItemMobile href="/status/" icon="dns">Status</NavbarItemMobile> */}
-            {/* <NavbarItemMobile href="/api/" icon="code">API</NavbarItemMobile> */}
+            <NavbarItemMobile href="/api/" icon="code">API</NavbarItemMobile>
             <NavbarItemMobile href="/contact/" icon="mail">Contact</NavbarItemMobile>
         </nav>
     )

@@ -89,9 +89,10 @@ namespace Noppes.Fluffle.Search.Api.Services
             var models = images
                 .Select(r => new SearchResultModel.ImageModel
                 {
+                    Id = r.Id,
                     IsSfw = r.IsSfw,
                     Platform = r.Platform.Name,
-                    ViewLocation = r.ViewLocation,
+                    Location = r.ViewLocation,
                     Score = CompareRgb(r.ImageHash, red, green, blue),
                     Thumbnail = ThumbnailModel(r.Thumbnail),
                     Credits = r.Credits.OrderBy(c => c.Type).Select(c => c.Name)
@@ -131,7 +132,7 @@ namespace Noppes.Fluffle.Search.Api.Services
                 Compare(blue, FluffleHash.ToInt64(hashes.PhashBlue256)),
             }.Max();
 
-            return (256 - worstMismatchCount) / (double)256 * 100;
+            return (256 - worstMismatchCount) / (double)256;
         }
 
         private static SearchResultModel.ImageModel.ThumbnailModel ThumbnailModel(Database.Models.Thumbnail thumbnail)

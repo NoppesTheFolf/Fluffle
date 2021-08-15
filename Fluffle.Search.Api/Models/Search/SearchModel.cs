@@ -50,12 +50,6 @@ namespace Noppes.Fluffle.Search.Api.Models
         {
             var model = context.InstanceToValidate;
 
-            if (model.File != null && model.File.Length > SizeMax)
-            {
-                result.Errors.Add(new ValidationFailure(nameof(SearchModel.File), $"The submitted file has a size of {model.File.Length} bytes while the maximum allowed size is {SizeMax} bytes (4 MiB)."));
-                return false;
-            }
-
             if (model.PlatformNames == null)
             {
                 model.Platforms = LookupDictionary.Values;

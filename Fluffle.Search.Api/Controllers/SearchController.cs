@@ -56,6 +56,9 @@ namespace Noppes.Fluffle.Search.Api.Controllers
         [HttpPost("search")]
         public async Task<IActionResult> Search([FromForm] SearchModel model)
         {
+            if (model.File != null && model.File.Length > SearchModelValidator.SizeMax)
+                return HandleV1(SearchError.FileTooLarge(model.File.Length));
+
             var request = new SearchRequest
             {
                 From = HttpContext.Connection.RemoteIpAddress?.ToString(),
@@ -92,10 +95,7 @@ namespace Noppes.Fluffle.Search.Api.Controllers
                     request.Height = dimensions.Height;
 
                     if (dimensions.Area > SearchModelValidator.AreaMax)
-                    {
-                        ModelState.AddModelError(nameof(SearchModel.File), $"The submitted image has an area (width * height) of {dimensions.Area} pixels while the maximum allowed area is {SearchModelValidator.AreaMax} pixels.");
-                        return _options.InvalidModelStateResponseFactory(ControllerContext);
-                    }
+                        return HandleV1(SearchError.AreaTooLarge(dimensions.Area));
                 }
                 catch (Exception e)
                 {

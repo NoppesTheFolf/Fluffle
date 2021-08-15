@@ -25,7 +25,7 @@ const Navbar = () => {
                     <NavbarItem href="/" icon="youtube-searched-for">Reverse search</NavbarItem>
                     <NavbarItem href="/about/" icon="info">About</NavbarItem>
                     {/* <NavbarItem href="/status/" icon="dns">Status</NavbarItem> */}
-                    {/* <NavbarItem href="/api/" icon="code">API</NavbarItem> */}
+                    <NavbarItem href="/api/" icon="code">API</NavbarItem>
                     <NavbarItem href="/contact/" icon="mail">Contact</NavbarItem>
                 </div>
             </nav>

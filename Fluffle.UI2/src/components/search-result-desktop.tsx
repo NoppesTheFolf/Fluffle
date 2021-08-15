@@ -8,12 +8,12 @@ const GalleryDesktopCard = ({ image, shouldBlur }: { image: GalleryRowImage<Sear
     const [hasHover, setHasHover] = React.useState(false);
 
     return (
-        <a href={image.data.viewLocation} rel="noreferrer" target="_blank" onMouseEnter={() => setHasHover(true)} onMouseLeave={() => setHasHover(false)} className="relative text-light-100 hover:text-light-100 rounded overflow-hidden select-none" style={{ width: image.width, height: image.height }}>
+        <a href={image.data.location} rel="noreferrer" target="_blank" onMouseEnter={() => setHasHover(true)} onMouseLeave={() => setHasHover(false)} className="relative text-light-100 hover:text-light-100 rounded overflow-hidden select-none" style={{ width: image.width, height: image.height }}>
             <div className={`absolute shadow px-1 py-0.5 flex items-center gap-1 bg-gradient-${image.data.match.class} rounded-tl rounded-br z-20`}>
                 <span className="w-6">
                     <Icon name={image.data.platform} />
                 </span>
-                <div>{image.data.score.toFixed(2)}%</div>
+                <div>{(image.data.score * 100).toFixed(2)}%</div>
             </div>
             <div className={`absolute w-full h-full bg-black transition-colors z-10 ${hasHover ? 'bg-opacity-20' : 'bg-opacity-0'}`}></div>
             <div className={`absolute bottom-0 w-full px-1 py-1.5 whitespace-nowrap overflow-hidden overflow-ellipsis transition-opacity bg-black bg-opacity-80 text-xs z-20 opacity-0 ${hasHover ? 'opacity-100' : ''}`}>

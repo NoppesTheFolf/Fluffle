@@ -5,7 +5,7 @@ import Icon from './icon';
 
 const GalleryCard = ({ data }: { data: SearchResultItem }) => {
     return (
-        <a className="square w-1/2 sm:w-1/3 md:w-1/4 p-1 block relative" href={data.viewLocation} target="" rel="noreferrer">
+        <a className="square w-1/2 sm:w-1/3 md:w-1/4 p-1 block relative" href={data.location} target="_blank" rel="noreferrer">
             <div className="absolute left-0 top-0 w-full h-full p-inherit">
                 <div className="relative w-full h-full rounded overflow-hidden">
                     <div className={`absolute top-0 left-0 w-7 p-0.5 bg-gradient-${data.match.class} rounded-tl rounded-br z-10`}>

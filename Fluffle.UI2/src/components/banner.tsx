@@ -1,5 +1,5 @@
-import * as React from "react"
-import svg from "../services/svg"
+import * as React from 'react'
+import svg from '../services/svg'
 
 const Banner = () => {
     return (

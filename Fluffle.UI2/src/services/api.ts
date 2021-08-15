@@ -25,7 +25,7 @@ export interface SearchResultItem {
     score: number;
     match: { class: string };
     platform: string;
-    viewLocation: string;
+    location: string;
     isSfw: boolean;
     thumbnail: SearchResultThumbnail;
     credits: string[];
@@ -98,7 +98,7 @@ const Api = function () {
                     return Promise.reject(message);
                 }).then<SearchResult>(response => {
                     const data = response.data.results.map(r => {
-                        r.match = r.score >= 92 ? Match.Excellent : r.score >= 85 ? Match.Doubtful : Match.Unlikely;
+                        r.match = r.score >= 0.92 ? Match.Excellent : r.score >= 0.85 ? Match.Doubtful : Match.Unlikely;
                         return r;
                     });
 

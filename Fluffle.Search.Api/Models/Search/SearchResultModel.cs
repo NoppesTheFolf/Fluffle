@@ -1,5 +1,4 @@
-﻿using Noppes.Fluffle.Constants;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Search.Api.Models
 {
@@ -16,11 +15,13 @@ namespace Noppes.Fluffle.Search.Api.Models
 
         public class ImageModel
         {
+            public int Id { get; set; }
+
             public double Score { get; set; }
 
             public string Platform { get; set; }
 
-            public string ViewLocation { get; set; }
+            public string Location { get; set; }
 
             public bool IsSfw { get; set; }
 

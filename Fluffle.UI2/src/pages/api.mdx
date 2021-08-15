@@ -1,0 +1,293 @@
+import { Link } from "gatsby";
+
+import hljs from "highlight.js/lib/core";
+import "highlight.js/styles/vs2015.css";
+
+import python from "highlight.js/lib/languages/python";
+hljs.registerLanguage("python", python);
+
+import json from "highlight.js/lib/languages/json";
+hljs.registerLanguage("json", json);
+
+import Layout from "../components/layout";
+export default ({ children }) => {
+  React.useEffect(() => {
+    hljs.highlightAll();
+  }, []);
+  return (
+    <Layout title="API" maxWidth="4xl">
+      <div className="prose max-w-none">{children}</div>
+    </Layout>
+  );
+};
+
+export const Endpoint = ({ method, url }) => (
+  <div className="flex items-center font-mono bg-dark-300 p-2 rounded">
+    <div className="bg-gradient-info px-2 py-1 rounded mr-3">
+      {method.toUpperCase()}
+    </div>
+    <div>{url}</div>
+  </div>
+);
+
+export const Response = ({ code, reason, state }) => (
+  <div className="flex items-center font-mono rounded">
+    <div className={`bg-gradient-${state} px-2 py-1 rounded mr-3`}>{code}</div>
+    <div>{reason}</div>
+  </div>
+);
+
+# API documentation
+
+Fluffle provides a publicly available HTTP-based API which can be used to integrate Fluffle into your own applications. Please read the next chapter (preprocessing) carefully before looking at anything else as its crucial for interacting with the API.
+
+## Preprocessing
+
+Fluffle has been built with performance in mind. One of the many optimizations applied to Fluffle is having the client shrink the image before sending it over. This not only dramatically reduces the size of the request (great for users with slow connections), but also hugely impacts the cost of processing the image server side. You MUST implement this optimization in your application too if you want to make use of Fluffle its API. Not complying will result in your application getting banned. If, for whatever reason, your application will not be able to do this optimization step, you should <Link to="/contact/">contact me</Link> before using the API. The exception to this are WebP images due to some programming languages still having mediocre support for the format.
+
+At the moment we recommend you shrink the image to a size where both its width and height don’t fall below 256 pixels as this seems to work nicely. A few examples: 1920x1080 becomes 455x256, 1000x1000 becomes 256x256 and 700x1200 becomes 256x439. It's recommended to export the shrunken image as a PNG due to the format its lossless nature and support for transparency. On the subject of transparency, Fluffle has a standardized way of dealing with it. If the image you want to send over has transparency, you must not flatten it before sending it to Fluffle.
+
+## Reverse searching
+
+<Endpoint method="post" url="https://api.fluffle.xyz/v1/search" />
+
+To reverse search an image, you need to send Fluffle a POST-request encoded using multipart/form-data. You must make your application identifiable by setting a custom User-Agent. Not doing this might get the default User-Agent banned in the future. It's recommended you use the following format for the User-Agent header: 'applicationName/applicationVersion (by yourName on somePlatform)'. So for example, 'Fluffle/1.2.3 (by NoppesTheFolf on Twitter)', would be a correct. If your project is open source, then instead of your personal contact details, it would preferred to instead link to where said project is hosted. Please keep in mind that providing your contact details is only a recommendation, you don't have to if you don't want to. These will only be used if your application is causing trouble so that we can resolve the issue diplomatically instead of having to resort to blocking the application entirely.
+
+## Parameters
+
+| Key         | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| file        | The image to reverse search. The currently supported image formats are JPEG, PNG and WebP. The size of the provided image must not exceed 4 MiB, nor should the image its dimensions exceed a total area (width \* height) of 16 million pixels (16MP). You MUST preprocess the images you send to Fluffle whenever possible. If you have no valid reason for skipping this stage, your app will get banned from using the API. The exception to this are WebP images due to some programming languages still having mediocre support for the format.                                                                      |
+| includeNsfw | An optional boolean value indicating whether or not Fluffle should also search through images deemed Not Safe For Work. By default, Fluffle will not search NSFW images.                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| platforms   | The platforms to be included in the reverse search process. Currently supported platforms are e621, Furry Network and Fur Affinity. Not providing this field will cause all of the aforementioned platforms to be included. Make sure your application can deal with new platforms: the API its version will not be increased if we decide to add support for another platform. An alternative would be to send a list of all platforms your application supports with each request. The values provided to this field are casing-insensitive, meaning you can pass them snake cased, camel cased, or whatever you prefer. |
+| limit       | By default, Fluffle will send you a maximum of 32 results. You can tweak this number by providing a value from 8 to 128. Exceeding this range will cause your request to fail.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+
+## Example request
+
+Alright, that’s enough documentation… let’s see some code! The code below is a small script written in Python which preprocesses the image “fluffy-critter.png” and reverse searches it using Fluffle its API. You can use this as reference material for implementing Fluffle its API in your programming language of choice.
+
+```python
+import io
+from pprint import pprint
+from PIL import Image
+from requests import post
+
+# Preprocess the image as per Fluffle its documentation
+image = Image.open("fluffy-critter.png")
+width, height = image.size
+
+
+def calculate_size(width, height, target):
+    def calculate_size(d1, d2, d1_target): return round(d1_target / d1 * d2)
+
+    if width > height:
+        return calculate_size(height, width, target), target
+
+    return target, calculate_size(width, height, target)
+
+
+image.thumbnail(calculate_size(width, height, 256))
+buffer = io.BytesIO()
+image.save(buffer, "png")
+
+# And then reverse search the preprocessed image
+headers = {
+    "User-Agent": "api-demo/1.0 (by NoppesTheFolf on Twitter)"
+}
+files = {
+    "file": buffer.getvalue()
+}
+data = {
+    "platforms": [
+        "fur affinity",
+        "furry network"
+    ],
+    "limit": 8
+}
+
+response = post("https://api.fluffle.xyz/v1/search", headers=headers, files=files, data=data).json()
+pprint(response)
+```
+
+## Responses
+
+The chapter below describes all of the responses you can get from the API. Please note that we can't guarantee that you always receive a JSON structure as a response on errors because the API is running behind Cloudflare.
+
+<div className="mt-8">
+  <Response state="success" code="200" reason="OK" />
+</div>
+
+Your request was valid and could therefore be processed. The submitted image has been compared against all (specified) platforms and the results said comparison yielded are embedded in the body of the request.
+
+### Example response
+
+```json
+{
+  "stats": {
+    "count": 4303216,
+    "elapsedMilliseconds": 263
+  },
+  "results": [
+    {
+      "id": 1344062,
+      "score": 96.875,
+      "platform": "e621",
+      "location": "https://e621.net/posts/546281",
+      "isSfw": true,
+      "thumbnail": {
+        "width": 300,
+        "centerX": 0,
+        "height": 400,
+        "centerY": 37,
+        "location": "https://static.fluffle.xyz/file/fluffle/0e2c770cf4a9eccb7f16570f5586aa9d.jpg"
+      },
+      "credits": ["lycanruff"]
+    }
+  ]
+}
+```
+
+import Accordion from "../components/accordion";
+
+<Accordion header='<h3 style="margin: 0">Schema</h3>' fontSize="1.25">
+
+#### Root
+
+| Field   | Type       | Description                                             |
+| ------- | ---------- | ------------------------------------------------------- |
+| stats   | `Stats`    | Statistics about the request.                           |
+| results | `Result[]` | The best matching images, ordered by good the match is. |
+
+#### Stats
+
+| Field               | Type      | Description                                                                    |
+| ------------------- | --------- | ------------------------------------------------------------------------------ |
+| count               | `integer` | The number of images that got compared.                                        |
+| elapsedMilliseconds | `float`   | The amount of time in milliseconds it took the server to process your request. |
+
+#### Result
+
+| Field     | Type        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| id        | `integer`   | Unique identifier.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| score     | `float`     | A number from 0 to 1 indicating how good of a match the image is. Scores greater than or equal to 0.92 are almost certainly a match. Anything below 0.80 is almost certainly not a match. Scores between 0.80 and 0.92 might indicate an alternative version. Sometimes low scores can also be caused by the submitted image being distorted in a way Fluffle can't correct for. The recommendations around the interpretation of this value might change in the future after a more careful analysis. |
+| platform  | `string`    | The platform (e621, Fur Affinity, etc) to which this image belongs.                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| location  | `string`    | URL at which this image can be viewed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| isSfw     | `boolean`   | Whether or not this image can be considered Safe For Work.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| thumbnail | `Thumbnail` | Tiny version of the scraped image hosted by Fluffle.                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| credits   | `string[]`  | The interpretation of this field is somewhat dependent on the platform from which the image was scraped. For e621, it's based on the artist tags and it's therefore safe to assume this field includes the names of the artist(s) that created the artwork. For all other platforms, it's the name of user that uploaded said image, which might be the artist, a commissioner, etc.                                                                                                                   |
+
+#### Thumbnail
+
+| Field    | Type      | Description                                                                                                                                                                                                                                             |
+| -------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| width    | `integer` | Width of the thumbnail.                                                                                                                                                                                                                                 |
+| centerX  | `integer` | Percentage the image has to shift horizontally for its content to be centered in a square. Works like the <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/object-position" target="_blank" rel="noreferrer">object-position CSS property</a>. |
+| height   | `integer` | Height of the thumbnail.                                                                                                                                                                                                                                |
+| centerY  | `integer` | Same as `CenterX` but vertically.                                                                                                                                                                                                                       |
+| location | `string`  | URL at which the thumbnail can be found.                                                                                                                                                                                                                |
+
+</Accordion>
+
+<hr />
+
+<Response state="danger" code="400" reason="Bad Request" />
+
+The request you sent over to Fluffle is invalid. The response body will tell you what you did wrong and how you can resolve the issue. For example, requesting Fluffle to search for images on a non-existent platform will cause such a response. These errors can always be prevented by properly implementing the API. They are only meant to give guidance to developers.
+
+```json
+{
+  "code": "VALIDATION_FAILED",
+  "message": "One or more validation errors occurred.",
+  "errors": {
+    "platforms": [
+      "Platform with the name 'some platform name' either doesn't exist or is not supported."
+    ]
+  }
+}
+```
+
+<hr />
+
+<Response state="danger" code="400" reason="Bad Request" />
+
+The submitted image its area exceeded the 16MP limit.
+
+```json
+{
+  "code": "AREA_TOO_LARGE",
+  "message": "An informational message for developers."
+}
+```
+
+<hr />
+
+<Response state="danger" code="413" reason="Payload Too Large" />
+
+There are a couple of variations of this response due to Fluffle running behind Cloudflare. You can get a JSON one generated by Fluffle if your image exceed the 4 MiB limit and a HTML one by Cloudflare if you exceed their limit. You shouldn't have to handle this response if you just make sure the image you send over isn't larger than 4 MiB. If you do wish to handle the response, then you should use the status code.
+
+```json
+{
+  "code": "FILE_TOO_LARGE",
+  "message": "An informational message for developers."
+}
+```
+
+<hr />
+
+<Response state="danger" code="415" reason="Unsupported Media Type" />
+
+The image embedded in the request couldn't be processed due to it not being encoded in a supported format. Currently only JPEG and non-animated PNG and WebP are supported. Support for AVIF might be added in a future release.
+
+```json
+{
+  "code": "UNSUPPORTED_FILE_TYPE",
+  "message": "An informational message for developers."
+}
+```
+
+<hr />
+
+<Response state="danger" code="422" reason="Unprocessable Entity" />
+
+The image embedded in the request got recognized as being encoded in a supported format, but it couldn't be read in said format. Therefore, the image couldn't be processed and is deemed corrupt.
+
+```json
+{
+  "code": "CORRUPT_FILE",
+  "message": "An informational message for developers."
+}
+```
+
+<hr />
+
+<Response state="danger" code="500" reason="Internal Server Error" />
+
+Something unexpected happened which made the server unable to fulfil the request. The response will contain a so-called trace ID which may prove useful when trying to determine the root cause of the error. You may choose to <Link to="/contact/">contact the grumpy folf</Link> - don’t worry, I won’t bite - who made Fluffle so that the issue can be solved. Please make sure you can provide the trace ID sent along with the request if you choose to do so!
+
+```json
+{
+  "code": "KABOOM",
+  "message": "Now you have become death, the destroyer of applications.",
+  "traceId": "12345678-01"
+}
+```
+
+<hr />
+
+<Response state="warning" code="503" reason="Service Unavailable" />
+
+Fluffle is unable to fulfil your request at this moment. This can be the case due to a variety of reasons. One being for example that the server assigned to process your request has restarted (unexpectedly) and is still getting ready. It should be noted that this response is extremely rare as downtime is limited as much as possible, of course. It is worth retrying the request after some time as it will succeed eventually. You should consider waiting at least 10 seconds before giving it another shot.
+
+```json
+{
+  "code": "UNAVAILABLE",
+  "message": "An informational message for developers."
+}
+```
+
+<hr />
+
+<Response state="warning" code="5xx" reason="Cloudflare" />
+
+Due to Fluffle running behind Cloudflare, there are various other status codes you might want to deal with. A complete list of status codes used by Cloudflare can be found on their support page. It's a good idea to treat the 502, 504, 521, 522, 523 and 524 status codes as transient errors (and are therefore worth retrying), just like 503 responses. Keep in mind that Cloudflare doesn't give you a JSON response.

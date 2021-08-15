@@ -15,12 +15,22 @@ namespace Noppes.Fluffle.Search.Api.Services
 
         private const string CorruptImageCode = "CORRUPT_FILE";
 
+        private const string FileTooLargeCode = "FILE_TOO_LARGE";
+
+        private const string AreaTooLargeCode = "AREA_TOO_LARGE";
+
         public static SE UnsupportedFileType() => new(UnsupportedFileTypeCode, HttpStatusCode.UnsupportedMediaType,
             "The type of the submitted file isn't supported. Only JPEG, PNG and WebP are. " +
-            "If you're getting this error even though the image seems te be a valid, check if the image is properly encoded.");
+            "If you're getting this error even though the image seems te be valid, check if the image is properly encoded.");
 
         public static SE CorruptImage() => new(CorruptImageCode, HttpStatusCode.UnprocessableEntity,
             "The submitted file couldn't be read by Fluffle. This likely means it's corrupt.");
+
+        public static SE FileTooLarge(long length) => new(FileTooLargeCode, HttpStatusCode.RequestEntityTooLarge,
+            $"The submitted file has a size of {length} bytes while the maximum allowed size is {SearchModelValidator.SizeMax} bytes (4 MiB).");
+
+        public static SE AreaTooLarge(int area) => new(AreaTooLargeCode, HttpStatusCode.BadRequest,
+            $"The submitted image has an area (width * height) of {area} pixels while the maximum allowed area is {SearchModelValidator.AreaMax} pixels.");
     }
 
     public interface ISearchService
