@@ -45,20 +45,25 @@ namespace Noppes.Fluffle.FurAffinity
             var response = await Request(submission.ViewLocation.AbsolutePath)
                 .GetHtmlAsync();
 
-            // Submission removed by owner
-            if (response.DocumentNode.InnerText.Contains("The page you are trying to reach has been deactivated by the owner."))
-                return null;
+            var containsSubmission = response.GetElementbyId("submission_page") != null;
+            if (!containsSubmission)
+            {
+                // FA doesn't return a 404 response
+                if (response.DocumentNode.InnerText.Contains("The submission you are trying to find is not in our database."))
+                    return null;
 
-            // Submission marked for deletion by owner
-            if (response.DocumentNode.InnerText.Contains("The page you are trying to reach is currently pending deletion by a request from its owner."))
-                return null;
+                // Submission removed by owner
+                if (response.DocumentNode.InnerText.Contains("The page you are trying to reach has been deactivated by the owner."))
+                    return null;
 
-            // FA doesn't return a 404 response
-            if (response.DocumentNode.InnerText.Contains("The submission you are trying to find is not in our database."))
-                return null;
+                // Submission marked for deletion by owner, the administration, or possibly another entity
+                if (response.DocumentNode.InnerText.Contains("The page you are trying to reach is currently pending deletion by a request from"))
+                    return null;
 
-            if (!HasLogin(response))
-                throw new InvalidOperationException();
+                throw new InvalidOperationException($"Submission with ID {submissionId} didn't contain a submission and also not a known error.");
+            }
+
+            ValidateLogin(response);
 
             var submissionContent = response.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-content')]");
             var sidebar = response.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-sidebar')]");
@@ -170,9 +175,7 @@ namespace Noppes.Fluffle.FurAffinity
         {
             url += $"/{page}";
             var response = await Request(url).GetHtmlAsync();
-
-            if (!HasLogin(response))
-                throw new InvalidOperationException();
+            ValidateLogin(response);
 
             var noticeMessage = response.DocumentNode.SelectSingleNode("//section[contains(@class, 'notice-message')]");
             if (noticeMessage != null && noticeMessage.InnerText.Contains("has voluntarily disabled access to their account"))
@@ -251,9 +254,7 @@ namespace Noppes.Fluffle.FurAffinity
         public async Task<int> GetMostRecentSubmissionId()
         {
             var response = await Request().GetHtmlAsync();
-
-            if (!HasLogin(response))
-                throw new InvalidOperationException();
+            ValidateLogin(response);
 
             var node = response.GetElementbyId("gallery-frontpage-submissions");
             var latestSubmission = node.ChildNodes.First(cn => cn.Name == "figure");
@@ -262,12 +263,15 @@ namespace Noppes.Fluffle.FurAffinity
             return int.Parse(submissionId);
         }
 
-        public static bool HasLogin(HtmlDocument htmlDocument)
+        public static void ValidateLogin(HtmlDocument htmlDocument)
         {
             var navbar = htmlDocument.DocumentNode.SelectSingleNode("//ul[contains(@class, 'navhideonmobile')]");
             var loginControls = navbar.SelectSingleNode("./li[contains(@class, 'no-sub')]");
 
-            return loginControls == null;
+            if (loginControls == null)
+                return;
+
+            throw new InvalidOperationException();
         }
 
         private static FaOnlineStats ExtractOnlineStats(HtmlDocument document)
