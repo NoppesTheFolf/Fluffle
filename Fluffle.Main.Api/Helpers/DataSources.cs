@@ -27,7 +27,7 @@ namespace Noppes.Fluffle.Main.Api.Helpers
                 PlatformConstant.FurAffinity => new Platform
                 {
                     Name = "Fur Affinity",
-                    EstimatedContentCount = 30_000_000,
+                    EstimatedContentCount = 25_000_000,
                     HomeLocation = "https://www.furaffinity.net"
                 },
                 _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
