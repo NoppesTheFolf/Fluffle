@@ -5,13 +5,13 @@ import Icon from './icon';
 
 const GalleryCard = ({ data }: { data: SearchResultItem }) => {
     return (
-        <a className="square w-1/2 sm:w-1/3 md:w-1/4 p-1 block relative" href={data.location} target="_blank" rel="noreferrer">
+        <a className="square w-1/2 sm:w-1/3 md:w-1/4 p-1 block relative force-light-100" href={data.location} target="_blank" rel="noreferrer">
             <div className="absolute left-0 top-0 w-full h-full p-inherit">
                 <div className="relative w-full h-full rounded overflow-hidden">
                     <div className={`absolute top-0 left-0 w-7 p-0.5 bg-gradient-${data.match.class} rounded-tl rounded-br z-10`}>
                         <Icon name={data.platform} />
                     </div>
-                    <div className="absolute bottom-0 w-full whitespace-nowrap overflow-hidden overflow-ellipsis p-1 bg-black bg-opacity-80 text-xs text-light-100 z-10">
+                    <div className="absolute bottom-0 w-full whitespace-nowrap overflow-hidden overflow-ellipsis p-1 bg-black bg-opacity-80 text-xs z-10">
                         By <span className="font-semibold">{data.credits.join(" & ")}</span>
                     </div>
                     <div className="absolute top-0 left-0 w-full h-full">

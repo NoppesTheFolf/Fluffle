@@ -8,7 +8,7 @@ const GalleryDesktopCard = ({ image, shouldBlur }: { image: GalleryRowImage<Sear
     const [hasHover, setHasHover] = React.useState(false);
 
     return (
-        <a href={image.data.location} rel="noreferrer" target="_blank" onMouseEnter={() => setHasHover(true)} onMouseLeave={() => setHasHover(false)} className="relative text-light-100 hover:text-light-100 rounded overflow-hidden select-none" style={{ width: image.width, height: image.height }}>
+        <a href={image.data.location} rel="noreferrer" target="_blank" onMouseEnter={() => setHasHover(true)} onMouseLeave={() => setHasHover(false)} className="relative rounded overflow-hidden select-none force-light-100" style={{ width: image.width, height: image.height }}>
             <div className={`absolute shadow px-1 py-0.5 flex items-center gap-1 bg-gradient-${image.data.match.class} rounded-tl rounded-br z-20`}>
                 <span className="w-6">
                     <Icon name={image.data.platform} />

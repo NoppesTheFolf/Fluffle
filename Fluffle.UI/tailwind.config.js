@@ -77,7 +77,8 @@ module.exports = {
   },
   variants: {
     extend: {
-      fill: ['hover']
+      textColor: ['visited'],
+      fill: ['hover', 'visited']
     },
   },
   plugins: [
