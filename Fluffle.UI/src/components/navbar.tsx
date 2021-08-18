@@ -21,7 +21,7 @@ const Navbar = () => {
                 <span className="block text-xl">Fluffle</span>
             </Link>
             <nav>
-                <div className="flex flex-wrap gap-x-2 md:gap-x-3 lg:gap-x-8">
+                <div className="flex flex-wrap space-x-2 md:space-x-3 lg:space-x-8">
                     <NavbarItem href="/" icon="youtube-searched-for">Reverse search</NavbarItem>
                     <NavbarItem href="/about/" icon="info">About</NavbarItem>
                     {/* <NavbarItem href="/status/" icon="dns">Status</NavbarItem> */}

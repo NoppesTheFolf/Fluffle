@@ -88,13 +88,13 @@ const Status = ({ status }) => {
     }
 
     return (
-        <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-6 w-full max-w-4xl bg-dark-300 rounded p-3 lg:p-8">
-            <div className="flex-grow flex flex-col justify-center items-center gap-y-6">
-                <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-6">
+        <div className="flex flex-wrap justify-center items-center space-x-0 md:space-x-6 space-y-6 w-full max-w-4xl bg-dark-300 rounded p-3 lg:p-8">
+            <div className="flex-grow flex flex-col justify-center items-center space-y-6">
+                <div className="flex flex-wrap justify-center items-center space-x-6 space-y-6">
                     <div className="w-32 fill-light-100">
                         <Icon name={status.name} />
                     </div>
-                    <div className="sm:flex-grow flex flex-col gap-2 sm:whitespace-nowrap text-sm lg:text-base">
+                    <div className="sm:flex-grow flex flex-col space-y-2 sm:whitespace-nowrap text-sm lg:text-base">
                         {!status.isComplete &&
                             <span>Estimated number of images: {status.estimatedCount.toLocaleString()}</span>
                         }
@@ -135,7 +135,7 @@ const StatusPage = () => {
                 </div>
             }
             {status != null &&
-                <div className="flex flex-wrap items-center gap-3 justify-center">
+                <div className="flex flex-wrap items-center space-y-3 justify-center">
                     {status.map(status =>
                         <Status key={status.name} status={status} />
                     )}

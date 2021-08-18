@@ -9,7 +9,7 @@ const GalleryDesktopCard = ({ image, shouldBlur }: { image: GalleryRowImage<Sear
 
     return (
         <a href={image.data.location} rel="noreferrer" target="_blank" onMouseEnter={() => setHasHover(true)} onMouseLeave={() => setHasHover(false)} className="relative rounded overflow-hidden select-none force-light-100" style={{ width: image.width, height: image.height }}>
-            <div className={`absolute shadow px-1 py-0.5 flex items-center gap-1 bg-gradient-${image.data.match.class} rounded-tl rounded-br z-20`}>
+            <div className={`absolute shadow px-1 py-0.5 flex items-center space-x-1 bg-gradient-${image.data.match.class} rounded-tl rounded-br z-20`}>
                 <span className="w-6">
                     <Icon name={image.data.platform} />
                 </span>
@@ -69,9 +69,9 @@ const GalleryDesktop = ({ data, width, targetHeight, maximumHeight, shouldBlur }
     }
 
     return (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col space-y-3">
             {render != null && render.map(row => (
-                <div key={row.images.map(i => i.data.id).join("-")} className={`flex ${row.couldFit ? "justify-between" : "justify-start gap-3"}`}>
+                <div key={row.images.map(i => i.data.id).join("-")} className={`flex ${row.couldFit ? "justify-between" : "justify-start space-x-3"}`}>
                     {row.images.map(image => (
                         <GalleryDesktopCard key={image.data.id} image={image} shouldBlur={shouldBlur} />
                     ))}
@@ -100,8 +100,8 @@ const SearchResultDesktop = ({ data }: { data: SearchResult }) => {
     }, []);
 
     return (
-        <div className="hidden lg:flex flex-col gap-6" ref={containerRef}>
-            <div className="flex justify-center items-center gap-3">
+        <div className="hidden lg:flex flex-col space-y-6" ref={containerRef}>
+            <div className="flex justify-center items-center space-x-3">
                 <img className="rounded" src={data.parameters.imageUrl} style={{ maxWidth: "50%", height: "100%", maxHeight: "300px" }} />
                 <div className="max-w-xl">
                     <div className="text-muted">
@@ -121,9 +121,9 @@ const SearchResultDesktop = ({ data }: { data: SearchResult }) => {
                 <GalleryDesktop shouldBlur={false} data={data.probableResults} width={width} targetHeight={250} maximumHeight={250} />
             }
             {width != 0 && data.improbableResults.length > 0 &&
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-1.5">
-                        <button className="btn btn-sm btn-secondary gap-1" style={{ lineHeight: 1 }} onClick={() => setHideImprobable(!hideImprobable)}>
+                <div className="flex flex-col space-y-2">
+                    <div className="flex items-center space-x-1.5">
+                        <button className="btn btn-sm btn-secondary space-x-1" style={{ lineHeight: 1 }} onClick={() => setHideImprobable(!hideImprobable)}>
                             <span>
                                 <Icon name={hideImprobable ? "visibility" : "visibility_off"} />
                             </span>
