@@ -5,6 +5,7 @@ using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.Mapping;
 using Noppes.Fluffle.Api.Services;
 using Noppes.Fluffle.Constants;
+using Noppes.Fluffle.Database;
 using Noppes.Fluffle.Database.Synchronization;
 using Noppes.Fluffle.Main.Api.Helpers;
 using Noppes.Fluffle.Main.Communication;
@@ -165,12 +166,23 @@ namespace Noppes.Fluffle.Main.Api.Services
         {
             return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
-                // Substitute null values for empty collections as those are easier to work with
+                // Clean up the submitted models
                 foreach (var contentModel in contentModels)
                 {
+                    // Substitute null values for empty collections as those are easier to work with
                     contentModel.CreditableEntities ??= new List<PutContentModel.CreditableEntityModel>();
                     contentModel.Files ??= new List<PutContentModel.FileModel>();
                     contentModel.Tags ??= new List<string>();
+
+                    // Remove NULL characters from user provided data as PostgreSQL does not support it
+                    contentModel.Title = contentModel.Title.RemoveNullChar();
+                    contentModel.Description = contentModel.Description.RemoveNullChar();
+                    contentModel.Tags = contentModel.Tags.Select(t => t.RemoveNullChar()).ToList();
+                    foreach (var creditableEntity in contentModel.CreditableEntities)
+                    {
+                        creditableEntity.Id = creditableEntity.Id.RemoveNullChar();
+                        creditableEntity.Name = creditableEntity.Name.RemoveNullChar();
+                    }
                 }
 
                 // We'll mark it as deleted at a later time to prevent saving these changes before
