@@ -175,8 +175,8 @@ namespace Noppes.Fluffle.Main.Api.Services
                     contentModel.Tags ??= new List<string>();
 
                     // Remove NULL characters from user provided data as PostgreSQL does not support it
-                    contentModel.Title = contentModel.Title.RemoveNullChar();
-                    contentModel.Description = contentModel.Description.RemoveNullChar();
+                    contentModel.Title = contentModel.Title?.RemoveNullChar();
+                    contentModel.Description = contentModel.Description?.RemoveNullChar();
                     contentModel.Tags = contentModel.Tags.Select(t => t.RemoveNullChar()).ToList();
                     foreach (var creditableEntity in contentModel.CreditableEntities)
                     {
