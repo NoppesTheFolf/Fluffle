@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Helmet } from 'react-helmet'
 import Api from '../services/api'
 import Layout from '../components/layout'
 import Loader from '../components/loader'
@@ -129,6 +130,9 @@ const StatusPage = () => {
 
     return (
         <Layout center={true} title="Status">
+            <Helmet>
+                <meta name="description" content="Information about the indexing progress Fluffle has made."></meta>
+            </Helmet>
             {status == null &&
                 <div className="w-full flex justify-center items-center">
                     <Loader />

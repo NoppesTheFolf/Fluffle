@@ -3,7 +3,6 @@ import { Helmet } from 'react-helmet'
 import classNames from 'classnames'
 import Navbar from './navbar'
 import NavbarMobile from './navbar-mobile'
-import { MDXProvider } from "@mdx-js/react"
 
 export const LayoutWidth = {
     '2xl': 'sm:max-w-2xl',
