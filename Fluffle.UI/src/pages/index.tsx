@@ -171,8 +171,8 @@ const SearchPage = () => {
             <div className="w-full flex flex-col items-center space-y-12">
                 <div className="flex flex-col justify-center items-center">
                     <div className="mb-4 flex justify-center w-auto">
-                        <Link to="/">
-                            <Banner></Banner>
+                        <Link className="flex justify-center sm:block" to="/">
+                            <Banner />
                             <span className="absolute text-muted uppercase hidden sm:inline">
                                 {process.env.VERSION}
                             </span>
