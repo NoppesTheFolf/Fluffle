@@ -41,8 +41,9 @@ namespace Noppes.Fluffle.E621Sync
         {
             await foreach (var (posts, afterId, maxId) in EnumeratePostsAsync(startId))
             {
+                // Getting posts approved might take a while. We'll index it anyway if it has more than three upvotes.
                 var approvedPosts = posts
-                    .Where(p => !p.Flags.IsPending && !p.Flags.IsDeleted)
+                    .Where(p => (!p.Flags.IsPending || p.Score.Total >= 3) && !p.Flags.IsDeleted)
                     .ToList();
 
                 await SubmitContentAsync(approvedPosts);
