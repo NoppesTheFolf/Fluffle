@@ -15,8 +15,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="FluentValidation" Version="10.3.0" />
-		<PackageReference Include="FluentValidation.AspNetCore" Version="10.3.0" />
+		<PackageReference Include="FluentValidation" Version="10.3.3" />
+		<PackageReference Include="FluentValidation.AspNetCore" Version="10.3.3" />
 		<PackageReference Include="Humanizer.Core" Version="2.11.10" />
 		<PackageReference Include="MessagePack.AspNetCoreMvcFormatter" Version="2.3.75" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
