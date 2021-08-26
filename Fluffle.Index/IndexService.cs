@@ -22,8 +22,6 @@ namespace Noppes.Fluffle.Index
 {
     public class IndexService : Service.Service
     {
-        private const string UserAgent = "fluffle-index";
-
         private IndexConfiguration Configuration { get; set; }
         private Dictionary<PlatformConstant, (DownloadClient client, IndexConfiguration.ClientConfiguration configuration)> DownloadClients { get; set; }
 
@@ -65,9 +63,9 @@ namespace Noppes.Fluffle.Index
 
             var fluffleClient = Services.GetRequiredService<FluffleClient>();
 
-            var e621Client = await new E621ClientFactory(configuration).CreateAsync(UserAgent, Configuration.E621.Interval);
-            var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(UserAgent, Configuration.FurryNetwork.Interval);
-            var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(UserAgent, Configuration.FurAffinity.Interval);
+            var e621Client = await new E621ClientFactory(configuration).CreateAsync(Configuration.E621.Interval);
+            var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(Configuration.FurryNetwork.Interval);
+            var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(Configuration.FurAffinity.Interval);
             DownloadClients = new Dictionary<PlatformConstant, (DownloadClient, IndexConfiguration.ClientConfiguration)>
             {
                 { PlatformConstant.E621, (new E621DownloadClient(e621Client), Configuration.E621) },

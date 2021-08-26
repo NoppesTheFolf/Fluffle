@@ -42,11 +42,7 @@ namespace Noppes.Fluffle.Main.Api
             services.AddSingleton(bucket);
 
             var faConf = Configuration.Get<FurAffinityConfiguration>();
-            var contactConf = Configuration.Get<ContactConfiguration>();
-            var faClient = new FurAffinityClient(
-                "https://www.furaffinity.net",
-                $"fluffle-main/{Project.Version} (by {contactConf.Username} at {contactConf.Platform})",
-                faConf.A, faConf.B);
+            var faClient = new FurAffinityClient("https://www.furaffinity.net", Project.UserAgent, faConf.A, faConf.B);
             services.AddSingleton(faClient);
 
             services.AddSingleton(Configuration);

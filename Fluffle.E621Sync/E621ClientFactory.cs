@@ -16,20 +16,18 @@ namespace Noppes.Fluffle.E621Sync
         {
         }
 
-        public override async Task<IE621Client> CreateAsync(string productName, int interval)
+        public override async Task<IE621Client> CreateAsync(int interval)
         {
-            var contactConfiguration = Configuration.Get<ContactConfiguration>();
-            var e621Configuration = Configuration.Get<E621Configuration>();
+            var conf = Configuration.Get<E621Configuration>();
 
             var e621Client = new E621ClientBuilder()
-                .WithUserAgent(productName, Project.Version, contactConfiguration.Username, contactConfiguration.Platform)
+                .WithUserAgent(Project.UserAgentBase, Project.Version, Project.DeveloperUsername, Project.DeveloperUrl)
                 .WithBaseUrl(Imageboard.E621)
                 .WithMaximumConnections(1)
                 .WithRequestInterval(interval.Milliseconds())
                 .Build();
 
-            var loginSuccess = await HttpResiliency.RunAsync(() =>
-                e621Client.LogInAsync(e621Configuration.Username, e621Configuration.ApiKey));
+            var loginSuccess = await HttpResiliency.RunAsync(() => e621Client.LogInAsync(conf.Username, conf.ApiKey));
 
             if (!loginSuccess)
             {

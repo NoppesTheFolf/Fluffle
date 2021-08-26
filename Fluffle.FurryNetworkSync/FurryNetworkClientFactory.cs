@@ -14,12 +14,11 @@ namespace Noppes.Fluffle.FurryNetworkSync
         {
         }
 
-        public override Task<FurryNetworkClient> CreateAsync(string productName, int interval)
+        public override Task<FurryNetworkClient> CreateAsync(int interval)
         {
             var conf = Configuration.Get<FurryNetworkConfiguration>();
-            var contactConf = Configuration.Get<ContactConfiguration>();
-            var client = new FurryNetworkClient(BaseUrl, conf.Token,
-                $"{productName}/{Project.Version} (by {contactConf.Username} at {contactConf.Platform})", interval.Milliseconds());
+
+            var client = new FurryNetworkClient(BaseUrl, conf.Token, Project.UserAgent, interval.Milliseconds());
 
             return Task.FromResult(client);
         }

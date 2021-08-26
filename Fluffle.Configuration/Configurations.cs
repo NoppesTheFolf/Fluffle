@@ -110,29 +110,6 @@ namespace Noppes.Fluffle.Configuration
     }
 
     /// <summary>
-    /// Contact information which is sent along with requests to certain APIs.
-    /// </summary>
-    [ConfigurationSection("Contact")]
-    public class ContactConfiguration : FluffleConfigurationPart<ContactConfiguration>
-    {
-        /// <summary>
-        /// The username on the specified <see cref="Platform"/>.
-        /// </summary>
-        public string Username { get; set; }
-
-        /// <summary>
-        /// The platform on which you can be found.
-        /// </summary>
-        public string Platform { get; set; }
-
-        public ContactConfiguration()
-        {
-            RuleFor(o => o.Username).NotEmpty();
-            RuleFor(o => o.Platform).NotEmpty();
-        }
-    }
-
-    /// <summary>
     /// Configuration regarding blacklisted tags.
     /// </summary>
     [ConfigurationSection("Blacklist")]
