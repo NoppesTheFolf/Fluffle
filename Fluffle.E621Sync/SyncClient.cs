@@ -14,7 +14,7 @@ namespace Noppes.Fluffle.E621Sync
         private static void Main(string[] args) => Run(args, "e621", (configuration, services) =>
         {
             var e621Client = new E621ClientFactory(configuration)
-                .CreateAsync("fluffle-e621sync").Result;
+                .CreateAsync("fluffle-e621sync", 1000).Result;
 
             services.AddSingleton(e621Client);
         });

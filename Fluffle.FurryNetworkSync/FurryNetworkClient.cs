@@ -20,7 +20,7 @@ namespace Noppes.Fluffle.FurryNetworkSync
         private readonly string _userAgent;
         private readonly AsyncLock _authMutex;
         private string _bearerToken;
-        private string _refreshToken;
+        private readonly string _refreshToken;
         private DateTimeOffset _refreshAt;
 
         public FurryNetworkClient(string baseUrl, string refreshToken, string userAgent, TimeSpan? interval = null) : base(baseUrl)

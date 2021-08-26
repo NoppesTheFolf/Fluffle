@@ -12,6 +12,6 @@ namespace Noppes.Fluffle.Sync
             Configuration = configuration;
         }
 
-        public abstract Task<TClient> CreateAsync(string productName);
+        public abstract Task<TClient> CreateAsync(string productName, int interval);
     }
 }

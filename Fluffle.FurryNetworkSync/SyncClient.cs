@@ -13,7 +13,7 @@ namespace Noppes.Fluffle.FurryNetworkSync
         private static void Main(string[] args) => Run(args, "Furry Network", (configuration, services) =>
         {
             var client = new FurryNetworkClientFactory(configuration)
-                .CreateAsync("fluffle-furry-network-sync").Result;
+                .CreateAsync("fluffle-furry-network-sync", 2000).Result;
 
             services.AddSingleton(client);
         });

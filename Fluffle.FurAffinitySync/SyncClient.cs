@@ -14,7 +14,7 @@ namespace Noppes.Fluffle.FurAffinitySync
         private static void Main(string[] args) => Run(args, "Fur Affinity", (configuration, services) =>
         {
             var client = new FurAffinityClientFactory(configuration)
-                .CreateAsync("fluffle-fur-affinity-sync").Result;
+                .CreateAsync("fluffle-fur-affinity-sync", 500).Result;
 
             services.AddSingleton(client);
         });

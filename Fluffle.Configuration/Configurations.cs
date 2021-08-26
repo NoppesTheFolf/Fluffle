@@ -219,6 +219,75 @@ namespace Noppes.Fluffle.Configuration
     }
 
     /// <summary>
+    /// Configuration regarding indexing client.
+    /// </summary>
+    [ConfigurationSection("Index")]
+    public class IndexConfiguration : FluffleConfigurationPart<IndexConfiguration>
+    {
+        public class ProducerConfiguration : AbstractValidator<ProducerConfiguration>
+        {
+            public int Threads { get; set; }
+
+            public ProducerConfiguration()
+            {
+                RuleFor(o => o.Threads).GreaterThanOrEqualTo(1);
+            }
+        }
+
+        public class ConsumerConfiguration : AbstractValidator<ConsumerConfiguration>
+        {
+            public int Threads { get; set; }
+
+            public int Buffer { get; set; }
+
+            public ConsumerConfiguration()
+            {
+                RuleFor(o => o.Threads).GreaterThanOrEqualTo(1);
+                RuleFor(o => o.Buffer).GreaterThanOrEqualTo(1);
+            }
+        }
+
+        public class ClientConfiguration : AbstractValidator<ClientConfiguration>
+        {
+            public int Threads { get; set; }
+
+            public int Interval { get; set; }
+
+            public ClientConfiguration()
+            {
+                RuleFor(o => o.Threads).GreaterThanOrEqualTo(1);
+                RuleFor(o => o.Interval).GreaterThanOrEqualTo(0);
+            }
+        }
+
+        public ConsumerConfiguration ImageHasher { get; set; }
+
+        public ConsumerConfiguration Thumbnailer { get; set; }
+
+        public ConsumerConfiguration ThumbnailPublisher { get; set; }
+
+        public ProducerConfiguration IndexPublisher { get; set; }
+
+        public ClientConfiguration E621 { get; set; }
+
+        public ClientConfiguration FurryNetwork { get; set; }
+
+        public ClientConfiguration FurAffinity { get; set; }
+
+        public IndexConfiguration()
+        {
+            RuleFor(o => o.ImageHasher).NotEmpty().SetValidator(o => o.ImageHasher);
+            RuleFor(o => o.Thumbnailer).NotEmpty().SetValidator(o => o.Thumbnailer);
+            RuleFor(o => o.ThumbnailPublisher).NotEmpty().SetValidator(o => o.ThumbnailPublisher);
+            RuleFor(o => o.IndexPublisher).NotEmpty().SetValidator(o => o.IndexPublisher);
+
+            RuleFor(o => o.E621).NotEmpty().SetValidator(o => o.E621);
+            RuleFor(o => o.FurryNetwork).NotEmpty().SetValidator(o => o.FurryNetwork);
+            RuleFor(o => o.FurAffinity).NotEmpty().SetValidator(o => o.FurAffinity);
+        }
+    }
+
+    /// <summary>
     /// Configuration regarding the main server as a client.
     /// </summary>
     [ConfigurationSection("Main")]

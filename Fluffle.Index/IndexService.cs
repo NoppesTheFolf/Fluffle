@@ -15,7 +15,6 @@ using Noppes.Fluffle.Utils;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,7 +24,8 @@ namespace Noppes.Fluffle.Index
     {
         private const string UserAgent = "fluffle-index";
 
-        private Dictionary<PlatformConstant, DownloadClient> DownloadClients { get; set; }
+        private IndexConfiguration Configuration { get; set; }
+        private Dictionary<PlatformConstant, (DownloadClient client, IndexConfiguration.ClientConfiguration configuration)> DownloadClients { get; set; }
 
         public IndexService(IServiceProvider services) : base(services)
         {
@@ -61,16 +61,18 @@ namespace Noppes.Fluffle.Index
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
             var configuration = Services.GetRequiredService<FluffleConfiguration>();
+            Configuration = configuration.Get<IndexConfiguration>();
+
             var fluffleClient = Services.GetRequiredService<FluffleClient>();
 
-            var e621Client = await new E621ClientFactory(configuration).CreateAsync(UserAgent);
-            var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(UserAgent);
-            var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(UserAgent);
-            DownloadClients = new Dictionary<PlatformConstant, DownloadClient>
+            var e621Client = await new E621ClientFactory(configuration).CreateAsync(UserAgent, Configuration.E621.Interval);
+            var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(UserAgent, Configuration.FurryNetwork.Interval);
+            var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(UserAgent, Configuration.FurAffinity.Interval);
+            DownloadClients = new Dictionary<PlatformConstant, (DownloadClient, IndexConfiguration.ClientConfiguration)>
             {
-                { PlatformConstant.E621, new E621DownloadClient(e621Client) },
-                { PlatformConstant.FurryNetwork, new FurryNetworkDownloadClient(furryNetworkClient) },
-                { PlatformConstant.FurAffinity, new FurAffinityDownloadClient(furAffinityClient, fluffleClient, Environment) }
+                { PlatformConstant.E621, (new E621DownloadClient(e621Client), Configuration.E621) },
+                { PlatformConstant.FurryNetwork, (new FurryNetworkDownloadClient(furryNetworkClient), Configuration.FurryNetwork) },
+                { PlatformConstant.FurAffinity, (new FurAffinityDownloadClient(furAffinityClient, fluffleClient, Environment), Configuration.FurAffinity) }
             };
 
             await base.StartAsync(cancellationToken);
@@ -92,20 +94,20 @@ namespace Noppes.Fluffle.Index
             foreach (var platform in platforms)
             {
                 var sourceConstant = (PlatformConstant)platform.Id;
-                if (!DownloadClients.TryGetValue(sourceConstant, out var downloadClient))
+                if (!DownloadClients.TryGetValue(sourceConstant, out var x))
                 {
                     Log.Warning("There exists no download client for {platformName}.", platform.Name);
                     continue;
                 }
 
                 Log.Information("[{platformName}] Starting indexing...", platform.Name);
-                manager.AddProducer(1, () => new ImageDownloader(fluffleClient, platform, downloadClient));
+                manager.AddProducer(x.configuration.Threads, () => new ImageDownloader(fluffleClient, platform, x.client));
             }
 
-            manager.AddConsumer<ImageHasher>(2, 20);
-            manager.AddConsumer<Thumbnailer>(2, 20);
-            manager.AddConsumer<ThumbnailPublisher>(8, 20);
-            manager.AddFinalConsumer<IndexPublisher>(8);
+            manager.AddConsumer<ImageHasher>(Configuration.ImageHasher.Threads, Configuration.ImageHasher.Buffer);
+            manager.AddConsumer<Thumbnailer>(Configuration.Thumbnailer.Threads, Configuration.Thumbnailer.Buffer);
+            manager.AddConsumer<ThumbnailPublisher>(Configuration.ThumbnailPublisher.Threads, Configuration.ThumbnailPublisher.Buffer);
+            manager.AddFinalConsumer<IndexPublisher>(Configuration.IndexPublisher.Threads);
 
             await manager.RunAsync();
         }

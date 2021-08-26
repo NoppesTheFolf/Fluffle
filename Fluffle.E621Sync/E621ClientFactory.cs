@@ -1,11 +1,12 @@
-﻿using Noppes.E621;
+﻿using Humanizer;
+using Noppes.E621;
 using Noppes.Fluffle.Configuration;
+using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Sync;
 using Serilog;
 using System;
 using System.Threading.Tasks;
-using Noppes.Fluffle.Constants;
 
 namespace Noppes.Fluffle.E621Sync
 {
@@ -15,7 +16,7 @@ namespace Noppes.Fluffle.E621Sync
         {
         }
 
-        public override async Task<IE621Client> CreateAsync(string productName)
+        public override async Task<IE621Client> CreateAsync(string productName, int interval)
         {
             var contactConfiguration = Configuration.Get<ContactConfiguration>();
             var e621Configuration = Configuration.Get<E621Configuration>();
@@ -24,7 +25,7 @@ namespace Noppes.Fluffle.E621Sync
                 .WithUserAgent(productName, Project.Version, contactConfiguration.Username, contactConfiguration.Platform)
                 .WithBaseUrl(Imageboard.E621)
                 .WithMaximumConnections(1)
-                .WithRequestInterval(E621Constants.RecommendedRequestInterval)
+                .WithRequestInterval(interval.Milliseconds())
                 .Build();
 
             var loginSuccess = await HttpResiliency.RunAsync(() =>

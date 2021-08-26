@@ -14,7 +14,7 @@ namespace Noppes.Fluffle.FurAffinitySync
         {
         }
 
-        public override Task<FurAffinityClient> CreateAsync(string productName)
+        public override Task<FurAffinityClient> CreateAsync(string productName, int interval)
         {
             var faConf = Configuration.Get<FurAffinityConfiguration>();
             var contactConf = Configuration.Get<ContactConfiguration>();
@@ -23,7 +23,7 @@ namespace Noppes.Fluffle.FurAffinitySync
                 "https://www.furaffinity.net",
                 $"{productName}/{Project.Version} (by {contactConf.Username} at {contactConf.Platform})",
                 faConf.A, faConf.B);
-            client.AddInterceptor(new RequestRateLimiter(500.Milliseconds()));
+            client.AddInterceptor(new RequestRateLimiter(interval.Milliseconds()));
 
             return Task.FromResult(client);
         }
