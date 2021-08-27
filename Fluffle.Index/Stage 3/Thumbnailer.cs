@@ -21,6 +21,9 @@ namespace Noppes.Fluffle.Index
 
         public override Task<ChannelImage> ConsumeAsync(ChannelImage image)
         {
+            // Thumbnailing will never fail. The same functionality is used by the hasher and if the
+            // image is corrupt or something similar, it will already have crashed while trying to
+            // calculate the hash.
             Thumbnail CreateThumbnail(ThumbnailTemplate template)
             {
                 using (Operation.Time("[{platformName}, {idOnPlatform}, 3/5] Created {imageType} thumbnail with quality {quality} and size {size}",
