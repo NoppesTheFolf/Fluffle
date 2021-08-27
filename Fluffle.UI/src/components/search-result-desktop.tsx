@@ -17,7 +17,8 @@ const GalleryDesktopCard = ({ image, shouldBlur }: { image: GalleryRowImage<Sear
             </div>
             <div className={`absolute w-full h-full bg-black transition-colors z-10 ${hasHover ? 'bg-opacity-20' : 'bg-opacity-0'}`}></div>
             <div className={`absolute bottom-0 w-full px-1 py-1.5 whitespace-nowrap overflow-hidden overflow-ellipsis transition-opacity bg-black bg-opacity-80 text-xs z-20 opacity-0 ${hasHover ? 'opacity-100' : ''}`}>
-                By <span className="font-semibold">{image.data.credits.join(" & ")}</span>
+                {image.data.credits && <span>By <span className="font-semibold">{image.data.credits}</span></span>}
+                {!image.data.credits && <span className="font-semibold">Unknown artist</span>}
             </div>
             <GalleryThumbnail thumbnail={image.data.thumbnail} hasBlur={shouldBlur && !hasHover} />
         </a>

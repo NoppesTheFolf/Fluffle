@@ -33,7 +33,8 @@ const GalleryCard = ({ data, enableBlur, onClick, seq }: { data: SearchResultIte
                         <Icon name={data.platform} />
                     </div>
                     <div className={`absolute transition-opacity bottom-0 w-full whitespace-nowrap overflow-hidden overflow-ellipsis p-1 bg-black bg-opacity-80 text-xs z-10 opacity-0 ${hasBlur ? '' : 'opacity-100'}`}>
-                        By <span className="font-semibold">{data.credits.join(" & ")}</span>
+                        {data.credits && <span>By <span className="font-semibold">{data.credits}</span></span>}
+                        {!data.credits && <span className="font-semibold">Unknown artist</span>}
                     </div>
                     <div className="absolute top-0 left-0 w-full h-full">
                         <GalleryThumbnail thumbnail={data.thumbnail} hasBlur={hasBlur} />
