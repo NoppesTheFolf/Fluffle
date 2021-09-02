@@ -103,7 +103,7 @@ namespace Noppes.Fluffle.Search.Api.Controllers
                     return HandleV1(SearchError.CorruptImage());
                 }
 
-                var result = await _searchService.SearchAsync(temporaryFile.Location, model.IncludeNsfw, model.Limit, model.Platforms, scope);
+                var result = await _searchService.SearchAsync(temporaryFile.Location, model.IncludeNsfw, model.Limit, model.Platforms, IsDebug, scope);
                 return HandleV1(result, response =>
                 {
                     request.Count = response.Stats.Count;

@@ -29,7 +29,7 @@ namespace Noppes.Fluffle.Search.Api.Services
             _context = context;
         }
 
-        public async Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ICollection<PlatformConstant> platforms, CheckpointStopwatchScope<SearchRequest> scope)
+        public async Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ICollection<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
         {
             // We need to compute a more granular hash too as the 64-bit averaged hash is unable to
             // differentiate between alternate version. We do this asynchronously to computing the
@@ -72,6 +72,7 @@ namespace Noppes.Fluffle.Search.Api.Services
             // TODO: Automatically determine degree of parallelism based on the hardware Fluffle is running on
             scope.Next(t => t.Compare64Average);
             var searchResult = _compareService.Compare(hash, !includeNsfw, limit * 2, platforms);
+            var searchResultLookup = searchResult.Images.ToDictionary(i => i.Id);
 
             scope.Next(t => t.ComplementComparisonResults);
             var images = await _context.Images.AsNoTracking()
@@ -86,28 +87,45 @@ namespace Noppes.Fluffle.Search.Api.Services
             var (red, green, blue) = await hash256Task;
 
             scope.Next(t => t.CreateAndRefineOutput);
+
             var models = images
-                .Select(r => new SearchResultModel.ImageModel
+                .Select(r =>
                 {
-                    Id = r.Id,
-                    IsSfw = r.IsSfw,
-                    Platform = r.Platform.Name,
-                    Location = r.ViewLocation,
-                    Score = CompareRgb(r.ImageHash, red, green, blue),
-                    Thumbnail = new SearchResultModel.ImageModel.ThumbnailModel
+                    var compareResult = CompareRgb(r.ImageHash, red, green, blue);
+
+                    var model = new SearchResultModel.ImageModel
                     {
-                        Id = r.Thumbnail.Id,
-                        Width = r.Thumbnail.Width,
-                        CenterX = r.Thumbnail.CenterX,
-                        Height = r.Thumbnail.Height,
-                        CenterY = r.Thumbnail.CenterY,
-                        Location = r.Thumbnail.Location
-                    },
-                    Credits = r.Credits.OrderBy(c => c.Type).Select(c => new SearchResultModel.ImageModel.CreditModel
-                    {
-                        Id = c.Id,
-                        Name = c.Name
-                    })
+                        Id = r.Id,
+                        IsSfw = r.IsSfw,
+                        Platform = r.Platform.Name,
+                        Location = r.ViewLocation,
+                        Score = compareResult.Score,
+                        Thumbnail = new SearchResultModel.ImageModel.ThumbnailModel
+                        {
+                            Id = r.Thumbnail.Id,
+                            Width = r.Thumbnail.Width,
+                            CenterX = r.Thumbnail.CenterX,
+                            Height = r.Thumbnail.Height,
+                            CenterY = r.Thumbnail.CenterY,
+                            Location = r.Thumbnail.Location
+                        },
+                        Credits = r.Credits.OrderBy(c => c.Type).Select(c =>
+                            new SearchResultModel.ImageModel.CreditModel
+                            {
+                                Id = c.Id,
+                                Name = c.Name
+                            }
+                        ),
+                        Stats = includeDebug ? new SearchResultModel.ImageModel.StatsModel
+                        {
+                            Average64 = (int)searchResultLookup[r.Id].MismatchCount,
+                            Red256 = compareResult.Red,
+                            Green256 = compareResult.Green,
+                            Blue256 = compareResult.Blue
+                        } : null
+                    };
+
+                    return model;
                 })
                 .OrderByDescending(r => r.Score)
                 .Take(limit)
@@ -124,7 +142,18 @@ namespace Noppes.Fluffle.Search.Api.Services
             });
         }
 
-        private static double CompareRgb(ImageHash hashes, ReadOnlySpan<ulong> red, ReadOnlySpan<ulong> green, ReadOnlySpan<ulong> blue)
+        public class CompareResult
+        {
+            public double Score { get; set; }
+
+            public int Red { get; set; }
+
+            public int Green { get; set; }
+
+            public int Blue { get; set; }
+        }
+
+        private static CompareResult CompareRgb(ImageHash hashes, ReadOnlySpan<ulong> red, ReadOnlySpan<ulong> green, ReadOnlySpan<ulong> blue)
         {
             static int Compare(ReadOnlySpan<ulong> hash, ReadOnlySpan<ulong> otherHash)
             {
@@ -136,15 +165,24 @@ namespace Noppes.Fluffle.Search.Api.Services
                 return (int)mismatchCount;
             }
 
-            // Compare all channels and select the one with the worst match
+            // Compare all channels
+            var result = new CompareResult
+            {
+                Red = Compare(red, FluffleHash.ToInt64(hashes.PhashRed256)),
+                Green = Compare(green, FluffleHash.ToInt64(hashes.PhashGreen256)),
+                Blue = Compare(blue, FluffleHash.ToInt64(hashes.PhashBlue256))
+            };
+
+            // Select the one with the worst match and base the score on that
             var worstMismatchCount = new[]
             {
-                Compare(red, FluffleHash.ToInt64(hashes.PhashRed256)),
-                Compare(green, FluffleHash.ToInt64(hashes.PhashGreen256)),
-                Compare(blue, FluffleHash.ToInt64(hashes.PhashBlue256)),
+                result.Red,
+                result.Green,
+                result.Blue
             }.Max();
+            result.Score = (256 - worstMismatchCount) / (double)256;
 
-            return (256 - worstMismatchCount) / (double)256;
+            return result;
         }
     }
 }

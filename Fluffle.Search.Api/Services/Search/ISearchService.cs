@@ -35,6 +35,6 @@ namespace Noppes.Fluffle.Search.Api.Services
 
     public interface ISearchService
     {
-        public Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ICollection<PlatformConstant> platforms, CheckpointStopwatchScope<SearchRequest> scope);
+        public Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ICollection<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope);
     }
 }

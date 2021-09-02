@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Noppes.Fluffle.Search.Api.Models
 {
@@ -50,6 +51,20 @@ namespace Noppes.Fluffle.Search.Api.Models
             }
 
             public IEnumerable<CreditModel> Credits { get; set; }
+
+            public class StatsModel
+            {
+                public int Average64 { get; set; }
+
+                public int Red256 { get; set; }
+
+                public int Green256 { get; set; }
+
+                public int Blue256 { get; set; }
+            }
+
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+            public StatsModel Stats { get; set; }
         }
 
         public IEnumerable<ImageModel> Results { get; set; }
