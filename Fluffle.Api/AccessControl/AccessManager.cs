@@ -2,8 +2,8 @@
 using System;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
+using Random = Noppes.Fluffle.Utils.Random;
 
 namespace Noppes.Fluffle.Api.AccessControl
 {
@@ -48,19 +48,7 @@ namespace Noppes.Fluffle.Api.AccessControl
         /// <summary>
         /// Generates a API with 32 characters and a 128 bit entropy using a <see cref="RNGCryptoServiceProvider"/>.
         /// </summary>
-        private static string GenerateNewApiKey()
-        {
-            using var rng = new RNGCryptoServiceProvider();
-            var buffer = new byte[16];
-            rng.GetBytes(buffer);
-
-            var keyBuilder = new StringBuilder();
-
-            foreach (var part in buffer)
-                keyBuilder.Append(part.ToString("x2"));
-
-            return keyBuilder.ToString();
-        }
+        private static string GenerateNewApiKey() => Random.GenerateString(32);
 
         /// <summary>
         /// Gets the API key with the provided key. Optionally also include the permissions.

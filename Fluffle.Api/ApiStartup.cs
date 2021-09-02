@@ -238,6 +238,8 @@ namespace Noppes.Fluffle.Api
 
             AfterConfigure(app, env, serviceBuilder);
             serviceBuilder.StartAsync().Wait();
+
+            logger.LogInformation("The debug key for this session is {debugKey}.", DebugFilter.DebugKey);
         }
 
         public virtual void BeforeConfigure(IApplicationBuilder app, IWebHostEnvironment env)

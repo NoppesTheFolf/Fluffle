@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Noppes.Fluffle.Api.Filters;
 using Noppes.Fluffle.Api.Services;
 using System;
 
@@ -10,9 +11,12 @@ namespace Noppes.Fluffle.Api.Controllers
     /// </summary>
     [ApiController]
     [Route(BaseUrl)]
+    [TypeFilter(typeof(DebugFilter))]
     public class ApiController : ControllerBase
     {
         public const string BaseUrl = "api/v{version:apiVersion}/";
+
+        public bool IsDebug { get; set; }
 
         [NonAction]
         public IActionResult HandleV1<T>(SR<T> result, Func<T, IActionResult> onSuccess = null)
