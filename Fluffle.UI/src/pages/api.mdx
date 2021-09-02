@@ -135,13 +135,19 @@ Your request was valid and could therefore be processed. The submitted image has
       "location": "https://e621.net/posts/546281",
       "isSfw": true,
       "thumbnail": {
+        "id": 123,
         "width": 300,
         "centerX": 0,
         "height": 400,
         "centerY": 37,
         "location": "https://static.fluffle.xyz/file/fluffle/0e2c770cf4a9eccb7f16570f5586aa9d.jpg"
       },
-      "credits": ["lycanruff"]
+      "credits": [
+        {
+          "id": 123,
+          "name": "lycanruff"
+        }
+      ]
     }
   ]
 }
@@ -175,17 +181,25 @@ import Accordion from "../components/accordion";
 | location  | `string`    | URL at which this image can be viewed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | isSfw     | `boolean`   | Whether or not this image can be considered Safe For Work.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | thumbnail | `Thumbnail` | Tiny version of the scraped image hosted by Fluffle.                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| credits   | `string[]`  | The interpretation of this field is somewhat dependent on the platform from which the image was scraped. For e621, it's based on the artist tags and it's therefore safe to assume this field includes the names of the artist(s) that created the artwork. For all other platforms, it's the name of user that uploaded said image, which might be the artist, a commissioner, etc.                                                                                                                   |
+| credits   | `Credit[]`  | To whom credits can be given for this image.                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 #### Thumbnail
 
 | Field    | Type      | Description                                                                                                                                                                                                                                             |
 | -------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id       | `integer` | Unique identifier.                                                                                                                                                                                                                                      |
 | width    | `integer` | Width of the thumbnail.                                                                                                                                                                                                                                 |
 | centerX  | `integer` | Percentage the image has to shift horizontally for its content to be centered in a square. Works like the <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/object-position" target="_blank" rel="noreferrer">object-position CSS property</a>. |
 | height   | `integer` | Height of the thumbnail.                                                                                                                                                                                                                                |
 | centerY  | `integer` | Same as `CenterX` but vertically.                                                                                                                                                                                                                       |
 | location | `string`  | URL at which the thumbnail can be found.                                                                                                                                                                                                                |
+
+#### Credit
+
+| Field | Type      | Description                                                                                                                                                                                                                                                                                                                                                                          |
+| ----- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| id    | `integer` | Unique identifier.                                                                                                                                                                                                                                                                                                                                                                   |
+| name  | `integer` | The interpretation of this field is somewhat dependent on the platform from which the image was scraped. For e621, it's based on the artist tags and it's therefore safe to assume this field includes the names of the artist(s) that created the artwork. For all other platforms, it's the name of user that uploaded said image, which might be the artist, a commissioner, etc. |
 
 </Accordion>
 

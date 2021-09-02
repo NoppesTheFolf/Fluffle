@@ -27,6 +27,8 @@ namespace Noppes.Fluffle.Search.Api.Models
 
             public class ThumbnailModel
             {
+                public int Id { get; set; }
+
                 public int Width { get; set; }
 
                 public int CenterX { get; set; }
@@ -40,7 +42,14 @@ namespace Noppes.Fluffle.Search.Api.Models
 
             public ThumbnailModel Thumbnail { get; set; }
 
-            public IEnumerable<string> Credits { get; set; }
+            public class CreditModel
+            {
+                public int Id { get; set; }
+
+                public string Name { get; set; }
+            }
+
+            public IEnumerable<CreditModel> Credits { get; set; }
         }
 
         public IEnumerable<ImageModel> Results { get; set; }

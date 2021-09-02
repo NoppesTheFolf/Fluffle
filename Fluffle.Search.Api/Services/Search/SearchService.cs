@@ -94,8 +94,20 @@ namespace Noppes.Fluffle.Search.Api.Services
                     Platform = r.Platform.Name,
                     Location = r.ViewLocation,
                     Score = CompareRgb(r.ImageHash, red, green, blue),
-                    Thumbnail = ThumbnailModel(r.Thumbnail),
-                    Credits = r.Credits.OrderBy(c => c.Type).Select(c => c.Name)
+                    Thumbnail = new SearchResultModel.ImageModel.ThumbnailModel
+                    {
+                        Id = r.Thumbnail.Id,
+                        Width = r.Thumbnail.Width,
+                        CenterX = r.Thumbnail.CenterX,
+                        Height = r.Thumbnail.Height,
+                        CenterY = r.Thumbnail.CenterY,
+                        Location = r.Thumbnail.Location
+                    },
+                    Credits = r.Credits.OrderBy(c => c.Type).Select(c => new SearchResultModel.ImageModel.CreditModel
+                    {
+                        Id = c.Id,
+                        Name = c.Name
+                    })
                 })
                 .OrderByDescending(r => r.Score)
                 .Take(limit)
@@ -133,18 +145,6 @@ namespace Noppes.Fluffle.Search.Api.Services
             }.Max();
 
             return (256 - worstMismatchCount) / (double)256;
-        }
-
-        private static SearchResultModel.ImageModel.ThumbnailModel ThumbnailModel(Database.Models.Thumbnail thumbnail)
-        {
-            return new()
-            {
-                Width = thumbnail.Width,
-                CenterX = thumbnail.CenterX,
-                Height = thumbnail.Height,
-                CenterY = thumbnail.CenterY,
-                Location = thumbnail.Location
-            };
         }
     }
 }

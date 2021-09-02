@@ -98,7 +98,7 @@ const Api = function () {
                     return Promise.reject(message);
                 }).then<SearchResult>(response => {
                     const data = response.data.results.map(r => {
-                        r.credits = r.credits.join(" & ");
+                        r.credits = r.credits.map(c => c.name).join(" & ");
                         r.match = r.score >= 0.92 ? Match.Excellent : r.score >= 0.85 ? Match.Doubtful : Match.Unlikely;
                         return r;
                     });
