@@ -24,9 +24,9 @@ namespace Noppes.Fluffle.Sync
         {
         }
 
-        public static void Run(string[] args, string platformName, Action<FluffleConfiguration, IServiceCollection> configure = null)
+        public static Task RunAsync(string[] args, string platformName, Action<FluffleConfiguration, IServiceCollection> configure = null)
         {
-            Run(args, (configuration, services) =>
+            return RunAsync(args, (configuration, services) =>
             {
                 var mainConfiguration = configuration.Get<MainConfiguration>();
                 var fluffleClient = new FluffleClient(mainConfiguration.Url, mainConfiguration.ApiKey);

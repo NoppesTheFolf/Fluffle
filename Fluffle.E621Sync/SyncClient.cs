@@ -2,6 +2,7 @@
 using Noppes.E621;
 using Noppes.Fluffle.Sync;
 using System;
+using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.E621Sync
 {
@@ -11,7 +12,7 @@ namespace Noppes.Fluffle.E621Sync
         {
         }
 
-        private static void Main(string[] args) => Run(args, "e621", (configuration, services) =>
+        private static async Task Main(string[] args) => await RunAsync(args, "e621", (configuration, services) =>
         {
             var e621Client = new E621ClientFactory(configuration)
                 .CreateAsync(1000).Result;

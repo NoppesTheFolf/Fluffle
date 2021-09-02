@@ -17,6 +17,7 @@ namespace Noppes.Fluffle.Configuration
         public static ILogger Create(Action<LoggerConfiguration> configureLogging = null)
         {
             var configuration = new LoggerConfiguration()
+                .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning) // Don't log Entity Framework Core queries and such
                 .WriteTo.Console();
 
             configuration.MinimumLevel.Is(Debugger.IsAttached ? LogEventLevel.Debug : LogEventLevel.Information);

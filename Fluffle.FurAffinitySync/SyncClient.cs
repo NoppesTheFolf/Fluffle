@@ -2,6 +2,7 @@
 using Noppes.Fluffle.FurAffinity;
 using Noppes.Fluffle.Sync;
 using System;
+using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.FurAffinitySync
 {
@@ -11,7 +12,7 @@ namespace Noppes.Fluffle.FurAffinitySync
         {
         }
 
-        private static void Main(string[] args) => Run(args, "Fur Affinity", (configuration, services) =>
+        private static async Task Main(string[] args) => await RunAsync(args, "Fur Affinity", (configuration, services) =>
         {
             var client = new FurAffinityClientFactory(configuration)
                 .CreateAsync(500).Result;

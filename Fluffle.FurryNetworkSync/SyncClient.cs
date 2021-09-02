@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.Sync;
 using System;
+using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.FurryNetworkSync
 {
@@ -10,7 +11,7 @@ namespace Noppes.Fluffle.FurryNetworkSync
         {
         }
 
-        private static void Main(string[] args) => Run(args, "Furry Network", (configuration, services) =>
+        private static async Task Main(string[] args) => await RunAsync(args, "Furry Network", (configuration, services) =>
         {
             var client = new FurryNetworkClientFactory(configuration)
                 .CreateAsync(2000).Result;

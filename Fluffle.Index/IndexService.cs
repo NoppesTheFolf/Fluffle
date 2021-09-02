@@ -29,7 +29,7 @@ namespace Noppes.Fluffle.Index
         {
         }
 
-        private static void Main(string[] args) => Service<IndexService>.Run(args, (configuration, services) =>
+        private static async Task Main(string[] args) => await Service<IndexService>.RunAsync(args, (configuration, services) =>
         {
             var mainConf = configuration.Get<MainConfiguration>();
             var fluffleClient = new FluffleClient(mainConf.Url, mainConf.ApiKey);

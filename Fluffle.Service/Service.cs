@@ -39,7 +39,7 @@ namespace Noppes.Fluffle.Service
         {
         }
 
-        public static void Run(string[] args, Action<FluffleConfiguration, IServiceCollection> configureServices = null)
+        public static async Task RunAsync(string[] args, Action<FluffleConfiguration, IServiceCollection> configureServices = null)
         {
             var hostBuilder = Host.CreateDefaultBuilder(args)
                 .ConfigureServices(services =>
@@ -60,7 +60,7 @@ namespace Noppes.Fluffle.Service
 
             try
             {
-                hostBuilder.Build().Run();
+                await hostBuilder.Build().RunAsync();
             }
             catch (Exception exception)
             {
