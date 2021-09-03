@@ -8,6 +8,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="morelinq" Version="3.3.2" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\Fluffle.Api\Fluffle.Api.csproj" />
 		<ProjectReference Include="..\Fluffle.Main.Client\Fluffle.Main.Client.csproj" />
 		<ProjectReference Include="..\Fluffle.PerceptualHashing\Fluffle.PerceptualHashing.csproj" />

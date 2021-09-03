@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Intrinsics.X86;
 using System.Threading.Tasks;
+using static MoreLinq.Extensions.DistinctByExtension;
 
 namespace Noppes.Fluffle.Search.Api.Services
 {
@@ -72,6 +73,10 @@ namespace Noppes.Fluffle.Search.Api.Services
             // TODO: Automatically determine degree of parallelism based on the hardware Fluffle is running on
             scope.Next(t => t.Compare64Average);
             var searchResult = _compareService.Compare(hash, !includeNsfw, limit * 2, platforms);
+
+            // Bug: The search service returns duplicate images
+            searchResult.Images = searchResult.Images.DistinctBy(i => i.Id).ToList();
+
             var searchResultLookup = searchResult.Images.ToDictionary(i => i.Id);
 
             scope.Next(t => t.ComplementComparisonResults);
