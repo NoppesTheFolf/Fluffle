@@ -1,0 +1,4 @@
+pyyaml==5.4.1
+python-telegram-bot==13.7
+requests==2.25.1
+pyvips==2.1.15
