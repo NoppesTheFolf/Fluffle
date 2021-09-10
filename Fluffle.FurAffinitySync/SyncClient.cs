@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.FurAffinity;
 using Noppes.Fluffle.Sync;
 using System;
@@ -14,8 +15,8 @@ namespace Noppes.Fluffle.FurAffinitySync
 
         private static async Task Main(string[] args) => await RunAsync(args, "Fur Affinity", (configuration, services) =>
         {
-            var client = new FurAffinityClientFactory(configuration)
-                .CreateAsync(500).Result;
+            var syncConf = configuration.Get<FurAffinitySyncConfiguration>();
+            var client = new FurAffinityClientFactory(configuration).CreateAsync(syncConf.Interval).Result;
 
             services.AddSingleton(client);
         });

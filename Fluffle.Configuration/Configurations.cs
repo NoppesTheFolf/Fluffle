@@ -10,14 +10,6 @@ namespace Noppes.Fluffle.Configuration
     /// </summary>
     public abstract class DatabaseConfiguration : FluffleConfigurationPart<DatabaseConfiguration>
     {
-        protected DatabaseConfiguration()
-        {
-            RuleFor(o => o.Host).Hostname();
-            RuleFor(o => o.Database).NotEmpty();
-            RuleFor(o => o.Username).NotEmpty();
-            RuleFor(o => o.Password).NotEmpty();
-        }
-
         /// <summary>
         /// Where may thou access thy database?
         /// </summary>
@@ -42,6 +34,14 @@ namespace Noppes.Fluffle.Configuration
         /// A connection string for easy use with EF Core.
         /// </summary>
         public string ConnectionString => $"Host={Host};Database={Database};Username={Username};Password={Password}";
+
+        protected DatabaseConfiguration()
+        {
+            RuleFor(o => o.Host).Hostname();
+            RuleFor(o => o.Database).NotEmpty();
+            RuleFor(o => o.Username).NotEmpty();
+            RuleFor(o => o.Password).NotEmpty();
+        }
     }
 
     /// <summary>
@@ -212,8 +212,26 @@ namespace Noppes.Fluffle.Configuration
         }
     }
 
+    public abstract class SyncClientConfiguration : FluffleConfigurationPart<SyncClientConfiguration>
+    {
+        public int Interval { get; set; }
+
+        protected SyncClientConfiguration()
+        {
+            RuleFor(o => o.Interval).GreaterThanOrEqualTo(0);
+        }
+    }
+
     /// <summary>
-    /// Configuration regarding indexing client.
+    /// Configuration regarding Fur Affinity sync client.
+    /// </summary>
+    [ConfigurationSection("FurAffinitySync")]
+    public class FurAffinitySyncConfiguration : SyncClientConfiguration
+    {
+    }
+
+    /// <summary>
+    /// Configuration regarding indexing clients.
     /// </summary>
     [ConfigurationSection("Index")]
     public class IndexConfiguration : FluffleConfigurationPart<IndexConfiguration>
