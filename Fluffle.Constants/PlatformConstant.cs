@@ -7,6 +7,7 @@
     {
         E621 = 1,
         FurryNetwork = 2,
-        FurAffinity = 3
+        FurAffinity = 3,
+        Weasyl = 4
     }
 }

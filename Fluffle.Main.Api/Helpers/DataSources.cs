@@ -30,6 +30,12 @@ namespace Noppes.Fluffle.Main.Api.Helpers
                     EstimatedContentCount = 25_000_000,
                     HomeLocation = "https://www.furaffinity.net"
                 },
+                PlatformConstant.Weasyl => new Platform
+                {
+                    Name = "Weasyl",
+                    EstimatedContentCount = 1_200_000,
+                    HomeLocation = "https://www.weasyl.com"
+                },
                 _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
             };
 

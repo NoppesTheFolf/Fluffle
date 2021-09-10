@@ -196,6 +196,23 @@ namespace Noppes.Fluffle.Configuration
     }
 
     /// <summary>
+    /// Configuration regarding weasyl.com.
+    /// </summary>
+    [ConfigurationSection("Weasyl")]
+    public class WeasylConfiguration : FluffleConfigurationPart<WeasylConfiguration>
+    {
+        /// <summary>
+        /// API authentication key.
+        /// </summary>
+        public string ApiKey { get; set; }
+
+        public WeasylConfiguration()
+        {
+            RuleFor(o => o.ApiKey).NotEmpty().Length(48);
+        }
+    }
+
+    /// <summary>
     /// Configuration regarding indexing client.
     /// </summary>
     [ConfigurationSection("Index")]
@@ -251,6 +268,8 @@ namespace Noppes.Fluffle.Configuration
 
         public ClientConfiguration FurAffinity { get; set; }
 
+        public ClientConfiguration Weasyl { get; set; }
+
         public IndexConfiguration()
         {
             RuleFor(o => o.ImageHasher).NotEmpty().SetValidator(o => o.ImageHasher);
@@ -261,6 +280,7 @@ namespace Noppes.Fluffle.Configuration
             RuleFor(o => o.E621).NotEmpty().SetValidator(o => o.E621);
             RuleFor(o => o.FurryNetwork).NotEmpty().SetValidator(o => o.FurryNetwork);
             RuleFor(o => o.FurAffinity).NotEmpty().SetValidator(o => o.FurAffinity);
+            RuleFor(o => o.Weasyl).NotEmpty().SetValidator(o => o.Weasyl);
         }
     }
 

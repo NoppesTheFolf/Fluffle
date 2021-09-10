@@ -6,6 +6,7 @@ using Noppes.Fluffle.FurAffinity;
 using Noppes.Fluffle.FurryNetworkSync;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
+using Noppes.Fluffle.Weasyl;
 using Serilog;
 using System;
 using System.IO;
@@ -14,11 +15,24 @@ using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Index
 {
+    public class WeasylDownloadClient : DownloadClient
+    {
+        private readonly WeasylClient _client;
+
+        public WeasylDownloadClient(WeasylClient client)
+        {
+            _client = client;
+        }
+
+        public override Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default) =>
+            _client.GetStreamAsync(url);
+    }
+
     public class FurryNetworkDownloadClient : DownloadClient
     {
         private readonly FurryNetworkClient _client;
 
-        public FurryNetworkDownloadClient(FurryNetworkClient client) : base(3.Seconds())
+        public FurryNetworkDownloadClient(FurryNetworkClient client)
         {
             _client = client;
         }
@@ -38,7 +52,7 @@ namespace Noppes.Fluffle.Index
         private long _newCheckAt;
         private bool _botsAllowed;
 
-        public FurAffinityDownloadClient(FurAffinityClient faClient, FluffleClient fluffleClient, IHostEnvironment environment) : base(1.Seconds())
+        public FurAffinityDownloadClient(FurAffinityClient faClient, FluffleClient fluffleClient, IHostEnvironment environment)
         {
             _faClient = faClient;
             _fluffleClient = fluffleClient;
@@ -78,7 +92,7 @@ namespace Noppes.Fluffle.Index
     {
         private readonly IE621Client _client;
 
-        public E621DownloadClient(IE621Client client) : base(null)
+        public E621DownloadClient(IE621Client client)
         {
             _client = client;
         }
@@ -89,18 +103,8 @@ namespace Noppes.Fluffle.Index
 
     public abstract class DownloadClient
     {
-        private readonly RequestRateLimiter _rateLimiter;
-
-        protected DownloadClient(TimeSpan? interval)
-        {
-            _rateLimiter = interval == null ? null : new RequestRateLimiter((TimeSpan)interval);
-        }
-
         public async Task<TemporaryFile> DownloadAsync(string url, CancellationToken cancellationToken = default)
         {
-            if (_rateLimiter != null)
-                await _rateLimiter.InterceptAsync(null);
-
             var temporaryFile = new TemporaryFile();
             var temporaryFileStream = temporaryFile.OpenFileStream();
 

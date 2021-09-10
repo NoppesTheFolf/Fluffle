@@ -12,6 +12,7 @@ using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Service;
 using Noppes.Fluffle.Thumbnail;
 using Noppes.Fluffle.Utils;
+using Noppes.Fluffle.WeasylSync;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -66,11 +67,13 @@ namespace Noppes.Fluffle.Index
             var e621Client = await new E621ClientFactory(configuration).CreateAsync(Configuration.E621.Interval);
             var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(Configuration.FurryNetwork.Interval);
             var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(Configuration.FurAffinity.Interval);
+            var weasylClient = await new WeasylClientFactory(configuration).CreateAsync(Configuration.Weasyl.Interval);
             DownloadClients = new Dictionary<PlatformConstant, (DownloadClient, IndexConfiguration.ClientConfiguration)>
             {
                 { PlatformConstant.E621, (new E621DownloadClient(e621Client), Configuration.E621) },
                 { PlatformConstant.FurryNetwork, (new FurryNetworkDownloadClient(furryNetworkClient), Configuration.FurryNetwork) },
-                { PlatformConstant.FurAffinity, (new FurAffinityDownloadClient(furAffinityClient, fluffleClient, Environment), Configuration.FurAffinity) }
+                { PlatformConstant.FurAffinity, (new FurAffinityDownloadClient(furAffinityClient, fluffleClient, Environment), Configuration.FurAffinity) },
+                { PlatformConstant.Weasyl, (new WeasylDownloadClient(weasylClient), Configuration.Weasyl) }
             };
 
             await base.StartAsync(cancellationToken);
