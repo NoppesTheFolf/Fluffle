@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Humanizer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Api.RunnableServices;
@@ -42,6 +43,10 @@ namespace Noppes.Fluffle.Search.Api
 
             using var scope = _services.CreateScope();
             await using var context = scope.ServiceProvider.GetRequiredService<FluffleSearchContext>();
+
+            // Todo: this timeout should not be this long, it's bad design. This part needs an
+            // overhaul to accomodate the number of hashes the production database has anyway.
+            context.Database.SetCommandTimeout(5.Minutes());
 
             foreach (var platform in await context.Platform.ToListAsync())
             {
