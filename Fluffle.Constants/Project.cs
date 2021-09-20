@@ -7,7 +7,7 @@ namespace Noppes.Fluffle.Constants
         /// <summary>
         /// Version of Fluffle.
         /// </summary>
-        public static string Version => Debugger.IsAttached ? "development" : "0.8.0";
+        public static string Version => Debugger.IsAttached ? "development" : "0.8.1";
 
         /// <summary>
         /// Base name of the User Agent used by Fluffle its synchronization and indexing bots.
