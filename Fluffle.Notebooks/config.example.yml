@@ -1,0 +1,4 @@
+username: e621 username
+api_key: e621 api key
+debug_key: debug key used on production server
+cache_dir: ../cache
