@@ -38,7 +38,7 @@ namespace Noppes.Fluffle.Search.Api.Services
             // simple hash and comparing that. We can assume that awaiting this task doesn't throw
             // any exceptions as this process is pretty much identical to computing the simple hash
             // (of which we handle the exceptions explicitly).
-            Task<(ulong[] red, ulong[] green, ulong[] blue)> StartHashCalculation(PerceptualHash perceptualHash, Expression<Func<SearchRequest, int?>> red, Expression<Func<SearchRequest, int?>> green, Expression<Func<SearchRequest, int?>> blue)
+            Task<(ulong[] red, ulong[] green, ulong[] blue, ulong[] average)> StartHashCalculation(PerceptualHash perceptualHash, Expression<Func<SearchRequest, int?>> red, Expression<Func<SearchRequest, int?>> green, Expression<Func<SearchRequest, int?>> blue)
             {
                 return Task.Run(() =>
                 {
@@ -53,14 +53,16 @@ namespace Noppes.Fluffle.Search.Api.Services
                     taskScope.Next(blue);
                     var blueHash = image.ComputeHash(Channel.Blue);
 
-                    return (FluffleHash.ToInt64(redHash), FluffleHash.ToInt64(greenHash), FluffleHash.ToInt64(blueHash));
+                    var averageHash = image.ComputeHash(Channel.Average);
+
+                    return (FluffleHash.ToInt64(redHash), FluffleHash.ToInt64(greenHash), FluffleHash.ToInt64(blueHash), FluffleHash.ToInt64(averageHash));
                 });
             }
 
             scope.Next(t => t.Start256RgbComputation);
             var hash256Task = StartHashCalculation(_hash.Size256, t => t.Compute256Red, t => t.Compute256Green, t => t.Compute256Blue);
 
-            Task<(ulong[], ulong[], ulong[])> hash1024Task = null;
+            Task<(ulong[], ulong[], ulong[], ulong[])> hash1024Task = null;
             if (includeDebug) hash1024Task = StartHashCalculation(_hash.Size1024, t => t.Compute256Red, t => t.Compute256Green, t => t.Compute256Blue);
 
             scope.Next(t => t.Compute64Average);
@@ -100,17 +102,17 @@ namespace Noppes.Fluffle.Search.Api.Services
             scope.Next(t => t.WaitFor256RgbComputation);
             var hashes256 = await hash256Task;
 
-            (ulong[], ulong[], ulong[]) hashes1024 = default;
+            (ulong[], ulong[], ulong[], ulong[]) hashes1024 = default;
             if (includeDebug) hashes1024 = await hash1024Task;
 
             scope.Next(t => t.CreateAndRefineOutput);
             var models = images
                 .Select(r =>
                 {
-                    var compareResult256 = CompareRgb((r.ImageHash.PhashRed256, r.ImageHash.PhashGreen256, r.ImageHash.PhashBlue256), hashes256);
+                    var compareResult256 = CompareRgb((r.ImageHash.PhashRed256, r.ImageHash.PhashGreen256, r.ImageHash.PhashBlue256, r.ImageHash.PhashAverage256), hashes256);
 
                     CompareResult compareResult1024 = null;
-                    if (includeDebug) compareResult1024 = CompareRgb((r.ImageHash.PhashRed1024, r.ImageHash.PhashGreen1024, r.ImageHash.PhashBlue1024), hashes1024);
+                    if (includeDebug) compareResult1024 = CompareRgb((r.ImageHash.PhashRed1024, r.ImageHash.PhashGreen1024, r.ImageHash.PhashBlue1024, r.ImageHash.PhashAverage1024), hashes1024);
 
                     var model = new SearchResultModel.ImageModel
                     {
@@ -141,9 +143,11 @@ namespace Noppes.Fluffle.Search.Api.Services
                             Red256 = compareResult256.Red,
                             Green256 = compareResult256.Green,
                             Blue256 = compareResult256.Blue,
+                            Average256 = compareResult256.Average,
                             Red1024 = compareResult1024.Red,
                             Green1024 = compareResult1024.Green,
-                            Blue1024 = compareResult1024.Blue
+                            Blue1024 = compareResult1024.Blue,
+                            Average1024 = compareResult1024.Average
                         } : null
                     };
 
@@ -173,9 +177,11 @@ namespace Noppes.Fluffle.Search.Api.Services
             public int Green { get; set; }
 
             public int Blue { get; set; }
+
+            public int Average { get; set; }
         }
 
-        private static CompareResult CompareRgb((byte[] red, byte[] green, byte[] blue) hashesOne, (ulong[] red, ulong[] green, ulong[] blue) hashesTwo)
+        private static CompareResult CompareRgb((byte[] red, byte[] green, byte[] blue, byte[] average) hashesOne, (ulong[] red, ulong[] green, ulong[] blue, ulong[] average) hashesTwo)
         {
             var bits = sizeof(ulong) * hashesTwo.red.Length * 8;
 
@@ -194,7 +200,8 @@ namespace Noppes.Fluffle.Search.Api.Services
             {
                 Red = Compare(hashesTwo.red, FluffleHash.ToInt64(hashesOne.red)),
                 Green = Compare(hashesTwo.green, FluffleHash.ToInt64(hashesOne.green)),
-                Blue = Compare(hashesTwo.blue, FluffleHash.ToInt64(hashesOne.blue))
+                Blue = Compare(hashesTwo.blue, FluffleHash.ToInt64(hashesOne.blue)),
+                Average = Compare(hashesTwo.average, FluffleHash.ToInt64(hashesOne.average)),
             };
 
             // Select the one with the worst match and base the score on that

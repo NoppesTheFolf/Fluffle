@@ -62,11 +62,15 @@ namespace Noppes.Fluffle.Search.Api.Models
 
                 public int Blue256 { get; set; }
 
+                public int Average256 { get; set; }
+
                 public int Red1024 { get; set; }
 
                 public int Green1024 { get; set; }
 
                 public int Blue1024 { get; set; }
+
+                public int Average1024 { get; set; }
             }
 
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
