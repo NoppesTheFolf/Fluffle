@@ -423,8 +423,8 @@ namespace Noppes.Fluffle.Main.Api.Services
             return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
                 var minId = await _context.Content
-                    .Where(i => i.Platform.Id == platform.Id)
-                    .MinAsync(i => i.IdOnPlatformAsInteger);
+                    .Where(c => c.PlatformId == platform.Id)
+                    .MinAsync(c => c.IdOnPlatformAsInteger);
 
                 return new SR<int?>(minId);
             });
@@ -435,8 +435,8 @@ namespace Noppes.Fluffle.Main.Api.Services
             return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
                 var maxId = await _context.Content
-                    .Where(i => i.Platform.Id == platform.Id)
-                    .MaxAsync(i => i.IdOnPlatformAsInteger);
+                    .Where(c => c.PlatformId == platform.Id)
+                    .MaxAsync(c => c.IdOnPlatformAsInteger);
 
                 return new SR<int?>(maxId);
             });

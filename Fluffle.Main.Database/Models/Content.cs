@@ -94,7 +94,7 @@ namespace Noppes.Fluffle.Main.Database.Models
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.Property(e => e.IdOnPlatformAsInteger);
-            entity.HasIndex(e => e.IdOnPlatformAsInteger);
+            entity.HasIndex(e => new { e.IdOnPlatformAsInteger, e.PlatformId });
 
             entity.Property(e => e.ChangeId);
             entity.HasIndex(e => new { e.PlatformId, e.ChangeId }).IsUnique();
