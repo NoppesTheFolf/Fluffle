@@ -99,7 +99,7 @@ const Api = function () {
                 }).then<SearchResult>(response => {
                     const data = response.data.results.map(r => {
                         r.credits = r.credits.map(c => c.name).join(" & ");
-                        r.match = r.score >= 0.92 ? Match.Excellent : r.score >= 0.85 ? Match.Doubtful : Match.Unlikely;
+                        r.match = r.match === 'exact' ? Match.Excellent : r.match === 'unlikely' ? Match.Unlikely : Match.Doubtful;
                         return r;
                     });
 

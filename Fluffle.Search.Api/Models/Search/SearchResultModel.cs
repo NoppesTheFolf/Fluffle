@@ -3,6 +3,14 @@ using System.Text.Json.Serialization;
 
 namespace Noppes.Fluffle.Search.Api.Models
 {
+    public enum ResultMatch
+    {
+        Unlikely,
+        Alternative,
+        TossUp,
+        Exact
+    }
+
     public class SearchResultModel
     {
         public class StatsModel
@@ -19,6 +27,8 @@ namespace Noppes.Fluffle.Search.Api.Models
             public int Id { get; set; }
 
             public double Score { get; set; }
+
+            public ResultMatch Match { get; set; }
 
             public string Platform { get; set; }
 

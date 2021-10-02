@@ -34,13 +34,13 @@ namespace Noppes.Fluffle.Search.Database.Models
 
         public int? AreaCheck { get; set; }
 
-        public int? Start256RgbComputation { get; set; }
+        public int? StartExpensiveRgbComputation { get; set; }
 
-        public int? Compute256Red { get; set; }
+        public int? ComputeExpensiveRed { get; set; }
 
-        public int? Compute256Green { get; set; }
+        public int? ComputeExpensiveGreen { get; set; }
 
-        public int? Compute256Blue { get; set; }
+        public int? ComputeExpensiveBlue { get; set; }
 
         public int? Compute64Average { get; set; }
 
@@ -48,7 +48,7 @@ namespace Noppes.Fluffle.Search.Database.Models
 
         public int? ComplementComparisonResults { get; set; }
 
-        public int? WaitFor256RgbComputation { get; set; }
+        public int? WaitForExpensiveRgbComputation { get; set; }
 
         public int? CreateAndRefineOutput { get; set; }
 
@@ -73,14 +73,14 @@ namespace Noppes.Fluffle.Search.Database.Models
 
             entity.Property(e => e.Flush);
             entity.Property(e => e.AreaCheck);
-            entity.Property(e => e.Start256RgbComputation);
-            entity.Property(e => e.Compute256Red);
-            entity.Property(e => e.Compute256Green);
-            entity.Property(e => e.Compute256Blue);
+            entity.Property(e => e.StartExpensiveRgbComputation);
+            entity.Property(e => e.ComputeExpensiveRed);
+            entity.Property(e => e.ComputeExpensiveGreen);
+            entity.Property(e => e.ComputeExpensiveBlue);
             entity.Property(e => e.Compute64Average);
             entity.Property(e => e.Compare64Average);
             entity.Property(e => e.ComplementComparisonResults);
-            entity.Property(e => e.WaitFor256RgbComputation);
+            entity.Property(e => e.WaitForExpensiveRgbComputation);
             entity.Property(e => e.CreateAndRefineOutput);
         }
     }
