@@ -21,7 +21,7 @@ namespace Noppes.Fluffle.Search.Api.Services
     public class SearchService : Service, ISearchService
     {
         private const int BestUnlikelyThreshold = 340;
-        private const int VarianceAlternativeThreshold = 100;
+        private const int VarianceAlternativeThreshold = 120;
         private const int WorstAlternativeThreshold = 55;
         private const int DistanceFromBestAlternativeThreshold = 35;
 
