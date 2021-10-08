@@ -213,6 +213,8 @@ namespace Noppes.Fluffle.FurAffinitySync
 
         public override string GetDescription(FaSubmission src) => src.Description;
 
+        public override IEnumerable<string> GetOtherSources(FaSubmission src) => null;
+
         public override bool ShouldBeIndexed(FaSubmission src)
         {
             if (DisallowedCategories.Contains(src.Category))

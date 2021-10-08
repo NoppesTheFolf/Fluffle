@@ -173,16 +173,23 @@ namespace Noppes.Fluffle.Main.Api.Services
                     contentModel.CreditableEntities ??= new List<PutContentModel.CreditableEntityModel>();
                     contentModel.Files ??= new List<PutContentModel.FileModel>();
                     contentModel.Tags ??= new List<string>();
+                    contentModel.OtherSources ??= new List<string>();
 
                     // Remove NULL characters from user provided data as PostgreSQL does not support it
                     contentModel.Title = contentModel.Title?.RemoveNullChar();
                     contentModel.Description = contentModel.Description?.RemoveNullChar();
                     contentModel.Tags = contentModel.Tags.Select(t => t.RemoveNullChar()).ToList();
+                    contentModel.OtherSources = contentModel.OtherSources.Select(os => os.RemoveNullChar()).ToList();
                     foreach (var creditableEntity in contentModel.CreditableEntities)
                     {
                         creditableEntity.Id = creditableEntity.Id.RemoveNullChar();
                         creditableEntity.Name = creditableEntity.Name.RemoveNullChar();
                     }
+
+                    // Only allow valid URIs
+                    contentModel.OtherSources = contentModel.OtherSources
+                        .Where(os => Uri.TryCreate(os, UriKind.RelativeOrAbsolute, out _))
+                        .ToList();
                 }
 
                 // We'll mark it as deleted at a later time to prevent saving these changes before
@@ -287,8 +294,9 @@ namespace Noppes.Fluffle.Main.Api.Services
                     .Include(ec => ec.Files)
                     .Include(ec => ec.Credits)
                     .Include(ec => ec.Tags)
+                    .Include(ec => ec.OtherSources)
                     .Where(c => c.PlatformId == platform.Id && contentModels.Select(c => c.IdOnPlatform).Contains(c.IdOnPlatform))
-                    .ToDictionaryAsync(c => c.IdOnPlatform, c => c); ;
+                    .ToDictionaryAsync(c => c.IdOnPlatform, c => c);
 
                 foreach (var contentPiece in content)
                     if (existingContent.TryGetValue(contentPiece.IdOnPlatform, out var existingContentPiece))
@@ -358,6 +366,15 @@ namespace Noppes.Fluffle.Main.Api.Services
                         Tag = tagEntitiesLookup[t]
                     }).ToList();
                     var synchronizeTagsResult = await _context.SynchronizeContentTagsAsync(contentPiece.ContentTags, contentTags);
+
+                    var contentOtherSources = contentModel.OtherSources.Select(os => new ContentOtherSource
+                    {
+                        Content = contentPiece,
+                        Location = os
+                    }).ToList();
+                    var synchronizeOtherSourcesResult = await _context.SynchronizeAsync(c => c.ContentOtherSources,
+                        contentPiece.OtherSources, contentOtherSources,
+                        (os1, os2) => (os1.Content, os1.Location) == (os2.Content, os2.Location));
 
                     var isContentChanged = synchronizeResult.HasChanges || synchronizeFilesResult.HasChanges || synchronizeCredits.HasChanges;
                     if (contentPiece.ChangeId != null && isContentChanged)

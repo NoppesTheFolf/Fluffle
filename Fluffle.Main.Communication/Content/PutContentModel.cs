@@ -45,6 +45,8 @@ namespace Noppes.Fluffle.Main.Communication
 
         public ICollection<CreditableEntityModel> CreditableEntities { get; set; }
 
+        public ICollection<string> OtherSources { get; set; }
+
         public byte[] Source { get; set; }
 
         public int? SourceVersion { get; set; }

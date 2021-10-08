@@ -25,6 +25,7 @@ namespace Noppes.Fluffle.Main.Database.Models
             Errors = new HashSet<ContentError>();
             Tags = new HashSet<Tag>();
             ContentTags = new HashSet<ContentTag>();
+            OtherSources = new HashSet<ContentOtherSource>();
         }
 
         public int Id { get; set; }
@@ -66,6 +67,7 @@ namespace Noppes.Fluffle.Main.Database.Models
         public virtual ICollection<ContentError> Errors { get; set; }
         public virtual ICollection<Tag> Tags { get; set; }
         public virtual ICollection<ContentTag> ContentTags { get; set; }
+        public virtual ICollection<ContentOtherSource> OtherSources { get; set; }
 
         public IEnumerable<Thumbnail> EnumerateThumbnails()
         {

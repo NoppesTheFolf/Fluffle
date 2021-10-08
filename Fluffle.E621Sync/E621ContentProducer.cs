@@ -165,6 +165,8 @@ namespace Noppes.Fluffle.E621Sync
 
         public override string GetDescription(Post src) => src.Description;
 
+        public override IEnumerable<string> GetOtherSources(Post src) => src.Sources;
+
         public override bool ShouldBeIndexed(Post src) => true;
     }
 }

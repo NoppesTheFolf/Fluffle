@@ -145,6 +145,8 @@ namespace Noppes.Fluffle.FurryNetworkSync
 
         public override string GetDescription(FnSubmission src) => src.Description;
 
+        public override IEnumerable<string> GetOtherSources(FnSubmission src) => null;
+
         public override bool ShouldBeIndexed(FnSubmission src) => true;
     }
 }

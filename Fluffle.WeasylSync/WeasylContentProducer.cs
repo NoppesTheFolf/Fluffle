@@ -109,6 +109,8 @@ namespace Noppes.Fluffle.WeasylSync
 
         public override string GetDescription(Submission src) => src.Description;
 
+        public override IEnumerable<string> GetOtherSources(Submission src) => null;
+
         public override bool ShouldBeIndexed(Submission src) => true;
     }
 }

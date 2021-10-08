@@ -94,6 +94,7 @@ namespace Noppes.Fluffle.Sync
             dest.ViewLocation = GetViewLocation(src);
             dest.Files = GetFiles(src).ToList();
             dest.Tags = GetTags(src).ToList();
+            dest.OtherSources = GetOtherSources(src).ToList();
             dest.MediaType = GetMediaType(src);
             dest.Priority = GetPriority(src);
             dest.ShouldBeIndexed = ShouldBeIndexed(src);
@@ -131,6 +132,8 @@ namespace Noppes.Fluffle.Sync
         public abstract string GetTitle(TContent src);
 
         public abstract string GetDescription(TContent src);
+
+        public abstract IEnumerable<string> GetOtherSources(TContent src);
 
         public abstract bool ShouldBeIndexed(TContent src);
 
