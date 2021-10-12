@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Noppes.Fluffle.B2
 {
@@ -62,13 +63,9 @@ namespace Noppes.Fluffle.B2
                         .WithHeader("Content-Type", contentType);
 
                     foreach (var (name, value) in info)
-                        request.WithHeader($"X-Bz-Info-{name}", value);
+                        request = request.WithHeader($"X-Bz-Info-{name}", HttpUtility.UrlEncode(value));
 
-                    return await _client.Request(_uploadUrl)
-                        .WithHeader("Authorization", _uploadAuthorizationToken)
-                        .WithHeader("X-Bz-File-Name", fileLocation)
-                        .WithHeader("X-Bz-Content-Sha1", sha1)
-                        .WithHeader("Content-Type", contentType)
+                    return await request
                         .PostContentReceiveJsonAsync<B2UploadResponse>(new StreamContent(stream));
                 }
                 catch (FlurlHttpException httpException)
