@@ -7,9 +7,9 @@ const artistName = 'Oggy123'
 const artUrl = 'https://twitter.com/OggyOsbourne/status/1294700124187262976'
 
 const socials = [
-    { name: 'Telegram', url: 'https://t.me/NoppesTheFolf', icon: 'telegram-plane' },
-    { name: 'Twitter', url: 'https://twitter.com/NoppesTheFolf', icon: 'twitter' },
-    { name: 'GitHub', url: 'https://github.com/NoppesTheFolf', icon: 'github-alt' }
+    { name: 'Telegram', url: 'https://t.me/NoppesTheFolf', icon: 'fa-telegram-plane' },
+    { name: 'Twitter', url: 'https://twitter.com/NoppesTheFolf', icon: 'fa-twitter' },
+    { name: 'GitHub', url: 'https://github.com/NoppesTheFolf', icon: 'fa-github-alt' }
 ];
 
 const SocialBadge = ({ social }) => {
