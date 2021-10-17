@@ -19,6 +19,9 @@ module.exports = {
                 color: variables.colors.info.light
               },
             },
+            strong: {
+              color: variables.colors.light['100']
+            },
             h1: {
               color: variables.colors.light['100']
             },

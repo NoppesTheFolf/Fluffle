@@ -196,18 +196,21 @@ const SearchPage = () => {
                             <div className={hasDrag ? classNames(dropZone, dropZoneActive) : dropZone}>
                                 <div className="text-5xl hidden sm:block">Drag 'n drop a fluffy critter here</div>
                                 <div className="hidden sm:block">Or</div>
-                                <div className="flex flex-col sm:flex-row items-center space-x-2 space-y-2 sm:space-y-0">
-                                    <label htmlFor="image" className="btn btn-primary text-xl sm:text-base">
-                                        <span className="mr-2">
-                                            <Icon name="photo-size-select-actual" />
-                                        </span>
-                                        <span className="hidden sm:inline">Select a floof</span>
-                                        <span className="inline sm:hidden">Select a fluffy critter</span>
-                                    </label>
-                                    <div className="flex btn-group">
-                                        <button onClick={() => searchConfig.setIncludeNsfw(false)} className={`btn btn-${searchConfig.includeNsfw ? "secondary" : "info"}`} data-ignore>SFW</button>
-                                        <button onClick={() => searchConfig.setIncludeNsfw(true)} className={`btn btn-${searchConfig.includeNsfw ? "danger" : "secondary"}`} data-ignore>NSFW</button>
+                                <div className="flex flex-col space-y-2">
+                                    <div className="flex flex-col sm:flex-row items-center space-x-2 space-y-2 sm:space-y-0">
+                                        <label htmlFor="image" className="btn btn-primary text-xl sm:text-base">
+                                            <span className="mr-2">
+                                                <Icon name="photo-size-select-actual" />
+                                            </span>
+                                            <span className="hidden sm:inline">Select a floof</span>
+                                            <span className="inline sm:hidden">Select a fluffy critter</span>
+                                        </label>
+                                        <div className="flex btn-group">
+                                            <button onClick={() => searchConfig.setIncludeNsfw(false)} className={`btn btn-${searchConfig.includeNsfw ? "secondary" : "info"}`} data-ignore>SFW</button>
+                                            <button onClick={() => searchConfig.setIncludeNsfw(true)} className={`btn btn-${searchConfig.includeNsfw ? "danger" : "secondary"}`} data-ignore>NSFW</button>
+                                        </div>
                                     </div>
+                                    <div className="text-sm text-muted">{!searchConfig.includeNsfw ? "Twitter isn't included in SFW mode." : 'Search both SFW and NSFW images.'}</div>
                                 </div>
                                 <div className="text-muted">Concerned about what happens to your data? Take a look at the <Link to="/about/">about page</Link>.</div>
                             </div>
