@@ -1,3 +1,4 @@
 config.yml
 cache
-models
+models/**/*.joblib
+models/**/*.hdf5
