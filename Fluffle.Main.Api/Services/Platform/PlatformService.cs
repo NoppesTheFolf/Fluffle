@@ -82,12 +82,10 @@ namespace Noppes.Fluffle.Main.Api.Services
                 var sync = await _context.PlatformSyncs
                     .FirstAsync(ps => ps.PlatformId == platform.Id && ps.SyncTypeId == syncTypeId);
 
+                // Any type of finished synchronization process indicates the database has at least
+                // been synchronized in its entirety once.
+                platform.IsComplete = true;
                 sync.When = DateTime.UtcNow;
-
-                // A full sync completing means the database is synchronized in its entirety and
-                // therefore complete
-                if (syncType == SyncTypeConstant.Full)
-                    platform.IsComplete = true;
 
                 await _context.SaveChangesAsync();
 

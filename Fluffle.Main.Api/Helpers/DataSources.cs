@@ -36,6 +36,12 @@ namespace Noppes.Fluffle.Main.Api.Helpers
                     EstimatedContentCount = 1_200_000,
                     HomeLocation = "https://www.weasyl.com"
                 },
+                PlatformConstant.Twitter => new Platform
+                {
+                    Name = "Twitter",
+                    EstimatedContentCount = -1,
+                    HomeLocation = "https://twitter.com"
+                },
                 _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
             };
 

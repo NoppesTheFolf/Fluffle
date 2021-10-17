@@ -8,6 +8,7 @@
         E621 = 1,
         FurryNetwork = 2,
         FurAffinity = 3,
-        Weasyl = 4
+        Weasyl = 4,
+        Twitter = 5
     }
 }

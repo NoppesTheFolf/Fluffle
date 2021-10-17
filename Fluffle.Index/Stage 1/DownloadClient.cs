@@ -12,9 +12,23 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Noppes.Fluffle.TwitterSync;
 
 namespace Noppes.Fluffle.Index
 {
+    public class TwitterDownloadClient : DownloadClient
+    {
+        private readonly ITwitterDownloadClient _client;
+
+        public TwitterDownloadClient(ITwitterDownloadClient client)
+        {
+            _client = client;
+        }
+
+        public override Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default) =>
+            _client.GetStreamAsync(url);
+    }
+
     public class WeasylDownloadClient : DownloadClient
     {
         private readonly WeasylClient _client;

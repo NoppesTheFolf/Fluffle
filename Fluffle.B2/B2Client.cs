@@ -99,7 +99,7 @@ namespace Noppes.Fluffle.B2
         {
             using var _ = await _mutex.LockAsync();
 
-            if (!force && DateTimeOffset.Now.Subtract(_authorizedWhen) < TokenExpirationInterval)
+            if (!force && DateTimeOffset.UtcNow.Subtract(_authorizedWhen) < TokenExpirationInterval)
                 return;
 
             var response = await Request(B2Endpoints.Authorize)
@@ -111,7 +111,7 @@ namespace Noppes.Fluffle.B2
 
             _httpClient.BaseUrl = response.ApiUrl;
             _authorizationToken = response.AuthorizationToken;
-            _authorizedWhen = DateTimeOffset.Now;
+            _authorizedWhen = DateTimeOffset.UtcNow;
             _authorizedBucket = new B2Bucket(response.Allowed.BucketId, response.Allowed.BucketName, this);
         }
 

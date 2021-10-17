@@ -31,7 +31,7 @@ namespace Noppes.Fluffle.Main.Api.Controllers
                 .Select(p =>
                 {
                     var (total, indexed, historyLast30Days, historyLast24Hours) =
-                        scope.Get(p.Id, (int) MediaTypeConstant.Image);
+                        scope.Get(p.Id, (int)MediaTypeConstant.Image);
 
                     var model = new StatusModel
                     {
@@ -39,7 +39,7 @@ namespace Noppes.Fluffle.Main.Api.Controllers
                         EstimatedCount = total > p.EstimatedContentCount ? total : p.EstimatedContentCount,
                         StoredCount = total,
                         IndexedCount = indexed,
-                        IsComplete = p.IsComplete,
+                        IsComplete = p.IsComplete || p.EstimatedContentCount == -1,
                         HistoryLast30Days = historyLast30Days,
                         HistoryLast24Hours = historyLast24Hours
                     };

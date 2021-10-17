@@ -5,9 +5,9 @@ using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.Main.Communication;
+using Noppes.Fluffle.Utils;
 using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -16,6 +16,7 @@ namespace Noppes.Fluffle.Index
 {
     public class ImageDownloader : ImageProducer
     {
+        private const int TargetSize = 300;
         private static readonly TimeSpan Delay = 5.Minutes();
 
         private readonly PlatformModel _platform;
@@ -58,7 +59,7 @@ namespace Noppes.Fluffle.Index
         {
             var temporaryFile = await LogEx.TimeAsync(async () =>
             {
-                var orderedImages = OrderByDownloadPreference(ci.Content.Files);
+                var orderedImages = ImageSizeHelper.OrderByDownloadPreference(ci.Content.Files, f => f.Width, f => f.Height, TargetSize);
 
                 foreach (var imageFile in orderedImages)
                 {
@@ -80,23 +81,6 @@ namespace Noppes.Fluffle.Index
             }, "[{platformName}, {idOnPlatform}, 1/5] Downloaded image", _platform.Name, ci.Content.IdOnPlatform);
 
             return temporaryFile;
-        }
-
-        public static IEnumerable<UnprocessedContentModel.FileModel> OrderByDownloadPreference(IEnumerable<UnprocessedContentModel.FileModel> files)
-        {
-            var imagesByArea = files
-                .OrderBy(s => s.Width * s.Height)
-                .ToList();
-
-            var preferredImages = imagesByArea
-                .Where(s => s.Width >= 300 && s.Height >= 300)
-                .ToList();
-
-            var leftOverImages = imagesByArea
-                .Except(preferredImages)
-                .OrderByDescending(s => s.Width * s.Height);
-
-            return preferredImages.Concat(leftOverImages);
         }
 
         private async Task<(bool success, TemporaryFile temporaryFile)> TryDownloadAsync(string url, Func<Task> onNotFoundAsync)

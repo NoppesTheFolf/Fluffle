@@ -61,6 +61,14 @@ namespace Noppes.Fluffle.Configuration
     }
 
     /// <summary>
+    /// The database configuration for the Twitter synchronization client.
+    /// </summary>
+    [ConfigurationSection("TwitterDatabase")]
+    public class TwitterDatabaseConfiguration : DatabaseConfiguration
+    {
+    }
+
+    /// <summary>
     /// Configuration used regarding thumbnails, in specific when uploading them somewhere for
     /// permanent storage.
     /// </summary>
@@ -212,6 +220,26 @@ namespace Noppes.Fluffle.Configuration
         }
     }
 
+    /// <summary>
+    /// Configuration regarding twitter.com.
+    /// </summary>
+    [ConfigurationSection("Twitter")]
+    public class TwitterConfiguration : FluffleConfigurationPart<TwitterConfiguration>
+    {
+        public string ApiKey { get; set; }
+
+        public string ApiKeySecret { get; set; }
+
+        public string BearerToken { get; set; }
+
+        public TwitterConfiguration()
+        {
+            RuleFor(o => o.ApiKey).NotEmpty();
+            RuleFor(o => o.ApiKeySecret).NotEmpty();
+            RuleFor(o => o.BearerToken).NotEmpty();
+        }
+    }
+
     public abstract class SyncClientConfiguration : FluffleConfigurationPart<SyncClientConfiguration>
     {
         public int Interval { get; set; }
@@ -288,6 +316,8 @@ namespace Noppes.Fluffle.Configuration
 
         public ClientConfiguration Weasyl { get; set; }
 
+        public ClientConfiguration Twitter { get; set; }
+
         public IndexConfiguration()
         {
             RuleFor(o => o.ImageHasher).NotEmpty().SetValidator(o => o.ImageHasher);
@@ -299,6 +329,7 @@ namespace Noppes.Fluffle.Configuration
             RuleFor(o => o.FurryNetwork).NotEmpty().SetValidator(o => o.FurryNetwork);
             RuleFor(o => o.FurAffinity).NotEmpty().SetValidator(o => o.FurAffinity);
             RuleFor(o => o.Weasyl).NotEmpty().SetValidator(o => o.Weasyl);
+            RuleFor(o => o.Twitter).NotEmpty().SetValidator(o => o.Twitter);
         }
     }
 
@@ -322,6 +353,23 @@ namespace Noppes.Fluffle.Configuration
         {
             RuleFor(o => o.Url).NotEmpty();
             RuleFor(o => o.ApiKey).NotEmpty();
+        }
+    }
+
+    /// <summary>
+    /// Configuration regarding the prediction API.
+    /// </summary>
+    [ConfigurationSection("Prediction")]
+    public class PredictionConfiguration : FluffleConfigurationPart<PredictionConfiguration>
+    {
+        /// <summary>
+        /// Where the prediction API is running.
+        /// </summary>
+        public string Url { get; set; }
+
+        public PredictionConfiguration()
+        {
+            RuleFor(o => o.Url).NotEmpty();
         }
     }
 }

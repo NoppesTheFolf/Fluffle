@@ -1,5 +1,4 @@
 ﻿using Humanizer;
-using MessagePack;
 using Microsoft.Extensions.Hosting;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
@@ -8,15 +7,12 @@ using Noppes.Fluffle.Main.Communication;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Sync
 {
-    public abstract class ContentProducer<TContent> : SyncProducer
+    public abstract class ContentProducer<TContent> : SyncProducer, IContentMapper<TContent>
     {
         protected readonly string Platform;
         protected readonly FluffleClient FluffleClient;
@@ -55,8 +51,7 @@ namespace Noppes.Fluffle.Sync
 
         protected async Task<(SyncTypeConstant syncType, TimeSpan timeToWait)> GetSyncInfoAsync()
         {
-            var syncInfo = await HttpResiliency.RunAsync(() =>
-                FluffleClient.GetPlatformSync(Platform));
+            var syncInfo = await HttpResiliency.RunAsync(() => FluffleClient.GetPlatformSync(Platform));
 
             if (syncInfo.Next == null)
             {
@@ -73,44 +68,11 @@ namespace Noppes.Fluffle.Sync
 
         protected async Task SubmitContentAsync(ICollection<TContent> content)
         {
-            var contentModels = new List<PutContentModel>();
-            foreach (var contentPiece in content)
-            {
-                var model = new PutContentModel();
-                SrcToContent(contentPiece, model);
-                contentModels.Add(model);
-            }
+            var contentModels = content
+                .Select(((IContentMapper<TContent>)this).SrcToContent)
+                .ToList();
 
             await ProduceAsync(contentModels);
-        }
-
-        public void SrcToContent(TContent src, PutContentModel dest)
-        {
-            dest.IdOnPlatform = GetId(src);
-            dest.Rating = GetRating(src);
-            dest.Title = GetTitle(src);
-            dest.Description = GetDescription(src);
-            dest.CreditableEntities = GetCredits(src).ToList();
-            dest.ViewLocation = GetViewLocation(src);
-            dest.Files = GetFiles(src).ToList();
-            dest.Tags = GetTags(src).ToList();
-            dest.OtherSources = GetOtherSources(src).ToList();
-            dest.MediaType = GetMediaType(src);
-            dest.Priority = GetPriority(src);
-            dest.ShouldBeIndexed = ShouldBeIndexed(src);
-
-            if (typeof(TContent).GetCustomAttribute<MessagePackObjectAttribute>() == null)
-                return;
-
-            if (SourceVersion < 1)
-                throw new InvalidOperationException("Specify a source version greater than 0.");
-
-            using var sourceStream = new MemoryStream();
-            using (var compressionStream = new BrotliStream(sourceStream, CompressionLevel.Optimal))
-                compressionStream.Write(MessagePackSerializer.Serialize(src));
-
-            dest.Source = sourceStream.ToArray();
-            dest.SourceVersion = SourceVersion;
         }
 
         public abstract string GetId(TContent src);
@@ -136,6 +98,8 @@ namespace Noppes.Fluffle.Sync
         public abstract IEnumerable<string> GetOtherSources(TContent src);
 
         public abstract bool ShouldBeIndexed(TContent src);
+
+        public int GetSourceVersion() => SourceVersion;
 
         public virtual int SourceVersion => 0;
 

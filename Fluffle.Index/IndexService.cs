@@ -11,6 +11,7 @@ using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Service;
 using Noppes.Fluffle.Thumbnail;
+using Noppes.Fluffle.TwitterSync;
 using Noppes.Fluffle.Utils;
 using Noppes.Fluffle.WeasylSync;
 using Serilog;
@@ -68,12 +69,14 @@ namespace Noppes.Fluffle.Index
             var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(Configuration.FurryNetwork.Interval);
             var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(Configuration.FurAffinity.Interval);
             var weasylClient = await new WeasylClientFactory(configuration).CreateAsync(Configuration.Weasyl.Interval);
+            var twitterClient = await new TwitterDownloadClientFactory(configuration).CreateAsync(Configuration.Twitter.Interval);
             DownloadClients = new Dictionary<PlatformConstant, (DownloadClient, IndexConfiguration.ClientConfiguration)>
             {
                 { PlatformConstant.E621, (new E621DownloadClient(e621Client), Configuration.E621) },
                 { PlatformConstant.FurryNetwork, (new FurryNetworkDownloadClient(furryNetworkClient), Configuration.FurryNetwork) },
                 { PlatformConstant.FurAffinity, (new FurAffinityDownloadClient(furAffinityClient, fluffleClient, Environment), Configuration.FurAffinity) },
-                { PlatformConstant.Weasyl, (new WeasylDownloadClient(weasylClient), Configuration.Weasyl) }
+                { PlatformConstant.Weasyl, (new WeasylDownloadClient(weasylClient), Configuration.Weasyl) },
+                { PlatformConstant.Twitter , (new TwitterDownloadClient(twitterClient), Configuration.Twitter) }
             };
 
             await base.StartAsync(cancellationToken);

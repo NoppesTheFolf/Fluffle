@@ -29,7 +29,7 @@ namespace Noppes.Fluffle.Main.Api.Services
         {
             using var _ = await Mutex.LockAsync();
 
-            var now = DateTimeOffset.Now.ToUnixTimeSeconds();
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var contentQuery = selectSet(context).AsSplitQuery()
                 .NotDeleted()
                 .Include(c => c.Platform)
@@ -48,7 +48,7 @@ namespace Noppes.Fluffle.Main.Api.Services
             var unprocessedImages = await contentQuery.ToListAsync();
 
             foreach (var unprocessedImage in unprocessedImages)
-                unprocessedImage.ReservedUntil = DateTimeOffset.Now.Add(ReservationTime).ToUnixTimeSeconds();
+                unprocessedImage.ReservedUntil = DateTimeOffset.UtcNow.Add(ReservationTime).ToUnixTimeSeconds();
 
             var models = unprocessedImages.Select(c =>
             {

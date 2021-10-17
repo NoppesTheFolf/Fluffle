@@ -87,12 +87,12 @@ namespace Noppes.Fluffle.B2
         {
             using var _ = await _mutex.LockAsync();
 
-            if (!force && DateTimeOffset.Now.Subtract(_authorizedWhen) < TokenExpirationInterval)
+            if (!force && DateTimeOffset.UtcNow.Subtract(_authorizedWhen) < TokenExpirationInterval)
                 return;
 
             var uploadInformation = await GetUploadInformationAsync();
 
-            _authorizedWhen = DateTimeOffset.Now;
+            _authorizedWhen = DateTimeOffset.UtcNow;
             _uploadUrl = uploadInformation.UploadUrl;
             _uploadAuthorizationToken = uploadInformation.AuthorizationToken;
         }

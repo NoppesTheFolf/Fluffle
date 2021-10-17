@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net5.0</TargetFramework>
+		<AssemblyName>Noppes.Fluffle.TwitterSync</AssemblyName>
+		<RootNamespace>Noppes.Fluffle.TwitterSync</RootNamespace>
+		<UserSecretsId>c344b214-e437-47e5-a817-7bad0ef8c3cb</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="5.0.0" />
+		<PackageReference Include="morelinq" Version="3.3.2" />
+		<PackageReference Include="TweetinviAPI" Version="5.0.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Fluffle.E621Sync\Fluffle.E621Sync.csproj" />
+		<ProjectReference Include="..\Fluffle.Sync\Fluffle.Sync.csproj" />
+		<ProjectReference Include="..\Fluffle.TwitterSync.Database\Fluffle.TwitterSync.Database.csproj" />
+	</ItemGroup>
+
+</Project>
