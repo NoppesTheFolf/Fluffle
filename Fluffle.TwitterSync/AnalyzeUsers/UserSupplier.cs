@@ -23,6 +23,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
         private const int BatchSize = 20;
         private static readonly TimeSpan Interval = 1.Minutes();
         private static readonly TimeSpan ReservationTime = 1.Hours();
+        private static readonly TimeSpan RetryTime = 2.Weeks();
 
         private readonly IServiceProvider _services;
         private readonly ITwitterClient _twitterClient;
@@ -76,7 +77,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 
                 if (user.IsProtected || user.IsSuspended)
                 {
-                    Log.Information("Skipping user @{username}", user.Username);
+                    Log.Information("Skipping user @{username} because their is either protected or suspended", user.Username);
                     return;
                 }
 
@@ -111,6 +112,15 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                         }).ToList()
                     })
                     .ToList();
+
+                if (images.Count < BatchSize)
+                {
+                    Log.Information("Skipping user @{username} for now because they have not uploaded enough images yet", user.Username);
+                    user.ReservedUntil = DateTimeOffset.UtcNow.Add(RetryTime).ToUnixTimeSeconds();
+                    await context.SaveChangesAsync();
+
+                    return;
+                }
 
                 await ProduceAsync(new AnalyzeUserData
                 {
