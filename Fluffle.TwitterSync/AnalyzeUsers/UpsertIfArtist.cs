@@ -6,11 +6,9 @@ using Noppes.Fluffle.Database.Synchronization;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using Noppes.Fluffle.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Tweetinvi.Models;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {
@@ -33,7 +31,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             if (user.IsFurryArtist == true)
             {
                 user.TimelineRetrievedAt = DateTimeOffset.UtcNow;
-                await UpsertTweetsAsync(context, data.Tweets, user.Id, CancellationToken.None);
+                await UpsertTweetsAsync(context, data.Timeline, user.Id, CancellationToken.None);
             }
 
             await context.SaveChangesAsync();
@@ -41,10 +39,10 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             return data;
         }
 
-        private static async Task UpsertTweetsAsync(TwitterContext context, IList<ITweet> pages, string artistId, CancellationToken cancellationToken)
+        private static async Task UpsertTweetsAsync(TwitterContext context, TimelineCollection timeline, string artistId, CancellationToken cancellationToken)
         {
             // Upsert tweets
-            var tweets = pages.Flatten();
+            var tweets = timeline.ToList();
             var newTweets = tweets.Select(t => new Tweet
             {
                 Id = t.IdStr,
@@ -58,7 +56,24 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 CreatedById = t.CreatedBy.IdStr,
                 CreatedAt = t.CreatedAt.ToUniversalTime(),
                 Type = t.Type(),
-                ShouldBeAnalyzed = t.Type() == TweetType.Post && t.CreatedBy.IdStr == artistId && t.Media.Any(m => m.MediaType() == MediaTypeConstant.Image)
+                ShouldBeAnalyzed = t.Media.Any(m =>
+                {
+                    // Skip if the tweet does not have any images
+                    if (m.MediaType() != MediaTypeConstant.Image)
+                        return false;
+
+                    // Skip if the tweet is a retweet
+                    if (t.Type() == TweetType.Retweet)
+                        return false;
+
+                    // If the tweet is a post or a quote tweet, and said tweet is created by the artist, then analyze it
+                    if ((t.Type() == TweetType.Post || t.Type() == TweetType.QuoteTweet) && t.CreatedBy.IdStr == artistId)
+                        return true;
+
+                    // Now we only have replies left, analyze them if the root tweet still exists and is created by the artist
+                    var rootTweet = timeline.GetReplyRootTweet(t);
+                    return rootTweet != null && rootTweet.CreatedBy.IdStr == artistId;
+                })
             }).ToList();
 
             var existingTweets = await context.Tweets

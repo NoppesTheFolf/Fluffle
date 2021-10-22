@@ -69,7 +69,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeMedia
                 .Select(((IContentMapper<AnalyzeMediaResult>)this).SrcToContent)
                 .ToList();
 
-            using (var _ = Operation.Time("Submitting {contentCount} content pieces", contentModels.Count))
+            using (var _ = Operation.Time("Submitting {contentCount} tweets", contentModels.Count))
             {
                 await HttpResiliency.RunAsync(async () =>
                 {

@@ -6,15 +6,12 @@ using Noppes.Fluffle.Http;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using Noppes.Fluffle.Utils;
 using Serilog;
-using SerilogTimings;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Tweetinvi;
 using Tweetinvi.Exceptions;
 using Tweetinvi.Models;
-using Tweetinvi.Parameters;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {
@@ -53,11 +50,12 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 return;
             }
 
+            IUser twitterUser = null;
             foreach (var user in users)
             {
                 try
                 {
-                    var twitterUser = await HttpResiliency.RunAsync(() => _twitterClient.Users.GetUserAsync(long.Parse(user.Id)));
+                    twitterUser = await HttpResiliency.RunAsync(() => _twitterClient.Users.GetUserAsync(long.Parse(user.Id)));
 
                     user.ReservedUntil = DateTimeOffset.UtcNow.Add(ReservationTime).ToUnixTimeSeconds();
                     user.Name = twitterUser.Name;
@@ -81,20 +79,10 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                     return;
                 }
 
-                var tweets = new List<ITweet>();
-                var iterator = _twitterClient.Timelines.GetUserTimelineIterator(new GetUserTimelineParameters(long.Parse(user.Id))
-                {
-                    IncludeRetweets = true
-                });
-                while (!iterator.Completed)
-                {
-                    using var _ = Operation.Time("Retrieved {count} tweets for user @{username}", tweets.Count, user.Username);
-                    var page = await HttpResiliency.RunAsync(() => iterator.NextPageAsync());
-                    tweets.AddRange(page);
-                }
+                var timeline = await TimelineCollection.CreateAsync(_twitterClient, twitterUser);
 
-                var images = tweets
-                    .Where(t => t.Type() == TweetType.Post)
+                var images = timeline
+                    .Where(t => t.Type() == TweetType.Post && t.CreatedBy.IdStr == user.Id)
                     .SelectMany(t => t.Media.Where(m => m.MediaType() == MediaTypeConstant.Image).Select(m => (t, m)))
                     .OrderByDescending(x => x.t.FavoriteCount)
                     .Take(BatchSize)
@@ -126,7 +114,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 {
                     Id = user.Id,
                     Username = user.Username,
-                    Tweets = tweets,
+                    Timeline = timeline,
                     Images = images
                 });
             }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Tweetinvi.Models;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {
@@ -9,7 +8,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
     {
         public string Id { get; set; }
         public string Username { get; set; }
-        public IList<ITweet> Tweets { get; set; }
+        public TimelineCollection Timeline { get; set; }
 
         public ICollection<RetrieverImage> Images { get; set; }
         public ICollection<Stream> Streams { get; set; }
