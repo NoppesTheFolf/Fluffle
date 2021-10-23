@@ -241,8 +241,10 @@ namespace Noppes.Fluffle.Search.Api
             {
                 var baseQuery = getSet(context).Where(i => i.PlatformId == platformId);
 
-                if (await baseQuery.AnyAsync())
-                    afterChangeId = await baseQuery.MaxAsync(i => i.ChangeId);
+                afterChangeId = await baseQuery
+                    .OrderByDescending(i => i.ChangeId)
+                    .Select(i => i.ChangeId)
+                    .FirstOrDefaultAsync();
             });
 
             while (true)

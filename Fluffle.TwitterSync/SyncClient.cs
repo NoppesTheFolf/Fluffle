@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Noppes.E621;
 using Noppes.Fluffle.Configuration;
+using Noppes.Fluffle.Database;
 using Noppes.Fluffle.E621Sync;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.TwitterSync.AnalyzeMedia;
@@ -52,12 +53,7 @@ namespace Noppes.Fluffle.TwitterSync
             services.AddSingleton<IReverseSearchClient>(reverseSearchClient);
 
             // Add database
-            services.AddDbContext<TwitterContext>(options =>
-            {
-                // options.LogTo(Console.WriteLine);
-                // options.EnableSensitiveDataLogging();
-                options.UseNpgsql(conf.Get<TwitterDatabaseConfiguration>().ConnectionString);
-            });
+            services.AddDatabase<TwitterContext, TwitterDatabaseConfiguration>(conf);
 
             // Configure user analyze consumers/producers
             services.AddTransient<UserSupplier>();

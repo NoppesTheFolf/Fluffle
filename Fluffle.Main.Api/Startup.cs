@@ -2,7 +2,6 @@ using Humanizer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.Api;
 using Noppes.Fluffle.Api.AccessControl;
@@ -10,6 +9,7 @@ using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.B2;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
+using Noppes.Fluffle.Database;
 using Noppes.Fluffle.FurAffinity;
 using Noppes.Fluffle.Main.Api.Helpers;
 using Noppes.Fluffle.Main.Database.Models;
@@ -25,10 +25,7 @@ namespace Noppes.Fluffle.Main.Api
 
         public override void AdditionalConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<FluffleContext>(options =>
-            {
-                options.UseNpgsql(Configuration.Get<MainDatabaseConfiguration>().ConnectionString);
-            });
+            services.AddDatabase<FluffleContext, MainDatabaseConfiguration>(Configuration);
 
             services.AddSingleton<TagBlacklistCollection>();
 

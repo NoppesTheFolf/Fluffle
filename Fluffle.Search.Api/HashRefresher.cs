@@ -17,6 +17,8 @@ namespace Noppes.Fluffle.Search.Api
 {
     public class HashRefresher : IService, IInitializable
     {
+        private const int BatchSize = 20_000;
+
         private readonly IServiceProvider _services;
         private readonly ILogger<HashRefresher> _logger;
         private readonly PlatformSearchService _compareService;
@@ -44,43 +46,48 @@ namespace Noppes.Fluffle.Search.Api
             using var scope = _services.CreateScope();
             await using var context = scope.ServiceProvider.GetRequiredService<FluffleSearchContext>();
 
-            // Todo: this timeout should not be this long, it's bad design. This part needs an
-            // overhaul to accomodate the number of hashes the production database has anyway.
             context.Database.SetCommandTimeout(5.Minutes());
 
             foreach (var platform in await context.Platform.ToListAsync())
             {
-                _afterChangeIds.TryGetValue(platform.Id, out var afterChangeId);
-
-                var images = context.Images.AsNoTracking()
-                    .Include(i => i.ImageHash)
-                    .Where(i => i.PlatformId == platform.Id)
-                    .Where(i => i.ChangeId > afterChangeId)
-                    .OrderBy(i => i.ChangeId)
-                    .Select(i => new
-                    {
-                        i.Id,
-                        i.PlatformId,
-                        i.ImageHash,
-                        i.IsSfw,
-                        i.ChangeId,
-                        i.IsDeleted
-                    });
-
-                foreach (var image in images)
+                while (true)
                 {
-                    // We can skip deleted images on the first run because they comparison service will be uninitialized
-                    if (image.IsDeleted && !isFirstRun)
+                    _afterChangeIds.TryGetValue(platform.Id, out var afterChangeId);
+
+                    var images = await context.Images.AsNoTracking()
+                        .Include(i => i.ImageHash)
+                        .Where(i => i.PlatformId == platform.Id)
+                        .Where(i => i.ChangeId > afterChangeId)
+                        .OrderBy(i => i.ChangeId)
+                        .Take(BatchSize)
+                        .Select(i => new
+                        {
+                            i.Id,
+                            i.PlatformId,
+                            i.ImageHash.PhashAverage64,
+                            i.IsSfw,
+                            i.ChangeId,
+                            i.IsDeleted
+                        }).ToListAsync();
+
+                    foreach (var image in images)
                     {
-                        _compareService.Remove((PlatformConstant)image.PlatformId, image.Id);
-                        continue;
+                        // We can skip deleted images on the first run because the comparison service will be uninitialized
+                        if (image.IsDeleted && !isFirstRun)
+                        {
+                            _compareService.Remove((PlatformConstant)image.PlatformId, image.Id);
+                            continue;
+                        }
+
+                        var hash = FluffleHash.ToUInt64(image.PhashAverage64);
+                        _compareService.Add((PlatformConstant)image.PlatformId, new HashedImage(image.Id, hash), image.IsSfw);
+
+                        if (image.ChangeId > afterChangeId)
+                            _afterChangeIds[platform.Id] = image.ChangeId;
                     }
 
-                    var hash = FluffleHash.ToUInt64(image.ImageHash.PhashAverage64);
-                    _compareService.Add((PlatformConstant)image.PlatformId, new HashedImage(image.Id, hash), image.IsSfw);
-
-                    if (image.ChangeId > afterChangeId)
-                        _afterChangeIds[platform.Id] = image.ChangeId;
+                    if (images.Count < BatchSize)
+                        break;
                 }
             }
 

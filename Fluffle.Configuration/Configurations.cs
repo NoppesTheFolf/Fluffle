@@ -35,6 +35,11 @@ namespace Noppes.Fluffle.Configuration
         /// </summary>
         public string ConnectionString => $"Host={Host};Database={Database};Username={Username};Password={Password}";
 
+        /// <summary>
+        /// Whether or not to log queries to the console.
+        /// </summary>
+        public bool EnableLogging { get; set; }
+
         protected DatabaseConfiguration()
         {
             RuleFor(o => o.Host).Hostname();

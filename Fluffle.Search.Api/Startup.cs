@@ -10,6 +10,7 @@ using Noppes.Fluffle.Api;
 using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.Configuration;
+using Noppes.Fluffle.Database;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Search.Database.Models;
@@ -23,10 +24,7 @@ namespace Noppes.Fluffle.Search.Api
 
         public override void AdditionalConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<FluffleSearchContext>(options =>
-            {
-                options.UseNpgsql(Configuration.Get<SearchDatabaseConfiguration>().ConnectionString);
-            });
+            services.AddDatabase<FluffleSearchContext, SearchDatabaseConfiguration>(Configuration);
 
             var mainConf = Configuration.Get<MainConfiguration>();
             services.AddSingleton(new FluffleClient(mainConf.Url, mainConf.ApiKey));
