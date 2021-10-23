@@ -31,6 +31,8 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             if (user.IsFurryArtist == true)
             {
                 user.TimelineRetrievedAt = DateTimeOffset.UtcNow;
+
+                await data.Timeline.FillMissingAsync();
                 await UpsertTweetsAsync(context, data.Timeline, user.Id, CancellationToken.None);
             }
 

@@ -32,7 +32,6 @@ namespace Noppes.Fluffle.TwitterSync
         {
             var collection = new TimelineCollection(twitterClient, user);
             await collection.FillWithTimelineAsync();
-            await collection.FillMissingAsync();
 
             return collection;
         }
@@ -67,7 +66,7 @@ namespace Noppes.Fluffle.TwitterSync
             _tweets = tweets.Flatten().ToDictionary(t => t.IdStr);
         }
 
-        private async Task FillMissingAsync()
+        public async Task FillMissingAsync()
         {
             while (true)
             {
