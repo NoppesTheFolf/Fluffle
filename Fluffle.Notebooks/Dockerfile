@@ -17,6 +17,8 @@ COPY ./Fluffle.Notebooks/requirements.txt ./requirements.txt
 RUN pip3 install --no-cache-dir --upgrade pip && \
     pip3 install --no-cache-dir -r requirements.txt
 
+ARG MEM_LIMIT=4096
+
 # Clone tensorflow
 RUN apt-get update && \
     apt-get install -y git && \
@@ -24,7 +26,7 @@ RUN apt-get update && \
     cd tensorflow && \
     git checkout v2.6.0 && \
     ./configure && \
-    bazel build -c opt --copt=-mfma --copt=-mavx --copt=-mavx2 --copt=-msse4.1 --copt=-msse4.2 --verbose_failures //tensorflow/tools/pip_package:build_pip_package && \
+    bazel build -c opt --copt=-mfma --copt=-mavx --copt=-mavx2 --copt=-msse4.1 --copt=-msse4.2 --verbose_failures --local_ram_resources=$MEM_LIMIT //tensorflow/tools/pip_package:build_pip_package && \
     ./bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg && \
     pip3 install --no-cache-dir /tmp/tensorflow_pkg/tensorflow-2.6.0-cp39-cp39-linux_x86_64.whl && \
     cd .. && \
