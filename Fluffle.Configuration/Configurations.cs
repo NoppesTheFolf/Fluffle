@@ -36,6 +36,11 @@ namespace Noppes.Fluffle.Configuration
         public string ConnectionString => $"Host={Host};Database={Database};Username={Username};Password={Password}";
 
         /// <summary>
+        /// Number of seconds before a query times out.
+        /// </summary>
+        public int CommandTimeout { get; set; } = 30;
+
+        /// <summary>
         /// Whether or not to log queries to the console.
         /// </summary>
         public bool EnableLogging { get; set; }
@@ -46,6 +51,7 @@ namespace Noppes.Fluffle.Configuration
             RuleFor(o => o.Database).NotEmpty();
             RuleFor(o => o.Username).NotEmpty();
             RuleFor(o => o.Password).NotEmpty();
+            RuleFor(o => o.CommandTimeout).GreaterThan(0);
         }
     }
 

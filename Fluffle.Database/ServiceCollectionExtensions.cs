@@ -13,7 +13,10 @@ namespace Noppes.Fluffle.Database
             services.AddDbContext<TContext>(options =>
             {
                 var dbConf = configuration.Get<TConfiguration>();
-                options.UseNpgsql(dbConf.ConnectionString);
+                options.UseNpgsql(dbConf.ConnectionString, builder =>
+                {
+                    builder.CommandTimeout(dbConf.CommandTimeout);
+                });
 
                 if (!dbConf.EnableLogging)
                     return;
