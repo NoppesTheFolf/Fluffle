@@ -38,7 +38,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var users = await context.Users
-                .Where(u => u.ReservedUntil < now && u.IsFurryArtist == null && u.IsOnE621 && !u.IsProtected && !u.IsSuspended)
+                .Where(u => u.ReservedUntil < now && u.IsFurryArtist == null && u.IsOnE621 && !u.IsProtected && !u.IsSuspended && !u.IsDeleted)
                 .OrderByDescending(u => u.FollowersCount)
                 .Take(20)
                 .ToListAsync();
@@ -65,17 +65,24 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 }
                 catch (TwitterException e)
                 {
-                    if (e.StatusCode == 403)
-                        user.IsSuspended = true;
-                    else
-                        throw;
+                    switch (e.StatusCode)
+                    {
+                        case 403:
+                            user.IsSuspended = true;
+                            break;
+                        case 404:
+                            user.IsDeleted = true;
+                            break;
+                        default:
+                            throw;
+                    }
                 }
 
                 await context.SaveChangesAsync();
 
-                if (user.IsProtected || user.IsSuspended)
+                if (user.IsProtected || user.IsSuspended || user.IsDeleted)
                 {
-                    Log.Information("Skipping user @{username} because their is either protected or suspended", user.Username);
+                    Log.Information("Skipping user @{username} because their is either protected, suspended or deleted", user.Username);
                     return;
                 }
 
