@@ -1,20 +1,36 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 from b2 import B2ModelManager
 import uvicorn
 import yaml
 import sys
+import secrets
 
 # Load the config
 config = yaml.load(open('config.yml', 'r'), Loader=yaml.SafeLoader)
 
 # Check if we are missing any of the required config variables
-required_keys = ['host', 'port', 'cache_directory', 'application_key_id', 'application_key']
+required_keys = ['host', 'port', 'api_key', 'cache_directory', 'application_key_id', 'application_key']
 missing_keys = set(required_keys) - set(config.keys())
 if len(missing_keys) > 0:
     raise Exception(f"You are missing the following keys in your config: {', '.join(missing_keys)}")
 
 manager = B2ModelManager(config['cache_directory'], config['application_key_id'], config['application_key'])
 app = FastAPI()
+
+API_KEY_HEADER_NAME = 'api-key'
+API_KEY = config['api_key']
+
+@app.middleware("http")
+async def api_key_authentication(request: Request, call_next):
+    if API_KEY_HEADER_NAME not in request.headers:
+        return Response(status_code=HTTP_400_BAD_REQUEST)
+    
+    if not secrets.compare_digest(request.headers[API_KEY_HEADER_NAME], API_KEY):
+        return Response(status_code=HTTP_401_UNAUTHORIZED)
+    
+    response = await call_next(request)
+    return response
 
 # Load all the models defined in the config
 for model_name in set(config.keys()) - set(required_keys):
