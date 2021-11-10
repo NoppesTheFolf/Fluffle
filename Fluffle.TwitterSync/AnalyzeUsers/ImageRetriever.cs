@@ -1,4 +1,6 @@
 ﻿using Flurl.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using Noppes.Fluffle.Utils;
@@ -53,10 +55,12 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
     public class ImageRetriever<T> : Consumer<T> where T : IImageRetrieverData
     {
         private const int TargetSize = 456;
+        private readonly IServiceProvider _services;
         private readonly ITwitterDownloadClient _downloadClient;
 
-        public ImageRetriever(ITwitterDownloadClient downloadClient)
+        public ImageRetriever(IServiceProvider services, ITwitterDownloadClient downloadClient)
         {
+            _services = services;
             _downloadClient = downloadClient;
         }
 
@@ -65,7 +69,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             // Download the images from Twitter
             data.Streams = new List<Stream>();
             data.OpenStreams = new List<Func<Stream>>();
-            foreach (var image in data.Images)
+            foreach (var image in data.Images.ToList()) // Make a copy so we can remove items from the original collection
             {
                 async Task<Stream> DownloadImage(string url, string fallbackUrl)
                 {
@@ -79,7 +83,17 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                             throw;
 
                         Log.Warning("Attempting to use fallback URL for media with ID {mediaId}...", image.MediaId);
-                        return await HttpResiliency.RunAsync(() => _downloadClient.GetStreamAsync(fallbackUrl));
+                        try
+                        {
+                            return await HttpResiliency.RunAsync(() => _downloadClient.GetStreamAsync(fallbackUrl));
+                        }
+                        catch (FlurlHttpException e2)
+                        {
+                            if (e2.StatusCode == 404)
+                                return null;
+
+                            throw;
+                        }
                     }
                 }
 
@@ -87,6 +101,24 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 using var _ = Operation.Time("Downloading media with ID {mediaId} for tweet with ID {tweetId} at size {size}", image.MediaId, image.TweetId, preferredSize.Size);
                 var url = $"{image.Url}?name={Enum.GetName(preferredSize.Size).ToLowerInvariant()}";
                 await using var stream = await DownloadImage(url, image.Url);
+
+                if (stream == null)
+                {
+                    using var scope = _services.CreateScope();
+                    await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
+
+                    var media = await context.Media.FirstOrDefaultAsync(m => m.Id == image.MediaId);
+                    if (media != null)
+                    {
+                        Log.Information("Marking media with ID {mediaId} as deleted", media.Id);
+                        media.IsDeleted = true;
+
+                        await context.SaveChangesAsync();
+                    }
+
+                    data.Images.Remove(data.Images.First(i => i.MediaId == image.MediaId));
+                    continue;
+                }
 
                 var memoryStream = new MemoryStream();
                 data.Streams.Add(memoryStream);

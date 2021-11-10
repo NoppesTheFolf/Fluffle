@@ -162,7 +162,14 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 .ToListAsync(cancellationToken);
 
             var mediaResult = await context.SynchronizeAsync(c => c.Media, existingMedia, newMedia,
-                (m1, m2) => m1.Id == m2.Id);
+                (m1, m2) => m1.Id == m2.Id, onUpdateAsync: (src, dest) =>
+                {
+                    dest.Url = src.Url;
+                    dest.MediaType = src.MediaType;
+                    dest.IsDeleted = false;
+
+                    return Task.CompletedTask;
+                });
             mediaResult.Print();
 
             // Upsert connection between media and tweet
