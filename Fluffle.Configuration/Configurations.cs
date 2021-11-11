@@ -378,9 +378,15 @@ namespace Noppes.Fluffle.Configuration
         /// </summary>
         public string Url { get; set; }
 
+        /// <summary>
+        /// API key required to access the prediction API.
+        /// </summary>
+        public string ApiKey { get; set; }
+
         public PredictionConfiguration()
         {
             RuleFor(o => o.Url).NotEmpty();
+            RuleFor(o => o.ApiKey).NotEmpty();
         }
     }
 }

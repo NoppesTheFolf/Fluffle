@@ -43,9 +43,10 @@ namespace Noppes.Fluffle.TwitterSync
 
     public class PredictionClient : ApiClient, IPredictionClient
     {
-        public PredictionClient(string baseUrl) : base(baseUrl)
+        public PredictionClient(string baseUrl, string apiKey) : base(baseUrl)
         {
             FlurlClient.WithHeader("User-Agent", Project.UserAgent);
+            FlurlClient.WithHeader("Api-Key", apiKey);
             FlurlClient.Settings.JsonSerializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings
             {
                 ContractResolver = new DefaultContractResolver

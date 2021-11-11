@@ -45,7 +45,7 @@ namespace Noppes.Fluffle.TwitterSync
 
             // Add prediction client
             var predictionConf = conf.Get<PredictionConfiguration>();
-            var predictionClient = new PredictionClient(predictionConf.Url);
+            var predictionClient = new PredictionClient(predictionConf.Url, predictionConf.ApiKey);
             services.AddSingleton<IPredictionClient>(predictionClient);
 
             // Add Fluffle reverse search client
