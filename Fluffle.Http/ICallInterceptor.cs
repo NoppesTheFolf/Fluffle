@@ -8,6 +8,8 @@ namespace Noppes.Fluffle.Http
     /// </summary>
     public interface ICallInterceptor
     {
-        public Task InterceptAsync(FlurlCall call);
+        public Task InterceptBeforeAsync(FlurlCall call);
+
+        public Task InterceptAfterAsync(FlurlCall call);
     }
 }

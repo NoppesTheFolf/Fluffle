@@ -43,6 +43,8 @@ namespace Noppes.Fluffle.TwitterSync
 
     public class PredictionClient : ApiClient, IPredictionClient
     {
+        private readonly SemaphoreInterceptor _classifyInterceptor;
+
         public PredictionClient(string baseUrl, string apiKey) : base(baseUrl)
         {
             FlurlClient.WithHeader("User-Agent", Project.UserAgent);
@@ -54,15 +56,19 @@ namespace Noppes.Fluffle.TwitterSync
                     NamingStrategy = new CamelCaseNamingStrategy(true, false),
                 }
             });
+
+            _classifyInterceptor = new SemaphoreInterceptor(1);
         }
 
         public async Task<ICollection<IDictionary<ClassificationClass, double>>> ClassifyAsync(IEnumerable<Func<Stream>> streams)
         {
-            var response = await Request("image-classifier").PostMultipartAsync(content =>
-            {
-                foreach (var stream in streams)
-                    content.AddFile("files", stream(), "dummy");
-            });
+            var response = await Request("image-classifier")
+                .AddInterceptor(_classifyInterceptor)
+                .PostMultipartAsync(content =>
+                {
+                    foreach (var stream in streams)
+                        content.AddFile("files", stream(), "dummy");
+                });
 
             return await response.GetJsonAsync<ICollection<IDictionary<ClassificationClass, double>>>();
         }

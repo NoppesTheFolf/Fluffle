@@ -22,7 +22,7 @@ namespace Noppes.Fluffle.Http
             _mutex = new AsyncLock();
         }
 
-        public async Task InterceptAsync(FlurlCall call)
+        public async Task InterceptBeforeAsync(FlurlCall call)
         {
             using var _ = await _mutex.LockAsync();
 
@@ -32,5 +32,7 @@ namespace Noppes.Fluffle.Http
 
             _waitUntil = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + _intervalInMilliseconds;
         }
+
+        public Task InterceptAfterAsync(FlurlCall call) => Task.CompletedTask;
     }
 }

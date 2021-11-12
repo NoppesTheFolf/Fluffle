@@ -85,5 +85,15 @@ namespace Noppes.Fluffle.Http
 
             return document;
         }
+
+        /// <summary>
+        /// Adds an interceptor to the request.
+        /// </summary>
+        public static IFlurlRequest AddInterceptor(this IFlurlRequest request, ICallInterceptor interceptor)
+        {
+            return request
+                .BeforeCall(interceptor.InterceptBeforeAsync)
+                .AfterCall(interceptor.InterceptAfterAsync);
+        }
     }
 }

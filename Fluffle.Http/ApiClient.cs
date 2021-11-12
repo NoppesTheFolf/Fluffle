@@ -35,7 +35,7 @@ namespace Noppes.Fluffle.Http
             var request = FlurlClient.Request(urlSegments);
 
             foreach (var interceptor in _interceptors)
-                request.BeforeCall(interceptor.InterceptAsync);
+                request.AddInterceptor(interceptor);
 
             return request;
         }
