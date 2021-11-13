@@ -13,8 +13,7 @@ namespace Noppes.Fluffle.Index
 
         private readonly FluffleThumbnail _thumbnail;
 
-        public Thumbnailer(FluffleClient fluffleClient,
-            FluffleThumbnail thumbnail) : base(fluffleClient)
+        public Thumbnailer(FluffleClient fluffleClient, FluffleThumbnail thumbnail) : base(fluffleClient)
         {
             _thumbnail = thumbnail;
         }

@@ -3,22 +3,41 @@ using Nitranium.PerceptualHashing.Exceptions;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.PerceptualHashing;
+using Noppes.Fluffle.Thumbnail;
 using SerilogTimings;
+using System;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Index
 {
     public class ImageHasher : ImageConsumer
     {
-        private readonly FluffleHash _fluffleHash;
+        private const int DifferenceThreshold = 12;
 
-        public ImageHasher(FluffleClient fluffleClient, FluffleHash fluffleHash) : base(fluffleClient)
+        private readonly FluffleHash _fluffleHash;
+        private readonly FluffleThumbnail _thumbnailer;
+
+        public ImageHasher(FluffleClient fluffleClient, FluffleHash fluffleHash,
+            FluffleThumbnail thumbnailer) : base(fluffleClient)
         {
             _fluffleHash = fluffleHash;
+            _thumbnailer = thumbnailer;
         }
 
         public override Task<ChannelImage> ConsumeAsync(ChannelImage image)
         {
+            var dimensions = _thumbnailer.GetDimensions(image.File.Location);
+            var max = Math.Max(dimensions.Width, dimensions.Height);
+            var min = Math.Min(dimensions.Width, dimensions.Height);
+            var difference = max / (double)min;
+
+            // TODO: This should not be considered an error, instead it should simply not be considered for indexation next time
+            if (difference > DifferenceThreshold)
+            {
+                image.Error = "The image its aspect ratio is too extreme to process.";
+                return Task.FromResult(image);
+            }
+
             try
             {
                 using (Operation.Time("[{platformName}, {idOnPlatform}, 2/5] Computed perceptual hashes", image.Content.PlatformName, image.Content.IdOnPlatform))
