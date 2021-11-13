@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using static MoreLinq.Extensions.BatchExtension;
 
 namespace Noppes.Fluffle.TwitterSync
 {
@@ -36,6 +37,8 @@ namespace Noppes.Fluffle.TwitterSync
     {
         public Task<ICollection<IDictionary<ClassificationClass, double>>> ClassifyAsync(IEnumerable<Func<Stream>> streams);
 
+        public Task<int> GetClassifyBatchSizeAsync();
+
         public Task<bool> IsFurryArtistAsync(IEnumerable<AnalyzeScore> scores);
 
         public Task<ICollection<bool>> IsFurryArtAsync(IEnumerable<IDictionary<ClassificationClass, double>> classes);
@@ -62,15 +65,29 @@ namespace Noppes.Fluffle.TwitterSync
 
         public async Task<ICollection<IDictionary<ClassificationClass, double>>> ClassifyAsync(IEnumerable<Func<Stream>> streams)
         {
-            var response = await Request("image-classifier")
-                .AddInterceptor(_classifyInterceptor)
-                .PostMultipartAsync(content =>
-                {
-                    foreach (var stream in streams)
-                        content.AddFile("files", stream(), "dummy");
-                });
+            var results = new List<IDictionary<ClassificationClass, double>>();
 
-            return await response.GetJsonAsync<ICollection<IDictionary<ClassificationClass, double>>>();
+            var batchSize = await GetClassifyBatchSizeAsync();
+            foreach (var batch in streams.Batch(batchSize))
+            {
+                var response = await Request("image-classifier")
+                    .AddInterceptor(_classifyInterceptor)
+                    .PostMultipartAsync(content =>
+                    {
+                        foreach (var stream in batch)
+                            content.AddFile("files", stream(), "dummy");
+                    });
+
+                var result = await response.GetJsonAsync<ICollection<IDictionary<ClassificationClass, double>>>();
+                results.AddRange(result);
+            }
+
+            return results;
+        }
+
+        public Task<int> GetClassifyBatchSizeAsync()
+        {
+            return Request("image-classifier/batch-size").GetJsonAsync<int>();
         }
 
         public async Task<bool> IsFurryArtistAsync(IEnumerable<AnalyzeScore> scores)

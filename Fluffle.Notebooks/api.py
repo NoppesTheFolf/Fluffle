@@ -19,14 +19,14 @@ manager = B2ModelManager(config['cache_directory'], config['application_key_id']
 app = FastAPI()
 
 API_KEY_HEADER_NAME = 'api-key'
-API_KEY = config['api_key']
+API_KEY = str(config['api_key'])
 
 @app.middleware("http")
 async def api_key_authentication(request: Request, call_next):
     if API_KEY_HEADER_NAME not in request.headers:
         return Response(status_code=HTTP_400_BAD_REQUEST)
     
-    if not secrets.compare_digest(request.headers[API_KEY_HEADER_NAME], API_KEY):
+    if not secrets.compare_digest(str(request.headers[API_KEY_HEADER_NAME]), API_KEY):
         return Response(status_code=HTTP_401_UNAUTHORIZED)
     
     response = await call_next(request)
@@ -40,6 +40,10 @@ for model_name in set(config.keys()) - set(required_keys):
     module.serve(app, slug, config[model_name], model)
     print(f'Serving {model_name} at {slug}')
     sys.stdout.flush()
+
+@app.get('/{model_name}/{config_key}')
+def get_config_key(model_name: str, config_key: str):
+    return config[model_name.replace('-', '_')][config_key.replace('-', '_')]
 
 # Start the webserver
 if __name__ == '__main__':
