@@ -73,11 +73,20 @@ namespace Noppes.Fluffle.Index
             DownloadClients = new Dictionary<PlatformConstant, (DownloadClient, IndexConfiguration.ClientConfiguration)>
             {
                 { PlatformConstant.E621, (new E621DownloadClient(e621Client), Configuration.E621) },
-                { PlatformConstant.FurryNetwork, (new FurryNetworkDownloadClient(furryNetworkClient), Configuration.FurryNetwork) },
                 { PlatformConstant.FurAffinity, (new FurAffinityDownloadClient(furAffinityClient, fluffleClient, Environment), Configuration.FurAffinity) },
                 { PlatformConstant.Weasyl, (new WeasylDownloadClient(weasylClient), Configuration.Weasyl) },
                 { PlatformConstant.Twitter , (new TwitterDownloadClient(twitterClient), Configuration.Twitter) }
             };
+
+            try
+            {
+                await furryNetworkClient.SearchAsync();
+                DownloadClients.Add(PlatformConstant.FurryNetwork, (new FurryNetworkDownloadClient(furryNetworkClient), Configuration.FurryNetwork));
+            }
+            catch (InvalidOperationException)
+            {
+                Log.Error("Furry Network credentials have expired.");
+            }
 
             await base.StartAsync(cancellationToken);
         }

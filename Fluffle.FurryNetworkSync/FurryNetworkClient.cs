@@ -69,7 +69,7 @@ namespace Noppes.Fluffle.FurryNetworkSync
             return AuthorizedRequest(_ => { }, r => r.GetStreamAsync(), url);
         }
 
-        public async Task<T> AuthorizedRequest<T>(Action<IFlurlRequest> buildRequest, Func<IFlurlRequest, Task<T>> makeRequest, params object[] urlSegments)
+        private async Task<T> AuthorizedRequest<T>(Action<IFlurlRequest> buildRequest, Func<IFlurlRequest, Task<T>> makeRequest, params object[] urlSegments)
         {
             await RefreshTokenAsync();
 
