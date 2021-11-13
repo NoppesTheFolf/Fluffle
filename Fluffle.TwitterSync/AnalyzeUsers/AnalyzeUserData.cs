@@ -4,7 +4,14 @@ using System.IO;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {
-    public class AnalyzeUserData : IPredictClassesData
+    public interface IUserTweetsSupplierData
+    {
+        public string Id { get; set; }
+        public string Username { get; set; }
+        public TimelineCollection Timeline { get; set; }
+    }
+
+    public class AnalyzeUserData : IUserTweetsSupplierData, IPredictClassesData
     {
         public string Id { get; set; }
         public string Username { get; set; }
@@ -17,7 +24,5 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
         public ICollection<IDictionary<ClassificationClass, double>> Classes { get; set; }
 
         public ICollection<FluffleResult> BestMatches { get; set; }
-
-        public bool IsFurryArtist { get; set; }
     }
 }

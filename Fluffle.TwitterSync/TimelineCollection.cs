@@ -4,6 +4,7 @@ using Serilog;
 using SerilogTimings;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Tweetinvi;
@@ -28,10 +29,10 @@ namespace Noppes.Fluffle.TwitterSync
             _user = user;
         }
 
-        public static async Task<TimelineCollection> CreateAsync(ITwitterClient twitterClient, IUser user)
+        public static async Task<TimelineCollection> CreateAsync(ITwitterClient twitterClient, IUser user, ImmutableHashSet<string> existingTweets = null)
         {
             var collection = new TimelineCollection(twitterClient, user);
-            await collection.FillWithTimelineAsync();
+            await collection.FillWithTimelineAsync(existingTweets);
 
             return collection;
         }
@@ -49,7 +50,7 @@ namespace Noppes.Fluffle.TwitterSync
                 : null;
         }
 
-        private async Task FillWithTimelineAsync()
+        private async Task FillWithTimelineAsync(ImmutableHashSet<string> existingTweets)
         {
             var tweets = new List<ITweet>();
             var iterator = _twitterClient.Timelines.GetUserTimelineIterator(new GetUserTimelineParameters(_user.Id)
@@ -61,6 +62,10 @@ namespace Noppes.Fluffle.TwitterSync
                 using var _ = Operation.Time("Retrieved {count} tweets for user @{username}", tweets.Count, _user.ScreenName);
                 var page = await HttpResiliency.RunAsync(() => iterator.NextPageAsync());
                 tweets.AddRange(page);
+
+                var pageIds = page.Select(t => t.IdStr);
+                if (existingTweets != null && existingTweets.Intersect(pageIds).Count != 0)
+                    break;
             }
 
             _tweets = tweets.Flatten().ToDictionary(t => t.IdStr);

@@ -1,18 +1,23 @@
-﻿using Noppes.Fluffle.Utils;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Noppes.Fluffle.Http;
+using Noppes.Fluffle.TwitterSync.Database.Models;
+using Noppes.Fluffle.Utils;
 using Serilog;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Noppes.Fluffle.Http;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {
     public class PredictIfArtist : Consumer<AnalyzeUserData>
     {
+        private readonly IServiceProvider _services;
         private readonly IPredictionClient _predictionClient;
 
-        public PredictIfArtist(IPredictionClient predictionClient)
+        public PredictIfArtist(IServiceProvider services, IPredictionClient predictionClient)
         {
+            _services = services;
             _predictionClient = predictionClient;
         }
 
@@ -29,9 +34,15 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                     ArtistIds = bestMatch == null || bestMatch.Credits.Count > 1 ? Array.Empty<int>() : bestMatch.Credits.Select(c => c.Id).ToArray()
                 };
             });
+            var isFurryArtist = await HttpResiliency.RunAsync(() => _predictionClient.IsFurryArtistAsync(scores));
+            Log.Information("Is @{username} a furry artist? {value}", data.Username, isFurryArtist);
 
-            data.IsFurryArtist = await HttpResiliency.RunAsync(() => _predictionClient.IsFurryArtistAsync(scores));
-            Log.Information("Is @{username} a furry artist? {value}", data.Username, data.IsFurryArtist);
+            using var scope = _services.CreateScope();
+            await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
+            var user = await context.Users.FirstAsync(u => u.Id == data.Id);
+
+            user.IsFurryArtist = isFurryArtist;
+            await context.SaveChangesAsync();
 
             return data;
         }

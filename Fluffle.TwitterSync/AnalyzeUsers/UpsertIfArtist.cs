@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {
-    public class UpsertIfArtist : Consumer<AnalyzeUserData>
+    public class UpsertIfArtist<T> : Consumer<T> where T : IUserTweetsSupplierData
     {
         private readonly IServiceProvider _services;
 
@@ -21,13 +21,12 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             _services = services;
         }
 
-        public override async Task<AnalyzeUserData> ConsumeAsync(AnalyzeUserData data)
+        public override async Task<T> ConsumeAsync(T data)
         {
             using var scope = _services.CreateScope();
             await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
             var user = await context.Users.FirstAsync(u => u.Id == data.Id);
 
-            user.IsFurryArtist = data.IsFurryArtist;
             if (user.IsFurryArtist == true)
             {
                 user.TimelineRetrievedAt = DateTimeOffset.UtcNow;

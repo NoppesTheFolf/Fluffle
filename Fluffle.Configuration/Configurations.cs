@@ -251,6 +251,17 @@ namespace Noppes.Fluffle.Configuration
         }
     }
 
+    [ConfigurationSection("TwitterSync")]
+    public class TwitterSyncConfiguration : FluffleConfigurationPart<TwitterSyncConfiguration>
+    {
+        public int TimelineExpirationInterval { get; set; }
+
+        public TwitterSyncConfiguration()
+        {
+            RuleFor(o => o.TimelineExpirationInterval).GreaterThan(0);
+        }
+    }
+
     public abstract class SyncClientConfiguration : FluffleConfigurationPart<SyncClientConfiguration>
     {
         public int Interval { get; set; }

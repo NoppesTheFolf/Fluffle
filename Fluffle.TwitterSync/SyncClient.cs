@@ -9,6 +9,7 @@ using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.TwitterSync.AnalyzeMedia;
 using Noppes.Fluffle.TwitterSync.AnalyzeUsers;
 using Noppes.Fluffle.TwitterSync.Database.Models;
+using Noppes.Fluffle.TwitterSync.RefreshTimeline;
 using Noppes.Fluffle.Utils;
 using System;
 using System.Collections.Generic;
@@ -55,13 +56,21 @@ namespace Noppes.Fluffle.TwitterSync
             // Add database
             services.AddDatabase<TwitterContext, TwitterDatabaseConfiguration>(conf);
 
+            // Add sync configuration
+            var syncConf = conf.Get<TwitterSyncConfiguration>();
+            services.AddSingleton(syncConf);
+
             // Configure user analyze consumers/producers
-            services.AddTransient<UserSupplier>();
+            services.AddTransient<NewUserSupplier>();
             services.AddSingleton<ImageRetriever<AnalyzeUserData>>();
             services.AddTransient<PredictClasses<AnalyzeUserData>>();
             services.AddTransient<ReverseSearch>();
             services.AddTransient<PredictIfArtist>();
-            services.AddTransient<UpsertIfArtist>();
+            services.AddTransient<UpsertIfArtist<AnalyzeUserData>>();
+
+            // Configure timeline refresh consumers/producers
+            services.AddTransient<RefreshUserSupplier>();
+            services.AddTransient<UpsertIfArtist<RefreshTimelineData>>();
 
             // Configure media analyze consumers/producers
             services.AddTransient<MediaSupplier>();
@@ -102,12 +111,12 @@ namespace Noppes.Fluffle.TwitterSync
             var taskOne = Task.Run(async () =>
             {
                 var manager = new ProducerConsumerManager<AnalyzeUserData>(Services, 5);
-                manager.AddProducer<UserSupplier>(1);
+                manager.AddProducer<NewUserSupplier>(1);
                 manager.AddConsumer<ImageRetriever<AnalyzeUserData>>(1, 5);
                 manager.AddConsumer<PredictClasses<AnalyzeUserData>>(1, 5);
                 manager.AddConsumer<ReverseSearch>(4, 5);
                 manager.AddConsumer<PredictIfArtist>(1, 5);
-                manager.AddFinalConsumer<UpsertIfArtist>(1);
+                manager.AddFinalConsumer<UpsertIfArtist<AnalyzeUserData>>(1);
 
                 await manager.RunAsync();
             }, stoppingToken);
@@ -124,8 +133,18 @@ namespace Noppes.Fluffle.TwitterSync
                 await manager.RunAsync();
             }, stoppingToken);
 
-            var task = await Task.WhenAny(taskOne, taskTwo);
+            var taskThree = Task.Run(async () =>
+            {
+                var manager = new ProducerConsumerManager<RefreshTimelineData>(Services, 5);
+                manager.AddProducer<RefreshUserSupplier>(1);
+                manager.AddFinalConsumer<UpsertIfArtist<RefreshTimelineData>>(1);
+
+                await manager.RunAsync();
+            }, stoppingToken);
+
+            var task = await Task.WhenAny(taskOne, taskTwo, taskThree);
             if (task.Exception != null) throw task.Exception;
+            throw new InvalidOperationException("One of the tasks exited. This should not be possible.");
 
             // This were the accounts used to train some models on. Kept here for future use.
             var users = new Dictionary<string, bool>
