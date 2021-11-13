@@ -36,6 +36,9 @@ namespace Noppes.Fluffle.TwitterSync
             client.Config.RateLimitTrackerMode = RateLimitTrackerMode.TrackAndAwait;
             services.AddSingleton<ITwitterClient>(client);
 
+            // Add efficient tweet retriever
+            services.AddSingleton<TweetRetriever>();
+
             // Add client used for downloading images from Twitter
             var downloadClient = new TwitterDownloadClientFactory(conf).CreateAsync(200).Result;
             services.AddSingleton(downloadClient);
@@ -66,10 +69,12 @@ namespace Noppes.Fluffle.TwitterSync
             services.AddTransient<PredictClasses<AnalyzeUserData>>();
             services.AddTransient<ReverseSearch>();
             services.AddTransient<PredictIfArtist>();
+            services.AddTransient<FillMissingFromTimelineIfArtist<AnalyzeUserData>>();
             services.AddTransient<UpsertIfArtist<AnalyzeUserData>>();
 
             // Configure timeline refresh consumers/producers
             services.AddTransient<RefreshUserSupplier>();
+            services.AddTransient<FillMissingFromTimelineIfArtist<RefreshTimelineData>>();
             services.AddTransient<UpsertIfArtist<RefreshTimelineData>>();
 
             // Configure media analyze consumers/producers
@@ -116,6 +121,7 @@ namespace Noppes.Fluffle.TwitterSync
                 manager.AddConsumer<PredictClasses<AnalyzeUserData>>(1, 5);
                 manager.AddConsumer<ReverseSearch>(4, 5);
                 manager.AddConsumer<PredictIfArtist>(1, 5);
+                manager.AddConsumer<FillMissingFromTimelineIfArtist<AnalyzeUserData>>(20, 5);
                 manager.AddFinalConsumer<UpsertIfArtist<AnalyzeUserData>>(1);
 
                 await manager.RunAsync();
@@ -137,12 +143,19 @@ namespace Noppes.Fluffle.TwitterSync
             {
                 var manager = new ProducerConsumerManager<RefreshTimelineData>(Services, 5);
                 manager.AddProducer<RefreshUserSupplier>(1);
+                manager.AddConsumer<FillMissingFromTimelineIfArtist<RefreshTimelineData>>(20, 5);
                 manager.AddFinalConsumer<UpsertIfArtist<RefreshTimelineData>>(1);
 
                 await manager.RunAsync();
             }, stoppingToken);
 
-            var task = await Task.WhenAny(taskOne, taskTwo, taskThree);
+            var taskFour = Task.Run(async () =>
+            {
+                var tweetRetriever = Services.GetRequiredService<TweetRetriever>();
+                await tweetRetriever.RunAsync();
+            }, stoppingToken);
+
+            var task = await Task.WhenAny(taskOne, taskTwo, taskThree, taskFour);
             if (task.Exception != null) throw task.Exception;
             throw new InvalidOperationException("One of the tasks exited. This should not be possible.");
 

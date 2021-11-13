@@ -29,13 +29,11 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 
             if (user.IsFurryArtist == true)
             {
-                user.TimelineRetrievedAt = DateTimeOffset.UtcNow;
-
-                await data.Timeline.FillMissingAsync();
+                user.TimelineRetrievedAt = data.TimelineRetrievedAt;
                 await UpsertTweetsAsync(context, data.Timeline, user.Id, CancellationToken.None);
-            }
 
-            await context.SaveChangesAsync();
+                await context.SaveChangesAsync();
+            }
 
             return data;
         }

@@ -9,6 +9,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
         public string Id { get; set; }
         public string Username { get; set; }
         public TimelineCollection Timeline { get; set; }
+        public DateTimeOffset TimelineRetrievedAt { get; set; }
     }
 
     public class AnalyzeUserData : IUserTweetsSupplierData, IPredictClassesData
@@ -16,6 +17,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
         public string Id { get; set; }
         public string Username { get; set; }
         public TimelineCollection Timeline { get; set; }
+        public DateTimeOffset TimelineRetrievedAt { get; set; }
 
         public ICollection<RetrieverImage> Images { get; set; }
         public ICollection<Stream> Streams { get; set; }

@@ -21,11 +21,13 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 
         private readonly IServiceProvider _services;
         private readonly ITwitterClient _twitterClient;
+        private readonly TweetRetriever _tweetRetriever;
 
-        protected BaseUserSupplier(IServiceProvider services, ITwitterClient twitterClient)
+        protected BaseUserSupplier(IServiceProvider services, ITwitterClient twitterClient, TweetRetriever tweetRetriever)
         {
             _services = services;
             _twitterClient = twitterClient;
+            _tweetRetriever = tweetRetriever;
         }
 
         public override async Task WorkAsync()
@@ -83,7 +85,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 produced.Username = user.Username;
 
                 var existingTweets = user.Tweets.Any() ? user.Tweets.Select(t => t.Id).ToImmutableHashSet() : null;
-                produced.Timeline = await TimelineCollection.CreateAsync(_twitterClient, twitterUser, existingTweets);
+                produced.Timeline = await TimelineCollection.CreateAsync(_twitterClient, _tweetRetriever, twitterUser, existingTweets);
 
                 if (!await BeforeProduceAsync(context, user, produced))
                     continue;

@@ -20,7 +20,8 @@ namespace Noppes.Fluffle.TwitterSync.RefreshTimeline
 
         private readonly TwitterSyncConfiguration _syncConf;
 
-        public RefreshUserSupplier(IServiceProvider services, ITwitterClient twitterClient, TwitterSyncConfiguration syncConf) : base(services, twitterClient)
+        public RefreshUserSupplier(IServiceProvider services, ITwitterClient twitterClient, TweetRetriever tweetRetriever,
+            TwitterSyncConfiguration syncConf) : base(services, twitterClient, tweetRetriever)
         {
             _syncConf = syncConf;
         }

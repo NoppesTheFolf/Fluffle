@@ -20,7 +20,8 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
         protected override TimeSpan Interval => 5.Minutes();
         protected override TimeSpan ReservationTime => 1.Hours();
 
-        public NewUserSupplier(IServiceProvider services, ITwitterClient twitterClient) : base(services, twitterClient)
+        public NewUserSupplier(IServiceProvider services, ITwitterClient twitterClient,
+            TweetRetriever tweetRetriever) : base(services, twitterClient, tweetRetriever)
         {
         }
 

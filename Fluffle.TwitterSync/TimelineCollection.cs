@@ -1,4 +1,5 @@
-﻿using Noppes.Fluffle.Http;
+﻿using Humanizer;
+using Noppes.Fluffle.Http;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using Serilog;
 using SerilogTimings;
@@ -10,28 +11,27 @@ using System.Threading.Tasks;
 using Tweetinvi;
 using Tweetinvi.Models;
 using Tweetinvi.Parameters;
-using static MoreLinq.Extensions.BatchExtension;
 
 namespace Noppes.Fluffle.TwitterSync
 {
     public class TimelineCollection : IEnumerable<ITweet>
     {
-        private const int BatchSize = 100;
-
         private readonly ITwitterClient _twitterClient;
+        private readonly TweetRetriever _tweetRetriever;
         private readonly IUser _user;
 
         private IDictionary<string, ITweet> _tweets;
 
-        private TimelineCollection(ITwitterClient twitterClient, IUser user)
+        private TimelineCollection(ITwitterClient twitterClient, TweetRetriever tweetRetriever, IUser user)
         {
             _twitterClient = twitterClient;
+            _tweetRetriever = tweetRetriever;
             _user = user;
         }
 
-        public static async Task<TimelineCollection> CreateAsync(ITwitterClient twitterClient, IUser user, ImmutableHashSet<string> existingTweets = null)
+        public static async Task<TimelineCollection> CreateAsync(ITwitterClient twitterClient, TweetRetriever tweetRetriever, IUser user, ImmutableHashSet<string> existingTweets = null)
         {
-            var collection = new TimelineCollection(twitterClient, user);
+            var collection = new TimelineCollection(twitterClient, tweetRetriever, user);
             await collection.FillWithTimelineAsync(existingTweets);
 
             return collection;
@@ -52,6 +52,7 @@ namespace Noppes.Fluffle.TwitterSync
 
         private async Task FillWithTimelineAsync(ImmutableHashSet<string> existingTweets)
         {
+            var pageCounter = 1;
             var tweets = new List<ITweet>();
             var iterator = _twitterClient.Timelines.GetUserTimelineIterator(new GetUserTimelineParameters(_user.Id)
             {
@@ -59,13 +60,15 @@ namespace Noppes.Fluffle.TwitterSync
             });
             while (!iterator.Completed)
             {
-                using var _ = Operation.Time("Retrieved {count} tweets for user @{username}", tweets.Count, _user.ScreenName);
+                using var _ = Operation.Time("Retrieved {page} page of tweets for user @{username}", pageCounter.Ordinalize(), _user.ScreenName);
                 var page = await HttpResiliency.RunAsync(() => iterator.NextPageAsync());
                 tweets.AddRange(page);
 
                 var pageIds = page.Select(t => t.IdStr);
                 if (existingTweets != null && existingTweets.Intersect(pageIds).Count != 0)
                     break;
+
+                pageCounter++;
             }
 
             _tweets = tweets.Flatten().ToDictionary(t => t.IdStr);
@@ -85,15 +88,7 @@ namespace Noppes.Fluffle.TwitterSync
                 if (missingIds.Count == 0)
                     break;
 
-                var retrievedMissing = new List<ITweet>();
-                foreach (var batch in missingIds.Select(long.Parse).Batch(BatchSize).Select(b => b.ToArray()))
-                {
-                    using var _ = Operation.Time("Retrieving {count} missing tweets for user @{username}", batch.Length, _user.ScreenName);
-                    var retrievedBatch = await HttpResiliency.RunAsync(() => _twitterClient.Tweets.GetTweetsAsync(batch));
-
-                    retrievedMissing.AddRange(retrievedBatch);
-                }
-
+                var retrievedMissing = await _tweetRetriever.GetTweets(missingIds.Select(long.Parse));
                 foreach (var missingId in missingIds)
                 {
                     _tweets.Add(missingId, retrievedMissing.Find(t => t.IdStr == missingId));
