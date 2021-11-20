@@ -109,11 +109,11 @@ namespace Noppes.Fluffle.FurAffinitySync
                     continue;
                 }
 
-                if (i % 7000 == 0 && _strategy is ArchiveStrategy)
-                {
-                    Log.Information("Switching to popular artists strategy");
-                    _strategy = _popularArtistsStrategy;
-                }
+                // if (i % 7000 == 0 && _strategy is ArchiveStrategy)
+                // {
+                //     Log.Information("Switching to popular artists strategy");
+                //     _strategy = _popularArtistsStrategy;
+                // }
 
                 if (result.FaResult == null || result.FaResult.Stats.Registered < FurAffinityClient.BotThreshold)
                     continue;
