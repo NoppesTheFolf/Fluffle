@@ -3,7 +3,9 @@ using Nitranium.PerceptualHashing.Imaging;
 using Nitranium.PerceptualHashing.Imaging.Netpbm;
 using Nitranium.PerceptualHashing.Utils;
 using Noppes.Fluffle.Vips;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace Noppes.Fluffle.PerceptualHashing
@@ -29,8 +31,16 @@ namespace Noppes.Fluffle.PerceptualHashing
             {
                 if (!_cache.TryGetValue(resolution, out var temporaryFile))
                 {
+                    var areaSqrt = Math.Sqrt(resolution.Area);
+                    var (_, value) = _cache
+                        .Where(kv => Math.Sqrt(kv.Key.Area) / areaSqrt >= 2)
+                        .OrderBy(kv => kv.Key.Area)
+                        .FirstOrDefault();
+
+                    var sourceLocation = value == null ? inputPath : value.Location;
+
                     temporaryFile = new TemporaryFile();
-                    FluffleVips.ThumbnailPpm(inputPath, temporaryFile.Location, resolution.Width, resolution.Height);
+                    FluffleVips.ThumbnailPpm(sourceLocation, temporaryFile.Location, resolution.Width, resolution.Height);
 
                     _cache[resolution] = temporaryFile;
                 }

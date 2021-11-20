@@ -42,9 +42,11 @@ namespace Noppes.Fluffle.Index
             {
                 using (Operation.Time("[{platformName}, {idOnPlatform}, 2/5] Computed perceptual hashes", image.Content.PlatformName, image.Content.IdOnPlatform))
                 {
-                    using var hasher64 = _fluffleHash.Size64.For(image.File.Location);
-                    using var hasher256 = _fluffleHash.Size256.For(image.File.Location);
-                    using var hasher1024 = _fluffleHash.Size1024.For(image.File.Location);
+                    // Unlike in the search API, here we circumvent the optimizations used in the libvips
+                    // imaging provider by creating multiple separate hashers.
+                    using var hasher64 = _fluffleHash.Create(8).For(image.File.Location);
+                    using var hasher256 = _fluffleHash.Create(32).For(image.File.Location);
+                    using var hasher1024 = _fluffleHash.Create(128).For(image.File.Location);
 
                     image.Hashes = new PutImageIndexModel.ImageHashesModel
                     {

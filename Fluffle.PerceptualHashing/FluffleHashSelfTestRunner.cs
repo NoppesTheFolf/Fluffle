@@ -1,6 +1,8 @@
 ﻿using Nitranium.PerceptualHashing;
 using System;
 using System.IO;
+using System.Linq;
+using System.Runtime.Intrinsics.X86;
 using System.Text.Json;
 
 namespace Noppes.Fluffle.PerceptualHashing
@@ -8,6 +10,7 @@ namespace Noppes.Fluffle.PerceptualHashing
     public class FluffleHashSelfTestRunner
     {
         private const string TestsLocation = "FluffleHashTests";
+        private const int AllowedMismatchCount = 6;
 
         private static readonly JsonSerializerOptions SerializerOptions = new()
         {
@@ -35,34 +38,46 @@ namespace Noppes.Fluffle.PerceptualHashing
                 var hashesJson = File.ReadAllText(jsonFile);
                 var expected = JsonSerializer.Deserialize<FluffleHashSelfTestResult>(hashesJson, SerializerOptions);
 
-                using var hasher64 = _fluffleHash.Size64.For(imageFile);
-                Compare(expected.PhashRed64, hasher64, Channel.Red);
-                Compare(expected.PhashGreen64, hasher64, Channel.Green);
-                Compare(expected.PhashBlue64, hasher64, Channel.Blue);
-                Compare(expected.PhashAverage64, hasher64, Channel.Average);
+                var hash = _fluffleHash.Create(128);
+                using var hasher = hash.For(imageFile);
+                var name = Path.GetFileNameWithoutExtension(imageFile);
 
-                using var hasher256 = _fluffleHash.Size256.For(imageFile);
-                Compare(expected.PhashRed256, hasher256, Channel.Red);
-                Compare(expected.PhashGreen256, hasher256, Channel.Green);
-                Compare(expected.PhashBlue256, hasher256, Channel.Blue);
-                Compare(expected.PhashAverage256, hasher256, Channel.Average);
+                Compare(name, expected.PhashRed1024, hasher, Channel.Red);
+                Compare(name, expected.PhashGreen1024, hasher, Channel.Green);
+                Compare(name, expected.PhashBlue1024, hasher, Channel.Blue);
+                Compare(name, expected.PhashAverage1024, hasher, Channel.Average);
 
-                using var hasher1024 = _fluffleHash.Size1024.For(imageFile);
-                Compare(expected.PhashRed1024, hasher1024, Channel.Red);
-                Compare(expected.PhashGreen1024, hasher1024, Channel.Green);
-                Compare(expected.PhashBlue1024, hasher1024, Channel.Blue);
-                Compare(expected.PhashAverage1024, hasher1024, Channel.Average);
+                hash.Size = 32;
+                Compare(name, expected.PhashRed256, hasher, Channel.Red);
+                Compare(name, expected.PhashGreen256, hasher, Channel.Green);
+                Compare(name, expected.PhashBlue256, hasher, Channel.Blue);
+                Compare(name, expected.PhashAverage256, hasher, Channel.Average);
+
+                hash.Size = 8;
+                Compare(name, expected.PhashRed64, hasher, Channel.Red);
+                Compare(name, expected.PhashGreen64, hasher, Channel.Green);
+                Compare(name, expected.PhashBlue64, hasher, Channel.Blue);
+                Compare(name, expected.PhashAverage64, hasher, Channel.Average);
             }
 
             Log("Self test ran successfully.");
         }
 
-        private static void Compare(ReadOnlySpan<byte> expected, PerceptualHashImage image, Channel channel)
+        private void Compare(string name, ReadOnlySpan<byte> expected, PerceptualHashImage image, Channel channel)
         {
             var actual = image.ComputeHash(channel);
+            ulong mismatchCount = 0;
+            foreach (var (b1, b2) in FluffleHash.ToInt64(actual).Zip(FluffleHash.ToInt64(expected.ToArray())))
+                mismatchCount += Popcnt.X64.PopCount(b1 ^ b2);
 
-            if (!expected.SequenceEqual(actual))
-                throw new InvalidOperationException($"Hashing did not produce expected result (channel: {channel}, length: {expected.Length})");
+            var lengthInBits = 8 * sizeof(byte) * actual.Length;
+            var percentageWrong = (int)mismatchCount / (double)lengthInBits;
+            var percentageWrongAllowed = AllowedMismatchCount / (double)lengthInBits;
+
+            Log($"Test {name} {channel}@{expected.Length} | mismatch: {percentageWrong}, allowed: {percentageWrongAllowed}");
+
+            if (percentageWrong > percentageWrongAllowed)
+                throw new InvalidOperationException($"Hashing did not produce expected result.");
         }
     }
 }

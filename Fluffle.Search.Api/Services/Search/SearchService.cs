@@ -39,56 +39,48 @@ namespace Noppes.Fluffle.Search.Api.Services
         public async Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ICollection<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
         {
             // We need to compute a more granular hash too as the 64-bit averaged hash is unable to
-            // differentiate between alternate version. We do this asynchronously to computing the
-            // simple hash and comparing that. We can assume that awaiting this task doesn't throw
-            // any exceptions as this process is pretty much identical to computing the simple hash
-            // (of which we handle the exceptions explicitly).
-            Task<(ulong[] red, ulong[] green, ulong[] blue, ulong[] average)> StartHashCalculation(PerceptualHash perceptualHash, bool includeDebug, Expression<Func<SearchRequest, int?>> red, Expression<Func<SearchRequest, int?>> green, Expression<Func<SearchRequest, int?>> blue)
+            // differentiate between alternate version. We first calculate the complex hashes because
+            // the libvips imaging provider can optimize itself when doing this.
+            (ulong[] red, ulong[] green, ulong[] blue, ulong[] average) CalculateHashes(PerceptualHashImage perceptualHashImage, Expression<Func<SearchRequest, int?>> red, Expression<Func<SearchRequest, int?>> green, Expression<Func<SearchRequest, int?>> blue)
             {
-                return Task.Run(() =>
-                {
-                    using var image = perceptualHash.For(imageLocation);
+                scope.Next(red);
+                var redHash = perceptualHashImage.ComputeHash(Channel.Red);
 
-                    using var taskScope = scope.Stopwatch.ForCheckpoint(red);
-                    var redHash = image.ComputeHash(Channel.Red);
+                scope.Next(green);
+                var greenHash = perceptualHashImage.ComputeHash(Channel.Green);
 
-                    taskScope.Next(green);
-                    var greenHash = image.ComputeHash(Channel.Green);
+                scope.Next(blue);
+                var blueHash = perceptualHashImage.ComputeHash(Channel.Blue);
 
-                    taskScope.Next(blue);
-                    var blueHash = image.ComputeHash(Channel.Blue);
+                var averageHash = includeDebug ? perceptualHashImage.ComputeHash(Channel.Average) : Array.Empty<byte>();
 
-                    var averageHash = includeDebug ? image.ComputeHash(Channel.Average) : Array.Empty<byte>();
-
-                    return (FluffleHash.ToInt64(redHash), FluffleHash.ToInt64(greenHash), FluffleHash.ToInt64(blueHash), FluffleHash.ToInt64(averageHash));
-                });
+                return (FluffleHash.ToInt64(redHash), FluffleHash.ToInt64(greenHash), FluffleHash.ToInt64(blueHash), FluffleHash.ToInt64(averageHash));
             }
 
             scope.Next(t => t.StartExpensiveRgbComputation);
-            var hash1024Task = StartHashCalculation(_hash.Size1024, includeDebug, t => t.ComputeExpensiveRed, t => t.ComputeExpensiveGreen, t => t.ComputeExpensiveBlue);
+            var hash = _hash.Create(128);
+            using var hasher = hash.For(imageLocation);
+            (ulong[] red, ulong[] green, ulong[] blue, ulong[] average) hashes1024 = default;
+            try
+            {
+                hashes1024 = CalculateHashes(hasher, t => t.ComputeExpensiveRed, t => t.ComputeExpensiveGreen, t => t.ComputeExpensiveBlue);
+            }
+            catch (ConvertException)
+            {
+                return new SR<SearchResultModel>(SearchError.CorruptImage());
+            }
 
-            Task<(ulong[], ulong[], ulong[], ulong[])> hash256Task = null;
-            if (includeDebug) hash256Task = StartHashCalculation(_hash.Size256, true, t => t.ComputeExpensiveRed, t => t.ComputeExpensiveGreen, t => t.ComputeExpensiveBlue);
+            hash.Size = 32;
+            (ulong[], ulong[], ulong[], ulong[]) hashes256 = default;
+            if (includeDebug) hashes256 = CalculateHashes(hasher, t => t.ComputeExpensiveRed, t => t.ComputeExpensiveGreen, t => t.ComputeExpensiveBlue);
 
             scope.Next(t => t.Compute64Average);
-            ulong hash;
-            using (var image = _hash.Size64.For(imageLocation))
-            {
-                try
-                {
-                    var hashBytes = image.ComputeHash(Channel.Average);
-
-                    hash = FluffleHash.ToUInt64(hashBytes);
-                }
-                catch (ConvertException)
-                {
-                    return new SR<SearchResultModel>(SearchError.CorruptImage());
-                }
-            }
+            hash.Size = 8;
+            var hash64 = FluffleHash.ToUInt64(hasher.ComputeHash(Channel.Average));
 
             // TODO: Automatically determine degree of parallelism based on the hardware Fluffle is running on
             scope.Next(t => t.Compare64Average);
-            var searchResult = _compareService.Compare(hash, !includeNsfw, limit * 2, platforms);
+            var searchResult = _compareService.Compare(hash64, !includeNsfw, limit * 2, platforms);
 
             // Bug: The search service returns duplicate images
             searchResult.Images = searchResult.Images.DistinctBy(i => i.Id).ToList();
@@ -103,12 +95,6 @@ namespace Noppes.Fluffle.Search.Api.Services
                 .Include(i => i.Credits)
                 .Where(i => searchResult.Images.Select(r => r.Id).Contains(i.Id) && !i.IsDeleted)
                 .ToListAsync();
-
-            scope.Next(t => t.WaitForExpensiveRgbComputation);
-            var hashes1024 = await hash1024Task;
-
-            (ulong[], ulong[], ulong[], ulong[]) hashes256 = default;
-            if (includeDebug) hashes256 = await hash256Task;
 
             scope.Next(t => t.CreateAndRefineOutput);
             var results = images

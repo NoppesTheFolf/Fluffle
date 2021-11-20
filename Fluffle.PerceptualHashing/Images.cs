@@ -1,18 +1,5 @@
 ﻿namespace Noppes.Fluffle.PerceptualHashing
 {
-    public readonly struct RemovedImage
-    {
-        public HashedImage HashedImage { get; }
-
-        public bool IsSfw { get; }
-
-        public RemovedImage(HashedImage hashedImage, bool isSfw)
-        {
-            HashedImage = hashedImage;
-            IsSfw = isSfw;
-        }
-    }
-
     public readonly struct HashedImage
     {
         public int Id { get; }

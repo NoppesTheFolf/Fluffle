@@ -11,44 +11,29 @@ namespace Noppes.Fluffle.PerceptualHashing
     /// </summary>
     public class FluffleHash
     {
-        /// <summary>
-        /// Generates 64-bit hashes using the PHash algorithm.
-        /// </summary>
-        public PHash Size64 { get; }
-
-        /// <summary>
-        /// Generates 256-bit hashes using the PHash algorithm.
-        /// </summary>
-        public PHash Size256 { get; }
-
-        /// <summary>
-        /// Generates 1024-bit hashes using the PHash algorithm.
-        /// </summary>
-        public PHash Size1024 { get; }
+        private readonly ImagingProviderFactory _imagingProviderFactory;
 
         public FluffleHash()
         {
-            ImagingProviderFactory imagingProviderFactory = new VipsInteropImagingProviderFactory();
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                if (!Debugger.IsAttached)
-                    throw new InvalidOperationException("This application can't run in production mode on Windows (no libvips).");
+            // Use libvips imaging provider on platforms that are not Linux
+            _imagingProviderFactory = new VipsInteropImagingProviderFactory();
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+                return;
 
-                imagingProviderFactory = new SystemDrawingImagingProviderFactory();
-            }
+            // Prevent running program on Windows with the system drawing imaging provider
+            if (!Debugger.IsAttached)
+                throw new InvalidOperationException("This application can't run in production mode on Windows (no libvips).");
 
-            Size64 = Create(imagingProviderFactory, 8);
-            Size256 = Create(imagingProviderFactory, 32);
-            Size1024 = Create(imagingProviderFactory, 128);
+            _imagingProviderFactory = new DebugImagingProviderFactory<SystemDrawingImagingProviderFactory>();
         }
 
-        private static PHash Create(ImagingProviderFactory imagingProviderFactory, int size)
+        public PHash Create(int size)
         {
-            return new()
+            return new PHash
             {
                 Size = size,
                 Channel = Channel.Average,
-                ImagingProviderFactory = imagingProviderFactory
+                ImagingProviderFactory = _imagingProviderFactory
             };
         }
 
