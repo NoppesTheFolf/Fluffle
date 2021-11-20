@@ -1,7 +1,7 @@
 FROM rust:1.56 as build-env
 WORKDIR /src
 
-COPY . .
+COPY ./Fluffle.Search.Api.Compare/ .
 RUN RUSTFLAGS="-C target-cpu=native" cargo install --path .
 
 FROM debian:bullseye-slim
