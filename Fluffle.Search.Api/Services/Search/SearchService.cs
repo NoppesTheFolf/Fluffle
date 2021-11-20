@@ -9,7 +9,7 @@ using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Utils;
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.Intrinsics.X86;
@@ -25,18 +25,18 @@ namespace Noppes.Fluffle.Search.Api.Services
         private const int WorstAlternativeThreshold = 55;
         private const int DistanceFromBestAlternativeThreshold = 35;
 
-        private readonly PlatformSearchService _compareService;
+        private readonly ICompareClient _compareClient;
         private readonly FluffleHash _hash;
         private readonly FluffleSearchContext _context;
 
-        public SearchService(PlatformSearchService compareService, FluffleHash hash, FluffleSearchContext context)
+        public SearchService(ICompareClient compareClient, FluffleHash hash, FluffleSearchContext context)
         {
-            _compareService = compareService;
+            _compareClient = compareClient;
             _hash = hash;
             _context = context;
         }
 
-        public async Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ICollection<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
+        public async Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
         {
             // We need to compute a more granular hash too as the 64-bit averaged hash is unable to
             // differentiate between alternate version. We first calculate the complex hashes because
@@ -78,22 +78,23 @@ namespace Noppes.Fluffle.Search.Api.Services
             hash.Size = 8;
             var hash64 = FluffleHash.ToUInt64(hasher.ComputeHash(Channel.Average));
 
-            // TODO: Automatically determine degree of parallelism based on the hardware Fluffle is running on
             scope.Next(t => t.Compare64Average);
-            var searchResult = _compareService.Compare(hash64, !includeNsfw, limit * 2, platforms);
+            var searchResult = await _compareClient.CompareAsync(hash64, includeNsfw, limit);
 
-            // Bug: The search service returns duplicate images
-            searchResult.Images = searchResult.Images.DistinctBy(i => i.Id).ToList();
+            // Bug: The search service returns duplicate images. Update: might not anymore, who knows
+            var searchResultImages = searchResult
+                .SelectMany(x => x.Value.Images)
+                .DistinctBy(i => i.Id)
+                .ToList();
 
-            var searchResultLookup = searchResult.Images.ToDictionary(i => i.Id);
+            var searchResultLookup = searchResultImages.ToDictionary(i => i.Id);
 
             scope.Next(t => t.ComplementComparisonResults);
             var images = await _context.Images.AsNoTracking()
                 .IncludeThumbnails()
                 .Include(i => i.ImageHash)
-                .Include(i => i.Platform)
                 .Include(i => i.Credits)
-                .Where(i => searchResult.Images.Select(r => r.Id).Contains(i.Id) && !i.IsDeleted)
+                .Where(i => searchResultImages.Select(r => r.Id).Contains(i.Id) && !i.IsDeleted)
                 .ToListAsync();
 
             scope.Next(t => t.CreateAndRefineOutput);
@@ -109,7 +110,7 @@ namespace Noppes.Fluffle.Search.Api.Services
                     {
                         Id = r.Id,
                         IsSfw = r.IsSfw,
-                        Platform = r.Platform.Name,
+                        Platform = (PlatformConstant)r.PlatformId,
                         Location = r.ViewLocation,
                         Score = compareResult1024.Score,
                         Thumbnail = new SearchResultModel.ImageModel.ThumbnailModel
@@ -149,7 +150,6 @@ namespace Noppes.Fluffle.Search.Api.Services
                     };
                 })
                 .OrderBy(x => x.CompareResult.Mean)
-                .Take(limit)
                 .ToList();
 
             var bestMatch = results[0].CompareResult;
@@ -183,15 +183,17 @@ namespace Noppes.Fluffle.Search.Api.Services
                 result.Model.Match = Predict(result.CompareResult);
 
             var models = results
+                .Where(r => platforms.Contains(r.Model.Platform))
                 .Select(r => r.Model)
-                .OrderByDescending(m => m.Score);
+                .OrderByDescending(m => m.Score)
+                .Take(limit);
 
             return new SR<SearchResultModel>(new SearchResultModel
             {
                 Results = models,
                 Stats = new SearchResultModel.StatsModel
                 {
-                    Count = searchResult.Count,
+                    Count = searchResult.Where(kv => platforms.Contains((PlatformConstant)kv.Key)).Sum(kv => kv.Value.Count),
                     ElapsedMilliseconds = (int)scope.Stopwatch.ElapsedMilliseconds
                 }
             });

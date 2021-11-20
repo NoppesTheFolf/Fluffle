@@ -48,7 +48,7 @@ namespace Noppes.Fluffle.TwitterSync
     {
         private readonly SemaphoreInterceptor _classifyInterceptor;
 
-        public PredictionClient(string baseUrl, string apiKey) : base(baseUrl)
+        public PredictionClient(string baseUrl, string apiKey, int classifyDegreeOfParallelism) : base(baseUrl)
         {
             FlurlClient.WithHeader("User-Agent", Project.UserAgent);
             FlurlClient.WithHeader("Api-Key", apiKey);
@@ -60,7 +60,7 @@ namespace Noppes.Fluffle.TwitterSync
                 }
             });
 
-            _classifyInterceptor = new SemaphoreInterceptor(1);
+            _classifyInterceptor = new SemaphoreInterceptor(classifyDegreeOfParallelism);
         }
 
         public async Task<ICollection<IDictionary<ClassificationClass, double>>> ClassifyAsync(IEnumerable<Func<Stream>> streams)

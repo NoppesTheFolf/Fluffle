@@ -80,6 +80,23 @@ namespace Noppes.Fluffle.Configuration
     }
 
     /// <summary>
+    /// Configuration regarding the compare API.
+    /// </summary>
+    [ConfigurationSection("Compare")]
+    public class CompareConfiguration : FluffleConfigurationPart<CompareConfiguration>
+    {
+        /// <summary>
+        /// Where the compare API is being hosted.
+        /// </summary>
+        public string Url { get; set; }
+
+        public CompareConfiguration()
+        {
+            RuleFor(o => o.Url).NotEmpty();
+        }
+    }
+
+    /// <summary>
     /// Configuration used regarding thumbnails, in specific when uploading them somewhere for
     /// permanent storage.
     /// </summary>
@@ -256,9 +273,12 @@ namespace Noppes.Fluffle.Configuration
     {
         public int TimelineExpirationInterval { get; set; }
 
+        public int DownloadInterval { get; set; } = 200;
+
         public TwitterSyncConfiguration()
         {
             RuleFor(o => o.TimelineExpirationInterval).GreaterThan(0);
+            RuleFor(o => o.DownloadInterval).GreaterThanOrEqualTo(0);
         }
     }
 
@@ -394,10 +414,13 @@ namespace Noppes.Fluffle.Configuration
         /// </summary>
         public string ApiKey { get; set; }
 
+        public int ClassifyDegreeOfParallelism { get; set; } = 1;
+
         public PredictionConfiguration()
         {
             RuleFor(o => o.Url).NotEmpty();
             RuleFor(o => o.ApiKey).NotEmpty();
+            RuleFor(o => o.ClassifyDegreeOfParallelism).GreaterThanOrEqualTo(1);
         }
     }
 }

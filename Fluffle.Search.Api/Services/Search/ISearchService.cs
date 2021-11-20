@@ -3,7 +3,7 @@ using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Search.Api.Models;
 using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Utils;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -35,6 +35,6 @@ namespace Noppes.Fluffle.Search.Api.Services
 
     public interface ISearchService
     {
-        public Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ICollection<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope);
+        public Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope);
     }
 }

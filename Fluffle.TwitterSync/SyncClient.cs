@@ -24,6 +24,10 @@ namespace Noppes.Fluffle.TwitterSync
     {
         private static async Task Main(string[] args) => await RunAsync(args, (conf, services) =>
         {
+            // Add sync configuration
+            var syncConf = conf.Get<TwitterSyncConfiguration>();
+            services.AddSingleton(syncConf);
+
             // Add main API client
             var mainConfiguration = conf.Get<MainConfiguration>();
             var fluffleClient = new FluffleClient(mainConfiguration.Url, mainConfiguration.ApiKey);
@@ -40,7 +44,7 @@ namespace Noppes.Fluffle.TwitterSync
             services.AddSingleton<TweetRetriever>();
 
             // Add client used for downloading images from Twitter
-            var downloadClient = new TwitterDownloadClientFactory(conf).CreateAsync(200).Result;
+            var downloadClient = new TwitterDownloadClientFactory(conf).CreateAsync(syncConf.DownloadInterval).Result;
             services.AddSingleton(downloadClient);
 
             // Add E621 API client
@@ -49,7 +53,7 @@ namespace Noppes.Fluffle.TwitterSync
 
             // Add prediction client
             var predictionConf = conf.Get<PredictionConfiguration>();
-            var predictionClient = new PredictionClient(predictionConf.Url, predictionConf.ApiKey);
+            var predictionClient = new PredictionClient(predictionConf.Url, predictionConf.ApiKey, predictionConf.ClassifyDegreeOfParallelism);
             services.AddSingleton<IPredictionClient>(predictionClient);
 
             // Add Fluffle reverse search client
@@ -58,10 +62,6 @@ namespace Noppes.Fluffle.TwitterSync
 
             // Add database
             services.AddDatabase<TwitterContext, TwitterDatabaseConfiguration>(conf);
-
-            // Add sync configuration
-            var syncConf = conf.Get<TwitterSyncConfiguration>();
-            services.AddSingleton(syncConf);
 
             // Configure user analyze consumers/producers
             services.AddTransient<NewUserSupplier>();

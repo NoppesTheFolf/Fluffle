@@ -107,7 +107,7 @@ const SearchPage = () => {
 
     function searchInternal(file: Blob, thumbnail: Blob) {
         setState(State.UPLOADING);
-        Api.search(file, thumbnail, searchConfig.includeNsfw, 64, {
+        Api.search(file, thumbnail, searchConfig.includeNsfw, 32, {
             onUploadProgress: e => {
                 const progress = Math.round(e.loaded / e.total * 100);
 

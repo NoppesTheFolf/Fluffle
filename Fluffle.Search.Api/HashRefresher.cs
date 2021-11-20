@@ -91,7 +91,7 @@ namespace Noppes.Fluffle.Search.Api
                 }
             }
 
-            StartupFilter.IsStarting = false;
+            StartupFilter.HasStarted = true;
             _logger.LogInformation("Hashes refreshed in {elapsedMilliseconds} ms", stopwatch.ElapsedMilliseconds);
         }
     }

@@ -1,0 +1,9 @@
+host: 127.0.0.1
+port: 80
+refresh_interval: 300
+
+db:
+  host: 127.0.0.1
+  user: my_user
+  password: my_password
+  name: my_db

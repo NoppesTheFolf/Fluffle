@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Noppes.Fluffle.Constants;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Noppes.Fluffle.Search.Api.Models
@@ -30,7 +31,7 @@ namespace Noppes.Fluffle.Search.Api.Models
 
             public ResultMatch Match { get; set; }
 
-            public string Platform { get; set; }
+            public PlatformConstant Platform { get; set; }
 
             public string Location { get; set; }
 

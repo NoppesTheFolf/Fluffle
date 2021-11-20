@@ -6,6 +6,7 @@ using Noppes.Fluffle.Database;
 using Noppes.Fluffle.Http;
 using Npgsql;
 using System;
+using System.Net;
 
 namespace Noppes.Fluffle.Api.Filters
 {
@@ -24,8 +25,7 @@ namespace Noppes.Fluffle.Api.Filters
 
         public void OnActionExecuted(ActionExecutedContext context)
         {
-            // No exception occurred
-            if (context.Exception == null)
+            if (context.Exception == null || context.ExceptionHandled)
                 return;
 
             if (!(context.Controller is ControllerBase fluffleController))
@@ -45,7 +45,7 @@ namespace Noppes.Fluffle.Api.Filters
             {
                 error.Code = "UNAVAILABLE";
                 error.Message = "Fluffle is partially offline.";
-                Handle(context, error, 503); // 503 Service Unavailable
+                Handle(context, error, (int)HttpStatusCode.ServiceUnavailable);
                 return;
             }
 
@@ -56,9 +56,9 @@ namespace Noppes.Fluffle.Api.Filters
             Handle(context, error, 500); // 500 Internal server error
         }
 
-        private static void Handle(ActionExecutedContext context, V1Error error, int statusCode)
+        private static void Handle<T>(ActionExecutedContext context, T value, int statusCode)
         {
-            context.Result = new ObjectResult(error)
+            context.Result = new ObjectResult(value)
             {
                 StatusCode = statusCode
             };

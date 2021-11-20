@@ -104,6 +104,8 @@ namespace Noppes.Fluffle.Search.Api.Controllers
                 }
 
                 var result = await _searchService.SearchAsync(temporaryFile.Location, model.IncludeNsfw, model.Limit, model.Platforms, IsDebug, scope);
+                StartupFilter.HasStarted = true;
+
                 return HandleV1(result, response =>
                 {
                     request.Count = response.Stats.Count;
