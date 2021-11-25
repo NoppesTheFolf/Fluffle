@@ -2,7 +2,7 @@ FROM rust:1.56 as build-env
 WORKDIR /src
 
 COPY ./Fluffle.Search.Api.Compare/ .
-RUN RUSTFLAGS="-C target-cpu=native" cargo install --path .
+RUN RUSTFLAGS="-C target-feature=+popcnt" cargo install --path .
 
 FROM debian:bullseye-slim
 WORKDIR /fluffle
