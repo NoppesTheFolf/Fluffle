@@ -55,6 +55,8 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
     public class ImageRetriever<T> : Consumer<T> where T : IImageRetrieverData
     {
         private const int TargetSize = 456;
+        private static readonly int OriginalSize = (int)Math.Floor(Math.Sqrt(int.MaxValue));
+
         private readonly IServiceProvider _services;
         private readonly ITwitterDownloadClient _downloadClient;
 
@@ -71,36 +73,47 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             data.OpenStreams = new List<Func<Stream>>();
             foreach (var image in data.Images.ToList()) // Make a copy so we can remove items from the original collection
             {
-                async Task<Stream> DownloadImage(string url, string fallbackUrl)
+                async Task<Stream> DownloadImageAsync(Stack<(RetrieverSize image, bool isOriginal)> urls)
                 {
-                    try
+                    FlurlHttpException exitException = null;
+                    while (urls.TryPop(out var x))
                     {
-                        return await HttpResiliency.RunAsync(() => _downloadClient.GetStreamAsync(url));
-                    }
-                    catch (FlurlHttpException e)
-                    {
-                        if (e.StatusCode != 404)
-                            throw;
-
-                        Log.Warning("Attempting to use fallback URL for media with ID {mediaId}...", image.MediaId);
                         try
                         {
-                            return await HttpResiliency.RunAsync(() => _downloadClient.GetStreamAsync(fallbackUrl));
-                        }
-                        catch (FlurlHttpException e2)
-                        {
-                            if (e2.StatusCode == 404)
-                                return null;
+                            var url = x.isOriginal ? image.Url : $"{image.Url}?name={Enum.GetName(x.Item1.Size).ToLowerInvariant()}";
 
-                            throw;
+                            using var _ = Operation.Time("Downloading media with ID {mediaId} for tweet with ID {tweetId} at size {size}", image.MediaId, image.TweetId, x.image.Size);
+                            return await HttpResiliency.RunAsync(() => _downloadClient.GetStreamAsync(url));
+                        }
+                        catch (FlurlHttpException exception)
+                        {
+                            exitException = exception;
+
+                            Log.Warning("Failed downloading media with ID {mediaId} for tweet with ID {tweetId} at size {size} ({statusCode})", image.MediaId, image.TweetId, x.image.Size, exception.StatusCode);
                         }
                     }
+
+                    if (exitException?.StatusCode == 404)
+                        return null;
+
+                    throw exitException!;
                 }
 
-                var preferredSize = ImageSizeHelper.OrderByDownloadPreference(image.Sizes.Where(s => s.Resize == ResizeMode.Fit), s => s.Width, s => s.Height, TargetSize).First();
-                using var _ = Operation.Time("Downloading media with ID {mediaId} for tweet with ID {tweetId} at size {size}", image.MediaId, image.TweetId, preferredSize.Size);
-                var url = $"{image.Url}?name={Enum.GetName(preferredSize.Size).ToLowerInvariant()}";
-                await using var stream = await DownloadImage(url, image.Url);
+                IEnumerable<(RetrieverSize image, bool isOriginal)> sizes = image.Sizes
+                    .Where(s => s.Resize == ResizeMode.Fit)
+                    .Select(s => (s, false))
+                    .Concat(new[]
+                    {
+                        (new RetrieverSize
+                        {
+                            Width = OriginalSize,
+                            Height = OriginalSize
+                        }, true)
+                    });
+
+                var preferredSizes = ImageSizeHelper.OrderByDownloadPreference(sizes, x => x.image.Width, x => x.image.Height, TargetSize);
+                var images = new Stack<(RetrieverSize image, bool isOriginal)>(preferredSizes.Reverse());
+                await using var stream = await DownloadImageAsync(images);
 
                 if (stream == null)
                 {
