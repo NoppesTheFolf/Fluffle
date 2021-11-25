@@ -32,7 +32,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeMedia
 
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var tweets = await context.Tweets
-                .Include(t => t.Media.Where(m => !m.IsDeleted && m.MediaType == MediaTypeConstant.Image))
+                .Include(t => t.Media.Where(m => !m.IsNotAvailable && m.MediaType == MediaTypeConstant.Image))
                 .ThenInclude(t => t.Sizes.Where(s => s.ResizeMode == ResizeMode.Fit))
                 .Where(t => t.ReservedUntil < now && t.ShouldBeAnalyzed && t.AnalyzedAt == null)
                 .OrderByDescending(t => t.FavoriteCount)

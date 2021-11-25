@@ -163,7 +163,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 {
                     dest.Url = src.Url;
                     dest.MediaType = src.MediaType;
-                    dest.IsDeleted = false;
+                    dest.IsNotAvailable = false;
 
                     return Task.CompletedTask;
                 });

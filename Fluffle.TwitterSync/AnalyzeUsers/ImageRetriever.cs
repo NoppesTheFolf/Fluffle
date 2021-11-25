@@ -73,10 +73,13 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             data.OpenStreams = new List<Func<Stream>>();
             foreach (var image in data.Images.ToList()) // Make a copy so we can remove items from the original collection
             {
-                async Task<Stream> DownloadImageAsync(Stack<(RetrieverSize image, bool isOriginal)> urls)
+                async Task<Stream> DownloadImageAsync(Stack<(RetrieverSize image, bool isOriginal)> items)
                 {
+                    if (items.Count == 0)
+                        return null;
+
                     FlurlHttpException exitException = null;
-                    while (urls.TryPop(out var x))
+                    while (items.TryPop(out var x))
                     {
                         try
                         {
@@ -93,7 +96,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                         }
                     }
 
-                    if (exitException?.StatusCode == 404)
+                    if (exitException!.StatusCode is 403 or 404)
                         return null;
 
                     throw exitException!;
@@ -124,7 +127,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                     if (media != null)
                     {
                         Log.Information("Marking media with ID {mediaId} as deleted", media.Id);
-                        media.IsDeleted = true;
+                        media.IsNotAvailable = true;
 
                         await context.SaveChangesAsync();
                     }

@@ -20,7 +20,7 @@ namespace Noppes.Fluffle.TwitterSync.Database.Models
 
         public string Url { get; set; }
 
-        public bool IsDeleted { get; set; }
+        public bool IsNotAvailable { get; set; }
 
         public bool? IsFurryArt { get; set; }
 
@@ -40,7 +40,7 @@ namespace Noppes.Fluffle.TwitterSync.Database.Models
 
             entity.Property(e => e.Url).IsRequired().HasMaxLength(256);
 
-            entity.Property(e => e.IsDeleted);
+            entity.Property(e => e.IsNotAvailable);
 
             entity.Property(e => e.IsFurryArt);
         }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -9,9 +10,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Noppes.Fluffle.TwitterSync.Database.Migrations
 {
     [DbContext(typeof(TwitterContext))]
-    partial class TwitterContextModelSnapshot : ModelSnapshot
+    [Migration("20211125180719_RenameIsDeletedToIsNotAvailableOnMedia")]
+    partial class RenameIsDeletedToIsNotAvailableOnMedia
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
