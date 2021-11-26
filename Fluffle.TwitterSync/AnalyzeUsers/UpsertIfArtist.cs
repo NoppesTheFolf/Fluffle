@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MoreLinq.Extensions;
+using Nito.AsyncEx;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Database.Synchronization;
 using Noppes.Fluffle.TwitterSync.Database.Models;
@@ -14,6 +15,8 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {
     public class UpsertIfArtist<T> : Consumer<T> where T : IUserTweetsSupplierData
     {
+        private static readonly AsyncLock Mutex = new();
+
         private readonly IServiceProvider _services;
 
         public UpsertIfArtist(IServiceProvider services)
@@ -40,6 +43,12 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 
         private static async Task UpsertTweetsAsync(TwitterContext context, TimelineCollection timeline, string artistId, CancellationToken cancellationToken)
         {
+            // We need to make sure that two upserts do not happen at the same time. When two or
+            // more upserts run concurrently, they might end up trying to create the same
+            // entity/entities two or more times, causing the database to give a duplicate key error
+            // and therefore resulting in application failure.
+            using var _ = await Mutex.LockAsync();
+
             // Upsert tweets
             var tweets = timeline.ToList();
             var newTweets = tweets.Select(t => new Tweet
