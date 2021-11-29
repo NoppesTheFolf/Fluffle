@@ -21,7 +21,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeMedia
         public ICollection<Stream> Streams { get; set; }
         public ICollection<Func<Stream>> OpenStreams { get; set; }
 
-        public ICollection<IDictionary<ClassificationClass, double>> Classes { get; set; }
+        public ICollection<IDictionary<bool, double>> Classes { get; set; }
 
         public ICollection<bool> IsFurryArt { get; set; }
     }

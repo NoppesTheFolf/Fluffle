@@ -9,6 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AsyncEnumerator" Version="4.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="5.0.0" />
 		<PackageReference Include="morelinq" Version="3.3.2" />
 		<PackageReference Include="TweetinviAPI" Version="5.0.4" />

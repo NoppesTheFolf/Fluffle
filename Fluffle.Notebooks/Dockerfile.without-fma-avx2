@@ -24,11 +24,11 @@ RUN apt-get update && \
     apt-get install -y git && \
     git clone https://github.com/tensorflow/tensorflow && \
     cd tensorflow && \
-    git checkout v2.6.2 && \
+    git checkout v2.7.0 && \
     ./configure && \
     bazel build -c opt --copt=-mavx --copt=-msse4.1 --copt=-msse4.2 --verbose_failures --local_ram_resources=$MEM_LIMIT //tensorflow/tools/pip_package:build_pip_package && \
     ./bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg && \
-    pip3 install --no-cache-dir /tmp/tensorflow_pkg/tensorflow-2.6.2-cp39-cp39-linux_x86_64.whl && \
+    pip3 install --no-cache-dir /tmp/tensorflow_pkg/tensorflow-2.7.0-cp39-cp39-linux_x86_64.whl && \
     cd .. && \
     apt-get purge -y git && \
     rm -rf tensorflow /tmp/tensorflow_pkg /root/.cache 

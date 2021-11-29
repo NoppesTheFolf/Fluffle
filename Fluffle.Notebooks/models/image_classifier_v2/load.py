@@ -24,10 +24,11 @@ class ImageClassifier:
                 batch.append(img_array)
             
             predictions = self.tf_model.predict(np.vstack(batch))
-            predictions = map(lambda x: map(lambda y: y.item(), x), predictions)
+            predictions = map(lambda x: tf.nn.softmax(x), predictions)
+            predictions = map(lambda x: map(lambda y: y.numpy().tolist(), x), predictions)
             predictions = list(map(lambda x: zip(self.labels, x), predictions))
             results.extend(predictions)
-
+        
         return results
 
 

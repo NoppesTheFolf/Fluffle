@@ -5,6 +5,7 @@ using Noppes.Fluffle.TwitterSync.Database.Models;
 using Noppes.Fluffle.Utils;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -23,18 +24,14 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 
         public override async Task<AnalyzeUserData> ConsumeAsync(AnalyzeUserData data)
         {
-            var scores = data.Classes.Zip(data.BestMatches, (prediction, bestMatch) =>
-            {
-                return new AnalyzeScore
-                {
-                    FurryArt = prediction[ClassificationClass.FurryArt],
-                    Fursuit = prediction[ClassificationClass.Fursuit],
-                    Real = prediction[ClassificationClass.Real],
-                    Anime = prediction[ClassificationClass.Anime],
-                    ArtistIds = bestMatch == null || bestMatch.Credits.Count > 1 ? Array.Empty<int>() : bestMatch.Credits.Select(c => c.Id).ToArray()
-                };
-            });
-            var isFurryArtist = await HttpResiliency.RunAsync(() => _predictionClient.IsFurryArtistAsync(scores));
+            var artistIds = data.BestMatches
+                .SelectMany(bestMatch => bestMatch == null || bestMatch.Credits.Count > 1
+                    ? Array.Empty<int>()
+                    : bestMatch.Credits.Select(c => c.Id).ToArray())
+                .Distinct()
+                .ToList();
+
+            var isFurryArtist = await HttpResiliency.RunAsync(() => _predictionClient.IsFurryArtistAsync(data.Classes, artistIds));
             Log.Information("Is @{username} a furry artist? {value}", data.Username, isFurryArtist);
 
             using var scope = _services.CreateScope();

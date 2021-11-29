@@ -1,8 +1,12 @@
-﻿using Humanizer;
+﻿using Dasync.Collections;
+using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using Noppes.E621;
 using Noppes.Fluffle.Configuration;
+using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Database;
 using Noppes.Fluffle.E621Sync;
 using Noppes.Fluffle.Main.Client;
@@ -13,6 +17,8 @@ using Noppes.Fluffle.TwitterSync.RefreshTimeline;
 using Noppes.Fluffle.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Tweetinvi;
@@ -205,13 +211,12 @@ namespace Noppes.Fluffle.TwitterSync
                 { "bkub_comic", false },
                 { "AfrobullArt", false },
                 // Fursuits
-                { "JurassiCats", false },
-                { "FoxiesCreations", false },
-                { "tallfuzzball", false },
-                { "Mojo_Coyote", false },
-                { "SkyeCabbit", false },
-                { "Elliotfolf", false },
-                { "TemplaCreations", false },
+                { "JurassiCats", true },
+                { "tallfuzzball", true },
+                { "Mojo_Coyote", true },
+                { "SkyeCabbit", true },
+                { "Elliotfolf", true },
+                { "TemplaCreations", true },
                 // Accounts without any art
                 { "ServalEveryHr", false },
                 { "hourlyfoxes", false },
@@ -222,11 +227,99 @@ namespace Noppes.Fluffle.TwitterSync
                 { "IwriteOK", false },
                 // Bots that post art from various sources
                 { "YiffyOttBot", false },
-                { "YiffMe_Bot", false },
+                { "WorldOfYiff", false },
                 { "femboifrost", false },
                 { "furrygaysexblog", false },
-                { "YiffFemboy", false }
+                { "YiffFemboy", false },
+                { "redditfurryporn", false }
             };
+
+            var downloadClient = Services.GetRequiredService<ITwitterDownloadClient>();
+            var twitterClient = Services.GetRequiredService<ITwitterClient>();
+            var tweetRetriever = Services.GetRequiredService<TweetRetriever>();
+            var predictionClient = Services.GetRequiredService<IPredictionClient>();
+            var reverseSearchClient = Services.GetRequiredService<IReverseSearchClient>();
+            await users.ParallelForEachAsync(async (kv) =>
+            {
+                var (username, isFurryArtist) = kv;
+
+                var destLocation = Path.Join("./data", username + ".json");
+                if (File.Exists(destLocation))
+                    return;
+
+                var user = await twitterClient.Users.GetUserAsync(username);
+                var timeline = await TimelineCollection.CreateAsync(twitterClient, tweetRetriever, user);
+                var images = timeline
+                    .Where(t => t.CreatedBy.IdStr == user.IdStr && t.Type() == TweetType.Post)
+                    .Select(t => (tweet: t, media: t.Media.FirstOrDefault(m => m.MediaType() == MediaTypeConstant.Image)))
+                    .Where(x => x.media != null)
+                    .OrderByDescending(x => x.tweet.CreatedAt)
+                    .Take(NewUserSupplier.ImagesPopularFactor * NewUserSupplier.ImagesBatchSize)
+                    .OrderByDescending(x => x.tweet.FavoriteCount)
+                    .Take(NewUserSupplier.ImagesBatchSize)
+                    .ToList();
+
+                var streams = new List<Func<Stream>>();
+                foreach (var image in images)
+                {
+                    var stream = await downloadClient.GetStreamAsync(image.media.MediaURLHttps);
+
+                    streams.Add(() =>
+                    {
+                        stream.Position = 0;
+
+                        var copy = new MemoryStream();
+                        stream.CopyTo(copy);
+                        copy.Position = 0;
+
+                        return copy;
+                    });
+                }
+
+                var classes = await predictionClient.ClassifyAsync(streams);
+                var isFurryArt = await predictionClient.IsFurryArtAsync(classes);
+
+                var artistIds = new List<int[]>();
+                foreach (var stream in streams)
+                {
+                    // Reverse search on Fluffle using only e621 as a source as that will always have the artist attached
+                    var searchResult = await reverseSearchClient.ReverseSearchAsync(stream, true, 8, FlufflePlatform.E621);
+                    var bestMatch = searchResult.Results
+                        .Where(r => r.Match != FluffleMatch.Unlikely)
+                        .OrderByDescending(r => r.Match)
+                        .ThenByDescending(r => r.Score)
+                        .FirstOrDefault();
+
+                    var ids = bestMatch == null || bestMatch.Credits.Count > 1
+                        ? Array.Empty<int>()
+                        : bestMatch.Credits.Select(c => c.Id).ToArray();
+
+                    artistIds.Add(ids);
+                }
+
+                var result = new DataRetrievalResult
+                {
+                    Username = user.ScreenName,
+                    IsFurryArtist = isFurryArtist,
+                    Classes = classes,
+                    ArtistIds = artistIds.SelectMany(a => a).Distinct().ToList()
+                };
+                await File.WriteAllTextAsync(destLocation, JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings
+                {
+                    ContractResolver = new CamelCasePropertyNamesContractResolver()
+                }));
+            }, 8);
         }
+    }
+
+    public class DataRetrievalResult
+    {
+        public string Username { get; set; }
+
+        public bool IsFurryArtist { get; set; }
+
+        public ICollection<IDictionary<bool, double>> Classes { get; set; }
+
+        public ICollection<int> ArtistIds { get; set; }
     }
 }

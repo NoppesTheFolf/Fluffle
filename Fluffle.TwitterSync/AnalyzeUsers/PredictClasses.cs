@@ -8,7 +8,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {
     public interface IPredictClassesData : IImageRetrieverData
     {
-        public ICollection<IDictionary<ClassificationClass, double>> Classes { get; set; }
+        public ICollection<IDictionary<bool, double>> Classes { get; set; }
     }
 
     public class PredictClasses<T> : Consumer<T> where T : IPredictClassesData

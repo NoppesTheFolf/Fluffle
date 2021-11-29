@@ -14,7 +14,8 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
     public class NewUserSupplier : BaseUserSupplier<AnalyzeUserData>
     {
         private const int UsersBatchSize = 20;
-        private const int ImagesBatchSize = 20;
+        public const int ImagesPopularFactor = 3;
+        public const int ImagesBatchSize = 25;
         private static readonly TimeSpan RetryTime = 2.Weeks();
 
         protected override TimeSpan Interval => 5.Minutes();
@@ -39,16 +40,19 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
         protected override async Task<bool> BeforeProduceAsync(TwitterContext context, User user, AnalyzeUserData produced)
         {
             produced.Images = produced.Timeline
-                .Where(t => t.Type() == TweetType.Post && t.CreatedBy.IdStr == user.Id)
-                .SelectMany(t => t.Media.Where(m => m.MediaType() == MediaTypeConstant.Image).Select(m => (t, m)))
-                .OrderByDescending(x => x.t.FavoriteCount)
+                .Where(t => t.CreatedBy.IdStr == user.Id && t.Type() == TweetType.Post)
+                .Select(t => (tweet: t, media: t.Media.FirstOrDefault(m => m.MediaType() == MediaTypeConstant.Image)))
+                .Where(x => x.media != null)
+                .OrderByDescending(x => x.tweet.CreatedAt)
+                .Take(ImagesPopularFactor * ImagesBatchSize)
+                .OrderByDescending(x => x.tweet.FavoriteCount)
                 .Take(ImagesBatchSize)
                 .Select(x => new RetrieverImage
                 {
-                    TweetId = x.t.IdStr,
-                    MediaId = x.m.IdStr,
-                    Url = x.m.MediaURLHttps,
-                    Sizes = x.m.Sizes.Select(s => new RetrieverSize
+                    TweetId = x.tweet.IdStr,
+                    MediaId = x.media.IdStr,
+                    Url = x.media.MediaURLHttps,
+                    Sizes = x.media.Sizes.Select(s => new RetrieverSize
                     {
                         Width = (int)s.Value.Width,
                         Height = (int)s.Value.Height,

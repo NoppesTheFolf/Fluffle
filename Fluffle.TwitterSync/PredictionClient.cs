@@ -12,36 +12,15 @@ using static MoreLinq.Extensions.BatchExtension;
 
 namespace Noppes.Fluffle.TwitterSync
 {
-    public enum ClassificationClass
-    {
-        Anime,
-        FurryArt,
-        Fursuit,
-        Real
-    }
-
-    public class AnalyzeScore
-    {
-        public double FurryArt { get; set; }
-
-        public double Real { get; set; }
-
-        public double Fursuit { get; set; }
-
-        public double Anime { get; set; }
-
-        public int[] ArtistIds { get; set; }
-    }
-
     public interface IPredictionClient
     {
-        public Task<ICollection<IDictionary<ClassificationClass, double>>> ClassifyAsync(IEnumerable<Func<Stream>> streams);
+        public Task<ICollection<IDictionary<bool, double>>> ClassifyAsync(IEnumerable<Func<Stream>> streams);
 
         public Task<int> GetClassifyBatchSizeAsync();
 
-        public Task<bool> IsFurryArtistAsync(IEnumerable<AnalyzeScore> scores);
+        public Task<bool> IsFurryArtistAsync(IEnumerable<IDictionary<bool, double>> classes, IEnumerable<int> artistIds);
 
-        public Task<ICollection<bool>> IsFurryArtAsync(IEnumerable<IDictionary<ClassificationClass, double>> classes);
+        public Task<ICollection<bool>> IsFurryArtAsync(IEnumerable<IDictionary<bool, double>> classes);
     }
 
     public class PredictionClient : ApiClient, IPredictionClient
@@ -63,14 +42,14 @@ namespace Noppes.Fluffle.TwitterSync
             _classifyInterceptor = new SemaphoreInterceptor(classifyDegreeOfParallelism);
         }
 
-        public async Task<ICollection<IDictionary<ClassificationClass, double>>> ClassifyAsync(IEnumerable<Func<Stream>> streams)
+        public async Task<ICollection<IDictionary<bool, double>>> ClassifyAsync(IEnumerable<Func<Stream>> streams)
         {
-            var results = new List<IDictionary<ClassificationClass, double>>();
+            var results = new List<IDictionary<bool, double>>();
 
             var batchSize = await GetClassifyBatchSizeAsync();
             foreach (var batch in streams.Batch(batchSize))
             {
-                var response = await Request("image-classifier")
+                var response = await Request("image-classifier-v2")
                     .AddInterceptor(_classifyInterceptor)
                     .PostMultipartAsync(content =>
                     {
@@ -78,7 +57,7 @@ namespace Noppes.Fluffle.TwitterSync
                             content.AddFile("files", stream(), "dummy");
                     });
 
-                var result = await response.GetJsonAsync<ICollection<IDictionary<ClassificationClass, double>>>();
+                var result = await response.GetJsonAsync<ICollection<IDictionary<bool, double>>>();
                 results.AddRange(result);
             }
 
@@ -87,21 +66,25 @@ namespace Noppes.Fluffle.TwitterSync
 
         public Task<int> GetClassifyBatchSizeAsync()
         {
-            return Request("image-classifier/batch-size").GetJsonAsync<int>();
+            return Request("image-classifier-v2/batch-size").GetJsonAsync<int>();
         }
 
-        public async Task<bool> IsFurryArtistAsync(IEnumerable<AnalyzeScore> scores)
+        public async Task<ICollection<bool>> IsFurryArtAsync(IEnumerable<IDictionary<bool, double>> classes)
         {
-            var response = await Request("is-furry-artist").PostJsonAsync(scores);
-
-            return await response.GetJsonAsync<bool>();
-        }
-
-        public async Task<ICollection<bool>> IsFurryArtAsync(IEnumerable<IDictionary<ClassificationClass, double>> classes)
-        {
-            var response = await Request("is-furry-art").PostJsonAsync(classes);
+            var response = await Request("is-furry-art-v2").PostJsonAsync(classes);
 
             return await response.GetJsonAsync<ICollection<bool>>();
+        }
+
+        public async Task<bool> IsFurryArtistAsync(IEnumerable<IDictionary<bool, double>> classes, IEnumerable<int> artistIds)
+        {
+            var response = await Request("is-furry-artist-v2").PostJsonAsync(new
+            {
+                Classes = classes,
+                ArtistIds = artistIds
+            });
+
+            return await response.GetJsonAsync<bool>();
         }
     }
 }
