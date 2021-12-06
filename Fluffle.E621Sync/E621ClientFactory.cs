@@ -2,7 +2,6 @@
 using Noppes.E621;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
-using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Sync;
 using Serilog;
 using System;
@@ -27,7 +26,7 @@ namespace Noppes.Fluffle.E621Sync
                 .WithRequestInterval(interval.Milliseconds())
                 .Build();
 
-            var loginSuccess = await HttpResiliency.RunAsync(() => e621Client.LogInAsync(conf.Username, conf.ApiKey));
+            var loginSuccess = await E621HttpResiliency.RunAsync(() => e621Client.LogInAsync(conf.Username, conf.ApiKey));
 
             if (!loginSuccess)
             {

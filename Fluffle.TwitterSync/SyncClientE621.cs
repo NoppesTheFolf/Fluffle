@@ -4,6 +4,7 @@ using Noppes.E621;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Database;
 using Noppes.Fluffle.Database.Synchronization;
+using Noppes.Fluffle.E621Sync;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using Serilog;
@@ -108,7 +109,7 @@ namespace Noppes.Fluffle.TwitterSync
             {
                 var artists = await LogEx.TimeAsync(async () =>
                 {
-                    return await HttpResiliency.RunAsync(() =>
+                    return await E621HttpResiliency.RunAsync(() =>
                         _e621Client.GetArtistsAsync(currentId, Position.After, limit: E621Constants.ArtistsMaximumLimit));
                 }, "Retrieving artists after ID {afterId}", currentId);
 

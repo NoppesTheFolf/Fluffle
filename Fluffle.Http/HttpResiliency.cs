@@ -14,10 +14,10 @@ namespace Noppes.Fluffle.Http
         /// exceptions thrown by said function are transient (and therefore worth retrying).
         /// </summary>
         public static async Task RunAsync(Func<Task> request, Action onTimeout = null,
-            Action<FlurlHttpException> onHttpException = null, Action<TimeSpan> onRetry = null)
+            Action<FlurlHttpException> onHttpException = null, Action<TimeSpan> onRetry = null, params int[] statusCodes)
         {
             await HttpRetryPolicy
-                .BuildFlurlRetryPolicy<bool>(onTimeout, onHttpException, onRetry)
+                .BuildFlurlRetryPolicy<bool>(onTimeout, onHttpException, onRetry, statusCodes)
                 .Invoke(async () =>
                 {
                     await request();
@@ -31,10 +31,10 @@ namespace Noppes.Fluffle.Http
         /// exceptions thrown by said function are transient (and therefore worth retrying).
         /// </summary>
         public static async Task<T> RunAsync<T>(Func<Task<T>> request, Action onTimeout = null,
-            Action<FlurlHttpException> onHttpException = null, Action<TimeSpan> onRetry = null)
+            Action<FlurlHttpException> onHttpException = null, Action<TimeSpan> onRetry = null, params int[] statusCodes)
         {
             return await HttpRetryPolicy
-                .BuildFlurlRetryPolicy<T>(onTimeout, onHttpException, onRetry)
+                .BuildFlurlRetryPolicy<T>(onTimeout, onHttpException, onRetry, statusCodes)
                 .Invoke(request);
         }
     }

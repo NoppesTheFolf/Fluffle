@@ -28,7 +28,7 @@ namespace Noppes.Fluffle.E621Sync
 
         protected override async Task QuickSyncAsync()
         {
-            var maxId = await HttpResiliency.RunAsync(() => FluffleClient.GetMaxId(Platform));
+            var maxId = await E621HttpResiliency.RunAsync(() => FluffleClient.GetMaxId(Platform));
 
             var id = maxId ?? 0;
             id -= 15 * E621Constants.PostsMaximumLimit - 1; // Move back 4801 IDs
@@ -58,7 +58,7 @@ namespace Noppes.Fluffle.E621Sync
             {
                 var posts = await LogEx.TimeAsync(async () =>
                 {
-                    return await HttpResiliency.RunAsync(() =>
+                    return await E621HttpResiliency.RunAsync(() =>
                         _e621Client.GetPostsAsync(currentId, Position.After, E621Constants.PostsMaximumLimit));
                 }, "Retrieving posts after ID {afterId}", currentId);
 

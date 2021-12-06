@@ -1,6 +1,7 @@
 ﻿using Flurl.Http;
 using Polly;
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -28,7 +29,7 @@ namespace Noppes.Fluffle.Http
         /// </summary>
         private const int MaximumShortHttpIntervalRetryCount = 5;
 
-        public static Func<Func<Task<TResult>>, Task<TResult>> BuildFlurlRetryPolicy<TResult>(Action onTimeout = null, Action<FlurlHttpException> onHttpException = null, Action<TimeSpan> onRetry = null)
+        public static Func<Func<Task<TResult>>, Task<TResult>> BuildFlurlRetryPolicy<TResult>(Action onTimeout = null, Action<FlurlHttpException> onHttpException = null, Action<TimeSpan> onRetry = null, params int[] statusCodes)
         {
             return Policy<TResult>
                 .Handle<FlurlHttpTimeoutException>(exception =>
@@ -46,7 +47,7 @@ namespace Noppes.Fluffle.Http
                         return true;
                     }
 
-                    return exception.IsTransient();
+                    return exception.IsTransient(statusCodes);
                 })
                 .WaitAndRetryForeverAsync(retryAttempt =>
                 {
@@ -65,7 +66,7 @@ namespace Noppes.Fluffle.Http
         /// <summary>
         /// Whether the failed request should be considered transient or not.
         /// </summary>
-        public static bool IsTransient(this FlurlHttpException exception)
+        public static bool IsTransient(this FlurlHttpException exception, params int[] statusCodes)
         {
             // Handle any network related exceptions
             if (exception.InnerException is HttpRequestException)
@@ -93,15 +94,7 @@ namespace Noppes.Fluffle.Http
             // server has lost connection to the internet. This should solve itself
             // eventually, most of the time...
 
-            return httpStatusCode == 408
-                   || httpStatusCode == 502
-                   || httpStatusCode == 503
-                   || httpStatusCode == 504
-                   || httpStatusCode == 520
-                   || httpStatusCode == 521
-                   || httpStatusCode == 522
-                   || httpStatusCode == 523
-                   || httpStatusCode == 524;
+            return statusCodes.Contains(httpStatusCode) || httpStatusCode is 408 or 502 or 503 or 504 or 520 or 521 or 522 or 523 or 524;
         }
     }
 }
