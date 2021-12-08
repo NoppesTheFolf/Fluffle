@@ -93,11 +93,15 @@ namespace Noppes.Fluffle.TwitterSync
 
         private readonly ITwitterClient _twitterClient;
         private readonly IE621Client _e621Client;
+        private readonly FluffleClient _fluffleClient;
+        private readonly TweetRetriever _tweetRetriever;
 
-        public SyncClient(IServiceProvider services, ITwitterClient twitterClient, IE621Client e621Client) : base(services)
+        public SyncClient(IServiceProvider services, ITwitterClient twitterClient, IE621Client e621Client, FluffleClient fluffleClient, TweetRetriever tweetRetriever) : base(services)
         {
             _twitterClient = twitterClient;
             _e621Client = e621Client;
+            _fluffleClient = fluffleClient;
+            _tweetRetriever = tweetRetriever;
         }
 
         private async Task ApplyMigrationsAsync()
@@ -116,10 +120,20 @@ namespace Noppes.Fluffle.TwitterSync
             using var scope = Services.CreateScope();
             await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
 
-            await SyncE621ArtistsAsync(stoppingToken);
-            await SyncTwitterArtists(stoppingToken);
-
             var taskOne = Task.Run(async () =>
+            {
+                while (true)
+                {
+                    await SyncE621ArtistsAsync(stoppingToken);
+                    await SyncTwitterArtists(stoppingToken);
+
+                    await SyncOtherSourcesAsync();
+
+                    await Task.Delay(5.Minutes());
+                }
+            }, stoppingToken);
+
+            var taskTwo = Task.Run(async () =>
             {
                 var manager = new ProducerConsumerManager<AnalyzeUserData>(Services, 5);
                 manager.AddProducer<NewUserSupplier>(1);
@@ -133,7 +147,7 @@ namespace Noppes.Fluffle.TwitterSync
                 await manager.RunAsync();
             }, stoppingToken);
 
-            var taskTwo = Task.Run(async () =>
+            var taskThree = Task.Run(async () =>
             {
                 var manager = new ProducerConsumerManager<AnalyzeMediaData>(Services, 5);
                 manager.AddProducer<MediaSupplier>(1);
@@ -145,7 +159,7 @@ namespace Noppes.Fluffle.TwitterSync
                 await manager.RunAsync();
             }, stoppingToken);
 
-            var taskThree = Task.Run(async () =>
+            var taskFour = Task.Run(async () =>
             {
                 var manager = new ProducerConsumerManager<RefreshTimelineData>(Services, 5);
                 manager.AddProducer<RefreshUserSupplier>(1);
@@ -155,13 +169,13 @@ namespace Noppes.Fluffle.TwitterSync
                 await manager.RunAsync();
             }, stoppingToken);
 
-            var taskFour = Task.Run(async () =>
+            var taskFive = Task.Run(async () =>
             {
                 var tweetRetriever = Services.GetRequiredService<TweetRetriever>();
                 await tweetRetriever.RunAsync();
             }, stoppingToken);
 
-            var task = await Task.WhenAny(taskOne, taskTwo, taskThree, taskFour);
+            var task = await Task.WhenAny(taskOne, taskTwo, taskThree, taskFour, taskFive);
             if (task.Exception != null) throw task.Exception;
             throw new InvalidOperationException("One of the tasks exited. This should not be possible.");
 

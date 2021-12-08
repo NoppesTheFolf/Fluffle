@@ -6,6 +6,7 @@ using Noppes.Fluffle.Database;
 using Noppes.Fluffle.Database.Synchronization;
 using Noppes.Fluffle.E621Sync;
 using Noppes.Fluffle.Http;
+using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using Serilog;
 using System;
@@ -25,7 +26,93 @@ namespace Noppes.Fluffle.TwitterSync
         /// <summary>
         /// Matches URLs that contain a semantically valid Twitter handle.
         /// </summary>
-        private static readonly Regex TwitterRegex = new("twitter\\.com\\/([A-Za-z0-9_]{1,15})(?=\\/|$|\\?)", RegexOptions.Compiled);
+        private static readonly Regex TwitterUsernameRegex = new("twitter\\.com\\/([A-Za-z0-9_]{1,15})(?=\\/|$|\\?)", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Matches URLs that contain a semantically valid Twitter tweet IDs.
+        /// </summary>
+        private static readonly Regex TwitterStatusRegex = new("twitter\\.com\\/.*\\/status\\/([0-9]*)(?=\\/|$|\\?)", RegexOptions.Compiled);
+
+        private async Task SynchronizeAsync(int afterId)
+        {
+            while (true)
+            {
+                using var scope = Services.CreateScope();
+                await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
+
+                Log.Information("Synchronizing other sources after ID {afterId}", afterId);
+                var sources = await HttpResiliency.RunAsync(() => _fluffleClient.GetOtherSourcesAsync(afterId));
+
+                await context.OtherSources.AddRangeAsync(sources.Select(s => new OtherSource
+                {
+                    Id = s.Id,
+                    Location = s.Location
+                }));
+                await context.SaveChangesAsync();
+
+                if (sources.Count != Endpoints.SourcesLimit)
+                    break;
+
+                afterId = sources.Max(s => s.Id);
+            }
+        }
+
+        private async Task ExtractAsync()
+        {
+            while (true)
+            {
+                using var scope = Services.CreateScope();
+                await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
+
+                var sources = await context.OtherSources
+                    .Where(os => !os.HasBeenProcessed)
+                    .Take(Endpoints.SourcesLimit)
+                    .ToListAsync();
+
+                var statusIds = new List<long>();
+                var usernames = new List<string>();
+                foreach (var source in sources)
+                {
+                    source.HasBeenProcessed = true;
+
+                    var statusMatch = TwitterStatusRegex.Match(source.Location);
+                    var statusIdStr = statusMatch.Groups[1].Value.Trim();
+                    if (statusMatch.Success && long.TryParse(statusIdStr, out var statusId))
+                    {
+                        statusIds.Add(statusId);
+                        continue;
+                    }
+
+                    var usernameMatch = TwitterUsernameRegex.Match(source.Location);
+                    if (!usernameMatch.Success)
+                        continue;
+
+                    usernames.Add(usernameMatch.Groups[1].Value);
+                }
+
+                await ProcessUsers(context, usernames, statusIds);
+                await context.SaveChangesAsync();
+
+                if (sources.Count != Endpoints.SourcesLimit)
+                    break;
+            }
+        }
+
+        public async Task<bool> SyncOtherSourcesAsync()
+        {
+            using var scope = Services.CreateScope();
+            await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
+
+            var afterId = await context.OtherSources
+                .OrderByDescending(os => os.Id)
+                .Select(os => os.Id)
+                .FirstOrDefaultAsync();
+
+            await SynchronizeAsync(afterId);
+            await ExtractAsync();
+
+            return true;
+        }
 
         private async Task<int> CalculateStartIdAsync()
         {
@@ -74,7 +161,7 @@ namespace Noppes.Fluffle.TwitterSync
                 var newUrls = artists
                     .SelectMany(a => a.Urls)
                     .Where(u => u.Location != null && u.IsActive)
-                    .Select(u => (url: u, match: TwitterRegex.Match(u.Location.OriginalString.Trim())))
+                    .Select(u => (url: u, match: TwitterUsernameRegex.Match(u.Location.OriginalString.Trim())))
                     .Where(x => x.match.Success)
                     .Select(x => new E621ArtistUrl
                     {
@@ -140,43 +227,78 @@ namespace Noppes.Fluffle.TwitterSync
 
             foreach (var batch in artistsToSync.Batch(100).Select(b => b.ToList()))
             {
-                var usernames = batch.Select(a => a.TwitterUsername.ToLowerInvariant()).Distinct().ToArray();
-                var response = await HttpResiliency.RunAsync(() => _twitterClient.UsersV2.GetUsersByNameAsync(usernames));
-                var users = response.Users ?? Array.Empty<UserV2>();
-                var responseLookup = users.ToDictionary(u => u.Username, u => u, StringComparer.InvariantCultureIgnoreCase);
-
-                var newUsers = users.Select(u => new User
-                {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Username = u.Username,
-                    IsProtected = u.IsProtected,
-                    FollowersCount = u.PublicMetrics.FollowersCount,
-                    IsOnE621 = true
-                }).ToList();
-
-                var existingUsers = await context.Users
-                    .Where(u => newUsers.Select(nu => nu.Id).Contains(u.Id))
-                    .ToListAsync(cancellationToken);
-
-                var syncResult = await context.SynchronizeAsync(c => c.Users, existingUsers, newUsers,
-                    (tu1, tu2) => tu1.Id == tu2.Id, onUpdateAsync: (src, dest) =>
-                    {
-                        dest.Name = src.Name;
-                        dest.Username = src.Username;
-                        dest.IsProtected = src.IsProtected;
-                        dest.FollowersCount = src.FollowersCount;
-                        dest.IsOnE621 = src.IsOnE621;
-
-                        return Task.CompletedTask;
-                    });
-                syncResult.Print();
+                var users = await ProcessUsers(context, batch.Select(a => a.TwitterUsername));
+                var usersLookup = users.Select(u => u.Username).ToHashSet(StringComparer.InvariantCultureIgnoreCase);
 
                 foreach (var url in batch)
-                    url.TwitterExists = responseLookup.ContainsKey(url.TwitterUsername);
+                    url.TwitterExists = usersLookup.Contains(url.TwitterUsername);
 
                 await context.SaveChangesAsync(cancellationToken);
             }
+        }
+
+        private async Task<ICollection<UserV2>> ProcessUsers(TwitterContext context, IEnumerable<string> usernames = null, IEnumerable<long> tweetIds = null)
+        {
+            var users = new Dictionary<string, UserV2>(StringComparer.InvariantCultureIgnoreCase);
+
+            void ProcessResponse(UsersV2Response response)
+            {
+                if (response.Users == null)
+                    return;
+
+                foreach (var user in response.Users)
+                    users[user.Username] = user;
+            }
+
+            if (usernames != null)
+            {
+                foreach (var usernameBatch in usernames.Select(u => u.ToLowerInvariant()).Distinct().Batch(100))
+                {
+                    var response = await HttpResiliency.RunAsync(() => _twitterClient.UsersV2.GetUsersByNameAsync(usernameBatch.ToArray()));
+                    ProcessResponse(response);
+                }
+            }
+
+            if (tweetIds != null)
+            {
+                var tweets = await _tweetRetriever.GetTweets(tweetIds.Distinct());
+                foreach (var tweetBatch in tweets.Batch(100))
+                {
+                    var userIds = tweetBatch.Select(t => t.CreatedBy.IdStr).ToArray();
+
+                    var response = await HttpResiliency.RunAsync(() => _twitterClient.UsersV2.GetUsersByIdAsync(userIds));
+                    ProcessResponse(response);
+                }
+            }
+
+            var newUsers = users.Values.Select(u => new User
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Username = u.Username,
+                IsProtected = u.IsProtected,
+                FollowersCount = u.PublicMetrics.FollowersCount,
+                IsOnE621 = true
+            }).ToList();
+
+            var existingUsers = await context.Users
+                .Where(u => newUsers.Select(nu => nu.Id).Contains(u.Id))
+                .ToListAsync();
+
+            var syncResult = await context.SynchronizeAsync(c => c.Users, existingUsers, newUsers,
+                (tu1, tu2) => tu1.Id == tu2.Id, onUpdateAsync: (src, dest) =>
+                {
+                    dest.Name = src.Name;
+                    dest.Username = src.Username;
+                    dest.IsProtected = src.IsProtected;
+                    dest.FollowersCount = src.FollowersCount;
+                    dest.IsOnE621 = src.IsOnE621;
+
+                    return Task.CompletedTask;
+                });
+            syncResult.Print();
+
+            return users.Values;
         }
     }
 }

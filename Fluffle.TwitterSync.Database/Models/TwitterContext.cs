@@ -23,6 +23,7 @@ namespace Noppes.Fluffle.TwitterSync.Database.Models
 
         public virtual DbSet<E621Artist> E621Artists { get; set; }
         public virtual DbSet<E621ArtistUrl> E621ArtistUrls { get; set; }
+        public virtual DbSet<OtherSource> OtherSources { get; set; }
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<Tweet> Tweets { get; set; }
         public virtual DbSet<UserMention> UserMentions { get; set; }

@@ -138,6 +138,12 @@ namespace Noppes.Fluffle.Main.Client
                 .GetMessagePackAsync<CreditableEntitiesSyncModel>();
         }
 
+        public Task<ICollection<OtherSourceModel>> GetOtherSourcesAsync(int afterId)
+        {
+            return Request(Endpoints.GetOtherSources(afterId))
+                .GetMessagePackAsync<ICollection<OtherSourceModel>>();
+        }
+
         public override IFlurlRequest Request(params object[] urlSegments)
         {
             return base.Request(urlSegments)
