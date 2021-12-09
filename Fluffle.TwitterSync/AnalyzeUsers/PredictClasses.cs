@@ -45,6 +45,12 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 False = x.First[false]
             }).ToList();
 
+            var existingMediaIds = await context.Media
+                .Where(m => mediaIds.Contains(m.Id))
+                .Select(m => m.Id)
+                .ToListAsync();
+            newMediaAnalytics = newMediaAnalytics.Where(ma => existingMediaIds.Contains(ma.Id)).ToList();
+
             await context.SynchronizeAsync(c => c.MediaAnalytics, existingMediaAnalytics, newMediaAnalytics,
                 (ma1, ma2) => ma1.Id == ma2.Id, onUpdateAsync: (src, dest) =>
                 {
