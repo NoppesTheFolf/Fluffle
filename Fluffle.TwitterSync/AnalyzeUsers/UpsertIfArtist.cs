@@ -50,7 +50,10 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             using var _ = await Mutex.LockAsync();
 
             // Upsert tweets
-            var tweets = timeline.ToList();
+            var tweets = timeline
+                .Where(t => t.CreatedBy.IdStr == artistId)
+                .ToList();
+
             var newTweets = tweets.Select(t => new Tweet
             {
                 Id = t.IdStr,
@@ -75,7 +78,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                         return false;
 
                     // If the tweet is a post or a quote tweet, and said tweet is created by the artist, then analyze it
-                    if ((t.Type() == TweetType.Post || t.Type() == TweetType.QuoteTweet) && t.CreatedBy.IdStr == artistId)
+                    if (t.Type() == TweetType.Post || t.Type() == TweetType.QuoteTweet)
                         return true;
 
                     // Now we only have replies left, analyze them if the root tweet still exists and is created by the artist
@@ -103,21 +106,6 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                     return Task.CompletedTask;
                 });
             tweetsResult.Print();
-
-            // Upsert tweet mentions
-            var newUserMentions = tweets.SelectMany(t => t.UserMentions.Select(um => new UserMention
-            {
-                TweetId = t.IdStr,
-                UserId = um.IdStr
-            })).DistinctBy(um => (um.TweetId, um.UserId)).ToList();
-
-            var existingUserMentions = await context.UserMentions
-                .Where(x => tweets.Select(y => y.IdStr).Contains(x.TweetId))
-                .ToListAsync(cancellationToken);
-
-            var userMentionResult = await context.SynchronizeAsync(c => c.UserMentions, existingUserMentions, newUserMentions,
-                (um1, um2) => (um1.TweetId, um1.UserId) == (um2.TweetId, um2.UserId));
-            userMentionResult.Print();
 
             // Upsert users
             var users = tweets

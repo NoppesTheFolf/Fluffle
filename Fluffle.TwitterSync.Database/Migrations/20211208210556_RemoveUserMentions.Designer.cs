@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -9,9 +10,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Noppes.Fluffle.TwitterSync.Database.Migrations
 {
     [DbContext(typeof(TwitterContext))]
-    partial class TwitterContextModelSnapshot : ModelSnapshot
+    [Migration("20211208210556_RemoveUserMentions")]
+    partial class RemoveUserMentions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -104,13 +106,26 @@ namespace Noppes.Fluffle.TwitterSync.Database.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("id");
 
-                    b.Property<double>("False")
+                    b.Property<double>("Anime")
                         .HasColumnType("double precision")
-                        .HasColumnName("false");
+                        .HasColumnName("anime");
 
-                    b.Property<double>("True")
+                    b.Property<int[]>("ArtistIds")
+                        .IsRequired()
+                        .HasColumnType("integer[]")
+                        .HasColumnName("artist_ids");
+
+                    b.Property<double>("FurryArt")
                         .HasColumnType("double precision")
-                        .HasColumnName("true");
+                        .HasColumnName("furry_art");
+
+                    b.Property<double>("Fursuit")
+                        .HasColumnType("double precision")
+                        .HasColumnName("fursuit");
+
+                    b.Property<double>("Real")
+                        .HasColumnType("double precision")
+                        .HasColumnName("real");
 
                     b.HasKey("Id")
                         .HasName("pk_media_analytic");

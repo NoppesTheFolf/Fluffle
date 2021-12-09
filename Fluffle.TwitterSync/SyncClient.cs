@@ -129,7 +129,7 @@ namespace Noppes.Fluffle.TwitterSync
 
                     await SyncOtherSourcesAsync();
 
-                    await Task.Delay(5.Minutes());
+                    await Task.Delay(1.Hours());
                 }
             }, stoppingToken);
 

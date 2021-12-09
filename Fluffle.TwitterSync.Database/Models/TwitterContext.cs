@@ -26,7 +26,6 @@ namespace Noppes.Fluffle.TwitterSync.Database.Models
         public virtual DbSet<OtherSource> OtherSources { get; set; }
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<Tweet> Tweets { get; set; }
-        public virtual DbSet<UserMention> UserMentions { get; set; }
         public virtual DbSet<TweetMedia> TweetMedia { get; set; }
         public virtual DbSet<Media> Media { get; set; }
         public virtual DbSet<MediaSize> MediaSizes { get; set; }

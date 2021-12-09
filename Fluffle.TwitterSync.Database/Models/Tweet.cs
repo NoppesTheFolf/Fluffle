@@ -12,7 +12,6 @@ namespace Noppes.Fluffle.TwitterSync.Database.Models
         {
             Media = new HashSet<Media>();
             TweetMedia = new HashSet<TweetMedia>();
-            Mentions = new HashSet<UserMention>();
         }
 
         /// <summary>
@@ -52,8 +51,6 @@ namespace Noppes.Fluffle.TwitterSync.Database.Models
 
         public virtual ICollection<Media> Media { get; set; }
         public virtual ICollection<TweetMedia> TweetMedia { get; set; }
-
-        public virtual ICollection<UserMention> Mentions { get; set; }
 
         public void Configure(EntityTypeBuilder<Tweet> entity)
         {
