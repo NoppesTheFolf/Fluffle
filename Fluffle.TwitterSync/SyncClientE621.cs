@@ -261,7 +261,8 @@ namespace Noppes.Fluffle.TwitterSync
 
             if (tweetIds != null)
             {
-                var tweets = await _tweetRetriever.GetTweets(tweetIds.Distinct());
+                var priority = await _tweetRetriever.AcquirePriorityAsync();
+                var tweets = await _tweetRetriever.GetTweets(priority, tweetIds.Distinct());
                 foreach (var tweetBatch in tweets.Batch(100))
                 {
                     var userIds = tweetBatch.Select(t => t.CreatedBy.IdStr).ToArray();

@@ -17,14 +17,15 @@ namespace Noppes.Fluffle.TwitterSync
 
         private readonly ITwitterClient _twitterClient;
         private readonly AsyncLock _mutex;
-        private readonly Dictionary<long, IList<TweetRetrieverRequest>> _requests;
+        private int _priority;
+        private readonly Dictionary<long, (int priority, IList<TweetRetrieverRequest> requests)> _requests;
         private DateTimeOffset _waitUntil;
 
         public TweetRetriever(ITwitterClient twitterClient)
         {
             _twitterClient = twitterClient;
             _mutex = new AsyncLock();
-            _requests = new Dictionary<long, IList<TweetRetrieverRequest>>();
+            _requests = new Dictionary<long, (int, IList<TweetRetrieverRequest>)>();
             _waitUntil = DateTimeOffset.UtcNow;
         }
 
@@ -48,13 +49,13 @@ namespace Noppes.Fluffle.TwitterSync
             if (_requests.Count == 0)
                 return;
 
-            var batch = _requests.Take(BatchSize).ToList();
+            var batch = _requests.OrderBy(kv => kv.Value.priority).Take(BatchSize).ToList();
             var batchIds = batch.Select(x => x.Key).ToArray();
             Log.Information("Retrieving {count} out of {totalCount} tweets by ID", batchIds.Length, _requests.Count);
             var retrievedTweets = await HttpResiliency.RunAsync(() => _twitterClient.Tweets.GetTweetsAsync(batchIds));
             var retrievedTweetsLookup = retrievedTweets.ToDictionary(t => t.Id);
 
-            foreach (var (tweetId, requests) in batch)
+            foreach (var (tweetId, (_, requests)) in batch)
             {
                 retrievedTweetsLookup.TryGetValue(tweetId, out var retrievedTweet);
 
@@ -73,40 +74,47 @@ namespace Noppes.Fluffle.TwitterSync
             }
         }
 
-        public async Task<List<ITweet>> GetTweets(IEnumerable<long> tweetIds)
+        public async Task<List<ITweet>> GetTweets(int priority, IEnumerable<long> tweetIds)
         {
-            var request = await EnqueueAsync(tweetIds);
+            var request = await EnqueueAsync(priority, tweetIds);
             await request.CompletionNotifier.WaitAsync();
 
             return request.Retrieved;
         }
 
-        private async Task<TweetRetrieverRequest> EnqueueAsync(IEnumerable<long> tweetIds)
+        private async Task<TweetRetrieverRequest> EnqueueAsync(int priority, IEnumerable<long> tweetIds)
         {
             var request = new TweetRetrieverRequest(tweetIds);
 
             using var _ = await _mutex.LockAsync();
             foreach (var tweetId in request.ToProcess)
             {
-                if (_requests.TryGetValue(tweetId, out var requests))
+                if (_requests.TryGetValue(tweetId, out var value))
                 {
-                    requests.Add(request);
+                    value.requests.Add(request);
                     continue;
                 }
 
-                _requests.Add(tweetId, new List<TweetRetrieverRequest> { request });
+                _requests.Add(tweetId, (priority, new List<TweetRetrieverRequest> { request }));
             }
 
             return request;
         }
 
+        public async Task<int> AcquirePriorityAsync()
+        {
+            using var _ = await _mutex.LockAsync();
+
+            return ++_priority;
+        }
+
         private class TweetRetrieverRequest
         {
-            public AsyncManualResetEvent CompletionNotifier { get; set; }
+            public AsyncManualResetEvent CompletionNotifier { get; }
 
-            public List<long> ToProcess { get; set; }
+            public List<long> ToProcess { get; }
 
-            public List<ITweet> Retrieved { get; set; }
+            public List<ITweet> Retrieved { get; }
 
             public TweetRetrieverRequest(IEnumerable<long> toProcess)
             {

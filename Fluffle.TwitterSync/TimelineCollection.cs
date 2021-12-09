@@ -76,6 +76,8 @@ namespace Noppes.Fluffle.TwitterSync
 
         public async Task FillMissingAsync()
         {
+            var priority = await _tweetRetriever.AcquirePriorityAsync();
+
             while (true)
             {
                 var missingIds = this
@@ -88,7 +90,7 @@ namespace Noppes.Fluffle.TwitterSync
                 if (missingIds.Count == 0)
                     break;
 
-                var retrievedMissing = await _tweetRetriever.GetTweets(missingIds.Select(long.Parse));
+                var retrievedMissing = await _tweetRetriever.GetTweets(priority, missingIds.Select(long.Parse));
                 foreach (var missingId in missingIds)
                 {
                     _tweets.Add(missingId, retrievedMissing.Find(t => t.IdStr == missingId));
