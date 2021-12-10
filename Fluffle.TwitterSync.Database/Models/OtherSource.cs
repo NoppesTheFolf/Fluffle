@@ -19,7 +19,6 @@ namespace Noppes.Fluffle.TwitterSync.Database.Models
             entity.Property(e => e.Location).IsRequired();
 
             entity.Property(e => e.HasBeenProcessed);
-            entity.HasIndex(e => e.HasBeenProcessed);
         }
     }
 }

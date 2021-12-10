@@ -74,8 +74,11 @@ namespace Noppes.Fluffle.TwitterSync
             }
         }
 
-        public async Task<List<ITweet>> GetTweets(int priority, IEnumerable<long> tweetIds)
+        public async Task<List<ITweet>> GetTweets(int priority, ICollection<long> tweetIds)
         {
+            if (tweetIds.Count == 0)
+                return new List<ITweet>();
+
             var request = await EnqueueAsync(priority, tweetIds);
             await request.CompletionNotifier.WaitAsync();
 

@@ -26,12 +26,12 @@ namespace Noppes.Fluffle.TwitterSync
         /// <summary>
         /// Matches URLs that contain a semantically valid Twitter handle.
         /// </summary>
-        private static readonly Regex TwitterUsernameRegex = new("twitter\\.com\\/([A-Za-z0-9_]{1,15})(?=\\/|$|\\?)", RegexOptions.Compiled);
+        private static readonly Regex TwitterUsernameRegex = new("twitter\\.com\\/([A-Za-z0-9_]{1,15})(?=\\/|$|\\?)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         /// <summary>
         /// Matches URLs that contain a semantically valid Twitter tweet IDs.
         /// </summary>
-        private static readonly Regex TwitterStatusRegex = new("twitter\\.com\\/.*\\/status\\/([0-9]*)(?=\\/|$|\\?)", RegexOptions.Compiled);
+        private static readonly Regex TwitterStatusRegex = new("twitter\\.com\\/.*\\/status\\/([0-9]*)(?=\\/|$|\\?)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private async Task SynchronizeAsync(int afterId)
         {
@@ -66,6 +66,7 @@ namespace Noppes.Fluffle.TwitterSync
 
                 var sources = await context.OtherSources
                     .Where(os => !os.HasBeenProcessed)
+                    .OrderByDescending(os => os.Id)
                     .Take(Endpoints.SourcesLimit)
                     .ToListAsync();
 
@@ -98,7 +99,7 @@ namespace Noppes.Fluffle.TwitterSync
             }
         }
 
-        public async Task<bool> SyncOtherSourcesAsync()
+        public async Task SyncOtherSourcesAsync()
         {
             using var scope = Services.CreateScope();
             await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
@@ -110,8 +111,6 @@ namespace Noppes.Fluffle.TwitterSync
 
             await SynchronizeAsync(afterId);
             await ExtractAsync();
-
-            return true;
         }
 
         private async Task<int> CalculateStartIdAsync()
@@ -262,7 +261,7 @@ namespace Noppes.Fluffle.TwitterSync
             if (tweetIds != null)
             {
                 var priority = await _tweetRetriever.AcquirePriorityAsync();
-                var tweets = await _tweetRetriever.GetTweets(priority, tweetIds.Distinct());
+                var tweets = await _tweetRetriever.GetTweets(priority, tweetIds.Distinct().ToList());
                 foreach (var tweetBatch in tweets.Batch(100))
                 {
                     var userIds = tweetBatch.Select(t => t.CreatedBy.IdStr).ToArray();

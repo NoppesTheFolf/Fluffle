@@ -90,7 +90,7 @@ namespace Noppes.Fluffle.TwitterSync
                 if (missingIds.Count == 0)
                     break;
 
-                var retrievedMissing = await _tweetRetriever.GetTweets(priority, missingIds.Select(long.Parse));
+                var retrievedMissing = await _tweetRetriever.GetTweets(priority, missingIds.Select(long.Parse).ToList());
                 foreach (var missingId in missingIds)
                 {
                     _tweets.Add(missingId, retrievedMissing.Find(t => t.IdStr == missingId));
