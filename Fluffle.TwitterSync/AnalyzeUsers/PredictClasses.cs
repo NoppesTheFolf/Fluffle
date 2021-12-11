@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Nito.AsyncEx;
 using Noppes.Fluffle.Database.Synchronization;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.TwitterSync.Database.Models;
@@ -9,12 +10,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static MoreLinq.Extensions.DistinctByExtension;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {
     public interface IPredictClassesData : IImageRetrieverData
     {
         public ICollection<IDictionary<bool, double>> Classes { get; set; }
+    }
+
+    internal static class PredictClasses
+    {
+        internal static readonly AsyncLock Mutex = new();
     }
 
     public class PredictClasses<T> : Consumer<T> where T : IPredictClassesData
@@ -33,6 +40,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             using var _ = Operation.Time("Predicting image classes for {count} images", data.Images.Count);
             data.Classes = await HttpResiliency.RunAsync(() => _predictionClient.ClassifyAsync(data.OpenStreams));
 
+            using var __ = await PredictClasses.Mutex.LockAsync();
             using var scope = _services.CreateScope();
             await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
 
@@ -43,7 +51,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 Id = x.Second,
                 True = x.First[true],
                 False = x.First[false]
-            }).ToList();
+            }).DistinctBy(ma => ma.Id).ToList();
 
             var existingMediaIds = await context.Media
                 .Where(m => mediaIds.Contains(m.Id))
