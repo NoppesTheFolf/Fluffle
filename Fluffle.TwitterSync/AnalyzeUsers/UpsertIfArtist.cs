@@ -171,7 +171,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             {
                 TweetId = t.IdStr,
                 MediaId = m.IdStr
-            })).ToList();
+            })).DistinctBy(tm => (tm.TweetId, tm.MediaId)).ToList();
 
             var existingTweetMedia = await context.TweetMedia
                 .Where(tm => tweets.Select(t => t.IdStr).Contains(tm.TweetId))
