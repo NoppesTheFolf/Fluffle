@@ -3,7 +3,7 @@ import yaml
 
 
 def get_version() -> str:
-    return '0.12.4' if os.environ.get('DEV') is None else 'development'
+    return '0.12.5' if os.environ.get('DEV') is None else 'development'
 
 
 def load() -> dict:
