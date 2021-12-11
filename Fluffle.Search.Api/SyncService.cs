@@ -35,15 +35,23 @@ namespace Noppes.Fluffle.Search.Api
             _logger.LogInformation("Synchronizing platforms...");
             var platforms = await RefreshPlatformsAsync();
 
-            foreach (var platform in platforms)
+            var tasks = new Task[platforms.Count];
+            for (var i = 0; i < platforms.Count; i++)
             {
-                _logger.LogInformation("Synchronizing for {platform}...", platform.Name);
-                await RefreshCreditableEntitiesAsync(platform);
-                await RefreshImagesAsync(platform);
+                var platform = platforms[i];
+                tasks[i] = Task.Run(async () =>
+                {
+                    _logger.LogInformation("Synchronizing for {platform}...", platform.Name);
+
+                    await RefreshCreditableEntitiesAsync(platform);
+                    await RefreshImagesAsync(platform);
+                });
             }
+
+            await Task.WhenAll(tasks);
         }
 
-        public async Task<IEnumerable<PlatformModel>> RefreshPlatformsAsync()
+        public async Task<IList<PlatformModel>> RefreshPlatformsAsync()
         {
             var platforms = await HttpResiliency.RunAsync(() => _client.GetPlatformsAsync(), onRetry: _ =>
             {
@@ -117,6 +125,62 @@ namespace Noppes.Fluffle.Search.Api
                 async (context, models) =>
                 {
                     var modelLookup = models.ToDictionary(m => m.Id);
+
+                    var existingDenormalizedImages = await context.DenormalizedImages
+                        .Where(i => modelLookup.Values.Select(m => m.Id).Contains(i.Id))
+                        .ToListAsync();
+
+                    var newDenormalizedImages = modelLookup.Values.Select(m => new DenormalizedImage
+                    {
+                        Id = m.Id,
+                        PlatformId = m.PlatformId,
+                        Location = m.ViewLocation,
+                        IsSfw = m.IsSfw,
+                        PhashAverage64 = m.Hash.PhashAverage64,
+                        PhashRed256 = m.Hash.PhashRed256,
+                        PhashGreen256 = m.Hash.PhashGreen256,
+                        PhashBlue256 = m.Hash.PhashBlue256,
+                        PhashAverage256 = m.Hash.PhashAverage256,
+                        PhashRed1024 = m.Hash.PhashRed1024,
+                        PhashGreen1024 = m.Hash.PhashGreen1024,
+                        PhashBlue1024 = m.Hash.PhashBlue1024,
+                        PhashAverage1024 = m.Hash.PhashAverage1024,
+                        ThumbnailLocation = m.Thumbnail.Location,
+                        ThumbnailWidth = m.Thumbnail.Width,
+                        ThumbnailCenterX = m.Thumbnail.CenterX,
+                        ThumbnailHeight = m.Thumbnail.Height,
+                        ThumbnailCenterY = m.Thumbnail.CenterY,
+                        Credits = m.Credits.ToArray(),
+                        ChangeId = m.ChangeId,
+                        IsDeleted = m.IsDeleted
+                    }).ToList();
+
+                    var result = await context.SynchronizeAsync(c => c.DenormalizedImages, existingDenormalizedImages,
+                        newDenormalizedImages, (i1, i2) => i1.Id == i2.Id, onUpdateAsync: (src, dest) =>
+                        {
+                            dest.PlatformId = src.PlatformId;
+                            dest.Location = src.Location;
+                            dest.IsSfw = src.IsSfw;
+                            dest.PhashAverage64 = src.PhashAverage64;
+                            dest.PhashRed256 = src.PhashRed256;
+                            dest.PhashGreen256 = src.PhashGreen256;
+                            dest.PhashBlue256 = src.PhashBlue256;
+                            dest.PhashAverage256 = src.PhashAverage256;
+                            dest.PhashRed1024 = src.PhashRed1024;
+                            dest.PhashGreen1024 = src.PhashGreen1024;
+                            dest.PhashBlue1024 = src.PhashBlue1024;
+                            dest.PhashAverage1024 = src.PhashAverage1024;
+                            dest.ThumbnailLocation = src.ThumbnailLocation;
+                            dest.ThumbnailWidth = src.ThumbnailWidth;
+                            dest.ThumbnailCenterX = src.ThumbnailCenterX;
+                            dest.ThumbnailHeight = src.ThumbnailHeight;
+                            dest.ThumbnailCenterY = src.ThumbnailCenterY;
+                            dest.Credits = src.Credits;
+                            dest.ChangeId = src.ChangeId;
+                            dest.IsDeleted = src.IsDeleted;
+
+                            return Task.CompletedTask;
+                        });
 
                     // First we check if we have all the credits defined in the model
                     var creditsInModels = modelLookup.Values

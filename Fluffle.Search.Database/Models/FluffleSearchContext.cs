@@ -27,6 +27,7 @@ namespace Noppes.Fluffle.Search.Database.Models
         public virtual DbSet<ContentFile> ContentFiles { get; set; }
         public virtual DbSet<ImageHash> ImageHashes { get; set; }
         public virtual DbSet<Image> Images { get; set; }
+        public virtual DbSet<DenormalizedImage> DenormalizedImages { get; set; }
         public virtual DbSet<Platform> Platform { get; set; }
         public virtual DbSet<Thumbnail> Thumbnails { get; set; }
         public virtual DbSet<ContentCreditableEntity> ContentCreditableEntities { get; set; }

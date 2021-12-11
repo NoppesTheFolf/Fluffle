@@ -5,10 +5,10 @@ using Noppes.Fluffle.Api.Services;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Search.Api.Models;
-using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Utils;
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
@@ -90,45 +90,35 @@ namespace Noppes.Fluffle.Search.Api.Services
             var searchResultLookup = searchResultImages.ToDictionary(i => i.Id);
 
             scope.Next(t => t.ComplementComparisonResults);
-            var images = await _context.Images.AsNoTracking()
-                .IncludeThumbnails()
-                .Include(i => i.ImageHash)
-                .Include(i => i.Credits)
+            var images = await _context.DenormalizedImages.AsNoTracking()
                 .Where(i => searchResultImages.Select(r => r.Id).Contains(i.Id) && !i.IsDeleted)
                 .ToListAsync();
+            var imagesLookup = images.ToDictionary(i => i.Id);
 
             scope.Next(t => t.CreateAndRefineOutput);
             var results = images
                 .Select(r =>
                 {
-                    var compareResult1024 = CompareRgb((r.ImageHash.PhashRed1024, r.ImageHash.PhashGreen1024, r.ImageHash.PhashBlue1024, r.ImageHash.PhashAverage1024), hashes1024, includeDebug);
+                    var compareResult1024 = CompareRgb((r.PhashRed1024, r.PhashGreen1024, r.PhashBlue1024, r.PhashAverage1024), hashes1024, includeDebug);
 
                     CompareResult compareResult256 = null;
-                    if (includeDebug) compareResult256 = CompareRgb((r.ImageHash.PhashRed256, r.ImageHash.PhashGreen256, r.ImageHash.PhashBlue256, r.ImageHash.PhashAverage256), hashes256, true);
+                    if (includeDebug) compareResult256 = CompareRgb((r.PhashRed256, r.PhashGreen256, r.PhashBlue256, r.PhashAverage256), hashes256, true);
 
                     var model = new SearchResultModel.ImageModel
                     {
                         Id = r.Id,
                         IsSfw = r.IsSfw,
                         Platform = (PlatformConstant)r.PlatformId,
-                        Location = r.ViewLocation,
+                        Location = r.Location,
                         Score = compareResult1024.Score,
                         Thumbnail = new SearchResultModel.ImageModel.ThumbnailModel
                         {
-                            Id = r.Thumbnail.Id,
-                            Width = r.Thumbnail.Width,
-                            CenterX = r.Thumbnail.CenterX,
-                            Height = r.Thumbnail.Height,
-                            CenterY = r.Thumbnail.CenterY,
-                            Location = r.Thumbnail.Location
+                            Width = r.ThumbnailWidth,
+                            CenterX = r.ThumbnailCenterX,
+                            Height = r.ThumbnailHeight,
+                            CenterY = r.ThumbnailCenterY,
+                            Location = r.ThumbnailLocation
                         },
-                        Credits = r.Credits.OrderBy(c => c.Type).Select(c =>
-                            new SearchResultModel.ImageModel.CreditModel
-                            {
-                                Id = c.Id,
-                                Name = c.Name
-                            }
-                        ),
                         Stats = includeDebug ? new SearchResultModel.ImageModel.StatsModel
                         {
                             Average64 = (int)searchResultLookup[r.Id].MismatchCount,
@@ -186,7 +176,31 @@ namespace Noppes.Fluffle.Search.Api.Services
                 .Where(r => platforms.Contains(r.Model.Platform))
                 .Select(r => r.Model)
                 .OrderByDescending(m => m.Score)
-                .Take(limit);
+                .Take(limit)
+                .ToList();
+
+            var creditableEntityIds = models.SelectMany(m => imagesLookup[m.Id].Credits);
+            var creditsLookup = await _context.CreditableEntities.AsNoTracking()
+                .Where(ce => creditableEntityIds.Contains(ce.Id))
+                .ToDictionaryAsync(c => c.Id);
+
+            IEnumerable<CreditableEntity> GetCredits(IEnumerable<int> creditIds)
+            {
+                foreach (var creditId in creditIds)
+                    if (creditsLookup.TryGetValue(creditId, out var creditableEntity))
+                        yield return creditableEntity;
+            }
+
+            foreach (var model in models)
+            {
+                model.Credits = GetCredits(imagesLookup[model.Id].Credits)
+                    .OrderBy(c => c.Type)
+                    .Select(c => new SearchResultModel.ImageModel.CreditModel
+                    {
+                        Id = c.Id,
+                        Name = c.Name
+                    });
+            }
 
             return new SR<SearchResultModel>(new SearchResultModel
             {

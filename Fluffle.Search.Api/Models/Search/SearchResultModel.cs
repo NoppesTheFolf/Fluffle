@@ -39,8 +39,6 @@ namespace Noppes.Fluffle.Search.Api.Models
 
             public class ThumbnailModel
             {
-                public int Id { get; set; }
-
                 public int Width { get; set; }
 
                 public int CenterX { get; set; }

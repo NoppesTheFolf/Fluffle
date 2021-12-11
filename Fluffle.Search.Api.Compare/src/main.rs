@@ -140,11 +140,10 @@ impl ImageCollection {
             };
 
             let results = client.query("
-                SELECT C.id, C.is_sfw, C.change_id, C.is_deleted, IH.phash_average64
-                FROM content C
-                LEFT JOIN image_hash AS IH ON C.id = IH.id
-                WHERE C.discriminator = 'Image' AND C.platform_id = $1 AND C.change_id > $2
-                ORDER BY C.change_id
+                SELECT id, is_sfw, change_id, is_deleted, phash_average64
+                FROM denormalized_image
+                WHERE platform_id = $1 AND change_id > $2
+                ORDER BY change_id
                 LIMIT $3", &[&self.platform.id, &get_change_id(), &ImageCollection::BATCH_SIZE]).await?;
             
             let progress = format!("{} - Applying {} changes...", self.platform.name, results.len());
