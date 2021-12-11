@@ -35,20 +35,30 @@ namespace Noppes.Fluffle.Search.Api
             _logger.LogInformation("Synchronizing platforms...");
             var platforms = await RefreshPlatformsAsync();
 
-            var tasks = new Task[platforms.Count];
-            for (var i = 0; i < platforms.Count; i++)
+            var tasks = new List<Task>();
+            foreach (var platform in platforms)
             {
-                var platform = platforms[i];
-                tasks[i] = Task.Run(async () =>
+                var task = Task.Run(async () =>
                 {
                     _logger.LogInformation("Synchronizing for {platform}...", platform.Name);
 
                     await RefreshCreditableEntitiesAsync(platform);
                     await RefreshImagesAsync(platform);
                 });
+
+                tasks.Add(task);
             }
 
-            await Task.WhenAll(tasks);
+            do
+            {
+                var task = await Task.WhenAny(tasks);
+                tasks.Remove(task);
+
+                if (task.Exception == null)
+                    continue;
+
+                _logger.LogError(task.Exception, "Synchronization process crashed.");
+            } while (tasks.Any());
         }
 
         public async Task<IList<PlatformModel>> RefreshPlatformsAsync()
@@ -129,6 +139,7 @@ namespace Noppes.Fluffle.Search.Api
                     var existingDenormalizedImages = await context.DenormalizedImages
                         .Where(i => modelLookup.Values.Select(m => m.Id).Contains(i.Id))
                         .ToListAsync();
+                    var existingDenormalizedImageIds = existingDenormalizedImages.Select(edi => edi.Id).ToHashSet();
 
                     var newDenormalizedImages = modelLookup.Values.Select(m => new DenormalizedImage
                     {
@@ -136,24 +147,24 @@ namespace Noppes.Fluffle.Search.Api
                         PlatformId = m.PlatformId,
                         Location = m.ViewLocation,
                         IsSfw = m.IsSfw,
-                        PhashAverage64 = m.Hash.PhashAverage64,
-                        PhashRed256 = m.Hash.PhashRed256,
-                        PhashGreen256 = m.Hash.PhashGreen256,
-                        PhashBlue256 = m.Hash.PhashBlue256,
-                        PhashAverage256 = m.Hash.PhashAverage256,
-                        PhashRed1024 = m.Hash.PhashRed1024,
-                        PhashGreen1024 = m.Hash.PhashGreen1024,
-                        PhashBlue1024 = m.Hash.PhashBlue1024,
-                        PhashAverage1024 = m.Hash.PhashAverage1024,
-                        ThumbnailLocation = m.Thumbnail.Location,
-                        ThumbnailWidth = m.Thumbnail.Width,
-                        ThumbnailCenterX = m.Thumbnail.CenterX,
-                        ThumbnailHeight = m.Thumbnail.Height,
-                        ThumbnailCenterY = m.Thumbnail.CenterY,
-                        Credits = m.Credits.ToArray(),
+                        PhashAverage64 = m.Hash?.PhashAverage64,
+                        PhashRed256 = m.Hash?.PhashRed256,
+                        PhashGreen256 = m.Hash?.PhashGreen256,
+                        PhashBlue256 = m.Hash?.PhashBlue256,
+                        PhashAverage256 = m.Hash?.PhashAverage256,
+                        PhashRed1024 = m.Hash?.PhashRed1024,
+                        PhashGreen1024 = m.Hash?.PhashGreen1024,
+                        PhashBlue1024 = m.Hash?.PhashBlue1024,
+                        PhashAverage1024 = m.Hash?.PhashAverage1024,
+                        ThumbnailLocation = m.Thumbnail?.Location,
+                        ThumbnailWidth = m.Thumbnail?.Width ?? -1,
+                        ThumbnailCenterX = m.Thumbnail?.CenterX ?? -1,
+                        ThumbnailHeight = m.Thumbnail?.Height ?? -1,
+                        ThumbnailCenterY = m.Thumbnail?.CenterY ?? -1,
+                        Credits = m.Credits?.ToArray(),
                         ChangeId = m.ChangeId,
                         IsDeleted = m.IsDeleted
-                    }).ToList();
+                    }).Where(ndi => !ndi.IsDeleted || existingDenormalizedImageIds.Contains(ndi.Id)).ToList();
 
                     var result = await context.SynchronizeAsync(c => c.DenormalizedImages, existingDenormalizedImages,
                         newDenormalizedImages, (i1, i2) => i1.Id == i2.Id, onUpdateAsync: (src, dest) =>
@@ -161,21 +172,36 @@ namespace Noppes.Fluffle.Search.Api
                             dest.PlatformId = src.PlatformId;
                             dest.Location = src.Location;
                             dest.IsSfw = src.IsSfw;
-                            dest.PhashAverage64 = src.PhashAverage64;
-                            dest.PhashRed256 = src.PhashRed256;
-                            dest.PhashGreen256 = src.PhashGreen256;
-                            dest.PhashBlue256 = src.PhashBlue256;
-                            dest.PhashAverage256 = src.PhashAverage256;
-                            dest.PhashRed1024 = src.PhashRed1024;
-                            dest.PhashGreen1024 = src.PhashGreen1024;
-                            dest.PhashBlue1024 = src.PhashBlue1024;
-                            dest.PhashAverage1024 = src.PhashAverage1024;
-                            dest.ThumbnailLocation = src.ThumbnailLocation;
-                            dest.ThumbnailWidth = src.ThumbnailWidth;
-                            dest.ThumbnailCenterX = src.ThumbnailCenterX;
-                            dest.ThumbnailHeight = src.ThumbnailHeight;
-                            dest.ThumbnailCenterY = src.ThumbnailCenterY;
-                            dest.Credits = src.Credits;
+
+                            if (src.PhashAverage64 != null)
+                            {
+                                dest.PhashAverage64 = src.PhashAverage64;
+
+                                dest.PhashRed256 = src.PhashRed256;
+                                dest.PhashGreen256 = src.PhashGreen256;
+                                dest.PhashBlue256 = src.PhashBlue256;
+                                dest.PhashAverage256 = src.PhashAverage256;
+
+                                dest.PhashRed1024 = src.PhashRed1024;
+                                dest.PhashGreen1024 = src.PhashGreen1024;
+                                dest.PhashBlue1024 = src.PhashBlue1024;
+                                dest.PhashAverage1024 = src.PhashAverage1024;
+                            }
+
+                            if (src.ThumbnailLocation != null)
+                            {
+                                dest.ThumbnailLocation = src.ThumbnailLocation;
+                                dest.ThumbnailWidth = src.ThumbnailWidth;
+                                dest.ThumbnailCenterX = src.ThumbnailCenterX;
+                                dest.ThumbnailHeight = src.ThumbnailHeight;
+                                dest.ThumbnailCenterY = src.ThumbnailCenterY;
+                            }
+
+                            if (src.Credits != null)
+                            {
+                                dest.Credits = src.Credits;
+                            }
+
                             dest.ChangeId = src.ChangeId;
                             dest.IsDeleted = src.IsDeleted;
 
