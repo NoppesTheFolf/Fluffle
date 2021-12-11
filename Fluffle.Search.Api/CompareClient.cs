@@ -1,15 +1,32 @@
 ﻿using Flurl.Http;
+using Newtonsoft.Json;
 using Noppes.Fluffle.Http;
-using Noppes.Fluffle.PerceptualHashing;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Search.Api
 {
+    public class ComparedImage
+    {
+        [JsonProperty("id")]
+        public int Id { get; }
+
+        [JsonProperty("mismatch_count")]
+        public ulong MismatchCount { get; }
+
+        public ComparedImage(int id, ulong mismatchCount)
+        {
+            Id = id;
+            MismatchCount = mismatchCount;
+        }
+    }
+
     public class CompareResult
     {
+        [JsonProperty("count")]
         public int Count { get; set; }
 
+        [JsonProperty("images")]
         public ICollection<ComparedImage> Images { get; set; }
     }
 
