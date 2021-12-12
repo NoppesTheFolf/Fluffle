@@ -21,11 +21,10 @@ module.exports.colors = {
     amber: colors.amber,
     orange: colors.orange,
     red: colors.red,
-    warmGray: colors.warmGray,
-    trueGray: colors.trueGray,
+    stone: colors.stone,
+    neutral: colors.neutral,
     gray: colors.gray,
-    coolGray: colors.coolGray,
-    blueGray: colors.blueGray,
+    slate: colors.slate,
     primary: {
         light: '#e67e22',
         DEFAULT: '#d35400'

@@ -89,7 +89,7 @@ ThumbnailResult ThumbnailWebp(const char *srcLocation, const char *destLocation,
     auto save = [quality, destLocation](VImage image) {
         image.webpsave(destLocation, VImage::option()
                                          ->set("Q", quality)
-                                         ->set("reduction-effort", 6)
+                                         ->set("effort", 6)
                                          ->set("strip", true));
     };
 
@@ -119,7 +119,7 @@ ThumbnailResult ThumbnailAvif(const char *srcLocation, const char *destLocation,
         image.heifsave(destLocation, VImage::option()
                                          ->set("Q", quality)
                                          ->set("compression", VipsForeignHeifCompression::VIPS_FOREIGN_HEIF_COMPRESSION_AV1)
-                                         ->set("speed", 0)
+                                         ->set("effort", 0)
                                          ->set("strip", true));
     };
 
