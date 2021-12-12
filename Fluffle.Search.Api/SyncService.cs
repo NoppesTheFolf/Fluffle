@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Humanizer;
 
 namespace Noppes.Fluffle.Search.Api
 {
@@ -47,6 +48,7 @@ namespace Noppes.Fluffle.Search.Api
                 });
 
                 tasks.Add(task);
+                await Task.Delay(3.Seconds());
             }
 
             do

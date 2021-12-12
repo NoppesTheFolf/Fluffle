@@ -32,7 +32,7 @@ namespace Noppes.Fluffle.Search.Api
 
     public interface ICompareClient
     {
-        Task<IDictionary<int, CompareResult>> CompareAsync(ulong hash, bool includeNsfw, int limit);
+        Task<IDictionary<int, CompareResult>> CompareAsync(ulong hash64, ulong[] hash256, bool includeNsfw, int limit);
     }
 
     public class CompareClient : ApiClient, ICompareClient
@@ -41,10 +41,10 @@ namespace Noppes.Fluffle.Search.Api
         {
         }
 
-        public Task<IDictionary<int, CompareResult>> CompareAsync(ulong hash, bool includeNsfw, int limit)
+        public Task<IDictionary<int, CompareResult>> CompareAsync(ulong hash64, ulong[] hash256, bool includeNsfw, int limit)
         {
             return FlurlClient
-                .Request("compare", hash, includeNsfw.ToString().ToLowerInvariant(), limit)
+                .Request("compare", hash64, hash256[0], hash256[1], hash256[2], hash256[3], includeNsfw.ToString().ToLowerInvariant(), limit)
                 .GetJsonAsync<IDictionary<int, CompareResult>>();
         }
     }

@@ -19,7 +19,33 @@ struct Platform {
 #[derive(Copy, Clone)]
 struct Image {
     id: i32,
-    hash: u64
+    hash64: u64,
+    hash256: [u64; 4]
+}
+
+trait Compare {
+    type T;
+    fn compare(&self, other: Self::T) -> u32;
+}
+
+impl Compare for u64 {
+    type T = u64;
+    fn compare(&self, other: u64) -> u32 {
+        return (self ^ other).count_ones();
+    }
+}
+
+impl Compare for [u64; 4] {
+    type T = [u64; 4];
+    fn compare(&self, other: [u64; 4]) -> u32 {
+        let mut mismatch_count = 0;
+
+        for i in 0..4 {
+            mismatch_count += self[i].compare(other[i])
+        }
+
+        return mismatch_count;
+    }
 }
 
 #[derive(Serialize)]
@@ -38,7 +64,7 @@ struct ImageCollection {
 
 impl ImageCollection {
     const BATCH_SIZE: i64 = 25000;
-    const THRESHOLD: u32 = 20;
+    const THRESHOLD: u32 = 18;
 
     fn new(platform: Platform, number_of_shards: usize) -> ImageCollection {
         return ImageCollection {
@@ -93,30 +119,31 @@ impl ImageCollection {
         return if is_sfw { &self.sfw_shards } else { &self.nsfw_shards };
     }
 
-    fn compare(&self, hash: u64, include_nsfw: bool) -> (usize, Vec<ComparedImage>) {
-        let mut results = self._compare(&self.sfw_shards, hash);
+    fn compare(&self, hash64: u64, hash256: [u64; 4], include_nsfw: bool) -> (usize, Vec<ComparedImage>) {
+        let mut results = self._compare(&self.sfw_shards, hash64, hash256);
 
         if !include_nsfw {
             return results;
         }
 
-        let mut nsfw_results = self._compare(&self.nsfw_shards, hash);
+        let mut nsfw_results = self._compare(&self.nsfw_shards, hash64, hash256);
         results.0 += nsfw_results.0;
         results.1.append(&mut nsfw_results.1);
 
         return results;
     }
 
-    fn _compare(&self, shards: &RwLock<Vec<Vec<Image>>>, hash: u64) -> (usize, Vec<ComparedImage>) {
+    fn _compare(&self, shards: &RwLock<Vec<Vec<Image>>>, hash64: u64, hash256: [u64; 4]) -> (usize, Vec<ComparedImage>) {
         let mut matches: Vec<ComparedImage> = Vec::new();
         
         let mut count: usize = 0;
         let shards = shards.read();
         for shard in shards.iter() {
             for image in shard {
-                let mismatch_count = (image.hash ^ hash).count_ones();
+                let mismatch_count = image.hash64.compare(hash64);
 
                 if mismatch_count <= ImageCollection::THRESHOLD  {
+                    let mismatch_count = image.hash256.compare(hash256);
                     matches.push(ComparedImage { id: image.id, mismatch_count: mismatch_count })
                 }
             }
@@ -140,7 +167,7 @@ impl ImageCollection {
             };
 
             let results = client.query("
-                SELECT id, is_sfw, change_id, is_deleted, phash_average64
+                SELECT id, is_sfw, change_id, is_deleted, phash_average64, phash_average256
                 FROM denormalized_image
                 WHERE platform_id = $1 AND change_id > $2
                 ORDER BY change_id
@@ -153,12 +180,33 @@ impl ImageCollection {
                 let change_id: i64 = row.get(2);
                 let is_deleted: bool = row.get(3);
                 let phash_average64: Vec<u8> = row.get(4);
+                let phash_average256: Vec<u8> = row.get(5);
 
-                let phash_average64 = u64::from_le_bytes([phash_average64[0], phash_average64[1], phash_average64[2], phash_average64[3], phash_average64[4], phash_average64[5], phash_average64[6], phash_average64[7]]);
+                fn bytes_to_u64(slice: &[u8]) -> u64 {
+                    return u64::from_le_bytes([
+                        slice[0],
+                        slice[1],
+                        slice[2],
+                        slice[3],
+                        slice[4],
+                        slice[5],
+                        slice[6],
+                        slice[7]
+                    ]);
+                }
+
                 if is_deleted {
-                    self.remove(id)
+                    self.remove(id);
                 } else {
-                    self.add(Image { id: id, hash: phash_average64 }, is_sfw);
+                    let phash_average64 = bytes_to_u64(&phash_average64);
+                    let phash_average256 = [
+                        bytes_to_u64(&phash_average256[0..8]),
+                        bytes_to_u64(&phash_average256[8..16]),
+                        bytes_to_u64(&phash_average256[16..24]),
+                        bytes_to_u64(&phash_average256[24..32])
+                    ];
+
+                    self.add(Image { id: id, hash64: phash_average64, hash256: phash_average256 }, is_sfw);
                 }
 
                 if change_id > get_change_id() {
@@ -219,10 +267,10 @@ impl ImageService {
         Ok(())
     }
 
-    fn compare(&self, hash: u64, include_nsfw: bool, limit: usize) -> HashMap<i32, CompareResult> {
+    fn compare(&self, hash64: u64, hash256: [u64; 4], include_nsfw: bool, limit: usize) -> HashMap<i32, CompareResult> {
         let mut results: HashMap<i32, CompareResult> = HashMap::new();
         for (platform_id, collection) in self.collections.iter() {
-            let (collection_count, mut collection_results) = collection.compare(hash, include_nsfw);
+            let (collection_count, mut collection_results) = collection.compare(hash64, hash256, include_nsfw);
             collection_results.sort_by(|a, b| a.mismatch_count.cmp(&b.mismatch_count));
             let collection_results = collection_results.into_iter().take(limit).collect::<Vec<ComparedImage>>();
 
@@ -277,10 +325,10 @@ async fn main() -> Result<(), Error> {
 
     let warp_service = service.clone();
     tokio::spawn(async move {
-        let compare = warp::path!("compare" / u64 / bool / usize)
-        .map(move |hash, include_nsfw, limit| -> warp::reply::Json {
+        let compare = warp::path!("compare" / u64 / u64 / u64 / u64 / u64 / bool / usize)
+        .map(move |hash64, hash256p1, hash256p2, hash256p3, hash256p4, include_nsfw, limit| -> warp::reply::Json {
             let duration = Instant::now();
-            let result = warp_service.compare(hash, include_nsfw, limit);
+            let result = warp_service.compare(hash64, [hash256p1, hash256p2, hash256p3, hash256p4], include_nsfw, limit);
             
             let mut count = 0;
             for platform_count in result.iter().map(|x| x.1.count) {

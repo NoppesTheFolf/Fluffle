@@ -20,6 +20,8 @@ namespace Noppes.Fluffle.Search.Api.Services
 {
     public class SearchService : Service, ISearchService
     {
+        private const int Mismatch256Threshold = 72;
+
         private const int BestUnlikelyThreshold = 340;
         private const int VarianceAlternativeThreshold = 120;
         private const int WorstAlternativeThreshold = 55;
@@ -41,18 +43,23 @@ namespace Noppes.Fluffle.Search.Api.Services
             // We need to compute a more granular hash too as the 64-bit averaged hash is unable to
             // differentiate between alternate version. We first calculate the complex hashes because
             // the libvips imaging provider can optimize itself when doing this.
-            (ulong[] red, ulong[] green, ulong[] blue, ulong[] average) CalculateHashes(PerceptualHashImage perceptualHashImage, Expression<Func<SearchRequest, int?>> red, Expression<Func<SearchRequest, int?>> green, Expression<Func<SearchRequest, int?>> blue)
+            (ulong[] red, ulong[] green, ulong[] blue, ulong[] average) CalculateHashes(
+                PerceptualHashImage perceptualHashImage,
+                bool red, Expression<Func<SearchRequest, int?>> timeRed,
+                bool green, Expression<Func<SearchRequest, int?>> timeGreen,
+                bool blue, Expression<Func<SearchRequest, int?>> timeBlue,
+                bool average)
             {
-                scope.Next(red);
-                var redHash = perceptualHashImage.ComputeHash(Channel.Red);
+                scope.Next(timeRed);
+                var redHash = red ? perceptualHashImage.ComputeHash(Channel.Red) : Array.Empty<byte>();
 
-                scope.Next(green);
-                var greenHash = perceptualHashImage.ComputeHash(Channel.Green);
+                scope.Next(timeGreen);
+                var greenHash = green ? perceptualHashImage.ComputeHash(Channel.Green) : Array.Empty<byte>();
 
-                scope.Next(blue);
-                var blueHash = perceptualHashImage.ComputeHash(Channel.Blue);
+                scope.Next(timeBlue);
+                var blueHash = blue ? perceptualHashImage.ComputeHash(Channel.Blue) : Array.Empty<byte>();
 
-                var averageHash = includeDebug ? perceptualHashImage.ComputeHash(Channel.Average) : Array.Empty<byte>();
+                var averageHash = average ? perceptualHashImage.ComputeHash(Channel.Average) : Array.Empty<byte>();
 
                 return (FluffleHash.ToInt64(redHash), FluffleHash.ToInt64(greenHash), FluffleHash.ToInt64(blueHash), FluffleHash.ToInt64(averageHash));
             }
@@ -63,7 +70,7 @@ namespace Noppes.Fluffle.Search.Api.Services
             (ulong[] red, ulong[] green, ulong[] blue, ulong[] average) hashes1024 = default;
             try
             {
-                hashes1024 = CalculateHashes(hasher, t => t.ComputeExpensiveRed, t => t.ComputeExpensiveGreen, t => t.ComputeExpensiveBlue);
+                hashes1024 = CalculateHashes(hasher, true, t => t.ComputeExpensiveRed, true, t => t.ComputeExpensiveGreen, true, t => t.ComputeExpensiveBlue, includeDebug);
             }
             catch (ConvertException)
             {
@@ -71,20 +78,34 @@ namespace Noppes.Fluffle.Search.Api.Services
             }
 
             hash.Size = 32;
-            (ulong[], ulong[], ulong[], ulong[]) hashes256 = default;
-            if (includeDebug) hashes256 = CalculateHashes(hasher, t => t.ComputeExpensiveRed, t => t.ComputeExpensiveGreen, t => t.ComputeExpensiveBlue);
+            var hashes256 = CalculateHashes(hasher, includeDebug, t => t.ComputeExpensiveRed, includeDebug, t => t.ComputeExpensiveGreen, includeDebug, t => t.ComputeExpensiveBlue, true);
 
             scope.Next(t => t.Compute64Average);
             hash.Size = 8;
             var hash64 = FluffleHash.ToUInt64(hasher.ComputeHash(Channel.Average));
 
             scope.Next(t => t.Compare64Average);
-            var searchResult = await _compareClient.CompareAsync(hash64, includeNsfw, limit);
+            var searchResult = await _compareClient.CompareAsync(hash64, hashes256.average, includeNsfw, limit);
 
             // Bug: The search service returns duplicate images. Update: might not anymore, who knows
             var searchResultImages = searchResult
-                .SelectMany(x => x.Value.Images)
-                .DistinctBy(i => i.Id)
+                .SelectMany(x => x.Value.Images.Select(i => (platform: (PlatformConstant)x.Key, image: i)))
+                .DistinctBy(x => x.image.Id)
+                .Select(x =>
+                {
+                    var thresholdWeight = x.image.MismatchCount < Mismatch256Threshold ? 2 : 0;
+                    var platformWeight = platforms.Contains(x.platform) ? 1 : 0;
+
+                    return new
+                    {
+                        Image = x.image,
+                        Priority = thresholdWeight + platformWeight
+                    };
+                })
+                .OrderByDescending(x => x.Priority)
+                .ThenBy(x => x.Image.MismatchCount)
+                .Select(x => x.Image)
+                .Take(limit + limit / 2) // The comparison service may be a bit behind on deleted images, so it is good to take a bit more than needed
                 .ToList();
 
             var searchResultLookup = searchResultImages.ToDictionary(i => i.Id);
