@@ -1,2 +1,4 @@
-token: Telegram bot token
-workers: Number of threads
+telegram_token: Telegram bot token
+telegram_workers: Number of threads
+
+mongo_uri: Mongo URI

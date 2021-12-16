@@ -74,7 +74,7 @@ def main() -> None:
     config = load_config()
 
     # Configure Telegram bot
-    updater = Updater(config['token'], workers=config['workers'])
+    updater = Updater(config.telegram_token, workers=config.telegram_workers)
     dispatcher = updater.dispatcher
 
     media_handler = MessageHandler(Filters.photo, handle_photo, run_async=True)
