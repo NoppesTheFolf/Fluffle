@@ -96,7 +96,7 @@ const SearchResultMobile = ({ data }: { data: SearchResult }) => {
                         </div>
                         <button className="btn btn-sm btn-secondary w-full space-x-1" onClick={toggleHide}>
                             <span>
-                                <Icon name={shouldHide ? "visibility_off" : "visibility"} />
+                                <Icon name={shouldHide ? "visibility-off" : "visibility"} />
                             </span>
                             <span>{shouldHide ? "Hide" : "Show"} improbable matches</span>
                         </button>

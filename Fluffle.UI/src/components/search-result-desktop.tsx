@@ -126,7 +126,7 @@ const SearchResultDesktop = ({ data }: { data: SearchResult }) => {
                     <div className="flex items-center space-x-1.5">
                         <button className="btn btn-sm btn-secondary space-x-1" style={{ lineHeight: 1 }} onClick={() => setHideImprobable(!hideImprobable)}>
                             <span>
-                                <Icon name={hideImprobable ? "visibility" : "visibility_off"} />
+                                <Icon name={hideImprobable ? "visibility" : "visibility-off"} />
                             </span>
                             <span>{hideImprobable ? "Show" : "Hide"} improbable matches</span>
                         </button>
