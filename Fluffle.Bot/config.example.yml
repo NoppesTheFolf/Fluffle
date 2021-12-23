@@ -1,4 +1,12 @@
 telegram_token: Telegram bot token
 telegram_workers: Number of threads
+telegram_known_sources:
+  - e621.net
+  - furaffinity.net
+  - furrynetwork.com
+  - cloudfront.net
+  - twitter.com
+  - twimg.com
+  - weasyl.com
 
 mongo_uri: Mongo URI

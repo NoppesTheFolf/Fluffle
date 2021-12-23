@@ -1,4 +1,5 @@
 import os
+from typing import List
 import yaml
 from dataclasses import dataclass
 
@@ -7,6 +8,7 @@ from dataclasses import dataclass
 class Config:
     telegram_token: str
     telegram_workers: int
+    telegram_known_sources: List[str]
     mongo_uri: str
 
 

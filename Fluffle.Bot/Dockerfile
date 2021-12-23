@@ -1,4 +1,4 @@
-FROM python:3.9-buster
+FROM python:3.10-buster
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y libvips-dev
