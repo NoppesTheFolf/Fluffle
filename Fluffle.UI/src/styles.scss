@@ -96,3 +96,7 @@ label {
 *[class*="rounded"] {
     -webkit-mask-image: -webkit-radial-gradient(white, black);
 }
+
+.hljs {
+    background-color: $dark-300 !important;
+}

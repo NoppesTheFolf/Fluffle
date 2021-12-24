@@ -66,8 +66,10 @@ module.exports = {
               fontSize: '1em'
             },
             thead: {
-              color: variables.colors.light['100'],
               borderBottomColor: variables.colors.dark['200']
+            },
+            'thead th': {
+              color: variables.colors.light['100'],
             },
             'tbody tr': {
               borderBottomColor: variables.colors.dark['200']
