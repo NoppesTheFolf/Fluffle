@@ -1,6 +1,6 @@
 from telegram.message import Message
 from telegram.utils.helpers import escape_markdown
-from routes.basic_commands import help_command, start_command
+from routes.basic_commands import help_command, i_has_found_bug, start_command
 from routes.track_chats import handle_mention, track_chat_membership
 from settings_menu import register as register_settings_menu
 from config import load as load_config
@@ -36,7 +36,7 @@ def handle_photo(update: Update, context: CallbackContext):
         return
     
     # Skip messages that already have at least one source attached to them. Only applies to channels, groups and supergroups
-    if update.effective_chat != tgc.CHAT_PRIVATE:
+    if update.effective_chat.type != tgc.CHAT_PRIVATE:
         if update.effective_message.caption:
             caption = update.effective_message.caption.casefold()
             if any(url in caption for url in config.telegram_known_sources):
@@ -76,7 +76,7 @@ def handle_photo(update: Update, context: CallbackContext):
             _id = None,
             chat_id = update.effective_chat.id,
             reverse_search_format = chat.reverse_search_format,
-            message_format = chat.message_format,
+            text_format = chat.text_format,
             message_id = update.effective_message.message_id,
             caption = update.effective_message.caption,
             caption_has_been_edited = False,
@@ -89,7 +89,7 @@ def handle_photo(update: Update, context: CallbackContext):
     
     try:
         if update.effective_chat.type == tgc.CHAT_PRIVATE:
-            response = ReverseSearchResponse(photo, results, update.effective_message.chat_id, None, None, None, None, None)
+            response = ReverseSearchResponse(photo, results, update.effective_message.chat_id, None, None, None, None, None, None)
             response.file_id = photo.file_id
             context.bot.delete_message(update.effective_message.chat_id, update.effective_message.message_id)
 
@@ -110,7 +110,7 @@ def handle_photo(update: Update, context: CallbackContext):
                 if len(results) == 0:
                     return
                 
-                response = ReverseSearchResponse(photo, results, update.effective_chat.id, update.effective_message.message_id, None, None, None, None)
+                response = ReverseSearchResponse(photo, results, update.effective_chat.id, update.effective_message.message_id, None, None, None, None, None)
                 Formatter.route(chat, response)
                 if response.text is None:
                     response.text = escape_markdown('🦊🔍...', version=2)
@@ -123,12 +123,12 @@ def handle_photo(update: Update, context: CallbackContext):
             return
         
         if update.effective_chat.type == tgc.CHAT_CHANNEL:
-            response = ReverseSearchResponse(photo, results, update.effective_chat.id, None, None, None, None, update.effective_message.message_id)
+            response = ReverseSearchResponse(photo, results, update.effective_chat.id, None, None, None, None, update.effective_message.message_id, update.effective_message.caption)
             message.processed_message_id = update.effective_message.message_id
 
             if len(results) > 0:
-                # Use the message format if the message is part of a media group
-                chat.reverse_search_format = ReverseSearchFormat.MESSAGE if update.effective_message.media_group_id else chat.reverse_search_format
+                # Use the text format if the message is part of a media group
+                chat.reverse_search_format = ReverseSearchFormat.TEXT if update.effective_message.media_group_id else chat.reverse_search_format
                 Formatter.route(chat, response)
                 response.process(context.bot)
 
@@ -151,6 +151,7 @@ def main() -> None:
     # Register the start and help commands
     updater.dispatcher.add_handler(CommandHandler('start', start_command, run_async=True))
     updater.dispatcher.add_handler(CommandHandler('help', help_command, run_async=True))
+    updater.dispatcher.add_handler(CommandHandler('ihasfoundbug', i_has_found_bug, run_async=True))
 
     # Register the settings menu
     register_settings_menu(updater)

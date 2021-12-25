@@ -7,7 +7,7 @@ import chevron
 class Template(Enum):
     START = 1
     HELP = 2
-    CANCELLED = 3
+    I_HAS_FOUND_BUG = 3
 
 
 cache = {}

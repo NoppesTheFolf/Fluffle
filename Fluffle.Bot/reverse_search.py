@@ -1,5 +1,5 @@
 import tempfile
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from requests import post
 from pyvips import Image, Size
 from telegram.bot import Bot
@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import os
 from itertools import groupby
 from telegram import ParseMode, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
-from mongo import MessageFormat, MongoChat, ReverseSearchFormat
+from mongo import TextFormat, MongoChat, ReverseSearchFormat
 from math import floor
 import re
 
@@ -41,7 +41,7 @@ PLATFORMS = {
 
 
 class ReverseSearchResponse:
-    def __init__(self, photo: PhotoSize, results: List[ReverseSearchItem], chat_id: int, reply_to_message_id: int, file_id: str, text: str, reply_markup: ReplyKeyboardMarkup, message_id: int):
+    def __init__(self, photo: PhotoSize, results: List[ReverseSearchItem], chat_id: int, reply_to_message_id: int, file_id: str, text: str, reply_markup: ReplyKeyboardMarkup, message_id: int, existing_caption: str):
         self.photo = photo
         self.results = results
         self.chat_id = chat_id
@@ -50,6 +50,7 @@ class ReverseSearchResponse:
         self.text = text
         self.reply_markup = reply_markup
         self.message_id = message_id
+        self.existing_caption = existing_caption
     
     def process(self, bot: Bot) -> Message:
         # We need to edit either the message or the reply markup if message_id is defined
@@ -94,7 +95,7 @@ class ReverseSearchResponse:
 
 class Formatter:
     def route(chat: MongoChat, response: ReverseSearchResponse):
-        if chat.reverse_search_format == ReverseSearchFormat.MESSAGE:
+        if chat.reverse_search_format == ReverseSearchFormat.TEXT:
             format = Formatter.use_message
         elif chat.reverse_search_format == ReverseSearchFormat.INLINE_KEYBOARD:
             format = Formatter.use_inline_keyboard
@@ -104,27 +105,32 @@ class Formatter:
         format(chat, response)
 
     def use_message(chat: MongoChat, response: ReverseSearchResponse):
-        if chat.message_format == MessageFormat.COMPACT:
-            format = lambda results: Formatter.format_message(results, False)
-        elif chat.message_format == MessageFormat.EXTENDED:
-            format = lambda results: Formatter.format_message(results, True)
+        if chat.text_format == TextFormat.COMPACT:
+            format = lambda results, existing_caption: Formatter.format_message(results, existing_caption, False)
+        elif chat.text_format == TextFormat.EXPANDED:
+            format = lambda results, existing_caption: Formatter.format_message(results, existing_caption, True)
         else:
             return
         
-        response.text = format(response.results)
+        response.text = format(response.results, response.existing_caption)
 
-    MESSAGE_FORMAT_LIMIT = 3
+    TEXT_FORMAT_LIMIT = 3
     
-    def format_message(results: List[ReverseSearchItem], extended: bool) -> str:
+    def format_message(results: List[ReverseSearchItem], existing_caption: Optional[str], expanded: bool) -> str:
         text = ''
-        for key, group in groupby(sorted(results, key=lambda r: r.priority)[:Formatter.MESSAGE_FORMAT_LIMIT], key=lambda r: r.platform):
-            if extended:
+        for key, group in groupby(sorted(results, key=lambda r: r.priority)[:Formatter.TEXT_FORMAT_LIMIT], key=lambda r: r.platform):
+            if expanded:
                 text += '\n*{}*\n'.format(key)
             
             for item in group:
                 text += escape_markdown(item.location, 2) + '\n'
         
-        return text.strip()
+        text = text.strip()
+
+        if existing_caption is not None:
+            text = escape_markdown(existing_caption, 2) + '\n\n' + text
+
+        return text
 
     def use_inline_keyboard(chat: MongoChat, response: ReverseSearchResponse): 
         aspect_ratio = response.photo.width / response.photo.height
@@ -132,7 +138,7 @@ class Formatter:
         aspect_ratio = 0.25 if aspect_ratio < 0.25 else aspect_ratio
         # Any aspect ratio larger than 1.0 will not grow bigger anymore
         aspect_ratio = 1.0 if aspect_ratio > 1.0 else aspect_ratio
-
+         
         bin_options = [
             (1, floor(37.24 * aspect_ratio)),
             (2, floor(18.24 * aspect_ratio)),
@@ -225,13 +231,13 @@ def reverse_search(bot: Bot, photos: List[PhotoSize]) -> Tuple[PhotoSize, List[R
                 match = re.search(WEASYL_REGEX, item['location'])
                 if match:
                     item['location'] = f'https://weasyl.com/submission/{match.group(1)}'
-
+            
             # Fur Affinity URLs sometimes have a www. prefix which is useless
             if item['platform'] == FUR_AFFINITY:
                 match = re.search(WWW_MATCH, item['location'])
                 if match:
                     item['location'] = 'https://' + item['location'][match.span()[1]:]
-
+            
             platform = PLATFORMS[item['platform']][1]
             priority = PLATFORMS[item['platform']][0]
             return ReverseSearchItem(item['id'], platform, item['location'], priority)

@@ -21,7 +21,7 @@ class MongoChat:
     owner_id: int
     # Settings regarding presentation of the reverse search results
     reverse_search_format: str
-    message_format: str
+    text_format: str
     # Unique identifier for the linked chat, i.e. the discussion group identifier for a channel and vice versa; for supergroups and channel chats.
     linked_chat_id: Optional[int] = None
     # Permissions
@@ -54,7 +54,7 @@ class MongoMessage:
     _id: int
     chat_id: int
     reverse_search_format: str
-    message_format: str
+    text_format: str
     message_id: int
     caption: str
     caption_has_been_edited: bool
@@ -65,13 +65,13 @@ class MongoMessage:
 
 
 class ReverseSearchFormat:
-    MESSAGE = "MESSAGE"
+    TEXT = "TEXT"
     INLINE_KEYBOARD = "INLINE_KEYBOARD"
 
 
-class MessageFormat:
+class TextFormat:
     COMPACT = "COMPACT"
-    EXTENDED = "EXTENDED"
+    EXPANDED = "EXPANDED"
 
 
 T = TypeVar('T')
@@ -146,20 +146,20 @@ database = FluffleDatabase()
 REVERSE_SEARCH_FORMAT_DEFAULTS = {
     (tgc.CHAT_PRIVATE, True): ReverseSearchFormat.INLINE_KEYBOARD,
     (tgc.CHAT_PRIVATE, False): ReverseSearchFormat.INLINE_KEYBOARD,
-    (tgc.CHAT_GROUP, True): ReverseSearchFormat.MESSAGE,
-    (tgc.CHAT_GROUP, False): ReverseSearchFormat.MESSAGE,
-    (tgc.CHAT_SUPERGROUP, True): ReverseSearchFormat.MESSAGE,
-    (tgc.CHAT_SUPERGROUP, False): ReverseSearchFormat.MESSAGE,
-    (tgc.CHAT_CHANNEL, True): ReverseSearchFormat.MESSAGE,
+    (tgc.CHAT_GROUP, True): ReverseSearchFormat.TEXT,
+    (tgc.CHAT_GROUP, False): ReverseSearchFormat.TEXT,
+    (tgc.CHAT_SUPERGROUP, True): ReverseSearchFormat.TEXT,
+    (tgc.CHAT_SUPERGROUP, False): ReverseSearchFormat.TEXT,
+    (tgc.CHAT_CHANNEL, True): ReverseSearchFormat.TEXT,
     (tgc.CHAT_CHANNEL, False): ReverseSearchFormat.INLINE_KEYBOARD
 }
 
 
-MESSAGE_FORMAT_DEFAULTS = {
-    tgc.CHAT_PRIVATE: MessageFormat.COMPACT,
-    tgc.CHAT_GROUP: MessageFormat.COMPACT,
-    tgc.CHAT_SUPERGROUP: MessageFormat.COMPACT,
-    tgc.CHAT_CHANNEL: MessageFormat.COMPACT
+TEXT_FORMAT_DEFAULTS = {
+    tgc.CHAT_PRIVATE: TextFormat.COMPACT,
+    tgc.CHAT_GROUP: TextFormat.COMPACT,
+    tgc.CHAT_SUPERGROUP: TextFormat.COMPACT,
+    tgc.CHAT_CHANNEL: TextFormat.COMPACT
 }
 
 
@@ -175,7 +175,7 @@ def upsert_chat(tg_chat: Chat, is_active: bool, owner: User = None, botChatMembe
             is_active = is_active,
             owner_id = owner.id,
             reverse_search_format = REVERSE_SEARCH_FORMAT_DEFAULTS[(tg_chat.type, tg_chat.linked_chat_id is not None)],
-            message_format = MESSAGE_FORMAT_DEFAULTS[tg_chat.type]
+            text_format = TEXT_FORMAT_DEFAULTS[tg_chat.type]
         )
     else:
         chat.title = owner.username if tg_chat.type == tgc.CHAT_PRIVATE else tg_chat.title

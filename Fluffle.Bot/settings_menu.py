@@ -7,14 +7,14 @@ from telegram.parsemode import ParseMode
 from telegram.update import Update
 from telegram.utils.helpers import escape_markdown
 import telegram.constants as tgc
-from mongo import MessageFormat, ReverseSearchFormat, database
+from mongo import TextFormat, ReverseSearchFormat, database
 import itertools
 import json
 from utils import get_owner
 
 
 SELECT_FORMAT, SET_FORMAT = range(2)
-SELECT_MESSAGE_FORMAT, SET_MESSAGE_FORMAT = range(2)
+SELECT_TEXT_FORMAT, SET_TEXT_FORMAT = range(2)
 
 
 def select_chat(update: Update, context: CallbackContext, text: str, state: int, nextFunc):
@@ -66,10 +66,10 @@ def select_format(update: Update, context: CallbackContext, callback_query_data 
     select_option(
         update,
         context,
-        'Which reverse search format would you like to use? Check out https://fluffle.xyz/bot#reverse-search-formats for more information.',
+        'Which reverse search format would you like to use? Check out https://fluffle.xyz/bot/#response-format for more information.',
         [
             ('Inline keyboard', ReverseSearchFormat.INLINE_KEYBOARD),
-            ('Message', ReverseSearchFormat.MESSAGE)
+            ('Text', ReverseSearchFormat.TEXT)
         ],
         lambda data, option: { 'chat_id': data, 'format': option },
         callback_query_data
@@ -78,20 +78,20 @@ def select_format(update: Update, context: CallbackContext, callback_query_data 
     return SET_FORMAT
 
 
-def select_message_format(update: Update, context: CallbackContext, callback_query_data = None):
+def select_text_format(update: Update, context: CallbackContext, callback_query_data = None):
     select_option(
         update,
         context,
-        'Which message format would you like to use? Check out https://fluffle.xyz/bot#message-formats for more information.',
+        'Which text format would you like to use? Check out https://fluffle.xyz/bot/#response-format for more information.',
         [
-            ('Compact', MessageFormat.COMPACT),
-            ('Extended', MessageFormat.EXTENDED)
+            ('Compact', TextFormat.COMPACT),
+            ('Expanded', TextFormat.EXPANDED)
         ],
         lambda data, option: { 'chat_id': data, 'format': option },
         callback_query_data
     )
     
-    return SET_MESSAGE_FORMAT
+    return SET_TEXT_FORMAT
 
 
 def set_option(update: Update, context: CallbackContext, constants_class, select_key, update_settings, text):
@@ -112,7 +112,7 @@ def set_option(update: Update, context: CallbackContext, constants_class, select
             database.chat.upsert_one(chat)
 
             update.callback_query.message.reply_text(
-                text = 'You are not the owner of the selected chat anymore. Therefore, you are not allowed to edit its settings.',
+                text = escape_markdown('You are not the owner of the selected chat anymore. Therefore, you are not allowed to edit its settings.', version = 2),
                 parse_mode = ParseMode.MARKDOWN_V2
             )
             return
@@ -121,7 +121,7 @@ def set_option(update: Update, context: CallbackContext, constants_class, select
     database.chat.upsert_one(chat)
 
     update.callback_query.message.reply_text(
-        text = text,
+        text = escape_markdown(text, version = 2),
         parse_mode = ParseMode.MARKDOWN_V2
     )
 
@@ -142,17 +142,17 @@ def set_format(update: Update, context: CallbackContext):
     )
 
 
-def set_message_format(update: Update, context: CallbackContext):
+def set_text_format(update: Update, context: CallbackContext):
     def set_message_search_format(chat, option):
-        chat.message_format = option
+        chat.text_format = option
 
     return set_option(
         update,
         context,
-        MessageFormat,
+        TextFormat,
         lambda x: x['format'],
         set_message_search_format,
-        'Message format set.'
+        'Text format set.'
     )
 
 
@@ -183,10 +183,10 @@ def register(updater: Updater):
     ))
 
     updater.dispatcher.add_handler(generate_conversation_handler(
-        command = 'setmessageformat',
-        func = lambda update, context: select_chat(update, context, 'Of which chat would you like to set the message format?', SELECT_MESSAGE_FORMAT, select_message_format),
+        command = 'settextformat',
+        func = lambda update, context: select_chat(update, context, 'Of which chat would you like to set the text format?', SELECT_TEXT_FORMAT, select_text_format),
         states = {
-            SELECT_MESSAGE_FORMAT: [CallbackQueryHandler(select_message_format)],
-            SET_MESSAGE_FORMAT: [CallbackQueryHandler(set_message_format)],
+            SELECT_TEXT_FORMAT: [CallbackQueryHandler(select_text_format)],
+            SET_TEXT_FORMAT: [CallbackQueryHandler(set_text_format)],
         }
     ))
