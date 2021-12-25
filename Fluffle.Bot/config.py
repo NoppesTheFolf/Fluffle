@@ -13,7 +13,7 @@ class Config:
 
 
 def get_version() -> str:
-    return '0.12.7' if os.environ.get('DEV') is None else 'development'
+    return '0.13.0' if os.environ.get('DEV') is None else 'development'
 
 
 def load() -> Config:
