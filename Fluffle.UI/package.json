@@ -16,7 +16,7 @@
     "autoprefixer": "^10.4.0",
     "axios": "^0.24.0",
     "change-case": "^4.1.2",
-    "chart.js": "^3.6.2",
+    "chart.js": "^3.7.0",
     "chartjs-adapter-date-fns": "^2.0.0",
     "classnames": "^2.3.1",
     "date-fns": "^2.27.0",
@@ -37,7 +37,7 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-helmet": "^6.1.0",
-    "sass": "^1.45.0",
+    "sass": "^1.45.1",
     "tailwindcss": "^3.0.7"
   }
 }

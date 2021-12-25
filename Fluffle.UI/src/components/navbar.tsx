@@ -23,8 +23,8 @@ const Navbar = () => {
             <nav>
                 <div className="flex flex-wrap space-x-2 md:space-x-3 lg:space-x-8">
                     <NavbarItem href="/" icon="youtube-searched-for">Reverse search</NavbarItem>
+                    <NavbarItem href="/bot/" icon="fa-telegram-plane">Bot</NavbarItem>
                     <NavbarItem href="/about/" icon="info">About</NavbarItem>
-                    {/* <NavbarItem href="/status/" icon="dns">Status</NavbarItem> */}
                     <NavbarItem href="/api/" icon="code">API</NavbarItem>
                     <NavbarItem href="/contact/" icon="mail">Contact</NavbarItem>
                 </div>

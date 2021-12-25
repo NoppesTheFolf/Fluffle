@@ -1,0 +1,71 @@
+import Layout from "../components/layout";
+export default ({ children }) => {
+  return (
+    <Layout title="Telegram bot" maxWidth="4xl">
+      <div className="prose max-w-none">
+        {children}
+      </div>
+    </Layout>
+  );
+};
+
+export const Format = ({ name, src, children }) => (
+  <div className="flex flex-wrap sm:flex-nowrap flex-col-reverse sm:flex-row items-center sm:space-x-4">
+    <div className="sm:w-72 max-w-fit flex-shrink-0">
+      <img className="w-full rounded m-0" alt={`Telegram bot using the ${name.toLowerCase()}`} src={`../images/${src}.jpg`} />
+      <span className="text-sm text-muted italic">Using the {name.toLowerCase()} format</span>
+    </div>
+    <div className="mb-2 sm:mb-0">
+      <h4>{name} format</h4>
+      {children}
+    </div>
+  </div>
+);
+
+# Telegram bot
+
+Fluffle has a Telegram bot. You can find it at <a href="https://t.me/FluffleXyzBot" target="_blank" rel="noreferrer">@FluffleXyzBot</a>. It will attempt to find the sources for any furry art you throw at it! You can have it reverse search images in the private chat between you and the bot, but it can also be deployed in both group chats and channels.
+
+## Fluffle in...
+
+This chapter describes how the bot operates in the different types of chats. You may skip this chapter if you are not planning on adding Fluffle to a channel or group.
+
+### Channels
+
+Fluffle can automate the process of adding sources to your channel posts. When you add the bot to your channel, it will automatically edit new channel posts and append the sources to it. By default, Fluffle will use the compact message format for channels.
+
+There are limitations to what Fluffle is able to do for you in channels. If you forward messages from other chats, then the bot is not able to edit these messages and add the sources to it. The way around this fundamental issue, is having a discussion group (aka comment section) and adding Fluffle to this discussion group as well. This way, Fluffle is able to leave comments on the forwarded messages instead. When a forwarded post already contains a source, then the bot will ignore it.
+
+### Groups
+
+You can deploy Fluffle to both groups and supergroups. See the chapter about channels for more information if your supergroup acts as the discussion group for a channel. By default, Fluffle will use the compact message format for the presentation of search results. When an image is sent in the group, the bot will send a reply message in the group with the sources. Sadly, it is impossible for the bot to edit the original message and add the sources to it that way. Due to this reason, you are discouraged from using the inline keyboard format in group chats.
+
+### Private chats
+
+There really isn’t much to this, the bot will simply reverse search whatever image you throw at it and report back to you about its findings. Just try it out!
+
+## Configuration
+
+At the moment, all of the functionality the bot provides is very much standardized and provides little configuration. If the bot has been added to any channels or groups you are the owner of, then you’ll be the sole person which is able to edit the settings the bot uses for those chats.
+
+<h3 id="response-format">Response format</h3>
+
+You can change the way in which the reverse search results are presented. Below you can find the commands associated with changing the format. There are also examples and explanations of each format.
+
+`/setformat` - Configure the bot to either use the inline keyboard or text way of formatting reverse search results.
+
+`/settextformat` - When the text format is used, configure the bot to either apply the compact or expanded way of formatting text.
+
+<div className="space-y-2 sm:space-y-8">
+  <Format name="Inline keyboard" src="inline-keyboard">
+    The inline keyboard is, subjectively, the slickest looking format in which the bot can format the reverse search results. On top of that, it is also the most space efficient format. Sadly, it also has one rather big downside: comment sections become unavailable in a channel when a message has an inline keyboard.
+  </Format>
+
+  <Format name="Compact text" src="message-compact">
+    The compact text format is the default for (super)groups and channels. To limit the amount of space the URLs take in, the number of sources presented is limited to a maximum of 3. It can be the most compact format depending on the length of the URLs. The main downside is that the format is rather crowed which can be distracting and also making it easy to open the wrong link.
+  </Format>
+
+  <Format name="Expanded text" src="message-expanded">
+    The expanded text format is mostly the same as the compact text format, it is limited to 3 sources as well. The expanded format is not used anywhere by default and is therefore entirely opt-in. Some will find this format too verbose for their liking, others will appreciate it for being easier to scan over. It really comes down to what you prefer.
+  </Format>
+</div>
