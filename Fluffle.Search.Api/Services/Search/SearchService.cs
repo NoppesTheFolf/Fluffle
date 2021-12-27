@@ -23,8 +23,6 @@ namespace Noppes.Fluffle.Search.Api.Services
         private const int Mismatch256Threshold = 72;
 
         private const int BestUnlikelyThreshold = 340;
-        private const int VarianceAlternativeThreshold = 120;
-        private const int WorstAlternativeThreshold = 55;
         private const int DistanceFromBestAlternativeThreshold = 35;
 
         private readonly ICompareClient _compareClient;
@@ -177,12 +175,6 @@ namespace Noppes.Fluffle.Search.Api.Services
             {
                 if (compareResult.Best > BestUnlikelyThreshold)
                     return ResultMatch.Unlikely;
-
-                if (compareResult.Variance > VarianceAlternativeThreshold)
-                    return ResultMatch.Alternative;
-
-                if (compareResult.Worst > WorstAlternativeThreshold)
-                    return ResultMatch.Alternative;
 
                 if (compareResult.DistanceFromBest > DistanceFromBestAlternativeThreshold)
                     return ResultMatch.Alternative;
