@@ -16,6 +16,13 @@ class Config:
     telegram_group_time_limit_ms: int
     telegram_read_timeout: int
     telegram_connect_timeout: int
+
+    reverse_search_limit: int
+    reverse_search_limit_h: int
+    reverse_search_pressure_s: int
+    reverse_search_max_concurrency: int
+    reverse_search_max_concurrency_per_chat: int
+
     mongo_uri: str
 
 

@@ -15,4 +15,10 @@ telegram_known_sources:
   - twimg.com
   - weasyl.com
 
+reverse_search_limit: 400
+reverse_search_limit_h: 24
+reverse_search_pressure_s: 900
+reverse_search_max_concurrency: 8
+reverse_search_max_concurrency_per_chat: 2
+
 mongo_uri: Mongo URI

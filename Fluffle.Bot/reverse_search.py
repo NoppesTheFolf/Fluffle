@@ -1,4 +1,5 @@
 import tempfile
+from threading import Lock, Semaphore, Thread
 from typing import List, Optional, Tuple
 from requests import post
 from telegram.bot import Bot
@@ -14,6 +15,10 @@ from mongo import TextFormat, MongoChat, ReverseSearchFormat
 from math import floor
 import re
 import rate_limiter
+from config import get as get_config
+from queue import PriorityQueue
+from telegram.ext.utils.promise import Promise
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -205,10 +210,55 @@ def _search(name, platforms):
     return response['results']
 
 
+_config = get_config()
 THRESHOLD = 512
 
+_chat_locks = dict()
+_chat_locks_lock = Lock()
 
-def reverse_search(bot: Bot, photos: List[PhotoSize]) -> Tuple[PhotoSize, List[ReverseSearchItem]]:
+
+@dataclass(order=True)
+class ReverseSearcherRequest:
+    priority: int
+    promise: Promise = field(compare = False)
+
+
+class ReverseSearcher:
+    _queue: PriorityQueue[ReverseSearcherRequest]
+    def __init__(self, workers: int) -> None:
+        self._queue = PriorityQueue()
+        for _ in range(workers):
+            Thread(target = self.target).start()
+
+
+    def target(self):
+        while True:
+            request = self._queue.get()
+            request.promise()
+
+
+    def search(self, bot: Bot, chat: MongoChat, photos: List[PhotoSize], priority: int) -> Tuple[PhotoSize, List[ReverseSearchItem]]:
+        promise = Promise(_reverse_search, [bot, chat, photos], {})
+        self._queue.put(ReverseSearcherRequest(priority, promise))
+
+        return promise.result()
+
+
+_reverse_searcher = ReverseSearcher(_config.reverse_search_max_concurrency)
+
+
+def reverse_search(bot: Bot, chat: MongoChat, photos: List[PhotoSize], priority: int) -> Tuple[PhotoSize, List[ReverseSearchItem]]:
+    with _chat_locks_lock:
+        chat_lock = _chat_locks.get(chat._id)
+        if chat_lock is None:
+            chat_lock = Semaphore(_config.reverse_search_max_concurrency_per_chat)
+            _chat_locks[chat._id] = chat_lock
+
+    with chat_lock:
+        return _reverse_searcher.search(bot, chat, photos, priority)
+
+
+def _reverse_search(bot: Bot, chat: MongoChat, photos: List[PhotoSize]) -> Tuple[PhotoSize, List[ReverseSearchItem]]:
     # Select the best image to reverse search from the ones Telegram provides
     photos = list(map(lambda p: (p, min(p.width, p.height)), photos))
     all_under_threshold = all(x[1] < THRESHOLD for x in photos)

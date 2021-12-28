@@ -14,6 +14,9 @@ from threading import Lock, Thread
 from datetime import datetime
 import rate_limiter
 import logging
+from collections import deque
+from datetime import datetime
+import itertools
 
 
 # Load config
@@ -79,8 +82,35 @@ def start_handle_photo(update: Update, context: CallbackContext):
     Thread(target = run).start()
 
 
+_histories_lock = Lock()
+_histories = dict()
+
+
 def handle_photo(chat: MongoChat, message: MongoMessage, update: Update, context: CallbackContext):
-    photo, results = reverse_search(context.bot, update.effective_message.photo)
+    with _histories_lock:
+        history = _histories.get(chat._id)
+        if history is None:
+            history = deque[datetime]()
+            _histories[chat._id] = history
+
+        now = datetime.utcnow()
+        while len(history) > 0:
+            earliest_request = history[0]
+            elapsed_hours = (now - earliest_request).total_seconds() / 3600
+            if elapsed_hours < config.reverse_search_limit_h:
+                break
+
+            history.pop()
+
+        pressure = sum(1 for _ in itertools.takewhile(lambda x: (now - x).total_seconds() < config.reverse_search_pressure_s, reversed(history)))
+        priority = pressure * -1
+
+        if len(history) >= config.reverse_search_limit:
+            return
+
+        history.append(datetime.utcnow())
+
+    photo, results = reverse_search(context.bot, chat, update.effective_message.photo, priority)
     message.results = list(map(lambda x: x.__dict__, results))
 
     def process_edit(tg_message: Message):

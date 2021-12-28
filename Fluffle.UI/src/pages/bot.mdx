@@ -44,6 +44,10 @@ You can deploy Fluffle to both groups and supergroups. See the chapter about cha
 
 There really isn’t much to this, the bot will simply reverse search whatever image you throw at it and report back to you about its findings. Just try it out!
 
+## Rate limits
+
+The bot makes use of rate limiting and prioritization to prevent abuse and guarantee service consistently to everyone. Per chat, per 24-hour period, a chat is allowed to make 400 reverse search requests. Exceed this, and the bot will start ignoring any photos sent.
+
 <h2 id="configuration">Configuration</h2>
 
 At the moment, all of the functionality the bot provides is very much standardized and provides little configuration. If the bot has been added to any channels or groups you are the owner of, then you’ll be the sole person which is able to edit the settings the bot uses for those chats.
