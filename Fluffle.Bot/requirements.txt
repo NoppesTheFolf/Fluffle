@@ -1,7 +1,6 @@
 pyyaml==6.0
 python-telegram-bot==13.9
 requests==2.26.0
-pyvips==2.1.16
 pymongo[srv]==4.0.1
 chevron==0.14.0
 ujson==5.1.0

@@ -1,7 +1,6 @@
 import tempfile
 from typing import List, Optional, Tuple
 from requests import post
-from pyvips import Image, Size
 from telegram.bot import Bot
 from telegram.files.photosize import PhotoSize
 from telegram.message import Message
@@ -182,18 +181,14 @@ def _calculate_size(width, height, target):
 
 
 def _search(name, platforms):
-    # Preprocess the image before sending it
-    image = Image.new_from_file(name)
-    width, height = _calculate_size(image.width, image.height, 256)
-    image = image.thumbnail_image(width, height=height, size=Size.FORCE)
-    buffer = image.pngsave_buffer()
+    # Preprocessing will only make the image larger (in terms of file size) and reduce reverse search accuracy
 
     # Make the request to Fluffle
     headers = {
         'User-Agent': 'telegram-bot/' + config.get_version()
     }
     files = {
-        'file': buffer
+        'file': open(name, 'rb')
     }
     data = {
         'limit': 16,
