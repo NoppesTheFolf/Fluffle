@@ -14,6 +14,7 @@ from telegram import ParseMode, ReplyKeyboardMarkup, InlineKeyboardMarkup, Inlin
 from mongo import TextFormat, MongoChat, ReverseSearchFormat
 from math import floor
 import re
+import rate_limiter
 
 
 @dataclass
@@ -56,40 +57,44 @@ class ReverseSearchResponse:
         # We need to edit either the message or the reply markup if message_id is defined
         if self.message_id:
             if self.text:
-                return bot.edit_message_caption(
-                    caption = self.text,
+                return rate_limiter.run(
+                    bot.edit_message_caption,
                     chat_id = self.chat_id,
+                    caption = self.text,
                     message_id = self.message_id,
                     reply_markup = self.reply_markup,
-                    parse_mode=ParseMode.MARKDOWN_V2
+                    parse_mode = ParseMode.MARKDOWN_V2
                 )
             elif self.reply_markup:
-                return bot.edit_message_reply_markup(
+                return rate_limiter.run(
+                    bot.edit_message_reply_markup,
                     chat_id = self.chat_id,
                     message_id = self.message_id,
                     reply_markup = self.reply_markup,
                 )
         # Else check if we need to send a photo, this is used for private chats
         elif self.file_id:
-            return bot.send_photo(
+            return rate_limiter.run(
+                bot.send_photo,
                 chat_id = self.chat_id,
                 reply_to_message_id = self.reply_to_message_id,
                 photo = self.file_id,
                 caption = self.text,
                 reply_markup = self.reply_markup,
-                disable_notification=True,
-                parse_mode=ParseMode.MARKDOWN_V2
+                disable_notification = True,
+                parse_mode = ParseMode.MARKDOWN_V2
             )
         # Else we send a normal message
         else:
-            return bot.send_message(
+            return rate_limiter.run(
+                bot.send_message,
                 chat_id = self.chat_id,
                 reply_to_message_id = self.reply_to_message_id,
                 text = self.text,
                 reply_markup = self.reply_markup,
-                parse_mode=ParseMode.MARKDOWN_V2,
-                disable_notification=True,
-                disable_web_page_preview=True
+                parse_mode = ParseMode.MARKDOWN_V2,
+                disable_notification = True,
+                disable_web_page_preview = True
             )
 
 

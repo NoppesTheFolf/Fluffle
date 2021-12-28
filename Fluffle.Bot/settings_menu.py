@@ -11,6 +11,7 @@ from mongo import TextFormat, ReverseSearchFormat, database
 import itertools
 import json
 from utils import get_owner
+import rate_limiter
 
 
 SELECT_FORMAT, SET_FORMAT = range(2)
@@ -31,7 +32,8 @@ def select_chat(update: Update, context: CallbackContext, text: str, state: int,
         )
     ], chats))
 
-    context.bot.send_message(
+    rate_limiter.run(
+        context.bot.send_message,
         chat_id = update.effective_chat.id,
         text = text,
         reply_markup = InlineKeyboardMarkup(chats)
@@ -46,13 +48,19 @@ def select_option(update: Update, context: CallbackContext, text: str, options, 
     if update.callback_query:
         available_options = list(itertools.chain(*update.callback_query.message.reply_markup.inline_keyboard))
         chosen_option = next(filter(lambda x: x.callback_data == update.callback_query.data, available_options))
-        update.callback_query.message.edit_reply_markup(InlineKeyboardMarkup([[chosen_option]]))
+        rate_limiter.run(
+            context.bot.edit_message_reply_markup,
+            chat_id = update.callback_query.message.chat_id,
+            message_id = update.callback_query.message.message_id,
+            reply_markup = InlineKeyboardMarkup([[chosen_option]])
+        )
         update.callback_query.answer()
 
     if options is None:
         return data
 
-    context.bot.send_message(
+    rate_limiter.run(
+        context.bot.send_message,
         chat_id = update.effective_chat.id,
         text = escape_markdown(text, version = 2),
         reply_markup = InlineKeyboardMarkup(list(map(lambda x: [InlineKeyboardButton(x[0], callback_data = json.dumps(create_option(data, x[1])))], options))),
@@ -74,7 +82,7 @@ def select_format(update: Update, context: CallbackContext, callback_query_data 
         lambda data, option: { 'chat_id': data, 'format': option },
         callback_query_data
     )
-    
+
     return SET_FORMAT
 
 
@@ -90,7 +98,7 @@ def select_text_format(update: Update, context: CallbackContext, callback_query_
         lambda data, option: { 'chat_id': data, 'format': option },
         callback_query_data
     )
-    
+
     return SET_TEXT_FORMAT
 
 
@@ -111,7 +119,9 @@ def set_option(update: Update, context: CallbackContext, constants_class, select
             chat.owner_id = owner.id
             database.chat.upsert_one(chat)
 
-            update.callback_query.message.reply_text(
+            rate_limiter.run(
+                context.bot.send_message,
+                chat_id = update.callback_query.message.chat_id,
                 text = escape_markdown('You are not the owner of the selected chat anymore. Therefore, you are not allowed to edit its settings.', version = 2),
                 parse_mode = ParseMode.MARKDOWN_V2
             )
@@ -120,7 +130,9 @@ def set_option(update: Update, context: CallbackContext, constants_class, select
     update_settings(chat, option)
     database.chat.upsert_one(chat)
 
-    update.callback_query.message.reply_text(
+    rate_limiter.run(
+        context.bot.send_message,
+        chat_id = update.callback_query.message.chat_id,
         text = escape_markdown(text, version = 2),
         parse_mode = ParseMode.MARKDOWN_V2
     )
@@ -157,7 +169,8 @@ def set_text_format(update: Update, context: CallbackContext):
 
 
 def cancel(update: Update, context: CallbackContext):
-    context.bot.send_message(
+    rate_limiter.run(
+        context.bot.send_message,
         chat_id = update.effective_chat.id,
         text = 'Action has been cancelled.'
     )

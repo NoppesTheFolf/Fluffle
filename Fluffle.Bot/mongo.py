@@ -5,7 +5,7 @@ from pymongo.collection import Collection
 from telegram.chat import Chat
 from telegram.chatmember import ChatMember
 from telegram.user import User
-from config import load as load_config
+from config import get as get_config
 import copy
 import telegram.constants as tgc
 from datetime import datetime
@@ -60,8 +60,8 @@ class MongoMessage:
     caption_has_been_edited: bool
     media_group_id: str
     processed_message_id: int
-    results: List
     when: datetime
+    results: Optional[List] = None
 
 
 class ReverseSearchFormat:
@@ -128,7 +128,7 @@ class FluffleCollection(Generic[T]):
 
 class FluffleDatabase:
     def __init__(self) -> None:
-        config = load_config()
+        config = get_config()
         self.__client = MongoClient(config.mongo_uri)
         db = self.__client.bot
 

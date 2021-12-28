@@ -5,6 +5,7 @@ from telegram.chatmember import ChatMember
 import telegram.constants as tgc
 from telegram.ext import CallbackContext
 from utils import get_owner
+import rate_limiter
 
 
 def update_chat(context: CallbackContext, chat: Chat, is_active: bool, botChatMember: ChatMember = None):
@@ -17,13 +18,14 @@ def update_chat(context: CallbackContext, chat: Chat, is_active: bool, botChatMe
 
 def track_chat_membership(update: Update, context: CallbackContext) -> None:
     is_active = update.my_chat_member.new_chat_member.status == tgc.CHATMEMBER_ADMINISTRATOR
-    chat = context.bot.get_chat(update.effective_chat.id) if is_active else update.effective_chat
+    chat = rate_limiter.run(context.bot.get_chat, chat_id = update.effective_chat.id) if is_active else update.effective_chat
     
     update_chat(context, chat, is_active, update.my_chat_member.new_chat_member)
 
 
 def remove_mention(context: CallbackContext):
-    context.bot.delete_message(
+    rate_limiter.run(
+        context.bot.delete_message,
         chat_id = context.job.context[0],
         message_id = context.job.context[1]
     )
@@ -40,7 +42,10 @@ def handle_mention(update: Update, context: CallbackContext):
     bot_username = context.bot.username.casefold()
     if received_username != bot_username:
         return
-    
-    chat = context.bot.get_chat(update.effective_chat.id)
+
+    chat = rate_limiter.run(
+        context.bot.get_chat,
+        chat_id = update.effective_chat.id
+    )
     update_chat(context, chat, True)
     context.job_queue.run_once(remove_mention, 1, context=(update.effective_chat.id, update.effective_message.message_id))

@@ -2,6 +2,7 @@ from telegram.message import Message
 from telegram.parsemode import ParseMode
 from enum import Enum
 import chevron
+import rate_limiter
 
 
 class Template(Enum):
@@ -21,7 +22,12 @@ for name, value in [(name, value) for name, value in vars(Template).items() if n
 
 
 def send_template(message: Message, template: Template, data: dict = {}) -> None:
-    message.reply_text(chevron.render(
-        template = cache[template],
-        data = data
-    ), parse_mode=ParseMode.MARKDOWN_V2)
+    rate_limiter.run(
+        message.bot.send_message,
+        chat_id = message.chat_id,
+        text = chevron.render(
+            template = cache[template],
+            data = data
+        ),
+        parse_mode=ParseMode.MARKDOWN_V2
+    )

@@ -1,25 +1,27 @@
+from time import sleep
 from telegram.message import Message
 from telegram.utils.helpers import escape_markdown
 from routes.basic_commands import help_command, i_has_found_bug, start_command
 from routes.track_chats import handle_mention, track_chat_membership
 from settings_menu import register as register_settings_menu
-from config import load as load_config
+from config import get as get_config
 from telegram import Update
 from telegram.ext import Updater, Filters, CallbackContext, MessageHandler, ChatMemberHandler, CommandHandler
 import telegram.constants as tgc
 from reverse_search import reverse_search, ReverseSearchResponse, Formatter
-from mongo import MongoMessage, ReverseSearchFormat, database
-from threading import Lock
+from mongo import MongoChat, MongoMessage, ReverseSearchFormat, database
+from threading import Lock, Thread
 from datetime import datetime
+import rate_limiter
 import logging
 
 
 # Load config
-config = load_config()
+config = get_config()
 lock = Lock()
 
 
-def handle_photo(update: Update, context: CallbackContext):
+def start_handle_photo(update: Update, context: CallbackContext):
     # No idea what this type of chat is supposed to be, so we skip it
     if update.effective_chat.type == tgc.CHAT_SENDER:
         return
@@ -48,25 +50,7 @@ def handle_photo(update: Update, context: CallbackContext):
             for option in options:
                 if any(url in option for url in config.telegram_known_sources):
                     return
-    
-    photo, results = reverse_search(context.bot, update.effective_message.photo)
 
-    def process_edit(tg_message: Message):
-        message = database.message.find_one({ 'chat_id': tg_message.chat_id, 'message_id': tg_message.message_id })
-        message.caption_has_been_edited = message.caption != tg_message.caption
-        message.results = list(map(lambda x: x.__dict__, results))
-        database.message.upsert_one(message)
-
-        return
-
-    if update.edited_message:
-        process_edit(update.edited_message)
-        return
-    
-    if update.edited_channel_post:
-        process_edit(update.edited_channel_post)
-        return
-    
     with lock:
         first_in_media_group = None
         if update.effective_message.media_group_id:
@@ -82,22 +66,55 @@ def handle_photo(update: Update, context: CallbackContext):
             caption_has_been_edited = False,
             media_group_id = update.effective_message.media_group_id,
             processed_message_id = None,
-            results = list(map(lambda x: x.__dict__, results)),
             when = datetime.utcnow()
         )
         database.message.insert_one(message)
     
+    def run():
+        try:
+            handle_photo(chat, message, update, context)
+        except Exception as error:
+            context.dispatcher.dispatch_error(update, error)
+
+    Thread(target = run).start()
+
+
+def handle_photo(chat: MongoChat, message: MongoMessage, update: Update, context: CallbackContext):
+    photo, results = reverse_search(context.bot, update.effective_message.photo)
+    message.results = list(map(lambda x: x.__dict__, results))
+
+    def process_edit(tg_message: Message):
+        message = database.message.find_one({ 'chat_id': tg_message.chat_id, 'message_id': tg_message.message_id })
+        message.caption_has_been_edited = message.caption != tg_message.caption
+        message.results = list(map(lambda x: x.__dict__, results))
+        database.message.upsert_one(message)
+
+        return
+
+    if update.edited_message:
+        process_edit(update.edited_message)
+        return
+
+    if update.edited_channel_post:
+        process_edit(update.edited_channel_post)
+        return
+
     try:
         if update.effective_chat.type == tgc.CHAT_PRIVATE:
             response = ReverseSearchResponse(photo, results, update.effective_message.chat_id, None, None, None, None, None, None)
             response.file_id = photo.file_id
-            context.bot.delete_message(update.effective_message.chat_id, update.effective_message.message_id)
+            rate_limiter.run(
+                context.bot.delete_message,
+                chat_id = update.effective_message.chat_id,
+                message_id = update.effective_message.message_id
+            )
 
             if (len(results) == 0):
-                context.bot.send_photo(
-                    update.effective_message.chat_id,
-                    photo.file_id,
-                    caption='This image could not be found.'
+                rate_limiter.run(
+                    context.bot.send_photo,
+                    chat_id = update.effective_message.chat_id,
+                    photo = photo.file_id,
+                    caption = 'This image could not be found.'
                 )
             else:
                 Formatter.route(chat, response)
@@ -145,7 +162,10 @@ def main() -> None:
     )
     
     # Configure Telegram bot
-    updater = Updater(config.telegram_token, workers=config.telegram_workers)
+    updater = Updater(config.telegram_token, workers=config.telegram_workers, request_kwargs={
+        'read_timeout': config.telegram_read_timeout,
+        'connect_timeout': config.telegram_connect_timeout
+    })
     dispatcher = updater.dispatcher
 
     # Register the start and help commands
@@ -160,7 +180,7 @@ def main() -> None:
     dispatcher.add_handler(MessageHandler(Filters.text, handle_mention))
 
     # Handle incoming images
-    dispatcher.add_handler(MessageHandler(Filters.photo, handle_photo, run_async=True))
+    dispatcher.add_handler(MessageHandler(Filters.photo, start_handle_photo, run_async=False))
 
     # Keep track of which chats the bot is in
     dispatcher.add_handler(ChatMemberHandler(track_chat_membership, ChatMemberHandler.MY_CHAT_MEMBER))
