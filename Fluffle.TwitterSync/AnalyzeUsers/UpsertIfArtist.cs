@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Humanizer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MoreLinq.Extensions;
 using Nito.AsyncEx;
@@ -7,16 +8,28 @@ using Noppes.Fluffle.Database.Synchronization;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using Noppes.Fluffle.Utils;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {
+    public static class UpsertIfArtist
+    {
+        public static readonly IDictionary<int, TimeSpan> NextRetrievalWeights = new Dictionary<int, TimeSpan>
+        {
+            { -1, 3.Days() },
+            { 1901, 1.5.Days() },
+            { 6409, 1.Days() },
+            { 16222, 12.Hours() }
+        };
+
+        public static readonly AsyncLock Mutex = new();
+    }
+
     public class UpsertIfArtist<T> : Consumer<T> where T : IUserTweetsSupplierData
     {
-        private static readonly AsyncLock Mutex = new();
-
         private readonly IServiceProvider _services;
 
         public UpsertIfArtist(IServiceProvider services)
@@ -30,9 +43,17 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
             var user = await context.Users.FirstAsync(u => u.Id == data.Id);
 
+            var now = DateTimeOffset.UtcNow;
             if (user.IsFurryArtist == true)
             {
                 user.TimelineRetrievedAt = data.TimelineRetrievedAt;
+
+                var nextRetrievalIn = UpsertIfArtist.NextRetrievalWeights
+                    .Where(x => user.FollowersCount > x.Key)
+                    .OrderByDescending(x => x.Key)
+                    .First().Value;
+                user.TimelineNextRetrievalAt = now.Add(nextRetrievalIn);
+
                 await UpsertTweetsAsync(context, data.Timeline, user.Id, CancellationToken.None);
 
                 await context.SaveChangesAsync();
@@ -47,7 +68,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             // more upserts run concurrently, they might end up trying to create the same
             // entity/entities two or more times, causing the database to give a duplicate key error
             // and therefore resulting in application failure.
-            using var _ = await Mutex.LockAsync();
+            using var _ = await UpsertIfArtist.Mutex.LockAsync();
 
             // Upsert tweets
             var tweets = timeline

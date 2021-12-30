@@ -32,6 +32,8 @@ namespace Noppes.Fluffle.TwitterSync.Database.Models
 
         public DateTimeOffset? TimelineRetrievedAt { get; set; }
 
+        public DateTimeOffset? TimelineNextRetrievalAt { get; set; }
+
         public bool IsDeleted { get; set; }
 
         public virtual ICollection<Tweet> Tweets { get; set; }
@@ -56,10 +58,15 @@ namespace Noppes.Fluffle.TwitterSync.Database.Models
 
             entity.Property(e => e.ReservedUntil);
             entity.Property(e => e.TimelineRetrievedAt);
+            entity.Property(e => e.TimelineNextRetrievalAt);
 
             entity.Property(e => e.IsDeleted);
 
+            // Speeds up supplying new users
             entity.HasIndex(e => new { e.IsFurryArtist, e.IsOnE621, e.IsProtected, e.IsSuspended, e.IsDeleted, e.ReservedUntil, e.FollowersCount });
+
+            // Speed up supplying existing users
+            entity.HasIndex(e => new { e.IsFurryArtist, e.IsProtected, e.IsSuspended, e.IsDeleted, e.ReservedUntil, e.TimelineNextRetrievalAt });
         }
     }
 }

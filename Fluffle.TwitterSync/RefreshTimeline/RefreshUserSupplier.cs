@@ -1,6 +1,5 @@
 ﻿using Humanizer;
 using Microsoft.EntityFrameworkCore;
-using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.TwitterSync.AnalyzeUsers;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using System;
@@ -15,15 +14,12 @@ namespace Noppes.Fluffle.TwitterSync.RefreshTimeline
     {
         private const int BatchSize = 20;
 
-        protected override TimeSpan Interval => 30.Minutes();
+        protected override TimeSpan Interval => 10.Minutes();
         protected override TimeSpan ReservationTime => 1.Hours();
 
-        private readonly TwitterSyncConfiguration _syncConf;
-
-        public RefreshUserSupplier(IServiceProvider services, ITwitterClient twitterClient, TweetRetriever tweetRetriever,
-            TwitterSyncConfiguration syncConf) : base(services, twitterClient, tweetRetriever)
+        public RefreshUserSupplier(IServiceProvider services, ITwitterClient twitterClient, TweetRetriever tweetRetriever)
+            : base(services, twitterClient, tweetRetriever)
         {
-            _syncConf = syncConf;
         }
 
         protected override async Task<List<User>> GetUsersAsync(TwitterContext context)
@@ -33,13 +29,13 @@ namespace Noppes.Fluffle.TwitterSync.RefreshTimeline
 
             var users = await context.Users
                 .Include(u => u.Tweets)
-                .Where(u => u.ReservedUntil < nowUnix && u.TimelineRetrievedAt != null && u.IsFurryArtist == true && !u.IsProtected && !u.IsSuspended && !u.IsDeleted)
-                .OrderBy(u => u.TimelineRetrievedAt)
+                .Where(u => u.ReservedUntil < nowUnix && u.IsFurryArtist == true && !u.IsProtected && !u.IsSuspended && !u.IsDeleted)
+                .OrderBy(u => u.TimelineNextRetrievalAt)
                 .Take(BatchSize)
                 .ToListAsync();
 
             users = users
-                .Where(u => now.Subtract((DateTimeOffset)u.TimelineRetrievedAt) > _syncConf.TimelineExpirationInterval.Hours())
+                .Where(u => u.TimelineNextRetrievalAt == null || u.TimelineNextRetrievalAt <= now)
                 .ToList();
 
             return users;

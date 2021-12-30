@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -9,9 +10,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Noppes.Fluffle.TwitterSync.Database.Migrations
 {
     [DbContext(typeof(TwitterContext))]
-    partial class TwitterContextModelSnapshot : ModelSnapshot
+    [Migration("20211230200859_AddTimelineNextRetrievalAtToUser")]
+    partial class AddTimelineNextRetrievalAtToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -335,9 +337,6 @@ namespace Noppes.Fluffle.TwitterSync.Database.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_user");
-
-                    b.HasIndex("IsFurryArtist", "IsProtected", "IsSuspended", "IsDeleted", "ReservedUntil", "TimelineNextRetrievalAt")
-                        .HasDatabaseName("idx_user_is_furry_artist_and_is_protected_and_is_suspended_and_is_deleted_and_reserved_until_and_timeline_next_retrieval_at");
 
                     b.HasIndex("IsFurryArtist", "IsOnE621", "IsProtected", "IsSuspended", "IsDeleted", "ReservedUntil", "FollowersCount")
                         .HasDatabaseName("idx_user_is_furry_artist_and_is_on_e621_and_is_protected_and_is_suspended_and_is_deleted_and_reserved_until_and_followers_count");
