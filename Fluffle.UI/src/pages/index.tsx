@@ -149,8 +149,13 @@ const SearchPage = () => {
     function onDrop(event) {
         // Prevent file from being opened
         event.preventDefault();
-
         setHasDrag(false);
+
+        if (event.dataTransfer.files.length == 0) {
+            setError('Did you drop a file which originates from the browser? Due to browser limitations, Fluffle cannot access those files. Save the file to your device first, then submit said saved file instead.')
+            return;
+        }
+
         search(event.dataTransfer.files);
     }
 
