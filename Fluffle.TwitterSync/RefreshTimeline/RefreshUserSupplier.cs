@@ -30,7 +30,8 @@ namespace Noppes.Fluffle.TwitterSync.RefreshTimeline
             var users = await context.Users
                 .Include(u => u.Tweets)
                 .Where(u => u.ReservedUntil < nowUnix && u.IsFurryArtist == true && !u.IsProtected && !u.IsSuspended && !u.IsDeleted)
-                .OrderBy(u => u.TimelineNextRetrievalAt)
+                .OrderBy(u => u.TimelineNextRetrievalAt != null)
+                .ThenBy(u => u.TimelineNextRetrievalAt)
                 .Take(BatchSize)
                 .ToListAsync();
 
