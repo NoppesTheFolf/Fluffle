@@ -152,7 +152,7 @@ const SearchPage = () => {
         setHasDrag(false);
 
         if (event.dataTransfer.files.length == 0) {
-            setError('Did you drop a file which originates from the browser? Due to browser limitations, Fluffle cannot access those files. Save the file to your device first, then submit said saved file instead.')
+            setError('Did you drop a file which originates from the browser? Due to your browser its limitations, Fluffle cannot access those files. Save the file to your device first, then submit this file instead.')
             return;
         }
 
