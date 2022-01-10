@@ -12,11 +12,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Random = System.Random;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {
     public static class UpsertIfArtist
     {
+        public const int NextRetrievalWiggleRoomPercentage = 10;
+        public const int NextRetrievalWiggleRoomMin = NextRetrievalWiggleRoomPercentage * -1;
+        public const int NextRetrievalWiggleRoomMax = NextRetrievalWiggleRoomPercentage + 1;
         public static readonly IDictionary<int, TimeSpan> NextRetrievalWeights = new Dictionary<int, TimeSpan>
         {
             { -1, 3.Days() },
@@ -25,7 +29,8 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             { 16222, 12.Hours() }
         };
 
-        public static readonly AsyncLock Mutex = new();
+        public static readonly Random Random = new();
+        public static readonly AsyncLock UpsertMutex = new();
     }
 
     public class UpsertIfArtist<T> : Consumer<T> where T : IUserTweetsSupplierData
@@ -52,8 +57,15 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                     .Where(x => user.FollowersCount > x.Key)
                     .OrderByDescending(x => x.Key)
                     .First().Value;
-                user.TimelineNextRetrievalAt = now.Add(nextRetrievalIn);
 
+                int wiggleRoomPercentage;
+                lock (UpsertIfArtist.Random)
+                    wiggleRoomPercentage = UpsertIfArtist.Random.Next(UpsertIfArtist.NextRetrievalWiggleRoomMin, UpsertIfArtist.NextRetrievalWiggleRoomMax);
+
+                var wiggleRoom = nextRetrievalIn.Multiply(wiggleRoomPercentage / 100.0);
+                var offset = nextRetrievalIn.Add(wiggleRoom);
+
+                user.TimelineNextRetrievalAt = now.Add(offset);
                 await UpsertTweetsAsync(context, data.Timeline, user.Id, CancellationToken.None);
 
                 await context.SaveChangesAsync();
@@ -68,7 +80,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             // more upserts run concurrently, they might end up trying to create the same
             // entity/entities two or more times, causing the database to give a duplicate key error
             // and therefore resulting in application failure.
-            using var _ = await UpsertIfArtist.Mutex.LockAsync();
+            using var _ = await UpsertIfArtist.UpsertMutex.LockAsync();
 
             // Upsert tweets
             var tweets = timeline
