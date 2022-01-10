@@ -9,6 +9,7 @@ using Serilog;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using static MoreLinq.Extensions.DistinctByExtension;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeMedia
 {
@@ -58,7 +59,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeMedia
                     Resize = s.ResizeMode,
                     Size = s.Size
                 }).ToList()
-            })).ToList();
+            })).DistinctBy(rt => rt.MediaId).ToList();
 
             foreach (var tweet in tweets)
             {
