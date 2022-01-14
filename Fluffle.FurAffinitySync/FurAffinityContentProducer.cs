@@ -90,10 +90,12 @@ namespace Noppes.Fluffle.FurAffinitySync
 
                 for (var i = 1; ; i++)
                 {
-                    var result = await _strategy.NextAsync();
+                    var (submissionId, result) = await _strategy.NextAsync();
 
                     if (result?.FaResult != null)
                         await SubmitContentAsync(new List<FaSubmission> { result.FaResult.Result });
+                    else if (submissionId != null)
+                        await FlagForDeletionAsync(submissionId.ToString());
 
                     if (i % 10 == 0)
                     {

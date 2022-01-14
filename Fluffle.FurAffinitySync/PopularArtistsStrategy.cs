@@ -23,14 +23,14 @@ namespace Noppes.Fluffle.FurAffinitySync
         {
         }
 
-        public override async Task<FurAffinityContentProducerStateResult> NextAsync()
+        public override async Task<(int?, FurAffinityContentProducerStateResult)> NextAsync()
         {
             if (_submissionIds == null)
             {
-                return await RefreshAsync() ? new FurAffinityContentProducerStateResult
+                return await RefreshAsync() ? (null, new FurAffinityContentProducerStateResult
                 {
                     FaResult = null
-                } : null;
+                }) : (null, null);
             }
 
             if (!_submissionIds.TryPop(out var id))
@@ -38,7 +38,7 @@ namespace Noppes.Fluffle.FurAffinitySync
                 _artist = null;
                 _submissionIds = null;
 
-                return null;
+                return (null, null);
             }
 
             var getSubmissionResult = await LogEx.TimeAsync(async () =>
@@ -49,10 +49,10 @@ namespace Noppes.Fluffle.FurAffinitySync
             if (_submissionIds.Count == 0)
                 State.ProcessedArtists.Add(_artist);
 
-            return new FurAffinityContentProducerStateResult
+            return (id, new FurAffinityContentProducerStateResult
             {
                 FaResult = getSubmissionResult
-            };
+            });
         }
 
         private async Task<bool> RefreshAsync()

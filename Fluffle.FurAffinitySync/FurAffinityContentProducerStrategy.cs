@@ -22,6 +22,6 @@ namespace Noppes.Fluffle.FurAffinitySync
             State = state;
         }
 
-        public abstract Task<FurAffinityContentProducerStateResult> NextAsync();
+        public abstract Task<(int?, FurAffinityContentProducerStateResult)> NextAsync();
     }
 }
