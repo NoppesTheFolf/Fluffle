@@ -18,6 +18,8 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Fluffle.E621Sync\Fluffle.E621Sync.csproj" />
+		<ProjectReference Include="..\Fluffle.FurAffinityClient\Fluffle.FurAffinityClient.csproj" />
+		<ProjectReference Include="..\Fluffle.FurAffinitySync\Fluffle.FurAffinitySync.csproj" />
 		<ProjectReference Include="..\Fluffle.Sync\Fluffle.Sync.csproj" />
 		<ProjectReference Include="..\Fluffle.TwitterSync.Database\Fluffle.TwitterSync.Database.csproj" />
 	</ItemGroup>
