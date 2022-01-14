@@ -140,6 +140,9 @@ namespace Noppes.Fluffle.Main.Database.Models
             // Speeds up calculating indexing history in index service
             entity.HasIndex(e => new { e.Discriminator, e.Id, e.PlatformId });
 
+            // Speeds up calculating maximum priority for a creditable entity
+            entity.HasIndex(e => new { e.Id, e.Priority });
+
             entity.Property(e => e.MediaTypeId);
             entity.HasOne(e => e.MediaType)
                 .WithMany(e => e.Content)

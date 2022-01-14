@@ -38,7 +38,7 @@ namespace Noppes.Fluffle.Sync
 
                 services.AddTransient(typeof(SyncStateService<>));
                 services.AddTransient<ContentSubmitter>();
-                services.AddTransient<TContentProducer>();
+                services.AddSingleton<TContentProducer>();
 
                 configure?.Invoke(configuration, services);
             });

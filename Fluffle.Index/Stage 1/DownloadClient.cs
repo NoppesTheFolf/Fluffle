@@ -1,18 +1,13 @@
-﻿using Humanizer;
-using Microsoft.Extensions.Hosting;
-using Nitranium.PerceptualHashing.Utils;
+﻿using Nitranium.PerceptualHashing.Utils;
 using Noppes.E621;
 using Noppes.Fluffle.FurAffinity;
 using Noppes.Fluffle.FurryNetworkSync;
 using Noppes.Fluffle.Http;
-using Noppes.Fluffle.Main.Client;
+using Noppes.Fluffle.TwitterSync;
 using Noppes.Fluffle.Weasyl;
-using Serilog;
-using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Noppes.Fluffle.TwitterSync;
 
 namespace Noppes.Fluffle.Index
 {
@@ -57,47 +52,15 @@ namespace Noppes.Fluffle.Index
 
     public class FurAffinityDownloadClient : DownloadClient
     {
-        private static readonly TimeSpan CheckInternal = 5.Minutes();
-
         private readonly FurAffinityClient _faClient;
-        private readonly FluffleClient _fluffleClient;
-        private readonly IHostEnvironment _environment;
 
-        private long _newCheckAt;
-        private bool _botsAllowed;
-
-        public FurAffinityDownloadClient(FurAffinityClient faClient, FluffleClient fluffleClient, IHostEnvironment environment)
+        public FurAffinityDownloadClient(FurAffinityClient faClient)
         {
             _faClient = faClient;
-            _fluffleClient = fluffleClient;
-            _environment = environment;
-            _newCheckAt = -1;
-            _botsAllowed = false;
         }
 
         public override async Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default)
         {
-            do
-            {
-                if (_environment.IsDevelopment())
-                    break;
-
-                var now = DateTimeOffset.UtcNow;
-                if (_newCheckAt == -1 || now.ToUnixTimeSeconds() >= _newCheckAt)
-                {
-                    Log.Information("[{platform}] Checking if bots allowed...", "Fur Affinity");
-                    _botsAllowed = await HttpResiliency.RunAsync(_fluffleClient.GetFaBotsAllowedAsync);
-                    _newCheckAt = now.Add(CheckInternal).ToUnixTimeSeconds();
-                }
-
-                if (_botsAllowed)
-                    continue;
-
-                Log.Information("[{platform}] Bots not allowed. Waiting for {time} before checking again",
-                    "Fur Affinity", CheckInternal.Humanize());
-                await Task.Delay(CheckInternal, cancellationToken);
-            } while (!_botsAllowed);
-
             return await _faClient.GetStreamAsync(url);
         }
     }

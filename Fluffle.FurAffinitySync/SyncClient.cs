@@ -16,9 +16,11 @@ namespace Noppes.Fluffle.FurAffinitySync
         private static async Task Main(string[] args) => await RunAsync(args, "Fur Affinity", (configuration, services) =>
         {
             var syncConf = configuration.Get<FurAffinitySyncConfiguration>();
-            var client = new FurAffinityClientFactory(configuration).CreateAsync(syncConf.Interval).Result;
+            services.AddSingleton(syncConf);
+            services.AddFurAffinityClient(configuration, syncConf.Interval);
 
-            services.AddSingleton(client);
+            services.AddTransient<RecentSubmissionProducer>();
+            services.AddTransient<RecentSubmissionConsumer>();
         });
     }
 }

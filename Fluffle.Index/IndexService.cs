@@ -63,8 +63,6 @@ namespace Noppes.Fluffle.Index
             var configuration = Services.GetRequiredService<FluffleConfiguration>();
             Configuration = configuration.Get<IndexConfiguration>();
 
-            var fluffleClient = Services.GetRequiredService<FluffleClient>();
-
             var e621Client = await new E621ClientFactory(configuration).CreateAsync(Configuration.E621.Interval);
             var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(Configuration.FurryNetwork.Interval);
             var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(Configuration.FurAffinity.Interval);
@@ -73,7 +71,7 @@ namespace Noppes.Fluffle.Index
             DownloadClients = new Dictionary<PlatformConstant, (DownloadClient, IndexConfiguration.ClientConfiguration)>
             {
                 { PlatformConstant.E621, (new E621DownloadClient(e621Client), Configuration.E621) },
-                { PlatformConstant.FurAffinity, (new FurAffinityDownloadClient(furAffinityClient, fluffleClient, Environment), Configuration.FurAffinity) },
+                { PlatformConstant.FurAffinity, (new FurAffinityDownloadClient(furAffinityClient), Configuration.FurAffinity) },
                 { PlatformConstant.Weasyl, (new WeasylDownloadClient(weasylClient), Configuration.Weasyl) },
                 { PlatformConstant.Twitter , (new TwitterDownloadClient(twitterClient), Configuration.Twitter) }
             };

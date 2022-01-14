@@ -7,11 +7,12 @@ using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.Sync;
-using Serilog;
+using Noppes.Fluffle.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Log = Serilog.Log;
 
 namespace Noppes.Fluffle.FurAffinitySync
 {
@@ -50,87 +51,93 @@ namespace Noppes.Fluffle.FurAffinitySync
 
         private FurAffinitySyncClientState _syncState;
         private readonly FurAffinityClient _client;
+        private readonly IServiceProvider _services;
 
         public override int SourceVersion => 3;
 
         public FurAffinityContentProducer(PlatformModel platform, FluffleClient fluffleClient,
-            IHostEnvironment environment, SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client) : base(platform, fluffleClient, environment)
+            IHostEnvironment environment, SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client, IServiceProvider services) : base(platform, fluffleClient, environment)
         {
             _syncStateService = syncStateService;
             _client = client;
+            _services = services;
         }
 
         protected override Task QuickSyncAsync() => throw new NotImplementedException();
 
         protected override async Task FullSyncAsync()
         {
-            _syncState = await _syncStateService.InitializeAsync(async state =>
+            var recentSubmissionsTask = Task.Run(async () =>
             {
-                state.Version = 1;
-                state.ArchiveEndId = await FluffleClient.GetMinId(Platform) ?? 38_000_001;
-                state.ArchiveStartId = await FluffleClient.GetMaxId(Platform) ?? 38_000_000;
+                var manager = new ProducerConsumerManager<RecentSubmissionData>(_services, 10_000);
+                manager.AddProducer<RecentSubmissionProducer>(1);
+                manager.AddFinalConsumer<RecentSubmissionConsumer>(1);
+
+                await manager.RunAsync();
             });
-            _archiveStrategy = new ArchiveStrategy(FluffleClient, _client, _syncState);
-            _popularArtistsStrategy = new PopularArtistsStrategy(FluffleClient, _client, _syncState);
-            _strategy = _archiveStrategy;
 
-            for (var i = 1; ; i++)
+            var archiveTask = Task.Run(async () =>
             {
-                var result = await _strategy.NextAsync();
-
-                if (result?.FaResult != null)
-                    await SubmitContentAsync(new List<FaSubmission> { result.FaResult.Result });
-
-                if (i % 10 == 0)
+                _syncState = await _syncStateService.InitializeAsync(async state =>
                 {
-                    await LogEx.TimeAsync(async () =>
-                    {
-                        await HttpResiliency.RunAsync(() => _syncStateService.SyncAsync());
-                    }, "Stored sync state");
-                }
+                    state.Version = 1;
+                    state.ArchiveEndId = await FluffleClient.GetMinId(Platform) ?? 38_000_001;
+                    state.ArchiveStartId = await FluffleClient.GetMaxId(Platform) ?? 38_000_000;
+                });
+                _archiveStrategy = new ArchiveStrategy(FluffleClient, _client, _syncState);
+                _popularArtistsStrategy = new PopularArtistsStrategy(FluffleClient, _client, _syncState);
+                _strategy = _archiveStrategy;
 
-                if (result == null)
+                for (var i = 1; ; i++)
                 {
-                    if (_strategy is PopularArtistsStrategy)
+                    var result = await _strategy.NextAsync();
+
+                    if (result?.FaResult != null)
+                        await SubmitContentAsync(new List<FaSubmission> { result.FaResult.Result });
+
+                    if (i % 10 == 0)
                     {
                         await LogEx.TimeAsync(async () =>
                         {
                             await HttpResiliency.RunAsync(() => _syncStateService.SyncAsync());
                         }, "Stored sync state");
+                    }
 
-                        Log.Information("Switching back to archive strategy");
-                        _strategy = _archiveStrategy;
+                    if (result == null)
+                    {
+                        if (_strategy is PopularArtistsStrategy)
+                        {
+                            await LogEx.TimeAsync(async () =>
+                            {
+                                await HttpResiliency.RunAsync(() => _syncStateService.SyncAsync());
+                            }, "Stored sync state");
 
+                            Log.Information("Switching back to archive strategy");
+                            _strategy = _archiveStrategy;
+
+                            continue;
+                        }
+
+                        Log.Information("Nothing more to do, waiting...");
+                        await Task.Delay(15.Minutes());
                         continue;
                     }
 
-                    Log.Information("Nothing more to do, waiting...");
-                    await Task.Delay(15.Minutes());
-                    continue;
+                    // if (i % 7000 == 0 && _strategy is ArchiveStrategy)
+                    // {
+                    //     Log.Information("Switching to popular artists strategy");
+                    //     _strategy = _popularArtistsStrategy;
+                    // }
+
+                    await FurAffinityUtils.WaitTillAllowedAsync(result.FaResult, Environment, FluffleClient);
                 }
+            });
 
-                // if (i % 7000 == 0 && _strategy is ArchiveStrategy)
-                // {
-                //     Log.Information("Switching to popular artists strategy");
-                //     _strategy = _popularArtistsStrategy;
-                // }
+            var task = await Task.WhenAny(recentSubmissionsTask, archiveTask);
+            if (task.Exception != null)
+                throw task.Exception;
 
-                if (result.FaResult == null || result.FaResult.Stats.Registered < FurAffinityClient.BotThreshold)
-                    continue;
-
-                if (Environment.IsDevelopment())
-                    continue;
-
-                bool allowedToContinue;
-                do
-                {
-                    Log.Information("No bots allowed at this moment. Waiting for {time} before checking again.", CheckInterval.Humanize());
-                    await Task.Delay(CheckInterval);
-
-                    allowedToContinue = await FluffleClient.GetFaBotsAllowedAsync();
-                } while (!allowedToContinue);
-                Log.Information("Bots allowed again, continuing full sync...");
-            }
+            throw new InvalidOperationException("For whatever reason, a task completed.");
         }
 
         public override string GetId(FaSubmission src) => src.Id.ToString();

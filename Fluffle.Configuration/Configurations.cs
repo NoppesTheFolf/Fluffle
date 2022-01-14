@@ -279,7 +279,7 @@ namespace Noppes.Fluffle.Configuration
         }
     }
 
-    public abstract class SyncClientConfiguration : FluffleConfigurationPart<SyncClientConfiguration>
+    public abstract class SyncClientConfiguration<T> : FluffleConfigurationPart<T> where T : SyncClientConfiguration<T>
     {
         public int Interval { get; set; }
 
@@ -293,8 +293,14 @@ namespace Noppes.Fluffle.Configuration
     /// Configuration regarding Fur Affinity sync client.
     /// </summary>
     [ConfigurationSection("FurAffinitySync")]
-    public class FurAffinitySyncConfiguration : SyncClientConfiguration
+    public class FurAffinitySyncConfiguration : SyncClientConfiguration<FurAffinitySyncConfiguration>
     {
+        public int RecentSubmissionsInterval { get; set; }
+
+        public FurAffinitySyncConfiguration()
+        {
+            RuleFor(o => o.RecentSubmissionsInterval).GreaterThanOrEqualTo(0);
+        }
     }
 
     /// <summary>

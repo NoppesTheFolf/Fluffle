@@ -144,6 +144,12 @@ namespace Noppes.Fluffle.Main.Client
                 .GetMessagePackAsync<ICollection<OtherSourceModel>>();
         }
 
+        public Task<int?> GetCreditableEntitiesMaxPriority(string platformName, string creditableEntityName)
+        {
+            return Request(Endpoints.GetCreditablyEntityMaxPriority(platformName, creditableEntityName))
+                .GetJsonAsync<int?>();
+        }
+
         public override IFlurlRequest Request(params object[] urlSegments)
         {
             return base.Request(urlSegments)

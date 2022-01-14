@@ -10,7 +10,7 @@ namespace Noppes.Fluffle.FurAffinitySync
     public class ArchiveStrategy : FurAffinityContentProducerStrategy
     {
         private DateTimeOffset? NextSubmissionAt { get; set; }
-        private static DateTimeOffset ArchiveUntil => DateTimeOffset.UtcNow.AddDays(-7);
+        private static DateTimeOffset ArchiveUntil => DateTimeOffset.UtcNow.AddDays(-14);
 
         public ArchiveStrategy(FluffleClient fluffleClient, FurAffinityClient faClient,
             FurAffinitySyncClientState state) : base(fluffleClient, faClient, state)
@@ -32,7 +32,7 @@ namespace Noppes.Fluffle.FurAffinitySync
                 return result;
             }
 
-            if (State.ArchiveEndId == 1)
+            if (State.ArchiveEndId <= 0)
                 return null;
 
             return await NextAsync(--State.ArchiveEndId);

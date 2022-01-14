@@ -353,4 +353,11 @@ namespace Noppes.Fluffle.FurAffinity
 
         public int Height { get; set; }
     }
+
+    public class FaGallerySubmission
+    {
+        public int Id { get; set; }
+
+        public string ArtistId { get; set; }
+    }
 }

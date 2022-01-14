@@ -171,14 +171,20 @@ namespace Noppes.Fluffle.FurAffinity
             return GetGalleryAsync(artistId, url, page, folder);
         }
 
+        private static bool CheckIfDisabled(HtmlNode node)
+        {
+            var noticeMessage = node.SelectSingleNode("//section[contains(@class, 'notice-message')]");
+
+            return noticeMessage != null && noticeMessage.InnerText.Contains("has voluntarily disabled access to their account");
+        }
+
         private async Task<FaResult<FaGallery>> GetGalleryAsync(string artistId, string url, int page, FaFolder folder = null)
         {
             url += $"/{page}";
             var response = await Request(url).GetHtmlAsync();
             ValidateLogin(response);
 
-            var noticeMessage = response.DocumentNode.SelectSingleNode("//section[contains(@class, 'notice-message')]");
-            if (noticeMessage != null && noticeMessage.InnerText.Contains("has voluntarily disabled access to their account"))
+            if (CheckIfDisabled(response.DocumentNode))
                 return null;
 
             var gallery = new FaGallery
@@ -251,16 +257,29 @@ namespace Noppes.Fluffle.FurAffinity
             };
         }
 
-        public async Task<int> GetMostRecentSubmissionId()
+        public async Task<ICollection<FaGallerySubmission>> GetRecentSubmissions()
         {
             var response = await Request().GetHtmlAsync();
             ValidateLogin(response);
 
             var node = response.GetElementbyId("gallery-frontpage-submissions");
-            var latestSubmission = node.ChildNodes.First(cn => cn.Name == "figure");
-            var submissionId = latestSubmission.Id["sid-".Length..];
+            var recentSubmissions = node.ChildNodes
+                .Where(cn => cn.Name == "figure")
+                .Select(cn =>
+                {
+                    var id = int.Parse(cn.Id["sid-".Length..]);
+                    var artistNode = cn.SelectSingleNode("./figcaption").ChildNodes[^1].SelectSingleNode("./a");
+                    var artistUrl = artistNode.Attributes["href"].Value;
+                    var artistMatch = Regex.Match(artistUrl, "(?<=\\/user\\/)(.*)(?=\\/)");
 
-            return int.Parse(submissionId);
+                    return new FaGallerySubmission
+                    {
+                        Id = id,
+                        ArtistId = artistMatch.Value
+                    };
+                }).ToList();
+
+            return recentSubmissions;
         }
 
         public static void ValidateLogin(HtmlDocument htmlDocument)
