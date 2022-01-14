@@ -18,7 +18,7 @@ namespace Noppes.Fluffle.FurAffinitySync
 {
     public class FurAffinityContentProducer : ContentProducer<FaSubmission>
     {
-        private static readonly IReadOnlySet<FaSubmissionCategory> DisallowedCategories = new HashSet<FaSubmissionCategory>
+        public static readonly IReadOnlySet<FaSubmissionCategory> DisallowedCategories = new HashSet<FaSubmissionCategory>
         {
             FaSubmissionCategory.Crafting,
             FaSubmissionCategory.Fursuiting,

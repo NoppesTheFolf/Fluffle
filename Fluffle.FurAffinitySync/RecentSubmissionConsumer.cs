@@ -53,6 +53,9 @@ namespace Noppes.Fluffle.FurAffinitySync
                     return null;
             }
 
+            if (!_contentProducer.ShouldBeIndexed(data.Submission.Result))
+                return null;
+
             await _contentProducer.SubmitContentAsync(new List<FaSubmission> { data.Submission.Result });
             return data;
         }
