@@ -297,9 +297,12 @@ namespace Noppes.Fluffle.Configuration
     {
         public int RecentSubmissionsInterval { get; set; }
 
+        public int RecentSubmissionPriorityThreshold { get; set; }
+
         public FurAffinitySyncConfiguration()
         {
             RuleFor(o => o.RecentSubmissionsInterval).GreaterThanOrEqualTo(0);
+            RuleFor(o => o.RecentSubmissionPriorityThreshold).GreaterThanOrEqualTo(0);
         }
     }
 

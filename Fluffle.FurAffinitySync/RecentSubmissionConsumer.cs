@@ -1,4 +1,5 @@
-﻿using Noppes.Fluffle.Constants;
+﻿using Noppes.Fluffle.Configuration;
+using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.FurAffinity;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
@@ -11,17 +12,18 @@ namespace Noppes.Fluffle.FurAffinitySync
 {
     public class RecentSubmissionConsumer : Consumer<RecentSubmissionData>
     {
-        private const int PriorityThreshold = 1029; // 0.85 percentile
-
         private readonly FurAffinityClient _furAffinityClient;
         private readonly FluffleClient _fluffleClient;
         private readonly FurAffinityContentProducer _contentProducer;
+        private readonly FurAffinitySyncConfiguration _configuration;
 
-        public RecentSubmissionConsumer(FurAffinityClient furAffinityClient, FluffleClient fluffleClient, FurAffinityContentProducer contentProducer)
+        public RecentSubmissionConsumer(FurAffinityClient furAffinityClient, FluffleClient fluffleClient,
+            FurAffinityContentProducer contentProducer, FurAffinitySyncConfiguration configuration)
         {
             _furAffinityClient = furAffinityClient;
             _fluffleClient = fluffleClient;
             _contentProducer = contentProducer;
+            _configuration = configuration;
         }
 
         public override async Task<RecentSubmissionData> ConsumeAsync(RecentSubmissionData data)
@@ -41,7 +43,7 @@ namespace Noppes.Fluffle.FurAffinitySync
             }
 
             var priority = await _fluffleClient.GetCreditableEntitiesMaxPriority(Enum.GetName(PlatformConstant.FurAffinity), data.ArtistId);
-            if (priority is null or < PriorityThreshold)
+            if (priority == null || priority < _configuration.RecentSubmissionPriorityThreshold)
                 return null;
 
             if (data.Submission == null)
