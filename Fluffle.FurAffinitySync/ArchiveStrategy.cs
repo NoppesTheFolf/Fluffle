@@ -17,25 +17,27 @@ namespace Noppes.Fluffle.FurAffinitySync
         {
         }
 
-        public override async Task<FurAffinityContentProducerStateResult> NextAsync()
+        public override async Task<(int?, FurAffinityContentProducerStateResult)> NextAsync()
         {
             if (NextSubmissionAt == null || NextSubmissionAt <= DateTimeOffset.UtcNow)
             {
-                var result = await NextAsync(++State.ArchiveStartId);
+                var submissionIdPositive = ++State.ArchiveStartId;
+                var result = await NextAsync(submissionIdPositive);
 
                 if (result.FaResult == null)
-                    return result;
+                    return (submissionIdPositive, result);
 
                 if (ArchiveUntil < result.FaResult.Result.When)
                     NextSubmissionAt = DateTimeOffset.UtcNow.AddMinutes(15);
 
-                return result;
+                return (submissionIdPositive, result);
             }
 
             if (State.ArchiveEndId <= 0)
-                return null;
+                return (null, null);
 
-            return await NextAsync(--State.ArchiveEndId);
+            var submissionIdNegative = --State.ArchiveEndId;
+            return (submissionIdNegative, await NextAsync(submissionIdNegative));
         }
 
         private async Task<FurAffinityContentProducerStateResult> NextAsync(int id)

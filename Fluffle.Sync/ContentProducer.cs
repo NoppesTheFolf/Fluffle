@@ -1,5 +1,7 @@
-﻿using Humanizer;
+﻿using Flurl.Http;
+using Humanizer;
 using Microsoft.Extensions.Hosting;
+using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
@@ -102,6 +104,25 @@ namespace Noppes.Fluffle.Sync
         public int GetSourceVersion() => SourceVersion;
 
         public virtual int SourceVersion => 0;
+
+        public async Task FlagForDeletionAsync(string contentId)
+        {
+            try
+            {
+                await LogEx.TimeAsync(() =>
+                {
+                    return HttpResiliency.RunAsync(() =>
+                        FluffleClient.DeleteContentAsync(Platform, contentId));
+                }, "Flagging content with ID {contentId} for deletion", contentId);
+            }
+            catch (FlurlHttpException e)
+            {
+                if (e.StatusCode == 404)
+                    return;
+
+                throw;
+            }
+        }
 
         protected async Task FlagRangeForDeletionAsync(int exclusiveStart, int inclusiveEnd, ICollection<TContent> content)
         {
