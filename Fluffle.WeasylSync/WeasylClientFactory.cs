@@ -18,8 +18,10 @@ namespace Noppes.Fluffle.WeasylSync
         {
             var weasylConf = Configuration.Get<WeasylConfiguration>();
 
-            var client = new WeasylClient("https://www.weasyl.com/", Project.UserAgent, weasylConf.ApiKey);
-            client.AddInterceptor(new RequestRateLimiter(interval.Milliseconds()));
+            var client = new WeasylClient("https://www.weasyl.com/", Project.UserAgent, weasylConf.ApiKey)
+            {
+                RateLimiter = new RequestRateLimiter(interval.Milliseconds())
+            };
 
             return Task.FromResult(client);
         }

@@ -12,6 +12,11 @@ namespace Noppes.Fluffle.Http
         private readonly List<ICallInterceptor> _interceptors;
 
         /// <summary>
+        /// The rate limiter used on this HTTP client, might be null.
+        /// </summary>
+        public RequestRateLimiter RateLimiter { get; set; }
+
+        /// <summary>
         /// The HTTP client used to make requests with.
         /// </summary>
         protected IFlurlClient FlurlClient { get; }
@@ -33,6 +38,9 @@ namespace Noppes.Fluffle.Http
         public virtual IFlurlRequest Request(params object[] urlSegments)
         {
             var request = FlurlClient.Request(urlSegments);
+
+            if (RateLimiter != null)
+                request.AddInterceptor(RateLimiter);
 
             foreach (var interceptor in _interceptors)
                 request.AddInterceptor(interceptor);

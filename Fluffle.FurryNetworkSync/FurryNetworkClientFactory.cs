@@ -1,6 +1,7 @@
 ﻿using Humanizer;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
+using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Sync;
 using System.Threading.Tasks;
 
@@ -18,7 +19,10 @@ namespace Noppes.Fluffle.FurryNetworkSync
         {
             var conf = Configuration.Get<FurryNetworkConfiguration>();
 
-            var client = new FurryNetworkClient(BaseUrl, conf.Token, Project.UserAgent, interval.Milliseconds());
+            var client = new FurryNetworkClient(BaseUrl, conf.Token, Project.UserAgent)
+            {
+                RateLimiter = new RequestRateLimiter(interval.Milliseconds())
+            };
 
             return Task.FromResult(client);
         }

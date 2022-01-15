@@ -18,8 +18,10 @@ namespace Noppes.Fluffle.FurAffinitySync
         {
             var faConf = Configuration.Get<FurAffinityConfiguration>();
 
-            var client = new FurAffinityClient("https://www.furaffinity.net", Project.UserAgent, faConf.A, faConf.B);
-            client.AddInterceptor(new RequestRateLimiter(interval.Milliseconds()));
+            var client = new FurAffinityClient("https://www.furaffinity.net", Project.UserAgent, faConf.A, faConf.B)
+            {
+                RateLimiter = new RequestRateLimiter(interval.Milliseconds())
+            };
 
             return Task.FromResult(client);
         }

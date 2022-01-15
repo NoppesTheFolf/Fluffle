@@ -52,15 +52,17 @@ namespace Noppes.Fluffle.FurAffinitySync
         private FurAffinitySyncClientState _syncState;
         private readonly FurAffinityClient _client;
         private readonly IServiceProvider _services;
+        private readonly FurAffinitySyncConfiguration _configuration;
 
         public override int SourceVersion => 3;
 
         public FurAffinityContentProducer(PlatformModel platform, FluffleClient fluffleClient,
-            IHostEnvironment environment, SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client, IServiceProvider services) : base(platform, fluffleClient, environment)
+            IHostEnvironment environment, SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client, IServiceProvider services, FurAffinitySyncConfiguration configuration) : base(platform, fluffleClient, environment)
         {
             _syncStateService = syncStateService;
             _client = client;
             _services = services;
+            _configuration = configuration;
         }
 
         protected override Task QuickSyncAsync() => throw new NotImplementedException();
@@ -88,8 +90,11 @@ namespace Noppes.Fluffle.FurAffinitySync
                 _popularArtistsStrategy = new PopularArtistsStrategy(FluffleClient, _client, _syncState);
                 _strategy = _archiveStrategy;
 
+                var interval = _configuration.BelowBotLimitInterval;
                 for (var i = 1; ; i++)
                 {
+                    var nextAt = DateTimeOffset.UtcNow.Add(interval.Milliseconds());
+
                     var (submissionId, result) = await _strategy.NextAsync();
 
                     if (result?.FaResult != null)
@@ -131,7 +136,18 @@ namespace Noppes.Fluffle.FurAffinitySync
                     //     _strategy = _popularArtistsStrategy;
                     // }
 
-                    await FurAffinityUtils.WaitTillAllowedAsync(result.FaResult, Environment, FluffleClient);
+                    var timeToWait = nextAt.Subtract(DateTimeOffset.UtcNow);
+                    if (timeToWait > TimeSpan.Zero)
+                    {
+                        await Task.Delay(timeToWait);
+                    }
+
+                    if (result.FaResult != null)
+                    {
+                        interval = result.FaResult.Stats.Registered < FurAffinityClient.BotThreshold
+                            ? _configuration.BelowBotLimitInterval
+                            : _configuration.AboveBotLimitInterval;
+                    }
                 }
             });
 

@@ -1,6 +1,5 @@
 ﻿using Flurl.Http;
 using Flurl.Http.Configuration;
-using Humanizer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Nito.AsyncEx;
@@ -23,7 +22,7 @@ namespace Noppes.Fluffle.FurryNetworkSync
         private readonly string _refreshToken;
         private DateTimeOffset _refreshAt;
 
-        public FurryNetworkClient(string baseUrl, string refreshToken, string userAgent, TimeSpan? interval = null) : base(baseUrl)
+        public FurryNetworkClient(string baseUrl, string refreshToken, string userAgent) : base(baseUrl)
         {
             _userAgent = userAgent;
             _refreshToken = refreshToken;
@@ -46,8 +45,6 @@ namespace Noppes.Fluffle.FurryNetworkSync
                 jsonSettings.Converters.Add(new SubmissionCollectionConverter());
                 settings.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
             });
-
-            AddInterceptor(new RequestRateLimiter(interval ?? 2.Seconds()));
         }
 
         public Task<FnSearchResult> SearchAsync(int from = 0, int? size = null)
