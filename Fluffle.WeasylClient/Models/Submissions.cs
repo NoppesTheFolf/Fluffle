@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 
@@ -15,9 +14,6 @@ namespace Noppes.Fluffle.Weasyl.Models
         public SubmissionRating Rating { get; set; }
 
         public ICollection<T> Tags { get; set; }
-
-        [JsonConverter(typeof(IsoDateTimeConverter))]
-        public DateTimeOffset PostedAt { get; set; }
 
         public SubmissionType Type { get; set; }
 

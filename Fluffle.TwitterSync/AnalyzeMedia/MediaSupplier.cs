@@ -9,7 +9,6 @@ using Serilog;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using static MoreLinq.Extensions.DistinctByExtension;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeMedia
 {

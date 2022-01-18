@@ -14,7 +14,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.Intrinsics.X86;
 using System.Threading.Tasks;
-using static MoreLinq.Extensions.DistinctByExtension;
 
 namespace Noppes.Fluffle.Search.Api.Services
 {

@@ -1,15 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>disable</Nullable>
+		<ImplicitUsings>disable</ImplicitUsings>
 		<AssemblyName>Noppes.Fluffle.PerceptualHashing</AssemblyName>
 		<RootNamespace>Noppes.Fluffle.PerceptualHashing</RootNamespace>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
-		<PackageReference Include="Nitranium.PerceptualHashing" Version="0.1.1" />
-		<PackageReference Include="Nitranium.PerceptualHashing.SystemDrawingImagingProvider" Version="0.1.1" />
+		<PackageReference Include="Nitranium.PerceptualHashing" Version="0.2.0" />
+		<PackageReference Include="Nitranium.PerceptualHashing.SystemDrawingImagingProvider" Version="0.2.0" />
 	</ItemGroup>
 
 	<ItemGroup>

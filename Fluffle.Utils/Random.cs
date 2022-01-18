@@ -16,14 +16,12 @@ namespace Noppes.Fluffle.Utils
             if (length < 1)
                 throw new ArgumentOutOfRangeException(nameof(length), "Length must be equal to or greater than 1.");
 
-            var buffer = new byte[1];
             var rngStr = new char[length];
-            using var rng = new RNGCryptoServiceProvider();
             for (var i = 0; i < length; i++)
             {
                 while (true)
                 {
-                    rng.GetBytes(buffer);
+                    var buffer = RandomNumberGenerator.GetBytes(1);
                     var character = (char)buffer[0];
 
                     if (!AllowedCharacter.IsMatch(char.ToString(character)))

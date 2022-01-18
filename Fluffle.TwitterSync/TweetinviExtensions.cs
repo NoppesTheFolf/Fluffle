@@ -1,5 +1,4 @@
-﻿using MoreLinq.Extensions;
-using Noppes.Fluffle.Constants;
+﻿using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.TwitterSync.Database.Models;
 using System;
 using System.Collections.Generic;

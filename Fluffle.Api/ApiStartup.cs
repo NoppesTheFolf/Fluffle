@@ -163,7 +163,6 @@ namespace Noppes.Fluffle.Api
                 };
             }).AddJsonOptions(options =>
             {
-                options.JsonSerializerOptions.IgnoreNullValues = false;
                 options.JsonSerializerOptions.Converters.Add(new TimeSpanConverter());
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
 

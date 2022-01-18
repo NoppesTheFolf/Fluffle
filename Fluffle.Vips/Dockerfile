@@ -110,7 +110,7 @@ RUN curl -sL https://packages.microsoft.com/config/debian/10/packages-microsoft-
     dpkg -i packages-microsoft-prod.deb && \
     rm packages-microsoft-prod.deb && \
     apt-get update && \
-    apt-get install -y dotnet-sdk-5.0 && \
+    apt-get install -y dotnet-sdk-6.0 && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /fluffle/build

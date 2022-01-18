@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static MoreLinq.Extensions.DistinctByExtension;
 
 namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 {

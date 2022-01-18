@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Runtime.Versioning;
 
 namespace Noppes.Fluffle.Thumbnail
 {
@@ -11,6 +12,7 @@ namespace Noppes.Fluffle.Thumbnail
     public class SystemDrawingFluffleThumbnail : FluffleThumbnail
     {
         /// <inheritdoc/>
+        [SupportedOSPlatform("windows")]
         public override FluffleThumbnailResult ThumbnailJpeg(string sourceLocation, string destinationLocation, int width, int height, int quality)
         {
             if (width < 1)
@@ -66,6 +68,7 @@ namespace Noppes.Fluffle.Thumbnail
         }
 
         /// <inheritdoc/>
+        [SupportedOSPlatform("windows")]
         public override ImageDimensions GetDimensions(string sourceLocation)
         {
             using var image = Image.FromFile(sourceLocation);
