@@ -70,6 +70,7 @@ class ReverseSearchFormat:
 
 
 class TextFormat:
+    PLATFORM_NAMES = "PLATFORM_NAMES"
     COMPACT = "COMPACT"
     EXPANDED = "EXPANDED"
 
@@ -156,10 +157,10 @@ REVERSE_SEARCH_FORMAT_DEFAULTS = {
 
 
 TEXT_FORMAT_DEFAULTS = {
-    tgc.CHAT_PRIVATE: TextFormat.COMPACT,
-    tgc.CHAT_GROUP: TextFormat.COMPACT,
-    tgc.CHAT_SUPERGROUP: TextFormat.COMPACT,
-    tgc.CHAT_CHANNEL: TextFormat.COMPACT
+    tgc.CHAT_PRIVATE: TextFormat.PLATFORM_NAMES,
+    tgc.CHAT_GROUP: TextFormat.PLATFORM_NAMES,
+    tgc.CHAT_SUPERGROUP: TextFormat.PLATFORM_NAMES,
+    tgc.CHAT_CHANNEL: TextFormat.PLATFORM_NAMES
 }
 
 

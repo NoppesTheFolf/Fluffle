@@ -115,19 +115,32 @@ class Formatter:
 
     def use_message(chat: MongoChat, response: ReverseSearchResponse):
         if chat.text_format == TextFormat.COMPACT:
-            format = lambda results, existing_caption: Formatter.format_message(results, existing_caption, False)
+            format = lambda results: Formatter.format_message(results, False)
         elif chat.text_format == TextFormat.EXPANDED:
-            format = lambda results, existing_caption: Formatter.format_message(results, existing_caption, True)
+            format = lambda results: Formatter.format_message(results, True)
+        elif chat.text_format == TextFormat.PLATFORM_NAMES:
+            format = lambda results: Formatter.format_platform_names(results)
         else:
             return
+
+        text, caption_after = format(list(sorted(response.results, key=lambda r: r.priority)))
+        if response.existing_caption is not None:
+            prefix = '' if caption_after else text + '\n\n'
+            suffix = '\n\n' + text if caption_after else ''
+            text = prefix + escape_markdown(response.existing_caption, 2) + suffix
+
+        response.text = text
+
+    def format_platform_names(results: List[ReverseSearchItem]):
+        text = ' \| '.join(map(lambda result: f'[{result.platform}]({result.location})', results))
         
-        response.text = format(response.results, response.existing_caption)
+        return text, False
 
     TEXT_FORMAT_LIMIT = 3
     
-    def format_message(results: List[ReverseSearchItem], existing_caption: Optional[str], expanded: bool) -> str:
+    def format_message(results: List[ReverseSearchItem], expanded: bool) -> str:
         text = ''
-        for key, group in groupby(sorted(results, key=lambda r: r.priority)[:Formatter.TEXT_FORMAT_LIMIT], key=lambda r: r.platform):
+        for key, group in groupby(results[:Formatter.TEXT_FORMAT_LIMIT], key=lambda r: r.platform):
             if expanded:
                 text += '\n*{}*\n'.format(key)
             
@@ -136,10 +149,7 @@ class Formatter:
         
         text = text.strip()
 
-        if existing_caption is not None:
-            text = escape_markdown(existing_caption, 2) + '\n\n' + text
-
-        return text
+        return text, True
 
     def use_inline_keyboard(chat: MongoChat, response: ReverseSearchResponse): 
         aspect_ratio = response.photo.width / response.photo.height

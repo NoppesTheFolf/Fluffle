@@ -92,8 +92,9 @@ def select_text_format(update: Update, context: CallbackContext, callback_query_
         context,
         'Which text format would you like to use? Check out https://fluffle.xyz/bot/#response-format for more information.',
         [
-            ('Compact', TextFormat.COMPACT),
-            ('Expanded', TextFormat.EXPANDED)
+            ('Platform names', TextFormat.PLATFORM_NAMES),
+            ('Compact links', TextFormat.COMPACT),
+            ('Expanded links', TextFormat.EXPANDED)
         ],
         lambda data, option: { 'chat_id': data, 'format': option },
         callback_query_data
