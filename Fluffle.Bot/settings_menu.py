@@ -1,4 +1,4 @@
-from telegram.ext import CallbackContext, CommandHandler, ConversationHandler
+from telegram.ext import CallbackContext, CommandHandler, ConversationHandler, MessageHandler, Filters
 from telegram.ext.callbackqueryhandler import CallbackQueryHandler
 from telegram.ext.updater import Updater
 from telegram.inline.inlinekeyboardbutton import InlineKeyboardButton
@@ -7,19 +7,22 @@ from telegram.parsemode import ParseMode
 from telegram.update import Update
 from telegram.utils.helpers import escape_markdown
 import telegram.constants as tgc
-from mongo import TextFormat, ReverseSearchFormat, database
+import mongo
+from mongo import TextFormat, ReverseSearchFormat, TextSeparator, database
 import itertools
 import json
 from utils import get_owner
 import rate_limiter
+import grapheme
 
 
 SELECT_FORMAT, SET_FORMAT = range(2)
 SELECT_TEXT_FORMAT, SET_TEXT_FORMAT = range(2)
+SELECT_SEPARATOR, SET_SEPARATOR = range(2)
 
 
 def select_chat(update: Update, context: CallbackContext, text: str, state: int, nextFunc):
-    chats = database.chat.find({ 'owner_id': update.effective_user.id, 'is_active': True })
+    chats = mongo.get_chat({ 'owner_id': update.effective_user.id, 'is_active': True })
     if len(chats) == 1 and chats[0]._id == update.effective_user.id:
         chat = chats[0]
 
@@ -103,13 +106,14 @@ def select_text_format(update: Update, context: CallbackContext, callback_query_
     return SET_TEXT_FORMAT
 
 
-def set_option(update: Update, context: CallbackContext, constants_class, select_key, update_settings, text):
-    data = select_option(update, context, None, None, None)
+def set_option(data: dict, update: Update, context: CallbackContext, constants_class, select_key, update_settings, text):
+    if constants_class is None:
+        option = select_key(data)
+    else:
+        options = [value for name, value in vars(constants_class).items() if not name.startswith('_')]
+        option = next(filter(lambda x: x == select_key(data), options))
 
-    options = [value for name, value in vars(constants_class).items() if not name.startswith('_')]
-    option = next(filter(lambda x: x == select_key(data), options))
-
-    chat = database.chat.find_one_by_id(data['chat_id'])
+    chat = mongo.get_chat(data['chat_id'])
     if chat.type == tgc.CHAT_PRIVATE:
         if chat.owner_id != update.effective_user.id:
             return
@@ -122,7 +126,7 @@ def set_option(update: Update, context: CallbackContext, constants_class, select
 
             rate_limiter.run(
                 context.bot.send_message,
-                chat_id = update.callback_query.message.chat_id,
+                chat_id = update.effective_chat.id,
                 text = escape_markdown('You are not the owner of the selected chat anymore. Therefore, you are not allowed to edit its settings.', version = 2),
                 parse_mode = ParseMode.MARKDOWN_V2
             )
@@ -133,7 +137,7 @@ def set_option(update: Update, context: CallbackContext, constants_class, select
 
     rate_limiter.run(
         context.bot.send_message,
-        chat_id = update.callback_query.message.chat_id,
+        chat_id = update.effective_chat.id,
         text = escape_markdown(text, version = 2),
         parse_mode = ParseMode.MARKDOWN_V2
     )
@@ -145,7 +149,9 @@ def set_format(update: Update, context: CallbackContext):
     def set_reverse_search_format(chat, option):
         chat.reverse_search_format = option
 
+    data = select_option(update, context, None, None, None)
     return set_option(
+        data,
         update,
         context,
         ReverseSearchFormat,
@@ -159,7 +165,9 @@ def set_text_format(update: Update, context: CallbackContext):
     def set_message_search_format(chat, option):
         chat.text_format = option
 
+    data = select_option(update, context, None, None, None)
     return set_option(
+        data,
         update,
         context,
         TextFormat,
@@ -167,6 +175,64 @@ def set_text_format(update: Update, context: CallbackContext):
         set_message_search_format,
         'Text format set.'
     )
+
+
+def select_separator(update: Update, context: CallbackContext, callback_query_data = None):
+    select_option(
+        update,
+        context,
+        'Which separator would you like to use?',
+        [
+            (f'Vertical bar {TextSeparator.VERTICAL_BAR}', TextSeparator.VERTICAL_BAR),
+            (f'Forward slash {TextSeparator.FORWARD_SLASH}', TextSeparator.FORWARD_SLASH),
+            (f'Bullet {TextSeparator.BULLET}', TextSeparator.BULLET),
+            ('A custom one', TextSeparator.CUSTOM)
+        ],
+        lambda data, option: { 'chat_id': data, 'separator': option },
+        callback_query_data
+    )
+
+    return SET_SEPARATOR
+
+def set_separator(update: Update, context: CallbackContext):
+    def set_chat_text_separator(chat, option):
+        chat.text_separator = option
+
+    def set_chat_text_separator_option(data, constants_class):
+        separator = data['separator']
+        return set_option(
+            data, update, context, constants_class, lambda x: x['separator'],
+            set_chat_text_separator, f'Custom separator set to {separator}.'
+        )
+
+    if update.callback_query:
+        data = select_option(update, context, None, None, None, None)
+        if data['separator'] == TextSeparator.CUSTOM:
+            rate_limiter.run(
+                context.bot.send_message,
+                chat_id = update.effective_chat.id,
+                text = escape_markdown('Which character would you like to use a custom separator? Please type it in the chat. This may be anything including emojis and other unicode symbols.', version = 2),
+                parse_mode = ParseMode.MARKDOWN_V2
+            )
+            context.user_data['chat_id'] = data['chat_id']
+
+            return SET_SEPARATOR
+
+        return set_chat_text_separator_option(data, TextSeparator)
+
+    if grapheme.length(update.effective_message.text) > 1:
+        rate_limiter.run(
+            context.bot.send_message,
+            chat_id = update.effective_chat.id,
+            text = escape_markdown('A separator may only consist out of one character. Please try again.', version = 2),
+            parse_mode = ParseMode.MARKDOWN_V2
+        )
+        return SET_SEPARATOR
+
+    return set_chat_text_separator_option({
+        'chat_id': context.user_data['chat_id'],
+        'separator': update.effective_message.text
+    }, None)
 
 
 def cancel(update: Update, context: CallbackContext):
@@ -202,5 +268,14 @@ def register(updater: Updater):
         states = {
             SELECT_TEXT_FORMAT: [CallbackQueryHandler(select_text_format)],
             SET_TEXT_FORMAT: [CallbackQueryHandler(set_text_format)],
+        }
+    ))
+
+    updater.dispatcher.add_handler(generate_conversation_handler(
+        command = 'settextseparator',
+        func = lambda update, context: select_chat(update, context, 'Of which chat would you like to change the text separator?', SELECT_SEPARATOR, select_separator),
+        states = {
+            SELECT_SEPARATOR: [CallbackQueryHandler(select_separator)],
+            SET_SEPARATOR: [MessageHandler(Filters.text & ~Filters.command, set_separator), CallbackQueryHandler(set_separator)],
         }
     ))

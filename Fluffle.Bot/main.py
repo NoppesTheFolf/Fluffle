@@ -9,6 +9,7 @@ from telegram import Update
 from telegram.ext import Updater, Filters, CallbackContext, MessageHandler, ChatMemberHandler, CommandHandler
 import telegram.constants as tgc
 from reverse_search import reverse_search, ReverseSearchResponse, Formatter
+import mongo
 from mongo import MongoChat, MongoMessage, ReverseSearchFormat, database
 from threading import Lock, Thread
 from datetime import datetime
@@ -30,7 +31,7 @@ def start_handle_photo(update: Update, context: CallbackContext):
         return
     
     # Get the chat from the database
-    chat = database.chat.find_one_by_id(update.effective_chat.id)
+    chat = mongo.get_chat(update.effective_chat.id)
 
     # Skip messages in supergroups of which the message in forwarded from their linked channel
     if update.effective_chat.type == tgc.CHAT_SUPERGROUP and update.effective_message.forward_from_chat and update.effective_message.forward_from_chat.id == chat.linked_chat_id:
@@ -64,6 +65,7 @@ def start_handle_photo(update: Update, context: CallbackContext):
             chat_id = update.effective_chat.id,
             reverse_search_format = chat.reverse_search_format,
             text_format = chat.text_format,
+            text_separator = chat.text_separator,
             message_id = update.effective_message.message_id,
             caption = update.effective_message.caption,
             caption_has_been_edited = False,
