@@ -9,6 +9,7 @@ from config import get as get_config
 import copy
 import telegram.constants as tgc
 from datetime import datetime
+import collections
 
 
 @dataclass
@@ -22,6 +23,7 @@ class MongoChat:
     # Settings regarding presentation of the reverse search results
     reverse_search_format: str
     text_format: str
+    text_separator: Optional[str] = None
     # Unique identifier for the linked chat, i.e. the discussion group identifier for a channel and vice versa; for supergroups and channel chats.
     linked_chat_id: Optional[int] = None
     # Permissions
@@ -61,12 +63,20 @@ class MongoMessage:
     media_group_id: str
     processed_message_id: int
     when: datetime
+    text_separator: Optional[str] = None
     results: Optional[List] = None
 
 
 class ReverseSearchFormat:
     TEXT = "TEXT"
     INLINE_KEYBOARD = "INLINE_KEYBOARD"
+
+
+class TextSeparator:
+    VERTICAL_BAR = "|"
+    FORWARD_SLASH = "/"
+    BULLET = "•"
+    CUSTOM = "CUSTOM"
 
 
 class TextFormat:
@@ -144,6 +154,9 @@ class FluffleDatabase:
 database = FluffleDatabase()
 
 
+DEFAULT_TEXT_SEPARATOR = TextSeparator.VERTICAL_BAR
+
+
 REVERSE_SEARCH_FORMAT_DEFAULTS = {
     (tgc.CHAT_PRIVATE, True): ReverseSearchFormat.INLINE_KEYBOARD,
     (tgc.CHAT_PRIVATE, False): ReverseSearchFormat.INLINE_KEYBOARD,
@@ -162,6 +175,26 @@ TEXT_FORMAT_DEFAULTS = {
     tgc.CHAT_SUPERGROUP: TextFormat.PLATFORM_NAMES,
     tgc.CHAT_CHANNEL: TextFormat.PLATFORM_NAMES
 }
+
+
+def get_chat(filter):
+    def migrate(chat):
+        is_modified = False
+        if chat.text_separator is None:
+            chat.text_separator = DEFAULT_TEXT_SEPARATOR
+            is_modified = True
+
+        if is_modified:
+            database.chat.upsert_one(chat)
+
+    obj = database.chat.find(filter) if isinstance(filter, collections.Mapping) else database.chat.find_one_by_id(filter)
+    if isinstance(obj, collections.Iterable):
+        for chat in obj:
+            migrate(chat)
+    else:
+        migrate(obj)
+
+    return obj
 
 
 def upsert_chat(tg_chat: Chat, is_active: bool, owner: User = None, botChatMember: ChatMember = None):

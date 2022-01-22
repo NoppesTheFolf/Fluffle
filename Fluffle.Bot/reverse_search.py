@@ -119,7 +119,7 @@ class Formatter:
         elif chat.text_format == TextFormat.EXPANDED:
             format = lambda results: Formatter.format_message(results, True)
         elif chat.text_format == TextFormat.PLATFORM_NAMES:
-            format = lambda results: Formatter.format_platform_names(results)
+            format = lambda results: Formatter.format_platform_names(results, chat.text_separator)
         else:
             return
 
@@ -131,8 +131,9 @@ class Formatter:
 
         response.text = text
 
-    def format_platform_names(results: List[ReverseSearchItem]):
-        text = ' \| '.join(map(lambda result: f'[{result.platform}]({result.location})', results))
+    def format_platform_names(results: List[ReverseSearchItem], separator):
+        separator = escape_markdown(separator, 2)
+        text = f' {separator} '.join(map(lambda result: f'[{result.platform}]({result.location})', results))
         
         return text, False
 
@@ -184,15 +185,6 @@ class Formatter:
         # Create the inline keyboard markup
         buttons = list(map(lambda x: list(map(lambda y: InlineKeyboardButton(y.platform, y.location), x)), bins))
         response.reply_markup = InlineKeyboardMarkup(buttons)
-
-
-def _calculate_size(width, height, target):
-    def calculate_size(d1, d2, d1_target): return round(d1_target / d1 * d2)
-
-    if width > height:
-        return calculate_size(height, width, target), target
-
-    return target, calculate_size(width, height, target)
 
 
 def _search(name, platforms):
