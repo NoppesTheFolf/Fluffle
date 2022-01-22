@@ -43,7 +43,13 @@ PLATFORMS = {
     WEASYL: (4, 'Weasyl'),
     FURRY_NETWORK: (5, 'Furry Network')
 }
-
+PLATFORM_SIZE_LOOKUP = {
+    'Fur Affinity': 79,
+    'Twitter': 54,
+    'e621': 36,
+    'Weasyl': 51,
+    'Furry Network': 100
+}
 
 class ReverseSearchResponse:
     def __init__(self, photo: PhotoSize, results: List[ReverseSearchItem], chat_id: int, reply_to_message_id: int, file_id: str, text: str, reply_markup: ReplyKeyboardMarkup, message_id: int, existing_caption: str):
@@ -158,29 +164,41 @@ class Formatter:
         aspect_ratio = 0.25 if aspect_ratio < 0.25 else aspect_ratio
         # Any aspect ratio larger than 1.0 will not grow bigger anymore
         aspect_ratio = 1.0 if aspect_ratio > 1.0 else aspect_ratio
-         
+
         bin_options = [
-            (1, floor(37.24 * aspect_ratio)),
-            (2, floor(18.24 * aspect_ratio)),
-            (3, floor(11.78 * aspect_ratio))
+            (1, floor(275 * aspect_ratio)),
+            (2, floor(134 * aspect_ratio)),
+            (3, floor(90 * aspect_ratio))
         ]
 
-        # Sort platform names, from longest to shortest
-        response.results.sort(key=lambda x: len(x.platform), reverse=True)
+        def compute_bins(results):
+            # Sort platform names, from longest to shortest
+            results.sort(key=lambda x: PLATFORM_SIZE_LOOKUP[x.platform], reverse=True)
 
-        bins = []
-        index = 0
+            bins = []
+            index = 0
+            while True:
+                item = results[index]
+                # Oh no what have I done, but it works, do not touch it :P
+                bin = next(map(lambda x: x[0], iter(sorted(filter(lambda x: x[1] > 1, map(lambda bin: [bin, bin[1]/ PLATFORM_SIZE_LOOKUP[item.platform]], bin_options)), key = lambda x: x[1]))), bin_options[0])
+
+                new_index = index + bin[0]
+                bins.append(results[index:new_index])
+                if new_index >= len(results):
+                    break
+
+                index = new_index
+
+            return bins
+
+        results = response.results.copy()
         while True:
-            item = response.results[index]
-            # Oh no what have I done, but it works, do not touch it :P
-            bin = next(map(lambda x: x[0], iter(sorted(filter(lambda x: x[1] > 1, map(lambda bin: [bin, bin[1]/ len(item.platform)], bin_options)), key = lambda x: x[1]))), bin_options[0])
-            
-            new_index = index + bin[0]
-            bins.append(response.results[index:new_index])
-            if new_index >= len(response.results):
+            bins = compute_bins(results)
+
+            if len(bins) < 3:
                 break
 
-            index = new_index
+            results.remove(max(results, key = lambda x: x.priority))
 
         # Create the inline keyboard markup
         buttons = list(map(lambda x: list(map(lambda y: InlineKeyboardButton(y.platform, y.location), x)), bins))
