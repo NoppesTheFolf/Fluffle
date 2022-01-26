@@ -63,6 +63,26 @@ namespace Noppes.Fluffle.Configuration
     {
     }
 
+    [ConfigurationSection("MainServer")]
+    public class MainServerConfiguration : FluffleConfigurationPart<MainServerConfiguration>
+    {
+        /// <summary>
+        /// Interval in minutes between updating indexing statistics.
+        /// </summary>
+        public int IndexingStatisticsInterval { get; set; }
+
+        /// <summary>
+        /// Interval in minutes between deleting content marked for deletion.
+        /// </summary>
+        public int DeletionInterval { get; set; }
+
+        public MainServerConfiguration()
+        {
+            RuleFor(o => o.IndexingStatisticsInterval).NotEmpty().GreaterThanOrEqualTo(0);
+            RuleFor(o => o.DeletionInterval).NotEmpty().GreaterThanOrEqualTo(0);
+        }
+    }
+
     /// <summary>
     /// The database configuration for search server instances.
     /// </summary>

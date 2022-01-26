@@ -25,6 +25,11 @@ namespace Noppes.Fluffle.Main.Api
 
         public override void AdditionalConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton(Configuration);
+
+            var mainConf = Configuration.Get<MainServerConfiguration>();
+            services.AddSingleton(mainConf);
+
             services.AddDatabase<FluffleContext, MainDatabaseConfiguration>(Configuration);
 
             services.AddSingleton<TagBlacklistCollection>();
@@ -41,8 +46,6 @@ namespace Noppes.Fluffle.Main.Api
             var faConf = Configuration.Get<FurAffinityConfiguration>();
             var faClient = new FurAffinityClient("https://www.furaffinity.net", Project.UserAgent, faConf.A, faConf.B);
             services.AddSingleton(faClient);
-
-            services.AddSingleton(Configuration);
 
             services.RegisterChangeIdIncrementers();
 
@@ -68,8 +71,9 @@ namespace Noppes.Fluffle.Main.Api
 
             app.ApplicationServices.InitializeChangeIdIncrementers();
 
-            serviceBuilder.AddSingleton<IndexStatisticsService>(5.Minutes());
-            serviceBuilder.AddTransient<DeletionService>(10.Minutes());
+            var mainConf = Configuration.Get<MainServerConfiguration>();
+            serviceBuilder.AddSingleton<IndexStatisticsService>(mainConf.IndexingStatisticsInterval.Minutes());
+            serviceBuilder.AddTransient<DeletionService>(mainConf.DeletionInterval.Minutes());
         }
     }
 }

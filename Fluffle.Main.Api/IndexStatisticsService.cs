@@ -118,7 +118,7 @@ namespace Noppes.Fluffle.Main.Api
         {
             DateTimeOffset CreateUtcDateTimeOffset(DateTimeOffset from)
             {
-                return new(year ? from.Year : 0, month ? from.Month : 0, day ? from.Day : 0,
+                return new DateTimeOffset(year ? from.Year : 0, month ? from.Month : 0, day ? from.Day : 0,
                     hour ? from.Hour : 0, 0, 0, TimeSpan.Zero);
             }
 
