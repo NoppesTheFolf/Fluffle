@@ -24,12 +24,18 @@ namespace Noppes.Fluffle.Main.Communication
 
             [Key(4)]
             public string Name { get; set; }
+
+            [Key(5)]
+            public string IdOnPlatform { get; set; }
+
+            [Key(6)]
+            public int? Priority { get; set; }
         }
 
         [Key(0)]
         public long NextChangeId { get; set; }
 
         [Key(1)]
-        public IEnumerable<CreditableEntityModel> Results { get; set; }
+        public ICollection<CreditableEntityModel> Results { get; set; }
     }
 }

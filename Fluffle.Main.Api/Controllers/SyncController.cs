@@ -2,9 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.Controllers;
+using Noppes.Fluffle.Api.Database;
 using Noppes.Fluffle.Api.Mapping;
 using Noppes.Fluffle.Api.Services;
-using Noppes.Fluffle.Main.Api.Services;
 using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.Main.Database;
 using Noppes.Fluffle.Main.Database.Models;
@@ -49,7 +49,7 @@ namespace Noppes.Fluffle.Main.Api.Controllers
                 return new SR<ImagesSyncModel>(new ImagesSyncModel
                 {
                     NextChangeId = maxId,
-                    Results = changes.MapEnumerableTo<ImagesSyncModel.ImageModel>()
+                    Results = changes.MapEnumerableTo<ImagesSyncModel.ImageModel>().ToList()
                 });
             });
 
@@ -73,7 +73,7 @@ namespace Noppes.Fluffle.Main.Api.Controllers
                 return new SR<CreditableEntitiesSyncModel>(new CreditableEntitiesSyncModel
                 {
                     NextChangeId = maxId,
-                    Results = changes.MapEnumerableTo<CreditableEntitiesSyncModel.CreditableEntityModel>()
+                    Results = changes.MapEnumerableTo<CreditableEntitiesSyncModel.CreditableEntityModel>().ToList()
                 });
             });
 

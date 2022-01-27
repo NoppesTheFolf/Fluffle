@@ -76,10 +76,22 @@ namespace Noppes.Fluffle.Configuration
         /// </summary>
         public int DeletionInterval { get; set; }
 
+        /// <summary>
+        /// Interval in minutes between updating priorities for creditable entities.
+        /// </summary>
+        public int CreditableEntityPriorityInterval { get; set; }
+
+        /// <summary>
+        /// Time span in minutes between (re)calculating a creditable entity its priority.
+        /// </summary>
+        public int CreditableEntityPriorityExpirationTime { get; set; }
+
         public MainServerConfiguration()
         {
             RuleFor(o => o.IndexingStatisticsInterval).NotEmpty().GreaterThanOrEqualTo(0);
             RuleFor(o => o.DeletionInterval).NotEmpty().GreaterThanOrEqualTo(0);
+            RuleFor(o => o.CreditableEntityPriorityInterval).NotEmpty().GreaterThanOrEqualTo(0);
+            RuleFor(o => o.CreditableEntityPriorityExpirationTime).NotEmpty().GreaterThanOrEqualTo(0);
         }
     }
 

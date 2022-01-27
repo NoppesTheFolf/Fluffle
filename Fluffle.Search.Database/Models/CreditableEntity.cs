@@ -24,6 +24,8 @@ namespace Noppes.Fluffle.Search.Database.Models
 
         public CreditableEntityType Type { get; set; }
 
+        public int? Priority { get; set; }
+
         public virtual Platform Platform { get; set; }
 
         public virtual ICollection<Content> Content { get; set; }
@@ -40,6 +42,8 @@ namespace Noppes.Fluffle.Search.Database.Models
             entity.HasIndex(e => new { e.PlatformId, e.ChangeId });
 
             entity.Property(e => e.Type);
+
+            entity.Property(e => e.Priority);
 
             entity.HasOne(d => d.Platform)
                 .WithMany(p => p.CreditableEntities)

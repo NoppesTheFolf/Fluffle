@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Noppes.Fluffle.Database;
+using Noppes.Fluffle.Database.Models;
 using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Search.Database.Models
 {
-    public partial class Platform : BaseEntity, IConfigurable<Platform>
+    public partial class Platform : BaseEntity, IConfigurable<Platform>, IPlatform
     {
         public Platform()
         {

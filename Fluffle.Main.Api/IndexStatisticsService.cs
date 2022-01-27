@@ -79,7 +79,7 @@ namespace Noppes.Fluffle.Main.Api
         public async Task RunAsync()
         {
             using var scope = _services.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<FluffleContext>();
+            await using var context = scope.ServiceProvider.GetRequiredService<FluffleContext>();
 
             _logger.LogInformation("Updating indexing statistics...");
 

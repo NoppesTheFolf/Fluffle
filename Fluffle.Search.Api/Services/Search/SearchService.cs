@@ -22,6 +22,7 @@ namespace Noppes.Fluffle.Search.Api.Services
         private const int Mismatch256Threshold = 72;
 
         private const int BestUnlikelyThreshold = 340;
+        private const int DistanceFromBestTossUpThreshold = 20;
         private const int DistanceFromBestAlternativeThreshold = 35;
 
         private readonly ICompareClient _compareClient;
@@ -40,7 +41,7 @@ namespace Noppes.Fluffle.Search.Api.Services
             // We need to compute a more granular hash too as the 64-bit averaged hash is unable to
             // differentiate between alternate version. We first calculate the complex hashes because
             // the libvips imaging provider can optimize itself when doing this.
-            (ulong[] red, ulong[] green, ulong[] blue, ulong[] average) CalculateHashes(
+            HashCollection CalculateHashes(
                 PerceptualHashImage perceptualHashImage,
                 bool red, Expression<Func<SearchRequest, int?>> timeRed,
                 bool green, Expression<Func<SearchRequest, int?>> timeGreen,
@@ -58,13 +59,13 @@ namespace Noppes.Fluffle.Search.Api.Services
 
                 var averageHash = average ? perceptualHashImage.ComputeHash(Channel.Average) : Array.Empty<byte>();
 
-                return (FluffleHash.ToInt64(redHash), FluffleHash.ToInt64(greenHash), FluffleHash.ToInt64(blueHash), FluffleHash.ToInt64(averageHash));
+                return new HashCollection(FluffleHash.ToInt64(redHash), FluffleHash.ToInt64(greenHash), FluffleHash.ToInt64(blueHash), FluffleHash.ToInt64(averageHash));
             }
 
             scope.Next(t => t.StartExpensiveRgbComputation);
             var hash = _hash.Create(128);
             using var hasher = hash.For(imageLocation);
-            (ulong[] red, ulong[] green, ulong[] blue, ulong[] average) hashes1024 = default;
+            HashCollection hashes1024;
             try
             {
                 hashes1024 = CalculateHashes(hasher, true, t => t.ComputeExpensiveRed, true, t => t.ComputeExpensiveGreen, true, t => t.ComputeExpensiveBlue, includeDebug);
@@ -81,8 +82,31 @@ namespace Noppes.Fluffle.Search.Api.Services
             hash.Size = 8;
             var hash64 = FluffleHash.ToUInt64(hasher.ComputeHash(Channel.Average));
 
+            return await SearchAsync(hash64, hashes256, hashes1024, includeNsfw, limit, platforms, includeDebug, scope);
+        }
+
+        public Task<SR<SearchResultModel>> SearchAsync(ImageHash hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
+        {
+            var hash64 = FluffleHash.ToUInt64(hash.PhashAverage64);
+            var hashes256 = new HashCollection(FluffleHash.ToInt64(hash.PhashRed256), FluffleHash.ToInt64(hash.PhashGreen256), FluffleHash.ToInt64(hash.PhashBlue256), FluffleHash.ToInt64(hash.PhashAverage256));
+            var hashes1024 = new HashCollection(FluffleHash.ToInt64(hash.PhashRed1024), FluffleHash.ToInt64(hash.PhashGreen1024), FluffleHash.ToInt64(hash.PhashBlue1024), FluffleHash.ToInt64(hash.PhashAverage1024));
+
+            return SearchAsync(hash64, hashes256, hashes1024, includeNsfw, limit, platforms, includeDebug, scope);
+        }
+
+        public class SearchResult
+        {
+            public CompareResult CompareResult { get; set; }
+
+            public SearchResultModel.ImageModel Model { get; set; }
+
+            public ICollection<CreditableEntity> CreditableEntities { get; set; }
+        }
+
+        public async Task<SR<SearchResultModel>> SearchAsync(ulong hash64, HashCollection hashes256, HashCollection hashes1024, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
+        {
             scope.Next(t => t.Compare64Average);
-            var searchResult = await _compareClient.CompareAsync(hash64, hashes256.average, includeNsfw, limit);
+            var searchResult = await _compareClient.CompareAsync(hash64, hashes256.Average, includeNsfw, limit);
 
             // Bug: The search service returns duplicate images. Update: might not anymore, who knows
             var searchResultImages = searchResult
@@ -114,7 +138,7 @@ namespace Noppes.Fluffle.Search.Api.Services
             var imagesLookup = images.ToDictionary(i => i.Id);
 
             scope.Next(t => t.CreateAndRefineOutput);
-            var results = images
+            var searchResults = images
                 .Select(r =>
                 {
                     var compareResult1024 = CompareRgb((r.PhashRed1024, r.PhashGreen1024, r.PhashBlue1024, r.PhashAverage1024), hashes1024, includeDebug);
@@ -151,24 +175,18 @@ namespace Noppes.Fluffle.Search.Api.Services
                         } : null
                     };
 
-                    return new
+                    return new SearchResult
                     {
                         CompareResult = compareResult1024,
                         Model = model
                     };
                 })
-                .OrderBy(x => x.CompareResult.Mean)
+                .OrderBy(sr => sr.CompareResult.Mean)
                 .ToList();
 
-            var bestMatch = results[0].CompareResult;
-            foreach (var result in results)
+            var bestMatch = searchResults[0].CompareResult;
+            foreach (var result in searchResults)
                 result.CompareResult.DistanceFromBest = result.CompareResult.Mean - bestMatch.Mean;
-
-            foreach (var group in results.GroupBy(r => r.Model.Platform))
-            {
-                var bestInGroup = group.OrderBy(r => r.CompareResult.Mean).First();
-                bestInGroup.CompareResult.IsBestOnPlatform = true;
-            }
 
             ResultMatch Predict(CompareResult compareResult)
             {
@@ -178,20 +196,22 @@ namespace Noppes.Fluffle.Search.Api.Services
                 if (compareResult.DistanceFromBest > DistanceFromBestAlternativeThreshold)
                     return ResultMatch.Alternative;
 
-                return compareResult.IsBestOnPlatform ? ResultMatch.Exact : ResultMatch.TossUp;
+                if (compareResult.DistanceFromBest > DistanceFromBestTossUpThreshold)
+                    return ResultMatch.TossUp;
+
+                return ResultMatch.Exact;
             }
 
-            foreach (var result in results)
+            foreach (var result in searchResults)
                 result.Model.Match = Predict(result.CompareResult);
 
-            var models = results
-                .Where(r => platforms.Contains(r.Model.Platform))
-                .Select(r => r.Model)
-                .OrderByDescending(m => m.Score)
+            searchResults = searchResults
+                .Where(sr => platforms.Contains(sr.Model.Platform))
+                .OrderByDescending(sr => sr.Model.Score)
                 .Take(limit)
                 .ToList();
 
-            var creditableEntityIds = models.SelectMany(m => imagesLookup[m.Id].Credits);
+            var creditableEntityIds = searchResults.SelectMany(sr => imagesLookup[sr.Model.Id].Credits);
             var creditsLookup = await _context.CreditableEntities.AsNoTracking()
                 .Where(ce => creditableEntityIds.Contains(ce.Id))
                 .ToDictionaryAsync(c => c.Id);
@@ -203,9 +223,11 @@ namespace Noppes.Fluffle.Search.Api.Services
                         yield return creditableEntity;
             }
 
-            foreach (var model in models)
+            foreach (var result in searchResults)
             {
-                model.Credits = GetCredits(imagesLookup[model.Id].Credits)
+                result.CreditableEntities = GetCredits(imagesLookup[result.Model.Id].Credits).ToList();
+
+                result.Model.Credits = result.CreditableEntities
                     .OrderBy(c => c.Type)
                     .Select(c => new SearchResultModel.ImageModel.CreditModel
                     {
@@ -214,12 +236,28 @@ namespace Noppes.Fluffle.Search.Api.Services
                     });
             }
 
+            foreach (var group in searchResults.Where(sr => sr.Model.Match is ResultMatch.Exact or ResultMatch.TossUp).GroupBy(sr => sr.Model.Platform))
+            {
+                var orderedGroup = group
+                    .OrderByDescending(sr => sr.CreditableEntities
+                        .OrderByDescending(ce => ce.Priority ?? int.MinValue)
+                        .Select(ce => ce.Priority)
+                        .FirstOrDefault() ?? int.MinValue)
+                    .ThenBy(sr => sr.CompareResult.Mean)
+                    .ToList();
+
+                for (var i = 0; i < orderedGroup.Count; i++)
+                    orderedGroup[i].Model.Match = i == 0 ? ResultMatch.Exact : ResultMatch.TossUp;
+            }
+
             return new SR<SearchResultModel>(new SearchResultModel
             {
-                Results = models,
+                Results = searchResults.Select(x => x.Model),
                 Stats = new SearchResultModel.StatsModel
                 {
-                    Count = searchResult.Where(kv => platforms.Contains((PlatformConstant)kv.Key)).Sum(kv => kv.Value.Count),
+                    Count = searchResult
+                        .Where(kv => platforms.Contains((PlatformConstant)kv.Key))
+                        .Sum(kv => kv.Value.Count),
                     ElapsedMilliseconds = (int)scope.Stopwatch.ElapsedMilliseconds
                 }
             });
@@ -243,16 +281,14 @@ namespace Noppes.Fluffle.Search.Api.Services
 
             public double DistanceFromBest { get; set; }
 
-            public bool IsBestOnPlatform { get; set; }
-
             public double Variance { get; set; }
 
             public int Average { get; set; }
         }
 
-        private static CompareResult CompareRgb((byte[] red, byte[] green, byte[] blue, byte[] average) hashesOne, (ulong[] red, ulong[] green, ulong[] blue, ulong[] average) hashesTwo, bool includeDebug)
+        private static CompareResult CompareRgb((byte[] red, byte[] green, byte[] blue, byte[] average) hashesOne, HashCollection hashesTwo, bool includeDebug)
         {
-            var bits = sizeof(ulong) * hashesTwo.red.Length * 8;
+            var bits = sizeof(ulong) * hashesTwo.Red.Length * 8;
 
             static int Compare(ReadOnlySpan<ulong> hash, ReadOnlySpan<ulong> otherHash)
             {
@@ -267,10 +303,10 @@ namespace Noppes.Fluffle.Search.Api.Services
             // Compare all channels
             var result = new CompareResult
             {
-                Red = Compare(hashesTwo.red, FluffleHash.ToInt64(hashesOne.red)),
-                Green = Compare(hashesTwo.green, FluffleHash.ToInt64(hashesOne.green)),
-                Blue = Compare(hashesTwo.blue, FluffleHash.ToInt64(hashesOne.blue)),
-                Average = includeDebug ? Compare(hashesTwo.average, FluffleHash.ToInt64(hashesOne.average)) : -1,
+                Red = Compare(hashesTwo.Red, FluffleHash.ToInt64(hashesOne.red)),
+                Green = Compare(hashesTwo.Green, FluffleHash.ToInt64(hashesOne.green)),
+                Blue = Compare(hashesTwo.Blue, FluffleHash.ToInt64(hashesOne.blue)),
+                Average = includeDebug ? Compare(hashesTwo.Average, FluffleHash.ToInt64(hashesOne.average)) : -1,
             };
 
             // Calculate the ones with the worst and best match and base the score on the worst one

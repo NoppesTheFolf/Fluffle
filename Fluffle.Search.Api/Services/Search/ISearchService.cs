@@ -33,8 +33,31 @@ namespace Noppes.Fluffle.Search.Api.Services
             $"The submitted image has an area (width * height) of {area} pixels while the maximum allowed area is {SearchModelValidator.AreaMax} pixels.");
     }
 
+    public readonly struct HashCollection
+    {
+        public ulong[] Red { get; }
+
+        public ulong[] Green { get; }
+
+        public ulong[] Blue { get; }
+
+        public ulong[] Average { get; }
+
+        public HashCollection(ulong[] red, ulong[] green, ulong[] blue, ulong[] average)
+        {
+            Red = red;
+            Green = green;
+            Blue = blue;
+            Average = average;
+        }
+    }
+
     public interface ISearchService
     {
         public Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope);
+
+        public Task<SR<SearchResultModel>> SearchAsync(ImageHash hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope);
+
+        public Task<SR<SearchResultModel>> SearchAsync(ulong hash64, HashCollection hashes256, HashCollection hashes1024, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope);
     }
 }

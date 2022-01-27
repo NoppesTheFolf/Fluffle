@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Nito.AsyncEx;
 using Noppes.Fluffle.Api.AccessControl;
+using Noppes.Fluffle.Api.Database;
 using Noppes.Fluffle.Api.Mapping;
 using Noppes.Fluffle.Api.Services;
 using Noppes.Fluffle.Constants;

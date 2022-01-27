@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Noppes.Fluffle.Api.Database;
 using Noppes.Fluffle.Api.Mapping;
 using Noppes.Fluffle.Api.Services;
 using Noppes.Fluffle.Constants;
