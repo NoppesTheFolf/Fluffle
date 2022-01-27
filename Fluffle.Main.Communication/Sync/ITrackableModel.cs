@@ -6,6 +6,6 @@ namespace Noppes.Fluffle.Main.Communication
     {
         public long NextChangeId { get; set; }
 
-        public IEnumerable<T> Results { get; set; }
+        public ICollection<T> Results { get; set; }
     }
 }

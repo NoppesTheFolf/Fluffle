@@ -13,6 +13,8 @@ namespace Noppes.Fluffle.Main.Api.Mappers
             dest.Type = src.Type;
             dest.PlatformId = src.PlatformId;
             dest.ChangeId = (long)src.ChangeId;
+            dest.IdOnPlatform = src.IdOnPlatform;
+            dest.Priority = src.Priority;
         }
     }
 }

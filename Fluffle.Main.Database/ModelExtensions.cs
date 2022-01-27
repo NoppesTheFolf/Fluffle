@@ -7,13 +7,6 @@ namespace Noppes.Fluffle.Main.Database
 {
     public static class ModelExtensions
     {
-        public static Task<Platform> FirstOrDefaultAsync(this IQueryable<Platform> platforms, string name)
-        {
-            name = name.ToLowerInvariant();
-
-            return platforms.FirstOrDefaultAsync(p => p.NormalizedName == name);
-        }
-
         public static Task<TContent> FirstOrDefaultAsync<TContent>(this IQueryable<TContent> content,
             int platformId, string platformContentId) where TContent : Content
         {

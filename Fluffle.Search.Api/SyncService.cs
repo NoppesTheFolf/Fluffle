@@ -119,6 +119,7 @@ namespace Noppes.Fluffle.Search.Api
                             dest.PlatformId = src.PlatformId;
                             dest.Name = src.Name;
                             dest.Type = src.Type;
+                            dest.Priority = src.Priority;
                             dest.ChangeId = src.ChangeId;
 
                             return Task.CompletedTask;

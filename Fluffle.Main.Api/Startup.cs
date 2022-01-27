@@ -34,8 +34,9 @@ namespace Noppes.Fluffle.Main.Api
 
             services.AddSingleton<TagBlacklistCollection>();
 
-            services.AddSingleton<DeletionService>();
             services.AddSingleton<IndexStatisticsService>();
+            services.AddSingleton<CreditableEntityPriorityService>();
+            services.AddSingleton<DeletionService>();
 
             var b2Conf = Configuration.Get<BackblazeB2Configuration>();
             var b2Client = new B2Client(b2Conf.ApplicationKeyId, b2Conf.ApplicationKey);
@@ -73,6 +74,7 @@ namespace Noppes.Fluffle.Main.Api
 
             var mainConf = Configuration.Get<MainServerConfiguration>();
             serviceBuilder.AddSingleton<IndexStatisticsService>(mainConf.IndexingStatisticsInterval.Minutes());
+            serviceBuilder.AddSingleton<CreditableEntityPriorityService>(mainConf.CreditableEntityPriorityInterval.Minutes());
             serviceBuilder.AddTransient<DeletionService>(mainConf.DeletionInterval.Minutes());
         }
     }

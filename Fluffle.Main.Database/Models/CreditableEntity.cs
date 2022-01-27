@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Database;
+using System;
 using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Main.Database.Models
@@ -26,6 +27,10 @@ namespace Noppes.Fluffle.Main.Database.Models
 
         public CreditableEntityType Type { get; set; }
 
+        public int? Priority { get; set; }
+
+        public DateTime? PriorityUpdatedAt { get; set; }
+
         public virtual Platform Platform { get; set; }
 
         public virtual ICollection<Content> Content { get; set; }
@@ -47,6 +52,10 @@ namespace Noppes.Fluffle.Main.Database.Models
             entity.HasIndex(e => new { e.PlatformId, e.ChangeId }).IsUnique();
 
             entity.Property(e => e.Type);
+
+            entity.Property(e => e.Priority);
+            entity.Property(e => e.PriorityUpdatedAt);
+            entity.HasIndex(e => e.PriorityUpdatedAt);
 
             entity.HasOne(d => d.Platform)
                 .WithMany(p => p.CreditableEntities)

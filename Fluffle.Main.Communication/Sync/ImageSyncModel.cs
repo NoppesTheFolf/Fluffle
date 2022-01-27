@@ -123,6 +123,6 @@ namespace Noppes.Fluffle.Main.Communication
         public long NextChangeId { get; set; }
 
         [Key(1)]
-        public IEnumerable<ImageModel> Results { get; set; }
+        public ICollection<ImageModel> Results { get; set; }
     }
 }
