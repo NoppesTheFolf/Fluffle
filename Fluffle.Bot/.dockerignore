@@ -1,9 +1,0 @@
-Dockerfile
-
-config.yml
-config.example.yml
-
-__pycache__
-
-.dockerignore
-.gitignore
