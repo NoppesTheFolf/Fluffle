@@ -123,9 +123,9 @@ namespace Noppes.Fluffle.FurAffinity
             var thumbnailWhen = long.Parse(string.Concat(Path.GetFileName(Path.GetDirectoryName(downloadUrl)).TakeWhile(char.IsDigit)));
             submission.ThumbnailWhen = DateTimeOffset.FromUnixTimeSeconds(thumbnailWhen);
 
-            var match = Regex.Match(downloadUrl, "(?<=\\/)[0-9]*?(?=\\.)");
+            var match = Regex.Match(downloadUrl, "(?<=\\/)[0-9]+?(?=\\.)");
             if (!match.Success)
-                match = Regex.Match(downloadUrl, "(?<=_)[0-9]*?(?=_)");
+                match = Regex.Match(downloadUrl, "(?<=_)[0-9]+?(?=_)");
 
             var when = match.Success ? long.Parse(match.Value) : thumbnailWhen;
             submission.When = DateTimeOffset.FromUnixTimeSeconds(when);
