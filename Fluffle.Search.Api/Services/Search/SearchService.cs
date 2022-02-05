@@ -13,12 +13,16 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.Intrinsics.X86;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Search.Api.Services
 {
     public class SearchService : Service, ISearchService
     {
+        public static readonly Regex WeasylRegex = new("\\/submission\\/([0-9]*)", RegexOptions.Compiled);
+        public static readonly Regex WwwRegex = new("https?:\\/\\/www\\.", RegexOptions.Compiled);
+
         private const int Mismatch256Threshold = 72;
 
         private const int BestUnlikelyThreshold = 340;
@@ -210,6 +214,28 @@ namespace Noppes.Fluffle.Search.Api.Services
                 .OrderByDescending(sr => sr.Model.Score)
                 .Take(limit)
                 .ToList();
+
+            // Clean up the view location
+            foreach (var model in searchResults.Select(x => x.Model))
+            {
+                if (model.Platform == PlatformConstant.Weasyl)
+                {
+                    var match = WeasylRegex.Match(model.Location);
+                    if (match.Success)
+                        model.Location = $"https://weasyl.com/submission/{match.Groups[1].Value}";
+
+                    continue;
+                }
+
+                if (model.Platform == PlatformConstant.FurAffinity)
+                {
+                    var match = WwwRegex.Match(model.Location);
+                    if (match.Success)
+                        model.Location = $"https://{model.Location[match.Length..]}";
+
+                    continue;
+                }
+            }
 
             var creditableEntityIds = searchResults.SelectMany(sr => imagesLookup[sr.Model.Id].Credits);
             var creditsLookup = await _context.CreditableEntities.AsNoTracking()
