@@ -95,6 +95,41 @@ namespace Noppes.Fluffle.Configuration
         }
     }
 
+    [ConfigurationSection("Bot")]
+    public class BotConfiguration : FluffleConfigurationPart<BotConfiguration>
+    {
+        public string TelegramToken { get; set; }
+
+        public int TelegramGlobalBurstLimit { get; set; }
+
+        public int TelegramGlobalBurstInterval { get; set; }
+
+        public int TelegramGroupBurstLimit { get; set; }
+
+        public int TelegramGroupBurstInterval { get; set; }
+
+        public ICollection<string> TelegramKnownSources { get; set; }
+
+        public string MongoConnectionString { get; set; }
+
+        public string MongoDatabase { get; set; }
+
+        public BotConfiguration()
+        {
+            RuleFor(o => o.TelegramToken).NotEmpty();
+
+            RuleFor(o => o.TelegramGlobalBurstLimit).GreaterThan(0);
+            RuleFor(o => o.TelegramGlobalBurstInterval).GreaterThan(0);
+            RuleFor(o => o.TelegramGroupBurstLimit).GreaterThan(0);
+            RuleFor(o => o.TelegramGroupBurstInterval).GreaterThan(0);
+
+            RuleFor(o => o.TelegramKnownSources).NotEmpty();
+
+            RuleFor(o => o.MongoConnectionString).NotEmpty();
+            RuleFor(o => o.MongoDatabase).NotEmpty();
+        }
+    }
+
     /// <summary>
     /// The database configuration for search server instances.
     /// </summary>
