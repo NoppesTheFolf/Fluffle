@@ -12,14 +12,14 @@ namespace Noppes.Fluffle.Bot.Utils
     {
         public static void Route(MongoMessage message, ReverseSearchResponse response)
         {
-            Action<MongoMessage, ReverseSearchResponse> generator = message.ReverseSearchFormat switch
+            Action<MongoMessage, ReverseSearchResponse> routeAction = message.ReverseSearchFormat switch
             {
                 ReverseSearchFormat.Text => TextFormatter.Route,
                 ReverseSearchFormat.InlineKeyboard => InlineKeyboardFormatter.Route,
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-            generator(message, response);
+            routeAction(message, response);
         }
     }
 
@@ -132,6 +132,32 @@ namespace Noppes.Fluffle.Bot.Utils
         private record BinOption(int BinSize, int CompartmentSize);
 
         public static void Route(MongoMessage message, ReverseSearchResponse response)
+        {
+            Action<MongoMessage, ReverseSearchResponse> routeAction = message.InlineKeyboardFormat switch
+            {
+                InlineKeyboardFormat.Single => RouteSingle,
+                InlineKeyboardFormat.Multiple => RouteMultiple,
+            };
+
+            routeAction(message, response);
+        }
+
+        private static void RouteSingle(MongoMessage message, ReverseSearchResponse response)
+        {
+            var result = message.FluffleResponse.Results.First();
+            response.ReplyMarkup = new InlineKeyboardMarkup(new[]
+            {
+                new[]
+                {
+                    new InlineKeyboardButton("Source")
+                    {
+                        Url = result.Location
+                    }
+                }
+            });
+        }
+
+        private static void RouteMultiple(MongoMessage message, ReverseSearchResponse response)
         {
             var aspectRatio = response.Photo.Width / (double)response.Photo.Height;
             aspectRatio = aspectRatio < 0.25 ? 0.25 : aspectRatio;
