@@ -69,7 +69,7 @@ namespace Noppes.Fluffle.Bot.Controllers
         public async Task HandleChannelPost(Message message) => await HandleMessage(message);
 
         [Update(UpdateType.Message)]
-        private async Task HandleMessage(Message message)
+        public async Task HandleMessage(Message message)
         {
             // Skip any messages that do not have a photo attached
             if (message.Photo == null)
@@ -82,7 +82,7 @@ namespace Noppes.Fluffle.Bot.Controllers
             // Skip forwarded messages in channels, those cannot be edited and creating a channel
             // post would be an awful way of solving this issue. The only real way is to link a
             // discussion group
-            if (message.Chat.Type == ChatType.Channel && message.ForwardFromChat != null)
+            if (message.Chat.Type == ChatType.Channel && (message.ForwardFrom != null || message.ForwardFromChat != null))
                 return;
 
             // Get the chat from the database
