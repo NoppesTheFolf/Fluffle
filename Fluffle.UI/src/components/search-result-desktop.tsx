@@ -111,9 +111,9 @@ const SearchResultDesktop = ({ data }: { data: SearchResult }) => {
                     <div className="text-4xl font-light">
                         {
                             {
-                                0: "Oh noes! Looks like we couldn't find what you're looking for",
-                                1: "Jolly good! We found an image similar to the one you submitted"
-                            }[data.probableResults.length] || "Jolly good! We found images similar to the one you submitted"
+                                0: "Looks like we couldn't find what you're looking for",
+                                1: "We found an image similar to the one you submitted"
+                            }[data.probableResults.length] || "We found images similar to the one you submitted"
                         }
                     </div>
                 </div>

@@ -7,7 +7,8 @@ import NavbarMobile from './navbar-mobile'
 export const LayoutWidth = {
     '2xl': 'sm:max-w-2xl',
     '4xl': 'sm:max-w-4xl',
-    '7xl': 'sm:max-w-7xl'
+    '7xl': 'sm:max-w-7xl',
+    'screen-2xl': 'sm:max-w-screen-2xl',
 }
 
 const Layout = ({ center, title, maxWidth, requireBrowser, children }) => {
@@ -32,9 +33,7 @@ const Layout = ({ center, title, maxWidth, requireBrowser, children }) => {
 
     return (
         <div className="w-full min-h-full flex flex-col">
-            <Helmet>
-                <title>{title} - Fluffle</title>
-
+            <Helmet title={`${title} - Fluffle`}>
                 <link rel="shortcut icon" href="/favicon.ico" />
                 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
                 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -102,7 +101,7 @@ const Layout = ({ center, title, maxWidth, requireBrowser, children }) => {
 }
 
 Layout.defaultProps = {
-    maxWidth: '7xl',
+    maxWidth: 'screen-2xl',
     requireBrowser: false,
 };
 
