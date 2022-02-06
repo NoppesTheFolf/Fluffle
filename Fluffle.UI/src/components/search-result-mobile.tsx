@@ -81,9 +81,9 @@ const SearchResultMobile = ({ data }: { data: SearchResult }) => {
                     <div className="text-3xl">
                         {
                             {
-                                0: "Oh noes! Couldn't find what you're looking for",
-                                1: "Jolly good! We found a similar image"
-                            }[data.probableResults.length] || "Jolly good! We found similar images"
+                                0: "Couldn't find what you're looking for",
+                                1: "We found a similar image"
+                            }[data.probableResults.length] || "We found similar images"
                         }
                     </div>
                 </div>

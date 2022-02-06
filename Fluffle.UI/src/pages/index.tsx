@@ -169,7 +169,7 @@ const SearchPage = () => {
     }
 
     return (
-        <Layout center={true} requireBrowser={true} title="Reverse search">
+        <Layout center={true} requireBrowser={true} maxWidth="7xl" title="Reverse search">
             <Helmet>
                 <meta name="description" content="A reverse image search service tailored to the furry community."></meta>
             </Helmet>
