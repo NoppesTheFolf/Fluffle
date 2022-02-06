@@ -38,6 +38,13 @@ namespace Noppes.Fluffle.Bot.Controllers
         public TextSeparator TextSeparator { get; init; }
     }
 
+    public record SetInlineKeyboardFormatCallbackQueryData : IChatCallbackQueryData
+    {
+        public long ChatId { get; init; }
+
+        public InlineKeyboardFormat InlineKeyboardFormat { get; init; }
+    }
+
     public class SettingsMenuController
     {
         private readonly ITelegramBotClient _botClient;
@@ -73,6 +80,30 @@ namespace Noppes.Fluffle.Bot.Controllers
         public async Task SetFormat(CallbackQuery callbackQuery, SetFormatCallbackQueryData data)
         {
             await SetChatSetting(callbackQuery, data, chat => chat.ReverseSearchFormat = data.ReverseSearchFormat, chat => $"Reverse search format of {chat} set to _{Markdown.Escape(data.ReverseSearchFormat.InlineKeyboardText(), ParseMode.MarkdownV2)}_\\.");
+        }
+
+        #endregion
+
+        #region SetInlineKeyboardFormat
+
+        [Command("setinlinekeyboardformat")]
+        public async Task RequestSetInlineKeyboardFormat(Message message)
+        {
+            await SelectChat(message.Chat, message.From, x => new SetInlineKeyboardFormatCallbackQueryData { ChatId = x }, ChooseInlineKeyboardFormat, "For which chat would you like to set the inline keyboard format?", nameof(SettingsMenuController), nameof(ChooseInlineKeyboardFormat));
+        }
+
+        [CallbackQuery]
+        public async Task ChooseInlineKeyboardFormat(CallbackQuery callbackQuery, SetInlineKeyboardFormatCallbackQueryData data) => await ChooseInlineKeyboardFormat(callbackQuery.Message!.Chat, data);
+
+        public async Task ChooseInlineKeyboardFormat(Chat chat, SetInlineKeyboardFormatCallbackQueryData data)
+        {
+            await PresentEnumOptions<InlineKeyboardFormat, SetInlineKeyboardFormatCallbackQueryData>(chat, x => data with { InlineKeyboardFormat = x }, "Which inline keyboard format would you like to use?", nameof(SettingsMenuController), nameof(SetInlineKeyboardFormat));
+        }
+
+        [CallbackQuery]
+        public async Task SetInlineKeyboardFormat(CallbackQuery callbackQuery, SetInlineKeyboardFormatCallbackQueryData data)
+        {
+            await SetChatSetting(callbackQuery, data, chat => chat.InlineKeyboardFormat = data.InlineKeyboardFormat, chat => $"Inline keyboard format of {chat} set to _{Markdown.Escape(data.InlineKeyboardFormat.InlineKeyboardText(), ParseMode.MarkdownV2)}_\\.");
         }
 
         #endregion
