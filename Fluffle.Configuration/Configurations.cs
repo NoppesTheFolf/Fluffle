@@ -114,6 +114,16 @@ namespace Noppes.Fluffle.Configuration
 
         public string MongoDatabase { get; set; }
 
+        public int TelegramReverseSearchWorkersCount { get; set; }
+
+        public int TelegramReverseSearchRateLimiterCount { get; set; }
+
+        public int TelegramReverseSearchRateLimiterExpirationTime { get; set; }
+
+        public int TelegramReverseSearchRateLimiterPressureTimeSpan { get; set; }
+
+        public int TelegramReverseSearchRateLimiterSaveEveryNthIncrement { get; set; }
+
         public BotConfiguration()
         {
             RuleFor(o => o.TelegramToken).NotEmpty();
@@ -127,6 +137,13 @@ namespace Noppes.Fluffle.Configuration
 
             RuleFor(o => o.MongoConnectionString).NotEmpty();
             RuleFor(o => o.MongoDatabase).NotEmpty();
+
+            RuleFor(o => o.TelegramReverseSearchWorkersCount).GreaterThan(0);
+
+            RuleFor(o => o.TelegramReverseSearchRateLimiterCount).GreaterThan(0);
+            RuleFor(o => o.TelegramReverseSearchRateLimiterExpirationTime).GreaterThan(0);
+            RuleFor(o => o.TelegramReverseSearchRateLimiterPressureTimeSpan).GreaterThan(0);
+            RuleFor(o => o.TelegramReverseSearchRateLimiterSaveEveryNthIncrement).GreaterThan(0);
         }
     }
 

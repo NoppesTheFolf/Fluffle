@@ -19,6 +19,13 @@ namespace Noppes.Fluffle.Bot.Database
         }
     }
 
+    public class ReverseSearchHistoryRepository : Repository<MongoReverseSearchRequestHistory>
+    {
+        public ReverseSearchHistoryRepository(IMongoCollection<MongoReverseSearchRequestHistory> collection) : base(collection)
+        {
+        }
+    }
+
     public class CallbackContextRepository : ITelegramRepository<CallbackContext, string>
     {
         private readonly IMongoCollection<CallbackContext> _mongoCollection;
@@ -63,6 +70,8 @@ namespace Noppes.Fluffle.Bot.Database
 
             Chats = new ChatRepository(_mongoDatabase.GetCollection<MongoChat>("Chat"));
             Messages = new MessageRepository(_mongoDatabase.GetCollection<MongoMessage>("Message"));
+            ReverseSearchRequestHistory = new ReverseSearchHistoryRepository(_mongoDatabase.GetCollection<MongoReverseSearchRequestHistory>("ReverseSearchRequestHistory"));
+
             CallbackContexts = _mongoDatabase.GetCollection<CallbackContext>("CallbackContext");
             InputContexts = _mongoDatabase.GetCollection<InputContext>("InputContext");
         }
@@ -72,5 +81,7 @@ namespace Noppes.Fluffle.Bot.Database
 
         public IRepository<MongoChat> Chats { get; }
         public IRepository<MongoMessage> Messages { get; }
+
+        public IRepository<MongoReverseSearchRequestHistory> ReverseSearchRequestHistory { get; }
     }
 }

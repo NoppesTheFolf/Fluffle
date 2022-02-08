@@ -9,6 +9,7 @@ using Noppes.Fluffle.Utils;
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -24,15 +25,17 @@ namespace Noppes.Fluffle.Bot.Controllers
         private readonly BotConfiguration _configuration;
         private readonly ITelegramBotClient _botClient;
         private readonly BotContext _context;
-        private readonly FluffleClient _fluffleClient;
-        private ILogger<ReverseSearchController> _logger;
+        private readonly ReverseSearchScheduler _reverseSearchScheduler;
+        private readonly ReverseSearchRequestLimiter _reverseSearchRequestLimiter;
+        private readonly ILogger<ReverseSearchController> _logger;
 
-        public ReverseSearchController(BotConfiguration configuration, ITelegramBotClient botClient, BotContext context, FluffleClient fluffleClient, ILogger<ReverseSearchController> logger)
+        public ReverseSearchController(BotConfiguration configuration, ITelegramBotClient botClient, BotContext context, ReverseSearchScheduler reverseSearchScheduler, ReverseSearchRequestLimiter reverseSearchRequestLimiter, ILogger<ReverseSearchController> logger)
         {
             _configuration = configuration;
             _botClient = botClient;
             _context = context;
-            _fluffleClient = fluffleClient;
+            _reverseSearchScheduler = reverseSearchScheduler;
+            _reverseSearchRequestLimiter = reverseSearchRequestLimiter;
             _logger = logger;
         }
 
@@ -62,7 +65,11 @@ namespace Noppes.Fluffle.Bot.Controllers
             if (mongoMessage.FileUniqueId == message.Photo.Largest().FileUniqueId)
                 return;
 
-            await ReverseSearchAsync(message.Chat, message, true, mongoMessage);
+            var (shouldContinue, priority) = await _reverseSearchRequestLimiter.NextAsync(message.Chat.Id);
+            if (!shouldContinue)
+                return;
+
+            await ReverseSearchAsync(message.Chat, message, mongoMessage, priority);
         }
 
         [Update(UpdateType.ChannelPost)]
@@ -141,7 +148,11 @@ namespace Noppes.Fluffle.Bot.Controllers
                 await _context.Messages.InsertAsync(mongoMessage);
             }
 
-            await ReverseSearchAsync(message.Chat, message, false, mongoMessage);
+            var (shouldContinue, priority) = await _reverseSearchRequestLimiter.NextAsync(chat.Id);
+            if (!shouldContinue)
+                return;
+
+            await ReverseSearchAsync(message.Chat, message, mongoMessage, priority);
         }
 
         private async Task HandlePrivateImage(Chat chat, Message message, MongoMessage mongoMessage, ReverseSearchResponse response)
@@ -151,7 +162,7 @@ namespace Noppes.Fluffle.Bot.Controllers
             await RateLimiter.RunAsync(chat, () => _botClient.DeleteMessageAsync(chat.Id, message.MessageId));
 
             if (mongoMessage.FluffleResponse.Results.Count == 0)
-                response.Text = Markdown.Escape("This image could not be found.", ParseMode.MarkdownV2);
+                response.Text = "This image could not be found.";
             else
                 Formatter.Route(mongoMessage, response);
         }
@@ -189,7 +200,7 @@ namespace Noppes.Fluffle.Bot.Controllers
             return Task.CompletedTask;
         }
 
-        private async Task ReverseSearchAsync(Chat chat, Message message, bool isEdit, MongoMessage mongoMessage)
+        private async Task ReverseSearchAsync(Chat chat, Message message, MongoMessage mongoMessage, int priority)
         {
             var photo = ImageSizeHelper.OrderByDownloadPreference(message.Photo, x => x.Width, x => x.Height, 350).First();
 
@@ -198,7 +209,12 @@ namespace Noppes.Fluffle.Bot.Controllers
             stream.Position = 0;
 
             mongoMessage.FileUniqueId = message.Photo.Largest().FileUniqueId;
-            mongoMessage.FluffleResponse = await _fluffleClient.SearchAsync(stream, true, 8);
+            mongoMessage.FluffleResponse = await _reverseSearchScheduler.ProcessAsync(new ReverseSearchSchedulerItem
+            {
+                Stream = stream,
+                IncludeNsfw = true,
+                Limit = 8
+            }, priority);
             mongoMessage.FluffleResponse.Results = mongoMessage.FluffleResponse.Results
                 .Where(x => x.Match == FluffleMatch.Exact)
                 .OrderBy(x => x.Platform.Priority())
@@ -222,7 +238,7 @@ namespace Noppes.Fluffle.Bot.Controllers
                 };
                 await func(chat, message, mongoMessage, response);
 
-                if (isEdit && mongoMessage.ReverseSearchFormat == ReverseSearchFormat.Text)
+                if (mongoMessage.ReverseSearchFormat == ReverseSearchFormat.Text)
                 {
                     // Use the original caption if no caption got generated
                     if (response.Text == null && mongoMessage.Caption != null)
@@ -240,7 +256,7 @@ namespace Noppes.Fluffle.Bot.Controllers
                         response.Text = string.Empty;
                 }
 
-                if (isEdit && mongoMessage.ReverseSearchFormat == ReverseSearchFormat.InlineKeyboard)
+                if (response.Text == null && mongoMessage.ReverseSearchFormat == ReverseSearchFormat.InlineKeyboard)
                 {
                     // We do not need to do anything if the new and existing reply markups are both null
                     if (response.ReplyMarkup == null && message.ReplyMarkup == null)
