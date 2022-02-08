@@ -137,6 +137,7 @@ namespace Noppes.Fluffle.Bot.Utils
             {
                 InlineKeyboardFormat.Single => RouteSingle,
                 InlineKeyboardFormat.Multiple => RouteMultiple,
+                _ => throw new ArgumentOutOfRangeException()
             };
 
             routeAction(message, response);

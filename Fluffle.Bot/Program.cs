@@ -31,6 +31,8 @@ namespace Noppes.Fluffle.Bot
 
             var fluffleClient = new FluffleClient();
             services.AddSingleton(fluffleClient);
+            services.AddSingleton(new ReverseSearchScheduler(botConf.TelegramReverseSearchWorkersCount, fluffleClient));
+            services.AddSingleton<ReverseSearchRequestLimiter>();
 
             var context = new BotContext(botConf.MongoConnectionString, botConf.MongoDatabase);
             services.AddSingleton(context);
