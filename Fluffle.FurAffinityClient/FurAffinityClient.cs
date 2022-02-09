@@ -85,11 +85,12 @@ namespace Noppes.Fluffle.FurAffinity
             submission.Rating = Enum.Parse<FaSubmissionRating>(stats[3], true);
 
             // Extract the submission its tags
-            submission.Tags = sidebar.SelectSingleNode("./section[contains(@class, 'tags-row')]").ChildNodes
+            submission.Tags = sidebar.SelectSingleNode("./section[contains(@class, 'tags-row')]")?.ChildNodes
                 .Where(n => n.NodeType != HtmlNodeType.Text)
                 .Select(n => HttpUtility.HtmlDecode(n.InnerText)?.Trim())
                 .Where(n => n != null)
                 .ToList();
+            submission.Tags ??= Array.Empty<string>();
 
             // Extract the submission its (sub)category, species, gender and size
             var infoNode = sidebar.SelectSingleNode("./section[contains(@class, 'info')]");
