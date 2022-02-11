@@ -1,4 +1,6 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import { defer } from 'rxjs';
+import { retryWhen, delay, tap } from 'rxjs/operators';
 
 export const Match = {
     Excellent: {
@@ -51,7 +53,20 @@ const Api = function () {
         return `${process.env.API_URL}/v1/${segment}`;
     }
 
+    function mediaGroupIndexUrl(id, file) {
+        return mediaGroupUrl(process.env.TELEGRAM_MEDIA_GROUP_INDEX_URL, id, file);
+    }
+
+    function mediaGroupThumbnailUrl(id, file) {
+        return mediaGroupUrl(process.env.TELEGRAM_MEDIA_GROUP_THUMBNAIL_URL, id, file);
+    }
+
+    function mediaGroupUrl(baseUrl, id, file) {
+        return `${baseUrl}/${id}/${file}`;
+    }
+
     return {
+        mediaGroupThumbnailUrl,
         search(file: Blob, thumbnail: Blob, includeNsfw: boolean, limit: number, config: AxiosRequestConfig = undefined) {
             if (thumbnail.size > sizeLimit) {
                 return Promise.reject('The selected file is over the 4 MiB limit.');
@@ -123,6 +138,34 @@ const Api = function () {
 
                 return status;
             });
+        },
+        mediaGroup(id: string) {
+            // Backblaze B2 is laughably unreliable. We will attempt to retrieve the index three
+            // times and retry when the request times out or errors with a 500 or 503 response. It would be neat
+            // if we could implement this same logic for loading the gallery.
+            return defer(() => {
+                return axios.get(mediaGroupIndexUrl(id, 'index.json'), { timeout: 4000 });
+            }).pipe(
+                retryWhen(errors => {
+                    let errorAttempt = 1;
+
+                    return errors.pipe(
+                        tap(error => {
+                            if (errorAttempt > 3) {
+                                throw error;
+                            }
+
+                            if (error.code == 'ECONNABORTED' || error.response?.status == 500 || error.response?.status == 503) {
+                                errorAttempt++;
+                                return;
+                            }
+
+                            throw error;
+                        }),
+                        delay(500)
+                    );
+                })
+            );
         }
     }
 }();

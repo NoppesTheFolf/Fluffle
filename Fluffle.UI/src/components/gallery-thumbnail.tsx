@@ -19,6 +19,7 @@ const GalleryThumbnail = ({ thumbnail, hasBlur }: GalleryThumbnailProps) => {
         image.onload = () => {
             element.src = image.src;
             setHasBeenLoaded(true);
+            setError(null);
         };
 
         image.onerror = () => {
