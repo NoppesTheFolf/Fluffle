@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -76,6 +77,17 @@ namespace Noppes.Fluffle.Bot.Database
             }
 
             await repository.UpsertAsync(x => x.Id == tgChat.Id, chat);
+        }
+
+        public static async Task<IList<(string title, long id)>> GetOwnedChatsAsync(this IRepository<MongoChat> repository, long ownerId)
+        {
+            var chats = await repository.ManyAsync(x => x.OwnerId == ownerId);
+
+            return chats.Select(x =>
+            {
+                var isOwner = x.Id == ownerId;
+                return (isOwner, title: isOwner ? "This chat" : x.Title, id: x.Id);
+            }).OrderByDescending(x => x.isOwner).ThenBy(x => x.title).Select(x => (x.title, chatId: x.id)).ToList();
         }
     }
 }

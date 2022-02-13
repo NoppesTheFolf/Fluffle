@@ -10,24 +10,50 @@ namespace Noppes.Fluffle.Bot.Utils
 {
     public static class Formatter
     {
-        public static void Route(MongoMessage message, ReverseSearchResponse response)
+        public const string SourcesText = "Sources";
+
+        public static void RouteMessage(MongoMessage message, ReverseSearchResponse response)
         {
             Action<MongoMessage, ReverseSearchResponse> routeAction = message.ReverseSearchFormat switch
             {
-                ReverseSearchFormat.Text => TextFormatter.Route,
-                ReverseSearchFormat.InlineKeyboard => InlineKeyboardFormatter.Route,
+                ReverseSearchFormat.Text => TextFormatter.RouteMessage,
+                ReverseSearchFormat.InlineKeyboard => InlineKeyboardFormatter.RouteMessage,
                 _ => throw new ArgumentOutOfRangeException()
             };
 
             routeAction(message, response);
         }
+
+        public static void RouteMediaGroup(string url, MongoMessage message, ReverseSearchResponse response)
+        {
+            Action<string, MongoMessage, ReverseSearchResponse> routeAction = message.ReverseSearchFormat switch
+            {
+                ReverseSearchFormat.Text => TextFormatter.RouteMediaGroup,
+                ReverseSearchFormat.InlineKeyboard => InlineKeyboardFormatter.RouteMediaGroup,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            routeAction(url, message, response);
+        }
     }
 
     public static class TextFormatter
     {
+        public static void RouteMediaGroup(string url, MongoMessage message, ReverseSearchResponse response)
+        {
+            (string text, ICollection<MessageEntity> textEntities, bool shouldCaptionBeAfter) x = message.TextFormat switch
+            {
+                TextFormat.PlatformNames => (Formatter.SourcesText, new List<MessageEntity> { new() { Url = url, Offset = 0, Length = Formatter.SourcesText.Length, Type = MessageEntityType.TextLink } }, false),
+                TextFormat.Compact or TextFormat.Expanded => (url, Array.Empty<MessageEntity>(), true),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            SetText(response, x.text, x.textEntities, x.shouldCaptionBeAfter);
+        }
+
         private const int LinksLimit = 3;
 
-        public static void Route(MongoMessage message, ReverseSearchResponse response)
+        public static void RouteMessage(MongoMessage message, ReverseSearchResponse response)
         {
             var (text, textEntities, shouldCaptionBeAfter) = message.TextFormat switch
             {
@@ -37,6 +63,11 @@ namespace Noppes.Fluffle.Bot.Utils
                 _ => throw new ArgumentOutOfRangeException()
             };
 
+            SetText(response, text, textEntities, shouldCaptionBeAfter);
+        }
+
+        public static void SetText(ReverseSearchResponse response, string text, ICollection<MessageEntity> textEntities, bool shouldCaptionBeAfter)
+        {
             if (response.ExistingText != null)
             {
                 const string nextLine = "\n\n";
@@ -127,32 +158,45 @@ namespace Noppes.Fluffle.Bot.Utils
 
     public static class InlineKeyboardFormatter
     {
+        private const string FallbackText = "🦊🔍...";
         private const int MaxRows = 2;
 
         private record BinOption(int BinSize, int CompartmentSize);
 
-        public static void Route(MongoMessage message, ReverseSearchResponse response)
+        public static void RouteMediaGroup(string url, MongoMessage message, ReverseSearchResponse response)
+        {
+            RouteSingle(url, Formatter.SourcesText, response);
+            AppendTextIfNeeded(response);
+        }
+
+        public static void RouteMessage(MongoMessage message, ReverseSearchResponse response)
         {
             Action<MongoMessage, ReverseSearchResponse> routeAction = message.InlineKeyboardFormat switch
             {
-                InlineKeyboardFormat.Single => RouteSingle,
+                InlineKeyboardFormat.Single => (x, y) => RouteSingle(x.FluffleResponse.Results.First().Location, "Source", y),
                 InlineKeyboardFormat.Multiple => RouteMultiple,
                 _ => throw new ArgumentOutOfRangeException()
             };
 
             routeAction(message, response);
+            AppendTextIfNeeded(response);
         }
 
-        private static void RouteSingle(MongoMessage message, ReverseSearchResponse response)
+        private static void AppendTextIfNeeded(ReverseSearchResponse response)
         {
-            var result = message.FluffleResponse.Results.First();
+            if (response.Chat.Type is ChatType.Group or ChatType.Supergroup)
+                response.Text ??= FallbackText;
+        }
+
+        private static void RouteSingle(string url, string text, ReverseSearchResponse response)
+        {
             response.ReplyMarkup = new InlineKeyboardMarkup(new[]
             {
                 new[]
                 {
-                    new InlineKeyboardButton("Source")
+                    new InlineKeyboardButton(text)
                     {
-                        Url = result.Location
+                        Url = url
                     }
                 }
             });

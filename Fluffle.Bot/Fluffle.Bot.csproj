@@ -23,9 +23,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Fluffle.B2\Fluffle.B2.csproj" />
 		<ProjectReference Include="..\Fluffle.Constants\Fluffle.Constants.csproj" />
 		<ProjectReference Include="..\Fluffle.Http\Fluffle.Http.csproj" />
+		<ProjectReference Include="..\Fluffle.PerceptualHashing\Fluffle.PerceptualHashing.csproj" />
 		<ProjectReference Include="..\Fluffle.Service\Fluffle.Service.csproj" />
+		<ProjectReference Include="..\Fluffle.Thumbnail\Fluffle.Thumbnail.csproj" />
 		<ProjectReference Include="..\Fluffle.Utils\Fluffle.Utils.csproj" />
 	</ItemGroup>
 
