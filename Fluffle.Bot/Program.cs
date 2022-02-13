@@ -99,6 +99,7 @@ namespace Noppes.Fluffle.Bot
             services.AddTransient<ChatTrackingController>();
             services.AddTransient<SettingsMenuController>();
             services.AddTransient<ReverseSearchController>();
+            services.AddTransient<RateLimitController>();
         });
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -115,6 +116,7 @@ namespace Noppes.Fluffle.Bot
             router.RegisterController<ChatTrackingController>();
             router.RegisterController<SettingsMenuController>();
             router.RegisterController<ReverseSearchController>();
+            router.RegisterController<RateLimitController>();
 
             await router.RunAsync(cancellationToken);
         }
