@@ -37,10 +37,12 @@ namespace Noppes.Fluffle.Bot
 
         public ReverseSearchRequestLimiter(BotConfiguration configuration, BotContext botContext)
         {
-            _expirationTime = configuration.TelegramReverseSearchRateLimiterExpirationTime.Minutes();
-            _pressureTimeSpan = configuration.TelegramReverseSearchRateLimiterPressureTimeSpan.Minutes();
-            _requestCount = configuration.TelegramReverseSearchRateLimiterCount;
-            _saveEveryNthIncrement = configuration.TelegramReverseSearchRateLimiterSaveEveryNthIncrement;
+            var rateLimiterConf = configuration.ReverseSearch.RateLimiter;
+
+            _expirationTime = rateLimiterConf.ExpirationTime.Minutes();
+            _pressureTimeSpan = rateLimiterConf.PressureTimeSpan.Minutes();
+            _requestCount = rateLimiterConf.Count;
+            _saveEveryNthIncrement = rateLimiterConf.SaveEveryNthIncrement;
 
             _botContext = botContext;
         }

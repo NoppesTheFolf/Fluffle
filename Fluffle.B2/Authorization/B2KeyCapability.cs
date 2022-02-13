@@ -16,6 +16,8 @@
         ReadFiles,
         ShareFiles,
         WriteFiles,
-        DeleteFiles
+        DeleteFiles,
+        ReadBucketEncryption,
+        WriteBucketEncryption
     }
 }

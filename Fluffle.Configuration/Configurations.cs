@@ -114,15 +114,55 @@ namespace Noppes.Fluffle.Configuration
 
         public string MongoDatabase { get; set; }
 
-        public int TelegramReverseSearchWorkersCount { get; set; }
+        public class ReverseSearchConfiguration : AbstractValidator<ReverseSearchConfiguration>
+        {
+            public int Workers { get; set; }
 
-        public int TelegramReverseSearchRateLimiterCount { get; set; }
+            public class RateLimiterConfiguration : AbstractValidator<RateLimiterConfiguration>
+            {
+                public int Count { get; set; }
 
-        public int TelegramReverseSearchRateLimiterExpirationTime { get; set; }
+                public int ExpirationTime { get; set; }
 
-        public int TelegramReverseSearchRateLimiterPressureTimeSpan { get; set; }
+                public int PressureTimeSpan { get; set; }
 
-        public int TelegramReverseSearchRateLimiterSaveEveryNthIncrement { get; set; }
+                public int SaveEveryNthIncrement { get; set; }
+
+                public RateLimiterConfiguration()
+                {
+                    RuleFor(o => o.Count).GreaterThan(0);
+                    RuleFor(o => o.ExpirationTime).GreaterThan(0);
+                    RuleFor(o => o.PressureTimeSpan).GreaterThan(0);
+                    RuleFor(o => o.SaveEveryNthIncrement).GreaterThan(0);
+                }
+            }
+
+            public RateLimiterConfiguration RateLimiter { get; set; }
+
+            public ReverseSearchConfiguration()
+            {
+                RuleFor(o => o.Workers).GreaterThan(0);
+                RuleFor(o => o.RateLimiter).NotEmpty().SetValidator(o => o.RateLimiter);
+            }
+        }
+
+        public ReverseSearchConfiguration ReverseSearch { get; set; }
+
+        public class BotBackblazeB2Configuration : BackblazeB2Configuration<BotBackblazeB2Configuration>
+        {
+            public int Workers { get; set; }
+
+            public BotBackblazeB2Configuration()
+            {
+                RuleFor(o => o.Workers).NotEmpty().GreaterThan(0);
+            }
+        }
+
+        public BotBackblazeB2Configuration IndexBackblazeB2 { get; set; }
+
+        public BotBackblazeB2Configuration ThumbnailBackblazeB2 { get; set; }
+
+        public string FluffleBaseUrl { get; set; }
 
         public BotConfiguration()
         {
@@ -138,12 +178,12 @@ namespace Noppes.Fluffle.Configuration
             RuleFor(o => o.MongoConnectionString).NotEmpty();
             RuleFor(o => o.MongoDatabase).NotEmpty();
 
-            RuleFor(o => o.TelegramReverseSearchWorkersCount).GreaterThan(0);
+            RuleFor(o => o.ReverseSearch).NotEmpty().SetValidator(o => o.ReverseSearch);
 
-            RuleFor(o => o.TelegramReverseSearchRateLimiterCount).GreaterThan(0);
-            RuleFor(o => o.TelegramReverseSearchRateLimiterExpirationTime).GreaterThan(0);
-            RuleFor(o => o.TelegramReverseSearchRateLimiterPressureTimeSpan).GreaterThan(0);
-            RuleFor(o => o.TelegramReverseSearchRateLimiterSaveEveryNthIncrement).GreaterThan(0);
+            RuleFor(o => o.IndexBackblazeB2).NotEmpty().SetValidator(o => o.IndexBackblazeB2);
+            RuleFor(o => o.ThumbnailBackblazeB2).NotEmpty().SetValidator(o => o.ThumbnailBackblazeB2);
+
+            RuleFor(o => o.FluffleBaseUrl).NotEmpty().IsWellFormedHttpUrl();
         }
     }
 
@@ -210,7 +250,7 @@ namespace Noppes.Fluffle.Configuration
     /// Backblaze B2 API configuration.
     /// </summary>
     [ConfigurationSection("BackblazeB2")]
-    public class BackblazeB2Configuration : FluffleConfigurationPart<BackblazeB2Configuration>
+    public class BackblazeB2Configuration<T> : FluffleConfigurationPart<T> where T : BackblazeB2Configuration<T>
     {
         /// <summary>
         /// The unique identifier of the <see cref="ApplicationKey"/>? No idea. It's required tho!
@@ -227,6 +267,10 @@ namespace Noppes.Fluffle.Configuration
             RuleFor(o => o.ApplicationKeyId).NotEmpty();
             RuleFor(o => o.ApplicationKey).NotEmpty();
         }
+    }
+
+    public class BackblazeB2Configuration : BackblazeB2Configuration<BackblazeB2Configuration>
+    {
     }
 
     /// <summary>

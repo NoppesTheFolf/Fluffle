@@ -27,15 +27,17 @@ namespace Noppes.Fluffle.Bot.Controllers
         private readonly BotContext _context;
         private readonly ReverseSearchScheduler _reverseSearchScheduler;
         private readonly ReverseSearchRequestLimiter _reverseSearchRequestLimiter;
+        private readonly MediaGroupTracker _mediaGroupTracker;
         private readonly ILogger<ReverseSearchController> _logger;
 
-        public ReverseSearchController(BotConfiguration configuration, ITelegramBotClient botClient, BotContext context, ReverseSearchScheduler reverseSearchScheduler, ReverseSearchRequestLimiter reverseSearchRequestLimiter, ILogger<ReverseSearchController> logger)
+        public ReverseSearchController(BotConfiguration configuration, ITelegramBotClient botClient, BotContext context, ReverseSearchScheduler reverseSearchScheduler, ReverseSearchRequestLimiter reverseSearchRequestLimiter, MediaGroupTracker mediaGroupTracker, ILogger<ReverseSearchController> logger)
         {
             _configuration = configuration;
             _botClient = botClient;
             _context = context;
             _reverseSearchScheduler = reverseSearchScheduler;
             _reverseSearchRequestLimiter = reverseSearchRequestLimiter;
+            _mediaGroupTracker = mediaGroupTracker;
             _logger = logger;
         }
 
@@ -152,7 +154,12 @@ namespace Noppes.Fluffle.Bot.Controllers
             if (!shouldContinue)
                 return;
 
-            await ReverseSearchAsync(message.Chat, message, mongoMessage, priority);
+            MediaGroupData mediaGroupData = null;
+            MediaGroupItem mediaGroupItem = null;
+            if (message.MediaGroupId != null && chat.Type is ChatType.Channel or ChatType.Group or ChatType.Supergroup)
+                (mediaGroupData, mediaGroupItem) = await _mediaGroupTracker.TrackAsync(message.Chat, mongoMessage);
+
+            await ReverseSearchAsync(message.Chat, message, mongoMessage, priority, mediaGroupData, mediaGroupItem);
         }
 
         private async Task HandlePrivateImage(Chat chat, Message message, MongoMessage mongoMessage, ReverseSearchResponse response)
@@ -164,7 +171,7 @@ namespace Noppes.Fluffle.Bot.Controllers
             if (mongoMessage.FluffleResponse.Results.Count == 0)
                 response.Text = "This image could not be found.";
             else
-                Formatter.Route(mongoMessage, response);
+                Formatter.RouteMessage(mongoMessage, response);
         }
 
         private Task HandleGroupImage(Chat chat, Message message, MongoMessage mongoMessage, ReverseSearchResponse response)
@@ -172,9 +179,8 @@ namespace Noppes.Fluffle.Bot.Controllers
             if (mongoMessage.FluffleResponse.Results.Count == 0)
                 return Task.CompletedTask;
 
-            Formatter.Route(mongoMessage, response);
+            Formatter.RouteMessage(mongoMessage, response);
             response.ReplyToMessageId = message.MessageId;
-            response.Text ??= Markdown.Escape("🦊🔍...", ParseMode.MarkdownV2);
 
             return Task.CompletedTask;
         }
@@ -195,17 +201,33 @@ namespace Noppes.Fluffle.Bot.Controllers
             if (mongoMessage.FluffleResponse.Results.Count <= 0)
                 return Task.CompletedTask;
 
-            Formatter.Route(mongoMessage, response);
+            Formatter.RouteMessage(mongoMessage, response);
 
             return Task.CompletedTask;
         }
 
-        private async Task ReverseSearchAsync(Chat chat, Message message, MongoMessage mongoMessage, int priority)
+        private async Task ReverseSearchAsync(Chat chat, Message message, MongoMessage mongoMessage, int priority, MediaGroupData mediaGroupData = null, MediaGroupItem mediaGroupItem = null)
         {
-            var photo = ImageSizeHelper.OrderByDownloadPreference(message.Photo, x => x.Width, x => x.Height, 350).First();
+            var photos = ImageSizeHelper.OrderByDownloadPreference(message.Photo, x => x.Width, x => x.Height, 350).ToList();
 
             await using var stream = new MemoryStream();
-            await _botClient.GetInfoAndDownloadFileAsync(photo.FileId, stream);
+            for (var i = 0; i < photos.Count; i++)
+            {
+                var photo = photos[i];
+
+                try
+                {
+                    stream.SetLength(0);
+                    await _botClient.GetInfoAndDownloadFileAsync(photo.FileId, stream, new CancellationTokenSource(3000).Token);
+
+                    break;
+                }
+                catch (TaskCanceledException)
+                {
+                    if (i == photos.Count - 1)
+                        throw;
+                }
+            }
             stream.Position = 0;
 
             mongoMessage.FileUniqueId = message.Photo.Largest().FileUniqueId;
@@ -219,6 +241,22 @@ namespace Noppes.Fluffle.Bot.Controllers
                 .Where(x => x.Match == FluffleMatch.Exact)
                 .OrderBy(x => x.Platform.Priority())
                 .ToList();
+
+            if (mediaGroupItem != null)
+            {
+                await _context.Messages.ReplaceAsync(x => x.Id == mongoMessage.Id, mongoMessage);
+                mediaGroupItem.Priority = priority;
+                mediaGroupItem.Image = stream.ToArray();
+                mediaGroupItem.ReverseSearchEvent.Set();
+
+                await mediaGroupData!.AllReceivedEvent.WaitAsync();
+                if (!mediaGroupData.ShouldControllerContinue)
+                {
+                    await mediaGroupData.ProcessedEvent.WaitAsync();
+
+                    return;
+                }
+            }
 
             try
             {

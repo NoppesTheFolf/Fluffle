@@ -32,5 +32,13 @@ namespace Noppes.Fluffle.Validation
                 .Must(value => value != null && value.Length == length)
                 .WithMessage($"The array must contain exactly {length} elements.");
         }
+
+        public static IRuleBuilder<T, string> IsWellFormedHttpUrl<T>(this IRuleBuilder<T, string> ruleBuilder)
+        {
+            return ruleBuilder
+                .NotEmpty()
+                .Must(value => value == null || Uri.IsWellFormedUriString(value, UriKind.Absolute) && new Uri(value, UriKind.Absolute).Scheme is "http" or "https")
+                .WithMessage("The string must be a well formatted HTTP(S) URL.");
+        }
     }
 }

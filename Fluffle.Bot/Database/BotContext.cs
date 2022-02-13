@@ -1,6 +1,7 @@
 ﻿using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using Noppes.Fluffle.Bot.Routing;
+using System;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Bot.Database
@@ -58,6 +59,13 @@ namespace Noppes.Fluffle.Bot.Database
         public async Task PutAsync(InputContext document) => await _mongoCollection.ReplaceOneAsync(x => x.Id == document.Id, document, new ReplaceOptions { IsUpsert = true });
     }
 
+    public class MediaGroupRepository : Repository<MongoMediaGroup>
+    {
+        public MediaGroupRepository(IMongoCollection<MongoMediaGroup> collection) : base(collection)
+        {
+        }
+    }
+
     public class BotContext
     {
         private readonly IMongoClient _mongoClient;
@@ -70,6 +78,8 @@ namespace Noppes.Fluffle.Bot.Database
 
             Chats = new ChatRepository(_mongoDatabase.GetCollection<MongoChat>("Chat"));
             Messages = new MessageRepository(_mongoDatabase.GetCollection<MongoMessage>("Message"));
+            MediaGroups = new MediaGroupRepository(_mongoDatabase.GetCollection<MongoMediaGroup>("MediaGroup"));
+
             ReverseSearchRequestHistory = new ReverseSearchHistoryRepository(_mongoDatabase.GetCollection<MongoReverseSearchRequestHistory>("ReverseSearchRequestHistory"));
 
             CallbackContexts = _mongoDatabase.GetCollection<CallbackContext>("CallbackContext");
@@ -81,6 +91,7 @@ namespace Noppes.Fluffle.Bot.Database
 
         public IRepository<MongoChat> Chats { get; }
         public IRepository<MongoMessage> Messages { get; }
+        public IRepository<MongoMediaGroup> MediaGroups { get; }
 
         public IRepository<MongoReverseSearchRequestHistory> ReverseSearchRequestHistory { get; }
     }

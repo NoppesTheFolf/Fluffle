@@ -26,6 +26,10 @@ namespace Noppes.Fluffle.Bot.Database
         public Task<List<T>> ManyAsync(Expression<Func<T, bool>> predicate) => ManyAsync(x => x.Where(predicate));
 
         public Task<List<T>> ManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+
+        public Task<bool> AnyAsync(Expression<Func<T, bool>> predicate) => AnyAsync(x => x.Where(predicate));
+
+        public Task<bool> AnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
     }
 
     public abstract class Repository<T> : IRepository<T> where T : class, new()
@@ -50,6 +54,11 @@ namespace Noppes.Fluffle.Bot.Database
         public Task<List<T>> ManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
         {
             return applyFilter(_collection.AsQueryable()).ToListAsync();
+        }
+
+        public Task<bool> AnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+        {
+            return applyFilter(_collection.AsQueryable()).AnyAsync();
         }
 
         public Task<T> FirstAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)

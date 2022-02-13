@@ -225,18 +225,18 @@ namespace Noppes.Fluffle.Bot.Controllers
 
         private async Task SelectChat<TData>(Chat chat, User owner, Func<long, TData> getData, Func<Chat, TData, Task> next, string text, string controller, string action) where TData : IChatCallbackQueryData
         {
-            var chats = await GetOwnedChatsAsync(owner.Id);
+            var chats = await _context.Chats.GetOwnedChatsAsync(owner.Id);
 
             if (chats.Count == 0)
                 return;
 
-            if (chats.All(x => x.chatId == owner.Id))
+            if (chats.All(x => x.id == owner.Id))
             {
-                await next(chat, getData(chats[0].chatId));
+                await next(chat, getData(chats[0].id));
                 return;
             }
 
-            var keyboard = await _callbackManager.CreateAsync(chats.Select(x => (x.title, getData(x.chatId))).ToList(), controller, action);
+            var keyboard = await _callbackManager.CreateAsync(chats.Select(x => (x.title, getData(x.id))).ToList(), controller, action);
             await RateLimiter.RunAsync(chat, () => _botClient.SendTextMessageAsync(chat.Id, text, replyMarkup: keyboard));
         }
 
@@ -248,17 +248,6 @@ namespace Noppes.Fluffle.Bot.Controllers
 
             var keyboard = await _callbackManager.CreateAsync(values, controller, action);
             await RateLimiter.RunAsync(chat, () => _botClient.SendTextMessageAsync(chat.Id, text, ParseMode.MarkdownV2, replyMarkup: keyboard));
-        }
-
-        private async Task<IList<(string title, long chatId)>> GetOwnedChatsAsync(long ownerId)
-        {
-            var chats = await _context.Chats.ManyAsync(x => x.OwnerId == ownerId);
-
-            return chats.Select(x =>
-            {
-                var isOwner = x.Id == ownerId;
-                return (isOwner, title: isOwner ? "This chat" : x.Title, chatId: x.Id);
-            }).OrderByDescending(x => x.isOwner).ThenBy(x => x.title).Select(x => (x.title, x.chatId)).ToList();
         }
     }
 }
