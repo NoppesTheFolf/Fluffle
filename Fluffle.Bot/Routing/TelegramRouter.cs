@@ -1,15 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Noppes.Fluffle.Bot.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.Payments;
@@ -94,7 +91,7 @@ namespace Noppes.Fluffle.Bot.Routing
             var text = _func(update.EffectiveMessage());
 
             var botClient = scope.ServiceProvider.GetRequiredService<ITelegramBotClient>();
-            await botClient.SendTextMessageAsync(update.EffectiveMessage().Chat.Id, text, ParseMode.MarkdownV2);
+            await RateLimiter.RunAsync(update.EffectiveChat(), () => botClient.SendTextMessageAsync(update.EffectiveMessage().Chat.Id, text, ParseMode.MarkdownV2));
         }
     }
 
@@ -205,13 +202,11 @@ namespace Noppes.Fluffle.Bot.Routing
         public List<Type> Interceptors = new();
 
         private readonly IServiceProvider _services;
-        private readonly ITelegramBotClient _botClient;
         private readonly ILogger<TelegramRouter> _logger;
 
-        public TelegramRouter(IServiceProvider services, ITelegramBotClient botClient, ILogger<TelegramRouter> logger)
+        public TelegramRouter(IServiceProvider services, ILogger<TelegramRouter> logger)
         {
             _services = services;
-            _botClient = botClient;
             _logger = logger;
         }
 
@@ -351,40 +346,20 @@ namespace Noppes.Fluffle.Bot.Routing
             { UpdateType.ChatJoinRequest, typeof(ChatJoinRequest) }
         };
 
-        public async Task RunAsync(CancellationToken cancellationToken)
+        public async Task HandleUpdateAsync(Update update)
         {
-            var tasks = new TaskAwaiter<TelegramRouter>(_logger, cancellationToken);
-            var updateReceiver = new QueuedUpdateReceiver(_botClient);
+            _logger.LogDebug("Dispatching worker to handle update with ID {id}.", update.Id);
 
-            _logger.LogInformation("Awaiting updates...");
             try
             {
-                await foreach (var update in updateReceiver.WithCancellation(cancellationToken))
-                {
-                    _logger.LogDebug("Dispatching worker to handle update with ID {id}.", update.Id);
-
-                    var task = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            var worker = _services.GetRequiredService<TelegramRouterWorker>();
-                            await worker.HandleUpdateAsync(update);
-                        }
-                        catch (Exception e)
-                        {
-                            _logger.LogError(e, "An exception occurred while executing a request.");
-                            throw;
-                        }
-                    });
-
-                    tasks.Add(task);
-                }
+                var worker = _services.GetRequiredService<TelegramRouterWorker>();
+                await worker.HandleUpdateAsync(update);
             }
-            catch (OperationCanceledException)
+            catch (Exception e)
             {
+                _logger.LogError(e, "An exception occurred while executing a request.");
+                throw;
             }
-
-            await tasks.WaitTillAllCompleted();
         }
     }
 }

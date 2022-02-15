@@ -1,12 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
-		<OutputType>Exe</OutputType>
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>disable</Nullable>
 		<ImplicitUsings>disable</ImplicitUsings>
-		<AssemblyName>Noppes.$(MSBuildProjectName)</AssemblyName>
-		<RootNamespace>Noppes.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+		<AssemblyName>Noppes.Fluffle.Bot</AssemblyName>
+		<RootNamespace>Noppes.Fluffle.Bot</RootNamespace>
 		<UserSecretsId>c344b214-e437-47e5-a817-7bad0ef8c3cb</UserSecretsId>
 	</PropertyGroup>
 
@@ -23,11 +22,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Fluffle.Api\Fluffle.Api.csproj" />
 		<ProjectReference Include="..\Fluffle.B2\Fluffle.B2.csproj" />
 		<ProjectReference Include="..\Fluffle.Constants\Fluffle.Constants.csproj" />
 		<ProjectReference Include="..\Fluffle.Http\Fluffle.Http.csproj" />
 		<ProjectReference Include="..\Fluffle.PerceptualHashing\Fluffle.PerceptualHashing.csproj" />
-		<ProjectReference Include="..\Fluffle.Service\Fluffle.Service.csproj" />
 		<ProjectReference Include="..\Fluffle.Thumbnail\Fluffle.Thumbnail.csproj" />
 		<ProjectReference Include="..\Fluffle.Utils\Fluffle.Utils.csproj" />
 	</ItemGroup>

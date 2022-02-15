@@ -56,7 +56,7 @@ namespace Noppes.Fluffle.Bot.Controllers
                 builder.Append($" {percentage}%\n\n");
             }
 
-            await _botClient.SendTextMessageAsync(message.Chat.Id, builder.ToString(), ParseMode.MarkdownV2);
+            await RateLimiter.RunAsync(message.Chat, () => _botClient.SendTextMessageAsync(message.Chat.Id, builder.ToString(), ParseMode.MarkdownV2));
         }
     }
 }

@@ -9,22 +9,23 @@ namespace Noppes.Fluffle.Bot.Utils
 {
     public class TaskAwaiter<T>
     {
+        public CancellationTokenSource CancellationTokenSource { get; }
+
         private readonly HashSet<Task> _tasks;
         private readonly ILogger<T> _logger;
-        private readonly CancellationToken _cancellationToken;
         private readonly Task _continuouslyRemoveCompletedTask;
 
-        public TaskAwaiter(ILogger<T> logger, CancellationToken cancellationToken)
+        public TaskAwaiter(ILogger<T> logger)
         {
             _logger = logger;
-            _cancellationToken = cancellationToken;
+            CancellationTokenSource = new CancellationTokenSource();
             _tasks = new HashSet<Task>();
             _continuouslyRemoveCompletedTask = Task.Run(ContinuouslyRemoveCompleted);
         }
 
         public void Add(Task task)
         {
-            if (_cancellationToken.IsCancellationRequested)
+            if (CancellationTokenSource.IsCancellationRequested)
                 throw new InvalidOperationException();
 
             lock (_tasks)
@@ -37,7 +38,7 @@ namespace Noppes.Fluffle.Bot.Utils
         {
             while (true)
             {
-                if (_cancellationToken.IsCancellationRequested)
+                if (CancellationTokenSource.IsCancellationRequested)
                     return;
 
                 lock (_tasks)
