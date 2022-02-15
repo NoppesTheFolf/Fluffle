@@ -10,6 +10,24 @@ using Telegram.Bot.Types.Enums;
 
 namespace Noppes.Fluffle.Bot.Routing
 {
+    public sealed class BurstRateLimiterScope : IDisposable
+    {
+        private readonly Queue<DateTime> _history;
+        private readonly IDisposable _lock;
+
+        public BurstRateLimiterScope(Queue<DateTime> history, IDisposable @lock)
+        {
+            _history = history;
+            _lock = @lock;
+        }
+
+        public void Dispose()
+        {
+            _history.Enqueue(DateTime.UtcNow);
+            _lock?.Dispose();
+        }
+    }
+
     public class BurstRateLimiter
     {
         private readonly AsyncLock _mutex;
@@ -25,9 +43,9 @@ namespace Noppes.Fluffle.Bot.Routing
             _burstInterval = burstInterval.Milliseconds();
         }
 
-        public async Task NextAsync()
+        public async Task<BurstRateLimiterScope> NextAsync()
         {
-            using var _ = await _mutex.LockAsync();
+            var @lock = await _mutex.LockAsync();
 
             // Clear the history of any old request times
             var now = DateTime.UtcNow;
@@ -50,7 +68,7 @@ namespace Noppes.Fluffle.Bot.Routing
                     await Task.Delay(timeToWait);
             }
 
-            _history.Enqueue(DateTime.UtcNow);
+            return new BurstRateLimiterScope(_history, @lock);
         }
     }
 
@@ -95,14 +113,22 @@ namespace Noppes.Fluffle.Bot.Routing
 
         public static async Task<T> RunAsync<T>(long chatId, ChatType chatType, Func<Task<T>> makeRequest)
         {
-            if (chatType is ChatType.Group or ChatType.Supergroup or ChatType.Channel)
+            BurstRateLimiterScope groupRateLimiterScope = null;
+            try
             {
-                var rateLimiter = _groupRateLimiters.GetOrAdd(chatId, _ => new BurstRateLimiter(GroupBurstLimit, GroupBurstInterval));
-                await rateLimiter.NextAsync();
-            }
+                if (chatType is ChatType.Group or ChatType.Supergroup or ChatType.Channel)
+                {
+                    var rateLimiter = _groupRateLimiters.GetOrAdd(chatId, _ => new BurstRateLimiter(GroupBurstLimit, GroupBurstInterval));
+                    groupRateLimiterScope = await rateLimiter.NextAsync();
+                }
 
-            await _globalRateLimiter.NextAsync();
-            return await makeRequest();
+                using var _ = await _globalRateLimiter.NextAsync();
+                return await makeRequest();
+            }
+            finally
+            {
+                groupRateLimiterScope?.Dispose();
+            }
         }
     }
 }
