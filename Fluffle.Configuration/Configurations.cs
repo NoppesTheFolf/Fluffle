@@ -100,6 +100,8 @@ namespace Noppes.Fluffle.Configuration
     {
         public string TelegramToken { get; set; }
 
+        public string TelegramHost { get; set; }
+
         public int TelegramGlobalBurstLimit { get; set; }
 
         public int TelegramGlobalBurstInterval { get; set; }
@@ -167,6 +169,7 @@ namespace Noppes.Fluffle.Configuration
         public BotConfiguration()
         {
             RuleFor(o => o.TelegramToken).NotEmpty();
+            RuleFor(o => o.TelegramHost).NotEmpty();
 
             RuleFor(o => o.TelegramGlobalBurstLimit).GreaterThan(0);
             RuleFor(o => o.TelegramGlobalBurstInterval).GreaterThan(0);
