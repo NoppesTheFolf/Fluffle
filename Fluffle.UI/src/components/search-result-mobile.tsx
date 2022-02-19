@@ -92,7 +92,7 @@ const SearchResultMobile = ({ data }: { data: SearchResult }) => {
                 <div className="space-y-1">
                     <div className="px-1 space-y-1">
                         <div className="text-xs text-center text-muted">
-                            We've hidden improbable matches to keep you from viewing content you might experience as disturbing
+                            We've hidden improbable matches to keep you from viewing content you might experience as unpleasant
                         </div>
                         <button className="btn btn-sm btn-secondary w-full space-x-1" onClick={toggleHide}>
                             <span>

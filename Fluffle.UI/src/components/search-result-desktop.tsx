@@ -130,7 +130,7 @@ const SearchResultDesktop = ({ data }: { data: SearchResult }) => {
                             </span>
                             <span>{hideImprobable ? "Show" : "Hide"} improbable matches</span>
                         </button>
-                        <span className="text-sm text-muted hidden lg:inline">We've hidden improbable matches to keep you from viewing content you might experience as disturbing</span>
+                        <span className="text-sm text-muted hidden lg:inline">We've hidden improbable matches to keep you from viewing content you might experience as unpleasant</span>
                     </div>
                     <GalleryDesktop shouldBlur={hideImprobable} data={data.improbableResults} width={width} targetHeight={200} maximumHeight={250} />
                 </div>

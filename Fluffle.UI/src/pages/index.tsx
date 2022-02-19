@@ -16,19 +16,21 @@ import { dropZone, dropZoneActive } from './index.module.scss'
 const State = {
     ERROR: -1,
     IDLE: 0,
-    PREPROCESSING: 1,
-    UPLOADING: 2,
-    PROCESSING: 3,
-    DONE: 4
+    WAITING_FOR_BROWSER_EXTENSION: 1,
+    PREPROCESSING: 2,
+    UPLOADING: 3,
+    PROCESSING: 4,
+    DONE: 5
 };
 
-const SearchPage = () => {
+const SearchPage = ({ forBrowserExtension }) => {
     let searchConfig = SearchConfig();
 
     const canvasRef: React.RefObject<HTMLCanvasElement> = React.useRef();
     const containerRef: React.RefObject<HTMLDivElement> = React.useRef();
+    const dataUrlRef: React.RefObject<HTMLInputElement> = React.useRef();
 
-    const [state, setState] = React.useState(State.IDLE);
+    const [state, setState] = React.useState(forBrowserExtension ? State.WAITING_FOR_BROWSER_EXTENSION : State.IDLE);
     const [data, setData] = React.useState<SearchResult>(null);
     const [errorMessage, setErrorMessage] = React.useState(null);
     const [progress, setProgress] = React.useState(0);
@@ -55,17 +57,22 @@ const SearchPage = () => {
             : [target, determineSize(width, height, target)];
     }
 
-    function search(files: FileList) {
+    function search(value: FileList | Blob) {
         setState(State.IDLE);
         setData(null);
         setErrorMessage(null);
         setProgress(0);
 
-        if (files.length > 1) {
-            setError('You can only reverse search one image at a time.');
-            return;
+        let file: Blob;
+        if (value instanceof FileList) {
+            if (value.length > 1) {
+                setError('You can only reverse search one image at a time.');
+                return;
+            }
+            file = value[0];
+        } else {
+            file = value;
         }
-        const file = files[0];
 
         setState(State.PREPROCESSING);
 
@@ -85,15 +92,9 @@ const SearchPage = () => {
 
             // Convert image drawn on canvas to blob
             const dataUri = canvas.toDataURL('image/png');
-            const base64EncodedData = dataUri.split(',')[1];
-            const data = atob(base64EncodedData);
-            const array = new Uint8Array(data.length);
-            for (let i = 0; i < data.length; i++) {
-                array[i] = data.charCodeAt(i);
-            }
-            const thumbnail = new Blob([array]);
-
-            searchInternal(file, thumbnail);
+            fetch(dataUri).then(response => response.blob()).then(thumbnail => {
+                searchInternal(file, thumbnail);
+            });
         };
 
         // The error might simply be that the image format isn't supported by the canvas.
@@ -121,7 +122,7 @@ const SearchPage = () => {
             setData(data);
             setState(State.DONE);
 
-            // TODO: Using a timeout has proven unrealiable in the Angular version of the application
+            // TODO: Using a timeout has proven unreliable in the Angular version of the application
             setTimeout(() => {
                 containerRef.current.scrollIntoView({
                     behavior: 'smooth'
@@ -134,6 +135,13 @@ const SearchPage = () => {
 
     function onSelect(event) {
         search(event.target.files);
+    }
+
+    function onProgrammaticSubmit(event) {
+        const dataUrl = dataUrlRef.current.value;
+        fetch(dataUrl).then(request => request.blob()).then(blob => {
+            search(blob);
+        });
     }
 
     function onDragover(event) {
@@ -188,9 +196,11 @@ const SearchPage = () => {
                     </div>
                 </div>
                 <input className="hidden" type="file" id="image" onChange={onSelect} />
+                <input className="hidden" type="text" id="image-data-url" ref={dataUrlRef} />
+                <button className="hidden" id="programmatic-submit" onClick={onProgrammaticSubmit}></button>
                 <canvas className="hidden" ref={canvasRef}></canvas>
                 {![State.PREPROCESSING, State.UPLOADING, State.PROCESSING].includes(state) &&
-                    <div className="flex w-full max-w-4xl flex-col space-y-3">
+                    <div className={classNames("flex w-full max-w-4xl flex-col space-y-3", { "hidden": state === State.WAITING_FOR_BROWSER_EXTENSION })}>
                         {state === State.ERROR &&
                             <div className="flex items-center bg-gradient-danger space-x-3 p-4 rounded">
                                 <Icon name="report-problem" />
@@ -223,12 +233,12 @@ const SearchPage = () => {
                     </div>
                 }
 
-                {[State.PREPROCESSING, State.UPLOADING, State.PROCESSING].includes(state) &&
+                {[State.WAITING_FOR_BROWSER_EXTENSION, State.PREPROCESSING, State.UPLOADING, State.PROCESSING].includes(state) &&
                     <div className="w-full max-w-xl flex flex-col space-y-3 items-center">
                         <ProgressBar>
                             <ProgressBarPart color="bg-primary" isStriped={true} isAnimated={true} percentage={progress}></ProgressBarPart>
                         </ProgressBar>
-                        <span>{state === State.PREPROCESSING ? "Preprocessing" : state === State.UPLOADING ? "Uploading" : "Processing"}...</span>
+                        <span className="text-center">{state === State.WAITING_FOR_BROWSER_EXTENSION ? 'Waiting for the browser extension to download the image' : state === State.PREPROCESSING ? "Preprocessing" : state === State.UPLOADING ? "Uploading" : "Processing"}...</span>
                     </div>
                 }
 
@@ -241,6 +251,10 @@ const SearchPage = () => {
             </div>
         </Layout>
     )
+}
+
+SearchPage.defaultProps = {
+    forBrowserExtension: false
 }
 
 export default SearchPage
