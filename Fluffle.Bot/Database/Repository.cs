@@ -15,21 +15,23 @@ namespace Noppes.Fluffle.Bot.Database
 
         public Task UpsertAsync(Expression<Func<T, bool>> predicate, T document);
 
-        public Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate) => FirstOrDefaultAsync(x => x.Where(predicate));
+        public Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate) => QueryFirstOrDefaultAsync(x => x.Where(predicate));
 
-        public Task<T> FirstOrDefaultAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+        public Task<T> QueryFirstOrDefaultAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
 
-        public Task<T> FirstAsync(Expression<Func<T, bool>> predicate) => FirstAsync(x => x.Where(predicate));
+        public Task<T> FirstAsync(Expression<Func<T, bool>> predicate) => QueryFirstAsync(x => x.Where(predicate));
 
-        public Task<T> FirstAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+        public Task<T> QueryFirstAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
 
-        public Task<List<T>> ManyAsync(Expression<Func<T, bool>> predicate) => ManyAsync(x => x.Where(predicate));
+        public Task<List<T>> ManyAsync(Expression<Func<T, bool>> predicate) => QueryManyAsync(x => x.Where(predicate));
 
-        public Task<List<T>> ManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+        public Task<List<T>> QueryManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
 
-        public Task<bool> AnyAsync(Expression<Func<T, bool>> predicate) => AnyAsync(x => x.Where(predicate));
+        public Task<long> DeleteManyAsync(Expression<Func<T, bool>> predicate);
 
-        public Task<bool> AnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+        public Task<bool> AnyAsync(Expression<Func<T, bool>> predicate) => QueryAnyAsync(x => x.Where(predicate));
+
+        public Task<bool> QueryAnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
     }
 
     public abstract class Repository<T> : IRepository<T> where T : class, new()
@@ -51,22 +53,29 @@ namespace Noppes.Fluffle.Bot.Database
             return _collection.ReplaceOneAsync(predicate, document);
         }
 
-        public Task<List<T>> ManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+        public Task<List<T>> QueryManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
         {
             return applyFilter(_collection.AsQueryable()).ToListAsync();
         }
 
-        public Task<bool> AnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+        public async Task<long> DeleteManyAsync(Expression<Func<T, bool>> predicate)
+        {
+            var result = await _collection.DeleteManyAsync(predicate);
+
+            return result.DeletedCount;
+        }
+
+        public Task<bool> QueryAnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
         {
             return applyFilter(_collection.AsQueryable()).AnyAsync();
         }
 
-        public Task<T> FirstAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+        public Task<T> QueryFirstAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
         {
             return applyFilter(_collection.AsQueryable()).FirstAsync();
         }
 
-        public Task<T> FirstOrDefaultAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+        public Task<T> QueryFirstOrDefaultAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
         {
             return applyFilter(_collection.AsQueryable()).FirstOrDefaultAsync();
         }

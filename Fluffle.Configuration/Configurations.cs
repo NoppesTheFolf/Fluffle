@@ -150,6 +150,21 @@ namespace Noppes.Fluffle.Configuration
 
         public ReverseSearchConfiguration ReverseSearch { get; set; }
 
+        public class CleanerConfiguration : AbstractValidator<CleanerConfiguration>
+        {
+            public int Interval { get; set; }
+
+            public int ExpirationTime { get; set; }
+
+            public CleanerConfiguration()
+            {
+                RuleFor(o => o.Interval).GreaterThan(0);
+                RuleFor(o => o.ExpirationTime).GreaterThan(0);
+            }
+        }
+
+        public CleanerConfiguration MessageCleaner { get; set; }
+
         public class BotBackblazeB2Configuration : BackblazeB2Configuration<BotBackblazeB2Configuration>
         {
             public int Workers { get; set; }
@@ -182,6 +197,8 @@ namespace Noppes.Fluffle.Configuration
             RuleFor(o => o.MongoDatabase).NotEmpty();
 
             RuleFor(o => o.ReverseSearch).NotEmpty().SetValidator(o => o.ReverseSearch);
+
+            RuleFor(o => o.MessageCleaner).NotEmpty().SetValidator(o => o.MessageCleaner);
 
             RuleFor(o => o.IndexBackblazeB2).NotEmpty().SetValidator(o => o.IndexBackblazeB2);
             RuleFor(o => o.ThumbnailBackblazeB2).NotEmpty().SetValidator(o => o.ThumbnailBackblazeB2);

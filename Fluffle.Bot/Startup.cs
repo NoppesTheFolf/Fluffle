@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Humanizer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,6 +84,8 @@ namespace Noppes.Fluffle.Bot
             services.AddSingleton(new ReverseSearchScheduler(botConf.ReverseSearch.Workers, fluffleClient));
             services.AddSingleton<ReverseSearchRequestLimiter>();
 
+            services.AddSingleton<MessageCleaner>();
+
             services.AddSingleton<MediaGroupTracker>();
             services.AddSingleton<MediaGroupHandler>();
 
@@ -125,6 +128,9 @@ namespace Noppes.Fluffle.Bot
             router.RegisterController<SettingsMenuController>();
             router.RegisterController<ReverseSearchController>();
             router.RegisterController<RateLimitController>();
+
+            var conf = Configuration.Get<BotConfiguration>();
+            serviceBuilder.AddSingleton<MessageCleaner>(conf.MessageCleaner.Interval.Minutes());
         }
     }
 
