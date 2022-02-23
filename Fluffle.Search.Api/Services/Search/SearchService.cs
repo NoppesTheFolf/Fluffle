@@ -278,7 +278,7 @@ namespace Noppes.Fluffle.Search.Api.Services
 
             return new SR<SearchResultModel>(new SearchResultModel
             {
-                Results = searchResults.Select(x => x.Model),
+                Results = searchResults.Select(x => x.Model).OrderByDescending(x => x.Match).ThenByDescending(x => x.Score),
                 Stats = new SearchResultModel.StatsModel
                 {
                     Count = searchResult

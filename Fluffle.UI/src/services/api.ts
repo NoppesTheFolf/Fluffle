@@ -114,6 +114,8 @@ const Api = function () {
                 }).then<SearchResult>(response => {
                     const data = response.data.results.map(r => {
                         r.credits = r.credits.map(c => c.name).join(" & ");
+                        r.score = (r.score - 0.5) * 2;
+                        r.score = Math.sign(r.score) === -1 ? 0 : r.score;
                         r.match = r.match === 'exact' ? Match.Excellent : r.match === 'unlikely' ? Match.Unlikely : Match.Doubtful;
                         return r;
                     });
