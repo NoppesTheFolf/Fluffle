@@ -6,7 +6,7 @@ Pillow==9.0.0
 fastapi==0.71.0
 python-multipart==0.0.5
 joblib==1.1.0
-b2sdk==1.14.0
+b2sdk==1.14.1
 uvicorn==0.17.0
 pyaml==21.10.1
 wheel==0.37.1
