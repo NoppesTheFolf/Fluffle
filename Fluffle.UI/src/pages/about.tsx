@@ -11,10 +11,10 @@ const AboutPage = () => {
             </div>
             <div className="prose max-w-none">
                 <p>
-                    Fluffle is an initiative taken by me, <Link to="/contact/" >Noppes</Link>, with the goal to eventually create a single
-                    unified platform for fellow furries with which they can reverse search artwork from a variety of sources. In its early
-                    stages Fluffle will remain closed source, but I might decide to make it public domain under the GPLv3 (The GNU General
-                    Public License v3.0) license in the future.
+                    Fluffle is an initiative taken by me, <Link to="/contact/" >Noppes</Link>, with the goal to create a single
+                    unified platform for fellow furries with which they can reverse search artwork from a variety of sources. It is
+                    an open source project licensed under the MIT license. If you'd like to check it out, the project can be found
+                    on <a href="https://github.com/NoppesTheFolf/Fluffle" target="_blank" rel="noreferrer">GitHub</a>.
                 </p>
                 <a id="privacy">
                     <h2>Privacy</h2>
@@ -32,24 +32,24 @@ const AboutPage = () => {
                     discarded when they are not required anymore for fulfilling your request.
                 </p>
                 <p>
-                    However, we do log a few things regarding your request. These are strictly used for assessing server performance and request throttling/blocking. The following information is being logged:
+                    However, a few things are logged regarding your request. These are strictly used for assessing server performance and request throttling/blocking. The following information is being logged:
                 </p>
                 <ul>
                     <li>The origin of the request, needed to identify malicious clients and block them.</li>
                     <li>User Agent, for a normal user, this would be the web browser and the version of said web browser. Also used to identify malicious clients. Mainly used to identify which applications are making use of Fluffle its API.</li>
-                    <li>If your request caused the server to error out for whatever reason, the corresponding stack trace of the occurred exception gets logged. We can use this information to determine what caused your request to fail if you decide to contact us and provide us with a trace ID, the used image and the settings used.</li>
+                    <li>If your request caused the server to error out for whatever reason, the corresponding stack trace of the occurred exception gets logged. This information is used to determine what caused your request to fail if you decide to report the issue.</li>
                     <li>The format in which the image is encoded and its width and height. These three image attributes correlate highly with the time needed to process your request. It is therefore used to assess server performance. Its also used to identify API clients that don’t follow the guidelines put up by Fluffle.</li>
                     <li>The moment at which the server started processing your request. This can be used to assess server performance in scenarios where there are a lot of request being processed in parallel.</li>
                     <li>The how manyth request it is since the start of the server. Used to assess server performance.</li>
                     <li>A bunch of timings. You can compare this to having a stopwatch and tracking laps, but in application code. How long did it take to create the fingerprint? How long did it take to check if the submitted file was an image? How long did it take to compare the fingerprint? Etc. Used to assess server performance.</li>
                     <li>The number of images compared against. Used to assess server performance.</li>
                 </ul>
-                <a id="privacy">
+                <a id="tracking-and-cookies">
                     <h2>Tracking & cookies</h2>
                 </a>
                 <p>
                     Fluffle uses <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noreferrer">Cloudflare its web analytics platform</a>.
-                    They do not collect personal information and also do not track your browsing behavior. They do not make use of cookies and neither do we, meaning Fluffle is cookie free.
+                    They do not collect personal information and also do not track your browsing behavior. They do not make use of cookies and neither does Fluffle, meaning Fluffle is cookie free.
                 </p>
             </div>
         </Layout>
