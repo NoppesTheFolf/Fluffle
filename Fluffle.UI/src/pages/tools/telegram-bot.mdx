@@ -1,4 +1,6 @@
-import Layout from "../components/layout";
+import Layout from "../../components/layout"
+import BackToTools from "./back-to-tools"
+
 export default ({ children }) => {
   return (
     <Layout title="Telegram bot" maxWidth="4xl">
@@ -12,7 +14,7 @@ export default ({ children }) => {
 export const Format = ({ name, src, children }) => (
   <div className="flex flex-wrap sm:flex-nowrap flex-col-reverse sm:flex-row items-center sm:space-x-4">
     <div className="sm:w-72 max-w-fit flex-shrink-0">
-      <img className="w-full rounded m-0" alt={`Telegram bot using the ${name.toLowerCase()}`} src={`../images/${src}.jpg`} />
+      <img className="w-full rounded m-0" alt={`Telegram bot using the ${name.toLowerCase()}`} src={`/images/${src}.jpg`} />
       <span className="text-sm text-muted italic">Using the {name.toLowerCase()} format</span>
     </div>
     <div className="mb-2 sm:mb-0">
@@ -23,6 +25,8 @@ export const Format = ({ name, src, children }) => (
     </div>
   </div>
 );
+
+<BackToTools/>
 
 # Telegram bot
 
@@ -48,7 +52,7 @@ There really isn't much to this, the bot will simply reverse search whatever ima
 
 <h2 id="configuration">Configuration</h2>
 
-At the moment, all of the functionality the bot provides is very much standardized and provides little configuration. If the bot has been added to any channels or groups you are the owner of, then you'll be the sole person which is able to edit the settings the bot uses for those chats.
+Some of the functionality the bot provides, can be configured to your liking. If the bot has been added to any channels or groups you are the owner of, then you'll be the sole person which is able to edit the settings the bot uses for those chats.
 
 <h3 id="response-format">Response format</h3>
 

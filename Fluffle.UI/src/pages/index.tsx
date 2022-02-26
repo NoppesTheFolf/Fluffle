@@ -227,7 +227,7 @@ const SearchPage = ({ forBrowserExtension }) => {
                                     </div>
                                     <div className="text-sm text-muted">{!searchConfig.includeNsfw ? "Twitter isn't included in SFW mode." : 'Search both SFW and NSFW images.'}</div>
                                 </div>
-                                <div className="text-muted">Concerned about what happens to your data? Take a look at the <Link to="/about/">about page</Link>.</div>
+                                <div className="text-muted">Fluffle also has a Telegram bot and a browser extension, interested? Check out the <Link to="/tools/">tools page</Link>.</div>
                             </div>
                         </label>
                     </div>

@@ -5,6 +5,7 @@ import Navbar from './navbar'
 import NavbarMobile from './navbar-mobile'
 
 export const LayoutWidth = {
+    'lg': 'sm:max-w-lg',
     '2xl': 'sm:max-w-2xl',
     '4xl': 'sm:max-w-4xl',
     '7xl': 'sm:max-w-7xl',

@@ -1,0 +1,32 @@
+import Layout from "../../components/layout";
+import BackToTools from "./back-to-tools"
+import { StaticImage } from 'gatsby-plugin-image'
+
+export default ({ children }) => {
+  return (
+    <Layout center={true} title="Telegram bot" maxWidth="lg">
+      <div className="prose max-w-none">
+        {children}
+      </div>
+    </Layout>
+  );
+};
+
+export const Badge = ({ href, src }) => (
+  <a href={href} target="_blank" rel="noreferrer">
+    <img className="w-48 rounded-lg m-0" src={`/images/${src}.png`} />
+  </a>
+)
+
+<BackToTools/>
+
+# Browser extension
+
+With the browser extension, you simply right click on any image and your browser will prompt you with the option to reverse search the image using Fluffle, as can be seen in the screenshot below.
+
+<div className="flex gap-2 flex-wrap">
+  <Badge src="chrome-web-store-badge" href="https://chrome.google.com/webstore/detail/fluffle/llhgiljidjhfkenmomnlhbncalgobcje" />
+  <Badge src="firefox-add-on-badge" href="https://addons.mozilla.org/firefox/addon/fluffle" />
+</div>
+
+<img className="border-2 border-dark-200" src="/images/browser-extension-screenshot.png" />
