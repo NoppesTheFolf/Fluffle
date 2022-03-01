@@ -4,7 +4,7 @@ use warp::Filter;
 use parking_lot::{Mutex, RwLock};
 use std::sync::{Arc};
 use std::collections::HashMap;
-use blake2::{Blake2b, Digest};
+use blake2::{Blake2s256, Digest};
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use std::net::IpAddr;
@@ -86,7 +86,7 @@ impl ImageCollection {
     }
 
     fn calculate_shard_index(&self, id: i32) -> usize {
-        let mut hasher = Blake2b::new();
+        let mut hasher = Blake2s256::new();
         hasher.update(id.to_le_bytes());
         let hash = hasher.finalize();
         let shard: usize = u16::from_le_bytes([hash[0], hash[1]]).into();

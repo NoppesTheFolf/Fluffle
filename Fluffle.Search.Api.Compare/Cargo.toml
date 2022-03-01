@@ -8,9 +8,9 @@ edition = "2021"
 [dependencies]
 tokio-postgres = "0.7"
 rand = "0.8"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.17", features = ["full"] }
 warp = "0.3"
 serde = { version = "1.0", features = ["derive"] }
-blake2 = "0.9"
-parking_lot = "0.11"
+blake2 = "0.10"
+parking_lot = "0.12"
 serde_yaml = "0.8"
