@@ -8,6 +8,8 @@ use blake2::{Blake2s256, Digest};
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use std::net::IpAddr;
+use std::path::Path;
+use std::{fs, io};
 use std::fs::File;
 
 #[derive(Clone)]
@@ -16,7 +18,7 @@ struct Platform {
     name: String
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 struct Image {
     id: i32,
     hash64: u64,
@@ -54,35 +56,119 @@ struct ComparedImage {
     mismatch_count: u32
 }
 
+#[derive(Serialize)]
+struct ImageCollectionDumpSerialize<'a> {
+    change_id: i64,
+    sfw_shards: &'a Vec<Vec<Image>>,
+    nsfw_shards: &'a Vec<Vec<Image>>
+}
+
+#[derive(Deserialize)]
+struct ImageCollectionDumpDeserialize {
+    change_id: i64,
+    sfw_shards: Vec<Vec<Image>>,
+    nsfw_shards: Vec<Vec<Image>>
+}
+
+enum DumpFileType {
+    Dump,
+    Hash
+}
+
 struct ImageCollection {
     platform: Platform,
     change_id: Mutex<i64>,
     number_of_shards: usize,
     sfw_shards: RwLock<Vec<Vec<Image>>>,
-    nsfw_shards: RwLock<Vec<Vec<Image>>>
+    nsfw_shards: RwLock<Vec<Vec<Image>>>,
+    dump_location: String,
+    dump_hash_location: String
 }
 
 impl ImageCollection {
     const BATCH_SIZE: i64 = 25000;
     const THRESHOLD: u32 = 18;
 
-    fn new(platform: Platform, number_of_shards: usize) -> ImageCollection {
-        return ImageCollection {
-            platform: platform,
-            change_id: Mutex::new(0),
-            number_of_shards: number_of_shards,
+    fn new(platform: Platform, number_of_shards: usize, cache_location: &String) -> ImageCollection {
+        let dump_location = ImageCollection::get_cache_location(cache_location, platform.id, number_of_shards, DumpFileType::Dump);
+        let dump_hash_location = ImageCollection::get_cache_location(cache_location, platform.id, number_of_shards, DumpFileType::Hash);
+        let dump = ImageCollection::open_dump(&dump_location, &dump_hash_location).unwrap_or(ImageCollectionDumpDeserialize {
+            change_id: 0,
             sfw_shards: ImageCollection::generate_shards(number_of_shards),
             nsfw_shards: ImageCollection::generate_shards(number_of_shards)
+        });
+
+        let collection = ImageCollection {
+            platform: platform.clone(),
+            change_id: Mutex::new(dump.change_id),
+            number_of_shards: number_of_shards,
+            sfw_shards: RwLock::new(dump.sfw_shards),
+            nsfw_shards: RwLock::new(dump.nsfw_shards),
+            dump_location: dump_location,
+            dump_hash_location: dump_hash_location
         };
+
+        return collection;
     }
 
-    fn generate_shards(number_of_shards: usize) -> RwLock<Vec<Vec<Image>>> {
+    fn generate_shards(number_of_shards: usize) -> Vec<Vec<Image>> {
         let mut shards: Vec<Vec<Image>> = Vec::with_capacity(number_of_shards);
         for _ in 0..number_of_shards {
             shards.push(Vec::new());
         }
 
-        return RwLock::new(shards);
+        return shards;
+    }
+
+    fn get_cache_location(cache_location: &String, platform_id: i32, number_of_shards: usize, file_type: DumpFileType) -> String {
+        let file_name = format!("{}_{}.{}", platform_id, number_of_shards, if let DumpFileType::Dump = file_type { "bin" } else { "hash" });
+        let path = Path::new(&cache_location).join(file_name);
+
+        return String::from(path.to_str().unwrap());
+    }
+
+    fn write_dump(&self) {
+        let dump = ImageCollectionDumpSerialize {
+            change_id: *self.change_id.lock(),
+            sfw_shards: &self.get_shard(true).read(),
+            nsfw_shards: &self.get_shard(false).read(),
+        };
+
+        let dump = bincode::serialize(&dump).unwrap();
+        fs::write(&self.dump_location, &dump).unwrap();
+
+        let mut hasher = Blake2s256::new();
+        hasher.update(&dump);
+        let hash = hasher.finalize();
+        fs::write(&self.dump_hash_location, &hash).unwrap();
+    }
+
+    fn open_dump(location: &String, hash_location: &String) -> Option<ImageCollectionDumpDeserialize> {
+        if [location, hash_location].iter().any(|x| !Path::exists(Path::new(x))) {
+            return None;
+        }
+
+        let file = fs::File::open(location).unwrap();
+        let mut reader = io::BufReader::new(file);
+        let mut hasher = Blake2s256::new();
+        io::copy(&mut reader, &mut hasher).unwrap();
+        let hash = hasher.finalize();
+
+        let signature = fs::read(hash_location).unwrap();
+        if hash.len() != signature.len() {
+            return None;
+        }
+
+        for i in 0..hash.len() {
+            if hash[i] != signature[i] {
+                return None;
+            }
+        }
+
+        let file = fs::File::open(location).unwrap();
+        let mut reader = io::BufReader::new(file);
+        let dump: ImageCollectionDumpDeserialize = bincode::deserialize_from(&mut reader).unwrap();
+        return Some(dump);
     }
 
     fn calculate_shard_index(&self, id: i32) -> usize {
@@ -153,8 +239,9 @@ impl ImageCollection {
 
         return (count, matches);
     }
-    
-    async fn refresh(&self, client: &Client) -> Result<(), Error> {
+
+    async fn refresh(&self, is_first_run: bool, client: &Client) -> Result<(), Error> {
+        let should_dump = !is_first_run || *self.change_id.lock() == 0;
         loop {
             let get_change_id = || {
                 let lock = self.change_id.lock();
@@ -172,7 +259,7 @@ impl ImageCollection {
                 WHERE platform_id = $1 AND change_id > $2
                 ORDER BY change_id
                 LIMIT $3", &[&self.platform.id, &get_change_id(), &ImageCollection::BATCH_SIZE]).await?;
-            
+
             let progress = format!("{} - Applying {} changes...", self.platform.name, results.len());
             for row in results.iter() {
                 let id: i32 = row.get(0);
@@ -224,6 +311,10 @@ impl ImageCollection {
             }
         }
 
+        if should_dump {
+            self.write_dump();
+        }
+
         Ok(())
     }
 
@@ -241,7 +332,7 @@ struct ImageService {
 }
 
 impl ImageService {
-    async fn new(client: &Client) -> Result<ImageService, Error> {
+    async fn new(client: &Client, cache_location: &String) -> Result<ImageService, Error> {
         let mut collections = HashMap::new();
         for row in client.query("SELECT id, name FROM platform", &[]).await? {
             let id: i32 = row.get(0);
@@ -251,7 +342,7 @@ impl ImageService {
                 name: name
             };
 
-            collections.insert(platform.id, ImageCollection::new(platform, 5000));
+            collections.insert(platform.id, ImageCollection::new(platform, 5000, cache_location));
         }
 
         return Ok(ImageService {
@@ -259,9 +350,9 @@ impl ImageService {
         })
     }
 
-    async fn refresh(&self, client: &Client) -> Result<(), Error> {
+    async fn refresh(&self, is_first_run: bool, client: &Client) -> Result<(), Error> {
         for (_, collection) in self.collections.iter() {
-            collection.refresh(&client).await?;
+            collection.refresh(is_first_run, &client).await?;
         }
         
         Ok(())
@@ -289,6 +380,7 @@ struct Config {
     host: IpAddr,
     port: u16,
     refresh_interval: u64,
+    cache_location: String,
     db: DatabaseConfig
 }
 
@@ -310,7 +402,10 @@ fn read_config(config_location: &str) -> Config {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let config = read_config("config.yml");
-    
+    if !Path::exists(Path::new(&config.cache_location)) {
+        panic!("Cache directory does not exist.");
+    }
+
     let connection_string = format!("host={} user={} password={} dbname={}", config.db.host, config.db.user, config.db.password, config.db.name);
     let (client, connection) = tokio_postgres::connect(&connection_string, NoTls).await?;
     tokio::spawn(async move {
@@ -319,8 +414,8 @@ async fn main() -> Result<(), Error> {
         }
     });
 
-    let service = ImageService::new(&client).await?;
-    service.refresh(&client).await?;
+    let service = ImageService::new(&client, &config.cache_location).await?;
+    service.refresh(true, &client).await?;
     let service = Arc::new(service);
 
     let warp_service = service.clone();
@@ -329,13 +424,13 @@ async fn main() -> Result<(), Error> {
         .map(move |hash64, hash256p1, hash256p2, hash256p3, hash256p4, include_nsfw, limit| -> warp::reply::Json {
             let duration = Instant::now();
             let result = warp_service.compare(hash64, [hash256p1, hash256p2, hash256p3, hash256p4], include_nsfw, limit);
-            
+
             let mut count = 0;
             for platform_count in result.iter().map(|x| x.1.count) {
                 count += platform_count;
             }
             println!("Compared {} images in {} ms", count, duration.elapsed().as_millis());
-            
+
             return warp::reply::json(&result);
         });
 
@@ -346,7 +441,7 @@ async fn main() -> Result<(), Error> {
 
     loop {
         sleep(Duration::from_secs(config.refresh_interval)).await;
-        service.refresh(&client).await?;
+        service.refresh(false, &client).await?;
     }
 }
 

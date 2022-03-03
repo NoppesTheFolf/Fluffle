@@ -1,6 +1,7 @@
 host: 127.0.0.1
 port: 80
 refresh_interval: 300
+cache_location: ./cache
 
 db:
   host: 127.0.0.1
