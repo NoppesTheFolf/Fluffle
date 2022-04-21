@@ -51,6 +51,16 @@ namespace Noppes.Fluffle.FurryNetworkSync
         public FnCharacter Character { get; set; }
     }
 
+    public class FnSpecificSubmission : FnSubmission
+    {
+        public new ICollection<FnTag> Tags { get; set; }
+    }
+
+    public class FnTag
+    {
+        public string Value { get; set; }
+    }
+
     public class FnCharacter
     {
         public int Id { get; set; }

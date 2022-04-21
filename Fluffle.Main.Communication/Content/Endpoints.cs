@@ -21,6 +21,9 @@ namespace Noppes.Fluffle.Main.Communication
         public static object[] PutContent(string platformName) =>
             V1.Url(ContentRoute(platformName));
 
+        public static object[] GetContentToRetry(string platformName) =>
+            V1.Url(ContentRoute(platformName, "retry"));
+
         public static object[] PutContentWarning(string platformName, string platformContentId) =>
             V1.Url(ContentRoute(platformName, platformContentId, "warning"));
 

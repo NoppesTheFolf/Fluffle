@@ -24,6 +24,16 @@ namespace Noppes.Fluffle.E621Sync
             _e621Client = e621Client;
         }
 
+        public override async Task<Post> GetContentAsync(string id)
+        {
+            var post = await HttpResiliency.RunAsync(() => _e621Client.GetPostAsync(int.Parse(id)));
+
+            if (post != null && post.Flags.IsDeleted)
+                return null;
+
+            return post;
+        }
+
         protected override async Task FullSyncAsync() => await SyncFromId(0);
 
         protected override async Task QuickSyncAsync()

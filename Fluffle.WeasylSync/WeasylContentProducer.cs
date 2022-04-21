@@ -25,6 +25,13 @@ namespace Noppes.Fluffle.WeasylSync
             _weasylClient = weasylClient;
         }
 
+        public override async Task<Submission> GetContentAsync(string id)
+        {
+            var submission = await HttpResiliency.RunAsync(() => _weasylClient.GetSubmissionAsync(int.Parse(id)));
+
+            return submission?.Media.Submission == null ? null : submission;
+        }
+
         protected override async Task QuickSyncAsync()
         {
             var fontPageSubmissions = await HttpResiliency.RunAsync(() => _weasylClient.GetFrontPageAsync());
@@ -38,10 +45,7 @@ namespace Noppes.Fluffle.WeasylSync
                     return await HttpResiliency.RunAsync(() => _weasylClient.GetSubmissionAsync(id));
                 }, "Retrieving submission with ID {id}", id);
 
-                if (submission == null)
-                    continue;
-
-                if (submission.Media.Submission == null)
+                if (submission?.Media.Submission == null)
                     continue;
 
                 await SubmitContentAsync(new[] { submission });

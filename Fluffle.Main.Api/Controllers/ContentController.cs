@@ -82,6 +82,15 @@ namespace Noppes.Fluffle.Main.Api.Controllers
 
             return HandleV1(error);
         }
+
+        [HttpGet(PluralRoute + "/retry")]
+        [Permissions(ContentPermissions.ReadUnprocessed)]
+        public async Task<IActionResult> Retry(string platformName)
+        {
+            var result = await _contentService.GetContentToRetry(platformName);
+
+            return HandleV1(result);
+        }
     }
 
     public class ContentPermissions : Permissions

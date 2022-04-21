@@ -23,6 +23,17 @@ namespace Noppes.Fluffle.FurryNetworkSync
             _client = client;
         }
 
+        public override async Task<FnSubmission> GetContentAsync(string id)
+        {
+            var submission = await _client.GetSubmissionAsync(int.Parse(id));
+
+            if (submission == null)
+                return null;
+
+            ((FnSubmission)submission).Tags = submission.Tags.Select(t => t.Value).ToList();
+            return submission;
+        }
+
         protected override Task FullSyncAsync() => SyncAsync();
 
         protected override Task QuickSyncAsync() => SyncAsync(FurryNetworkClient.MaximumSubmissionsPerSearch * 15);

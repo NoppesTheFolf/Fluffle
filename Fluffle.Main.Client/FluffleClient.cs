@@ -102,6 +102,11 @@ namespace Noppes.Fluffle.Main.Client
                 .GetMessagePackAsync<IList<UnprocessedImageModel>>();
         }
 
+        public Task<string> GetContentToRetryAsync(string platformName)
+        {
+            return Request(Endpoints.GetContentToRetry(platformName)).GetJsonAsync<string>();
+        }
+
         public Task<IList<StatusModel>> GetStatusAsync()
         {
             return Request(Endpoints.GetStatus)

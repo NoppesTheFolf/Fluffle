@@ -65,6 +65,13 @@ namespace Noppes.Fluffle.FurAffinitySync
             _configuration = configuration;
         }
 
+        public override async Task<FaSubmission> GetContentAsync(string id)
+        {
+            var result = await HttpResiliency.RunAsync(() => _client.GetSubmissionAsync(int.Parse(id)));
+
+            return result?.Result;
+        }
+
         protected override Task QuickSyncAsync() => throw new NotImplementedException();
 
         protected override async Task FullSyncAsync()

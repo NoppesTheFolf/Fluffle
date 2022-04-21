@@ -47,6 +47,21 @@ namespace Noppes.Fluffle.FurryNetworkSync
             });
         }
 
+        public async Task<FnSpecificSubmission> GetSubmissionAsync(int id)
+        {
+            try
+            {
+                return await AuthorizedRequest(null, r => r.GetJsonAsync<FnSpecificSubmission>(), "api/artwork", id);
+            }
+            catch (FlurlHttpException e)
+            {
+                if (e.StatusCode == 404)
+                    return null;
+
+                throw;
+            }
+        }
+
         public Task<FnSearchResult> SearchAsync(int from = 0, int? size = null)
         {
             size ??= MaximumSubmissionsPerSearch;
@@ -75,7 +90,7 @@ namespace Noppes.Fluffle.FurryNetworkSync
                 var request = Request(urlSegments)
                     .WithOAuthBearerToken(_bearerToken);
 
-                buildRequest(request);
+                buildRequest?.Invoke(request);
 
                 return request;
             }

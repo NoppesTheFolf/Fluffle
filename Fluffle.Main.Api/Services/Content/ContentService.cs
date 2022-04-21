@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Humanizer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Nito.AsyncEx;
 using Noppes.Fluffle.Api.AccessControl;
@@ -52,9 +53,12 @@ namespace Noppes.Fluffle.Main.Api.Services
 
         public async Task<SE> MarkForDeletionAsync(string platformName, string idOnPlatform, bool saveChanges = true)
         {
-            return await _context.Content.NotDeleted().GetContentAsync(_context.Platforms, platformName, idOnPlatform, async content =>
+            return await _context.Content.GetContentAsync(_context.Platforms, platformName, idOnPlatform, async content =>
             {
-                content.IsMarkedForDeletion = true;
+                content.HasFatalErrors = false;
+
+                if (!content.IsDeleted)
+                    content.IsMarkedForDeletion = true;
 
                 if (saveChanges)
                     await _context.SaveChangesAsync();
@@ -77,6 +81,7 @@ namespace Noppes.Fluffle.Main.Api.Services
 
                 foreach (var imageToDelete in imagesToDelete)
                 {
+                    imageToDelete.HasFatalErrors = false;
                     imageToDelete.IsMarkedForDeletion = true;
                     deletedIdsOnPlatform.Add((int)imageToDelete.IdOnPlatformAsInteger);
                 }
@@ -89,7 +94,7 @@ namespace Noppes.Fluffle.Main.Api.Services
 
         public async Task<SE> DeleteAsync(string platformName, string idOnPlatform)
         {
-            var query = _context.Content.Where(c => !c.IsDeleted)
+            var query = _context.Content
                 .Include(c => c.Platform)
                 .IncludeThumbnails();
 
@@ -154,7 +159,10 @@ namespace Noppes.Fluffle.Main.Api.Services
                 });
 
                 if (model.IsFatal)
+                {
+                    content.HasFatalErrors = true;
                     content.IsMarkedForDeletion = true;
+                }
 
                 await _context.SaveChangesAsync();
 
@@ -321,6 +329,7 @@ namespace Noppes.Fluffle.Main.Api.Services
 
                         // Some images might have failed to be downloaded. We therefore need to
                         // resume them if they're submitted again.
+                        dest.HasFatalErrors = false;
                         dest.IsMarkedForDeletion = false;
                         dest.IsDeleted = false;
 
@@ -432,6 +441,32 @@ namespace Noppes.Fluffle.Main.Api.Services
                    });
 
                 return new SR<IEnumerable<UnprocessedImageModel>>(models);
+            });
+        }
+
+        private const int RetryIncrementThreshold = 3;
+        private static readonly TimeSpan RetryReservationTime = 3.Days();
+
+        public async Task<SR<string>> GetContentToRetry(string platformName)
+        {
+            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
+            {
+                var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                var entity = await _context.Content
+                    .Where(i => i.PlatformId == platform.Id)
+                    .Where(i => i.HasFatalErrors && i.RetryIncrement < RetryIncrementThreshold)
+                    .Where(i => i.RetryReservedUntil < now)
+                    .OrderByDescending(i => i.Id)
+                    .FirstOrDefaultAsync();
+
+                if (entity == null)
+                    return new SR<string>((string)null);
+
+                entity.RetryIncrement++;
+                entity.RetryReservedUntil = DateTimeOffset.UtcNow.Add(RetryReservationTime).ToUnixTimeSeconds();
+                await _context.SaveChangesAsync();
+
+                return new SR<string>(entity.IdOnPlatform);
             });
         }
 

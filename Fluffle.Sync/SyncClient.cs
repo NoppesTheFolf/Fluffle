@@ -36,6 +36,8 @@ namespace Noppes.Fluffle.Sync
                     async () => await fluffleClient.GetPlatformAsync(platformName)).Result;
                 services.AddSingleton(platformModel);
 
+                services.AddTransient<RetryContentProducer<TContentProducer, TContent>>();
+
                 services.AddTransient(typeof(SyncStateService<>));
                 services.AddTransient<ContentSubmitter>();
                 services.AddSingleton<TContentProducer>();
@@ -56,11 +58,24 @@ namespace Noppes.Fluffle.Sync
         {
             Log.Information($"Starting {Platform.Name} syncing client...");
 
-            var manager = new ProducerConsumerManager<ICollection<PutContentModel>>(Services, 20);
-            manager.AddProducer<TContentProducer>(1);
-            manager.AddFinalConsumer<ContentSubmitter>(1);
+            var retryManager = new ProducerConsumerManager<ICollection<PutContentModel>>(Services, 1);
+            retryManager.AddProducer<RetryContentProducer<TContentProducer, TContent>>(1);
+            retryManager.AddFinalConsumer<ContentSubmitter>(1);
 
-            await manager.RunAsync();
+            var producerManager = new ProducerConsumerManager<ICollection<PutContentModel>>(Services, 20);
+            producerManager.AddProducer<TContentProducer>(1);
+            producerManager.AddFinalConsumer<ContentSubmitter>(1);
+
+            var exitedTask = await Task.WhenAny(new[]
+            {
+                retryManager.RunAsync(),
+                producerManager.RunAsync()
+            });
+
+            if (exitedTask.Exception != null)
+                throw exitedTask.Exception;
+
+            throw new InvalidOperationException("A task exited unexpectedly.");
         }
     }
 }

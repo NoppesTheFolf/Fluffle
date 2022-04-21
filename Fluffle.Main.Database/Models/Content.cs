@@ -52,6 +52,9 @@ namespace Noppes.Fluffle.Main.Database.Models
         public string Discriminator { get; set; }
         public bool IsMarkedForDeletion { get; set; }
         public bool IsDeleted { get; set; }
+        public bool HasFatalErrors { get; set; }
+        public int RetryIncrement { get; set; }
+        public long RetryReservedUntil { get; set; }
         public byte[] Source { get; set; }
         public int SourceVersion { get; set; }
 
@@ -122,6 +125,10 @@ namespace Noppes.Fluffle.Main.Database.Models
             entity.Property(e => e.IsMarkedForDeletion);
             entity.HasIndex(e => e.IsMarkedForDeletion);
 
+            entity.Property(e => e.HasFatalErrors);
+            entity.Property(e => e.RetryIncrement);
+            entity.Property(e => e.RetryReservedUntil);
+
             entity.Property(e => e.Source);
             entity.Property(e => e.SourceVersion);
 
@@ -142,6 +149,9 @@ namespace Noppes.Fluffle.Main.Database.Models
 
             // Speeds up calculating maximum priority for a creditable entity
             entity.HasIndex(e => new { e.Id, e.Priority });
+
+            // Speeds up getting the images sync clients have to retry retrieving
+            entity.HasIndex(e => new { e.PlatformId, e.HasFatalErrors, e.RetryIncrement, e.RetryReservedUntil });
 
             entity.Property(e => e.MediaTypeId);
             entity.HasOne(e => e.MediaType)

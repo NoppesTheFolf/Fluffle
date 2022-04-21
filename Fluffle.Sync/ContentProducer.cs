@@ -68,6 +68,8 @@ namespace Noppes.Fluffle.Sync
 
         protected abstract Task FullSyncAsync();
 
+        public abstract Task<TContent> GetContentAsync(string id);
+
         public async Task SubmitContentAsync(ICollection<TContent> content)
         {
             var contentModels = content
