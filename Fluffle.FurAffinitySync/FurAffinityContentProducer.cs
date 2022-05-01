@@ -212,7 +212,7 @@ namespace Noppes.Fluffle.FurAffinitySync
                     Location = src.FileLocation.AbsoluteUri,
                     Width = src.Size?.Width ?? -1,
                     Height = src.Size?.Height ?? -1,
-                    Format = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(src.FileLocation.AbsoluteUri))
+                    Format = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(src.FileLocation.AbsoluteUri), FileFormatConstant.Binary)
                 },
                 Thumbnail(200),
                 Thumbnail(300),
@@ -226,7 +226,7 @@ namespace Noppes.Fluffle.FurAffinitySync
 
         public override MediaTypeConstant GetMediaType(FaSubmission src)
         {
-            var fileFormat = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(src.FileLocation.AbsoluteUri));
+            var fileFormat = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(src.FileLocation.AbsoluteUri), FileFormatConstant.Binary);
 
             return fileFormat switch
             {

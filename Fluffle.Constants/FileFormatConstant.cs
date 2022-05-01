@@ -44,7 +44,7 @@ namespace Noppes.Fluffle.Constants
         /// <summary>
         /// Maps the provided extension to a <see cref="FileFormatConstant"/>.
         /// </summary>
-        public static FileFormatConstant GetFileFormatFromExtension(string extension)
+        public static FileFormatConstant GetFileFormatFromExtension(string extension, FileFormatConstant? fallback = null)
         {
             extension = extension.Trim();
 
@@ -80,7 +80,7 @@ namespace Noppes.Fluffle.Constants
                 "mid" => FileFormatConstant.Mid,
                 "bin" => FileFormatConstant.Binary,
                 "" => FileFormatConstant.Binary,
-                _ => throw new InvalidOperationException($"Extension `{extension}` could not be found")
+                _ => fallback ?? throw new InvalidOperationException($"Extension `{extension}` could not be found")
             };
         }
 
