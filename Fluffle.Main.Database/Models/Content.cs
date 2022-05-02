@@ -150,9 +150,6 @@ namespace Noppes.Fluffle.Main.Database.Models
             // Speeds up calculating maximum priority for a creditable entity
             entity.HasIndex(e => new { e.Id, e.Priority });
 
-            // Speeds up getting the images sync clients have to retry retrieving
-            entity.HasIndex(e => new { e.PlatformId, e.HasFatalErrors, e.RetryIncrement, e.RetryReservedUntil });
-
             entity.Property(e => e.MediaTypeId);
             entity.HasOne(e => e.MediaType)
                 .WithMany(e => e.Content)
