@@ -9,7 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Flurl.Http" Version="3.2.2" />
+		<PackageReference Include="Flurl.Http" Version="3.2.3" />
 		<PackageReference Include="MessagePack" Version="2.3.85" />
 		<PackageReference Include="MessagePackAnalyzer" Version="2.3.85" />
 		<PackageReference Include="HtmlAgilityPack" Version="1.11.42" />
