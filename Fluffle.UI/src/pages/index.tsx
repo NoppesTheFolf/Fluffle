@@ -58,6 +58,11 @@ const SearchPage = ({ forBrowserExtension }) => {
     }
 
     function search(value: FileList | Blob) {
+        // Ignore call if no files are provided
+        if (value instanceof FileList && value.length === 0) {
+            return;
+        }
+
         setState(State.IDLE);
         setData(null);
         setErrorMessage(null);
