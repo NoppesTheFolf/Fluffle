@@ -184,7 +184,7 @@ const SearchPage = ({ forBrowserExtension }) => {
     return (
         <Layout center={true} requireBrowser={true} maxWidth="7xl" title="Reverse search">
             <Helmet>
-                <meta name="description" content="A reverse image search service tailored to the furry community."></meta>
+                <meta name="description" content="Reverse image search furry artwork and find the source on Fur Affinity, Twitter, e621 and more!"></meta>
             </Helmet>
             <div className="w-full flex flex-col items-center space-y-12">
                 <div className="flex flex-col justify-center items-center">
