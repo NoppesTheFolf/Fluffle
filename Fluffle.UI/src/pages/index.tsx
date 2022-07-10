@@ -26,13 +26,16 @@ const State = {
 const SearchPage = ({ forBrowserExtension }) => {
     let searchConfig = SearchConfig();
 
-    const canvasRef: React.RefObject<HTMLCanvasElement> = React.useRef();
-    const containerRef: React.RefObject<HTMLDivElement> = React.useRef();
-    const dataUrlRef: React.RefObject<HTMLInputElement> = React.useRef();
+    const containerObserverTimeout = 500;
+    let containerObserver: ResizeObserver | undefined;
+    let containerObserverTime: number;
+
+    const canvasRef: React.RefObject<HTMLCanvasElement | null | undefined> = React.useRef();
+    const dataUrlRef: React.RefObject<HTMLInputElement | null | undefined> = React.useRef();
 
     const [state, setState] = React.useState(forBrowserExtension ? State.WAITING_FOR_BROWSER_EXTENSION : State.IDLE);
-    const [data, setData] = React.useState<SearchResult>(null);
-    const [errorMessage, setErrorMessage] = React.useState(null);
+    const [data, setData] = React.useState<SearchResult | undefined>();
+    const [errorMessage, setErrorMessage] = React.useState<string | undefined>();
     const [progress, setProgress] = React.useState(0);
     const [hasDrag, setHasDrag] = React.useState(false);
 
@@ -64,8 +67,8 @@ const SearchPage = ({ forBrowserExtension }) => {
         }
 
         setState(State.IDLE);
-        setData(null);
-        setErrorMessage(null);
+        setData(undefined);
+        setErrorMessage(undefined);
         setProgress(0);
 
         let file: Blob;
@@ -82,7 +85,7 @@ const SearchPage = ({ forBrowserExtension }) => {
         setState(State.PREPROCESSING);
 
         const image = new Image();
-        const canvas = canvasRef.current;
+        const canvas = canvasRef.current!;
         image.onload = () => {
             const target = 256;
             const thumbnailSize = calculateThumbnailSize(image.width, image.height, target);
@@ -92,7 +95,7 @@ const SearchPage = ({ forBrowserExtension }) => {
             // scale preserving the aspect ratio of the original image  
             canvas.width = thumbnailSize[0];
             canvas.height = thumbnailSize[1];
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d')!;
             ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
             // Convert image drawn on canvas to blob
@@ -126,16 +129,30 @@ const SearchPage = ({ forBrowserExtension }) => {
         }).then(data => {
             setData(data);
             setState(State.DONE);
-
-            // TODO: Using a timeout has proven unreliable in the Angular version of the application
-            setTimeout(() => {
-                containerRef.current.scrollIntoView({
-                    behavior: 'smooth'
-                });
-            }, 250);
         }).catch(message => {
             setError(message);
         });
+    }
+
+    function onContainerChanged(ref: HTMLElement) {
+        if (ref == null) {
+            containerObserver?.disconnect();
+            return;
+        }
+
+        containerObserverTime = new Date().getTime();
+        containerObserver = new ResizeObserver(() => {
+            const now = new Date().getTime();
+            if (now - containerObserverTime > containerObserverTimeout) {
+                return;
+            }
+
+            containerObserverTime = now;
+            ref.scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+        containerObserver.observe(ref);
     }
 
     function onSelect(event) {
@@ -143,7 +160,7 @@ const SearchPage = ({ forBrowserExtension }) => {
     }
 
     function onProgrammaticSubmit(event) {
-        const dataUrl = dataUrlRef.current.value;
+        const dataUrl = dataUrlRef.current!.value;
         fetch(dataUrl).then(request => request.blob()).then(blob => {
             search(blob);
         });
@@ -248,7 +265,7 @@ const SearchPage = ({ forBrowserExtension }) => {
                 }
 
                 {state === State.DONE &&
-                    <div className="w-full bg-dark-300 p-2 rounded" ref={containerRef}>
+                    <div className="w-full bg-dark-300 p-2 rounded" ref={onContainerChanged}>
                         <SearchResultDesktop data={data} />
                         <SearchResultMobile data={data} />
                     </div>
