@@ -6,16 +6,21 @@ const ImageRating = {
 };
 
 const SearchConfig = function () {
+    const ratingKey = 'rating';
+
     if (typeof localStorage === 'undefined') {
-        return {}
+        return {
+            includeNsfw: false,
+            setIncludeNsfw: () => {}
+        };
     }
 
     function readIncludeNsfw() {
-        if (localStorage.getItem('rating') != null) {
-            return localStorage.getItem('rating') === ImageRating.Explicit;
+        if (localStorage.getItem(ratingKey) != null) {
+            return localStorage.getItem(ratingKey) === ImageRating.Explicit;
         }
 
-        return false;
+        return true;
     }
 
     const [includeNsfw, setIncludeNsfw] = React.useState(readIncludeNsfw());
@@ -23,7 +28,7 @@ const SearchConfig = function () {
     return {
         includeNsfw,
         setIncludeNsfw(includeNsfw: boolean) {
-            localStorage.setItem('rating', includeNsfw ? ImageRating.Explicit : ImageRating.Safe);
+            localStorage.setItem(ratingKey, includeNsfw ? ImageRating.Explicit : ImageRating.Safe);
             setIncludeNsfw(includeNsfw);
         }
     }
