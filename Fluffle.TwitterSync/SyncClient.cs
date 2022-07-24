@@ -141,7 +141,7 @@ namespace Noppes.Fluffle.TwitterSync
                 manager.AddConsumer<PredictClasses<AnalyzeUserData>>(1, 5);
                 manager.AddConsumer<ReverseSearch>(4, 5);
                 manager.AddConsumer<PredictIfArtist>(1, 5);
-                manager.AddConsumer<FillMissingFromTimelineIfArtist<AnalyzeUserData>>(20, 5);
+                manager.AddConsumer<FillMissingFromTimelineIfArtist<AnalyzeUserData>>(5, 5);
                 manager.AddFinalConsumer<UpsertIfArtist<AnalyzeUserData>>(1);
 
                 await manager.RunAsync();
@@ -163,7 +163,7 @@ namespace Noppes.Fluffle.TwitterSync
             {
                 var manager = new ProducerConsumerManager<RefreshTimelineData>(Services, 5);
                 manager.AddProducer<RefreshUserSupplier>(1);
-                manager.AddConsumer<FillMissingFromTimelineIfArtist<RefreshTimelineData>>(20, 5);
+                manager.AddConsumer<FillMissingFromTimelineIfArtist<RefreshTimelineData>>(95, 5);
                 manager.AddFinalConsumer<UpsertIfArtist<RefreshTimelineData>>(1);
 
                 await manager.RunAsync();
