@@ -6,6 +6,7 @@ using Noppes.Fluffle.TwitterSync.Database.Models;
 using Noppes.Fluffle.Utils;
 using Serilog;
 using SerilogTimings;
+using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -81,18 +82,38 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                     FlurlHttpException exitException = null;
                     while (items.TryPop(out var x))
                     {
+                        Stream stream = null;
                         try
                         {
-                            var url = x.isOriginal ? image.Url : $"{image.Url}?name={Enum.GetName(x.Item1.Size).ToLowerInvariant()}";
+                            var url = x.isOriginal ? image.Url : $"{image.Url}?name={Enum.GetName(x.image.Size)!.ToLowerInvariant()}";
 
                             using var _ = Operation.Time("Downloading media with ID {mediaId} for tweet with ID {tweetId} at size {size}", image.MediaId, image.TweetId, x.image.Size);
-                            return await HttpResiliency.RunAsync(() => _downloadClient.GetStreamAsync(url));
+                            stream = await HttpResiliency.RunAsync(() => _downloadClient.GetStreamAsync(url));
+
+                            try
+                            {
+                                var validateImage = await Image.LoadAsync(stream);
+                                await validateImage.SaveAsJpegAsync(Stream.Null);
+                            }
+                            catch (Exception e)
+                            {
+                                Log.Warning(e, "Failed reading media with ID {mediaId} as image for tweet with ID {tweetId} at size {size}", image.MediaId, image.TweetId, x.image.Size);
+
+                                await stream.DisposeAsync();
+                                return null;
+                            }
+
+                            stream.Position = 0;
+                            return stream;
                         }
                         catch (FlurlHttpException exception)
                         {
                             exitException = exception;
 
                             Log.Warning("Failed downloading media with ID {mediaId} for tweet with ID {tweetId} at size {size} ({statusCode})", image.MediaId, image.TweetId, x.image.Size, exception.StatusCode);
+
+                            if (stream != null)
+                                await stream.DisposeAsync();
                         }
                     }
 
@@ -126,7 +147,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                     var media = await context.Media.FirstOrDefaultAsync(m => m.Id == image.MediaId);
                     if (media != null)
                     {
-                        Log.Information("Marking media with ID {mediaId} as deleted", media.Id);
+                        Log.Information("Marking media with ID {mediaId} as not available", media.Id);
                         media.IsNotAvailable = true;
 
                         await context.SaveChangesAsync();

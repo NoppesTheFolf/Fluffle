@@ -192,7 +192,8 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 {
                     dest.Url = src.Url;
                     dest.MediaType = src.MediaType;
-                    dest.IsNotAvailable = false;
+                    // Note that media should not be set to dest.IsNotAvailable = false here.
+                    // Sometimes media is corrupt and will be set unavailable because of it.
 
                     return Task.CompletedTask;
                 });
