@@ -42,14 +42,14 @@ RUN wget -qq https://github.com/glennrp/libpng/archive/v1.6.37.tar.gz && \
     cd .. && \
     rm -rf v1.6.37.tar.gz libpng-1.6.37
 
-RUN wget -qq https://github.com/randy408/libspng/archive/refs/tags/v0.7.1.tar.gz && \
-    tar xf v0.7.1.tar.gz && \
-    cd libspng-0.7.1 && \
+RUN wget -qq https://github.com/randy408/libspng/archive/refs/tags/v0.7.2.tar.gz && \
+    tar xf v0.7.2.tar.gz && \
+    cd libspng-0.7.2 && \
     cmake -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release && \
     make -j$(nproc) && \
     make install && \
     cd .. && \
-    rm -rf v0.7.1.tar.gz libspng-0.7.1
+    rm -rf v0.7.2.tar.gz libspng-0.7.2
 
 RUN wget -qq https://github.com/mozilla/mozjpeg/archive/v4.0.3.tar.gz && \
     tar xf v4.0.3.tar.gz && \
@@ -68,18 +68,18 @@ RUN wget -qq https://deac-ams.dl.sourceforge.net/project/giflib/giflib-5.2.1.tar
     cd .. && \
     rm -rf giflib-5.2.1.tar.gz giflib-5.2.1
 
-RUN wget -qq https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.2.1.tar.gz && \
-    tar xf libwebp-1.2.1.tar.gz && \
-    cd libwebp-1.2.1 && \
+RUN wget -qq https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.2.3.tar.gz && \
+    tar xf libwebp-1.2.3.tar.gz && \
+    cd libwebp-1.2.3 && \
     ./configure --enable-libwebpmux --enable-libwebpdecoder --enable-libwebpextras && \
     make -j$(nproc) && \
     make install && \
     cd .. && \
-    rm -rf libwebp-1.2.1.tar.gz libwebp-1.2.1
+    rm -rf libwebp-1.2.3.tar.gz libwebp-1.2.3
 
 RUN git clone https://aomedia.googlesource.com/aom && \
     cd aom && \
-    git checkout v3.2.0 && \
+    git checkout v3.4.0 && \
     mkdir build/linux && cd build/linux && cmake -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DAOM_TARGET_CPU=generic -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE ../../ && \
     make -j$(nproc) && \
     make install && \
@@ -95,14 +95,14 @@ RUN wget -qq https://github.com/strukturag/libheif/releases/download/v1.12.0/lib
     cd .. && \
     rm -rf libheif-1.12.0.tar.gz libheif-1.12.0
 
-RUN wget -qq https://github.com/libvips/libvips/releases/download/v8.12.1/vips-8.12.1.tar.gz && \
-    tar xf vips-8.12.1.tar.gz && \
-    cd vips-8.12.1 && \
+RUN wget -qq https://github.com/libvips/libvips/releases/download/v8.12.2/vips-8.12.2.tar.gz && \
+    tar xf vips-8.12.2.tar.gz && \
+    cd vips-8.12.2 && \
     CFLAGS=-O3 CXXFLAGS=-O3 ./configure && \
     make -j$(nproc) && \
     make install && \
     cd .. && \
-    rm -rf vips-8.12.1.tar.gz vips-8.12.1 && \
+    rm -rf vips-8.12.2.tar.gz vips-8.12.2 && \
     ldconfig
 
 # Install .NET Core SDK
