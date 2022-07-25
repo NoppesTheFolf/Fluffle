@@ -28,7 +28,7 @@ const SearchPage = ({ forBrowserExtension }) => {
 
     const containerObserverTimeout = 500;
     let containerObserver: ResizeObserver | undefined;
-    let containerObserverTime: number;
+    const [reverseSearchTime, setReverseSearchTime] = React.useState(0);
 
     const canvasRef: React.RefObject<HTMLCanvasElement | null | undefined> = React.useRef();
     const dataUrlRef: React.RefObject<HTMLInputElement | null | undefined> = React.useRef();
@@ -127,6 +127,7 @@ const SearchPage = ({ forBrowserExtension }) => {
                 }
             }
         }).then(data => {
+            setReverseSearchTime(new Date().getTime());
             setData(data);
             setState(State.DONE);
         }).catch(message => {
@@ -140,7 +141,8 @@ const SearchPage = ({ forBrowserExtension }) => {
             return;
         }
 
-        containerObserverTime = new Date().getTime();
+        // Allow the time to be updated from within the observer its callback by making a copy of it.
+        let containerObserverTime = reverseSearchTime;
         containerObserver = new ResizeObserver(() => {
             const now = new Date().getTime();
             if (now - containerObserverTime > containerObserverTimeout) {
