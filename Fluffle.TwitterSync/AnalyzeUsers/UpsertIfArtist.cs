@@ -65,7 +65,8 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
                 var offset = nextRetrievalIn.Add(wiggleRoom);
 
                 user.TimelineNextRetrievalAt = now.Add(offset);
-                await UpsertTweetsAsync(context, data.Timeline, user.Id, CancellationToken.None);
+                if (data.Timeline.Count() != 0)
+                    await UpsertTweetsAsync(context, data.Timeline, user.Id, CancellationToken.None);
 
                 await context.SaveChangesAsync();
             }

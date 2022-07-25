@@ -71,6 +71,9 @@ namespace Noppes.Fluffle.TwitterSync
                 pageCounter++;
             }
 
+            if (existingTweets != null)
+                tweets = tweets.ExceptBy(existingTweets.AsEnumerable(), x => x.IdStr).ToList();
+
             _tweets = tweets.Flatten().ToDictionary(t => t.IdStr);
         }
 
