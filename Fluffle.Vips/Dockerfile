@@ -60,7 +60,7 @@ RUN wget -qq https://github.com/mozilla/mozjpeg/archive/v4.0.3.tar.gz && \
     cd .. && \
     rm -rf v4.0.3.tar.gz mozjpeg-4.0.3
 
-RUN wget -qq https://deac-ams.dl.sourceforge.net/project/giflib/giflib-5.2.1.tar.gz && \
+RUN wget -qq https://deac-fra.dl.sourceforge.net/project/giflib/giflib-5.2.1.tar.gz && \
     tar xf giflib-5.2.1.tar.gz && \
     cd giflib-5.2.1 && \
     make -j$(nproc) && \
