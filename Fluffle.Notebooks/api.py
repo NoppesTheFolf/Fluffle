@@ -1,10 +1,12 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, File, UploadFile
+from fastapi.responses import JSONResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 from b2 import B2ModelManager
 import uvicorn
 import yaml
 import sys
 import secrets
+from PIL import Image
 
 # Load the config
 config = yaml.load(open('config.yml', 'r'), Loader=yaml.SafeLoader)
@@ -44,6 +46,13 @@ for model_name in set(config.keys()) - set(required_keys):
 @app.get('/{model_name}/{config_key}')
 def get_config_key(model_name: str, config_key: str):
     return config[model_name.replace('-', '_')][config_key.replace('-', '_')]
+
+@app.post('/verify-image')
+def verify_image(file: UploadFile = File(...)):
+    try:
+        Image.open(file.file).convert('RGB').resize((64, 64))
+    except:
+        return JSONResponse(status_code=400, content="INVALID_IMAGE")
 
 # Start the webserver
 if __name__ == '__main__':

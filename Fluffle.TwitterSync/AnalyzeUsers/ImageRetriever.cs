@@ -6,7 +6,6 @@ using Noppes.Fluffle.TwitterSync.Database.Models;
 using Noppes.Fluffle.Utils;
 using Serilog;
 using SerilogTimings;
-using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -60,11 +59,13 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 
         private readonly IServiceProvider _services;
         private readonly ITwitterDownloadClient _downloadClient;
+        private readonly IPredictionClient _predictionClient;
 
-        public ImageRetriever(IServiceProvider services, ITwitterDownloadClient downloadClient)
+        public ImageRetriever(IServiceProvider services, ITwitterDownloadClient downloadClient, IPredictionClient predictionClient)
         {
             _services = services;
             _downloadClient = downloadClient;
+            _predictionClient = predictionClient;
         }
 
         public override async Task<T> ConsumeAsync(T data)
@@ -92,18 +93,25 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
 
                             try
                             {
-                                var validateImage = await Image.LoadAsync(stream);
-                                await validateImage.SaveAsJpegAsync(Stream.Null);
+                                var streamCopy = new MemoryStream();
+                                await stream.CopyToAsync(streamCopy);
+                                streamCopy.Position = 0;
+                                stream.Position = 0;
+
+                                await _predictionClient.VerifyImage(streamCopy);
                             }
-                            catch (Exception e)
+                            catch (FlurlHttpException exception)
                             {
-                                Log.Warning(e, "Failed reading media with ID {mediaId} as image for tweet with ID {tweetId} at size {size}", image.MediaId, image.TweetId, x.image.Size);
+                                if (exception.StatusCode == 400)
+                                {
+                                    Log.Warning(exception, "Failed reading media with ID {mediaId} as image for tweet with ID {tweetId} at size {size}", image.MediaId, image.TweetId, x.image.Size);
+                                    return null;
+                                }
 
                                 await stream.DisposeAsync();
-                                return null;
+                                throw;
                             }
 
-                            stream.Position = 0;
                             return stream;
                         }
                         catch (FlurlHttpException exception)

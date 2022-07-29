@@ -14,6 +14,8 @@ namespace Noppes.Fluffle.TwitterSync
 {
     public interface IPredictionClient
     {
+        public Task VerifyImage(Stream stream);
+
         public Task<ICollection<IDictionary<bool, double>>> ClassifyAsync(IEnumerable<Func<Stream>> streams);
 
         public Task<int> GetClassifyBatchSizeAsync();
@@ -40,6 +42,14 @@ namespace Noppes.Fluffle.TwitterSync
             });
 
             _classifyInterceptor = new SemaphoreInterceptor(classifyDegreeOfParallelism);
+        }
+
+        public async Task VerifyImage(Stream stream)
+        {
+            await Request("verify-image").PostMultipartAsync(content =>
+            {
+                content.AddFile("file", stream, "dummy");
+            });
         }
 
         public async Task<ICollection<IDictionary<bool, double>>> ClassifyAsync(IEnumerable<Func<Stream>> streams)
