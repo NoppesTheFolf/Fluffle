@@ -72,24 +72,31 @@ namespace Noppes.Fluffle.TwitterSync
             }
 
             if (existingTweets != null)
-                tweets = tweets.ExceptBy(existingTweets.AsEnumerable(), x => x.IdStr).ToList();
+            {
+                tweets = tweets
+                    .Where(x => (x.CreatedBy.IdStr == _user.IdStr && x.Type() == TweetType.Post) || !existingTweets.Contains(x.IdStr))
+                    .ToList();
+            }
 
             _tweets = tweets.Flatten().ToDictionary(t => t.IdStr);
         }
 
-        public async Task FillMissingAsync()
+        public async Task FillMissingAsync(int maxDepth)
         {
             var priority = await _tweetRetriever.AcquirePriorityAsync();
 
+            var depth = 0;
             while (true)
             {
+                depth++;
+
                 var missingIds = this
                     .Where(t => t.Type() == TweetType.Reply)
                     .Select(t => t.InReplyToStatusIdStr)
                     .ToHashSet();
                 missingIds.ExceptWith(_tweets.Keys);
 
-                Log.Information("Missing {count} tweets for user @{username}", missingIds.Count, _user.ScreenName);
+                Log.Information("Missing {count} tweets for user @{username} at depth {depth}", missingIds.Count, _user.ScreenName, depth);
                 if (missingIds.Count == 0)
                     break;
 
@@ -98,6 +105,9 @@ namespace Noppes.Fluffle.TwitterSync
                 {
                     _tweets.Add(missingId, retrievedMissing.Find(t => t.IdStr == missingId));
                 }
+
+                if (depth >= maxDepth)
+                    break;
             }
         }
 

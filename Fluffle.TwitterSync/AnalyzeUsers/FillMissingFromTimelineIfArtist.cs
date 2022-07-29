@@ -25,7 +25,7 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
             if (user.IsFurryArtist == true)
             {
                 data.TimelineRetrievedAt = DateTimeOffset.UtcNow;
-                await data.Timeline.FillMissingAsync();
+                await data.Timeline.FillMissingAsync(3);
             }
 
             return data;
