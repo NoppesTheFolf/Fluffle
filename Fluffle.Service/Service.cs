@@ -4,12 +4,11 @@ using Noppes.Fluffle.Configuration;
 using Serilog;
 using System;
 using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Service
 {
-    public abstract class Service : IHostedService
+    public abstract class Service : BackgroundService
     {
         public IServiceProvider Services { get; internal set; }
         public IHostEnvironment Environment { get; }
@@ -18,18 +17,6 @@ namespace Noppes.Fluffle.Service
         {
             Services = services;
             Environment = services.GetRequiredService<IHostEnvironment>();
-        }
-
-        public virtual async Task StartAsync(CancellationToken cancellationToken)
-        {
-            await ExecuteAsync(cancellationToken);
-        }
-
-        protected abstract Task ExecuteAsync(CancellationToken stoppingToken);
-
-        public virtual Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
         }
     }
 
