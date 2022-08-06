@@ -8,15 +8,22 @@ using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Api;
 using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.RunnableServices;
+using Noppes.Fluffle.B2;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Database;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.PerceptualHashing;
+using Noppes.Fluffle.Search.Api.LinkCreation;
 using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Thumbnail;
 
 namespace Noppes.Fluffle.Search.Api
 {
+    public class B2ClientCollection
+    {
+        public B2Bucket SearchResultsClient { get; set; }
+    }
+
     public class Startup : ApiStartup<Startup, FluffleSearchContext>
     {
         protected override bool EnableAccessControl => true;
@@ -24,6 +31,21 @@ namespace Noppes.Fluffle.Search.Api
         public override void AdditionalConfigureServices(IServiceCollection services)
         {
             services.AddDatabase<FluffleSearchContext, SearchDatabaseConfiguration>(Configuration);
+
+            var conf = Configuration.Get<SearchServerConfiguration>();
+            services.AddSingleton(conf);
+
+            var searchResultsClient = new B2Client(conf.SearchResultsBackblazeB2.ApplicationKeyId, conf.SearchResultsBackblazeB2.ApplicationKey);
+            services.AddSingleton(new B2ClientCollection
+            {
+                SearchResultsClient = searchResultsClient.GetBucketAsync().Result,
+            });
+
+            services.AddSingleton<LinkCreatorStorage>();
+            services.AddHostedService<LinkCreator>();
+            services.AddSingleton<LinkCreatorRetriever>();
+            services.AddSingleton<LinkCreatorUploader>();
+            services.AddSingleton<LinkCreatorUpdater>();
 
             var mainConf = Configuration.Get<MainConfiguration>();
             services.AddSingleton(new FluffleClient(mainConf.Url, mainConf.ApiKey));

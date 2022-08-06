@@ -14,6 +14,8 @@ namespace Noppes.Fluffle.Search.Api.Models
 
     public class SearchResultModel
     {
+        public string Id { get; set; }
+
         public class StatsModel
         {
             public int Count { get; set; }

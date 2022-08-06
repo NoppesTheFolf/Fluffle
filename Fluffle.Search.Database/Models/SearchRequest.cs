@@ -12,6 +12,10 @@ namespace Noppes.Fluffle.Search.Database.Models
     {
         public int Id { get; set; }
 
+        public string QueryId { get; set; }
+
+        public bool? LinkCreated { get; set; }
+
         public string From { get; set; }
 
         public string UserAgent { get; set; }
@@ -56,6 +60,12 @@ namespace Noppes.Fluffle.Search.Database.Models
         {
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
             entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.QueryId);
+            entity.HasIndex(e => e.QueryId).IsUnique();
+
+            entity.Property(e => e.LinkCreated);
+            entity.HasIndex(e => e.LinkCreated);
 
             entity.Property(e => e.From);
             entity.Property(e => e.UserAgent).IsRequired();

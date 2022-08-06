@@ -95,6 +95,21 @@ namespace Noppes.Fluffle.Configuration
         }
     }
 
+    [ConfigurationSection("SearchServer")]
+    public class SearchServerConfiguration : FluffleConfigurationPart<SearchServerConfiguration>
+    {
+        public string SearchResultsTemporaryLocation { get; set; }
+
+        public BackblazeB2Configuration SearchResultsBackblazeB2 { get; set; }
+
+        public SearchServerConfiguration()
+        {
+            RuleFor(o => o.SearchResultsTemporaryLocation).NotEmpty();
+
+            RuleFor(o => o.SearchResultsBackblazeB2).NotEmpty().SetValidator(o => o.SearchResultsBackblazeB2);
+        }
+    }
+
     [ConfigurationSection("Bot")]
     public class BotConfiguration : FluffleConfigurationPart<BotConfiguration>
     {

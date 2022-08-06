@@ -48,7 +48,7 @@ namespace Noppes.Fluffle.Bot.Utils
                 string fluffleId;
                 do
                 {
-                    fluffleId = $"{FluffleIdDateTime.ToString(now)}{ShortUuid.Random(7)}";
+                    fluffleId = $"{ShortUuidDateTime.ToString(now)}{ShortUuid.Random(7)}";
                 } while (await _botContext.MediaGroups.AnyAsync(x => x.FluffleId == fluffleId));
 
                 data = new MediaGroupData

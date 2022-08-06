@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Noppes.Fluffle.Search.Database.Models;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Noppes.Fluffle.Search.Database.Migrations
 {
     [DbContext(typeof(FluffleSearchContext))]
-    partial class FluffleSearchContextModelSnapshot : ModelSnapshot
+    [Migration("20220801221100_AddQueryIdToSearchRequest")]
+    partial class AddQueryIdToSearchRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -546,10 +548,6 @@ namespace Noppes.Fluffle.Search.Database.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("height");
 
-                    b.Property<bool?>("LinkCreated")
-                        .HasColumnType("boolean")
-                        .HasColumnName("link_created");
-
                     b.Property<string>("QueryId")
                         .HasColumnType("text")
                         .HasColumnName("query_id");
@@ -581,9 +579,6 @@ namespace Noppes.Fluffle.Search.Database.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_search_request");
-
-                    b.HasIndex("LinkCreated")
-                        .HasDatabaseName("idx_search_request_link_created");
 
                     b.HasIndex("QueryId")
                         .IsUnique()

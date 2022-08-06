@@ -18,6 +18,8 @@
         WriteFiles,
         DeleteFiles,
         ReadBucketEncryption,
-        WriteBucketEncryption
+        WriteBucketEncryption,
+        WriteBucketReplications,
+        ReadBucketReplications
     }
 }

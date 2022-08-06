@@ -25,6 +25,8 @@ namespace Noppes.Fluffle.Search.Api.Models
         public ImmutableHashSet<PlatformConstant> Platforms { get; set; }
 
         public int Limit { get; set; } = 32;
+
+        public bool CreateLink { get; set; } = false;
     }
 
     public class SearchModelValidator : AbstractValidator<SearchModel>
@@ -48,6 +50,8 @@ namespace Noppes.Fluffle.Search.Api.Models
             RuleFor(o => o.File)
                 .NotNull()
                 .WithMessage("You forgot to provide an image. Make sure you add the 'file' field to your request as a file.");
+
+            RuleFor(o => o.CreateLink);
         }
 
         protected override bool PreValidate(ValidationContext<SearchModel> context, ValidationResult result)

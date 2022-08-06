@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Nitranium.PerceptualHashing.Utils;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Search.Api.Filters;
+using Noppes.Fluffle.Search.Api.LinkCreation;
 using Noppes.Fluffle.Search.Api.Models;
 using Noppes.Fluffle.Search.Api.Services;
 using Noppes.Fluffle.Search.Database.Models;
@@ -38,17 +38,19 @@ namespace Noppes.Fluffle.Search.Api.Controllers
 
         private readonly ISearchService _searchService;
         private readonly FluffleThumbnail _thumbnail;
+        private readonly LinkCreatorStorage _linkCreatorStorage;
+        private readonly LinkCreatorRetriever _linkCreatorRetriever;
         private readonly FluffleSearchContext _context;
-        private readonly ApiBehaviorOptions _options;
         private readonly ILogger<SearchApiController> _logger;
 
-        public SearchApiController(ISearchService searchService, FluffleThumbnail thumbnail, FluffleSearchContext context,
-            IOptions<ApiBehaviorOptions> options, ILogger<SearchApiController> logger)
+        public SearchApiController(ISearchService searchService, FluffleThumbnail thumbnail, LinkCreatorStorage linkCreatorStorage,
+            LinkCreatorRetriever linkCreatorRetriever, FluffleSearchContext context, ILogger<SearchApiController> logger)
         {
             _searchService = searchService;
             _thumbnail = thumbnail;
+            _linkCreatorStorage = linkCreatorStorage;
+            _linkCreatorRetriever = linkCreatorRetriever;
             _context = context;
-            _options = options.Value;
             _logger = logger;
         }
 
@@ -56,7 +58,7 @@ namespace Noppes.Fluffle.Search.Api.Controllers
         [HttpPost("search")]
         public async Task<IActionResult> Search([FromForm] SearchModel model)
         {
-            if (model.File != null && model.File.Length > SearchModelValidator.SizeMax)
+            if (model.File.Length > SearchModelValidator.SizeMax)
                 return HandleV1(SearchError.FileTooLarge(model.File.Length));
 
             var request = new SearchRequest
@@ -69,6 +71,12 @@ namespace Noppes.Fluffle.Search.Api.Controllers
             if (request.From == null)
                 _logger.LogWarning("Request is missing remote IP address. Has the server been configured correctly?");
 
+            request.QueryId = $"{ShortUuidDateTime.ToString(DateTime.UtcNow)}{ShortUuid.Random(12)}";
+
+            if (model.CreateLink)
+                request.LinkCreated = false;
+
+            var success = false;
             try
             {
                 using var scope = stopwatch.ForCheckpoint(t => t.Flush);
@@ -106,8 +114,20 @@ namespace Noppes.Fluffle.Search.Api.Controllers
                 var result = await _searchService.SearchAsync(temporaryFile.Location, model.IncludeNsfw, model.Limit, model.Platforms, IsDebug, scope);
                 StartupFilter.HasStarted = true;
 
+                await result.HandleAsync(_ => Task.FromResult(string.Empty), async response =>
+                {
+                    if (!model.CreateLink)
+                        return string.Empty;
+
+                    await _linkCreatorStorage.SaveAsync(request.QueryId, temporaryFile.Location, response);
+                    success = true;
+
+                    return string.Empty;
+                });
+
                 return HandleV1(result, response =>
                 {
+                    response.Id = request.QueryId;
                     request.Count = response.Stats.Count;
 
                     return Ok(response);
@@ -122,6 +142,9 @@ namespace Noppes.Fluffle.Search.Api.Controllers
             {
                 _context.SearchRequests.Add(request);
                 await _context.SaveChangesAsync();
+
+                if (model.CreateLink && success)
+                    await _linkCreatorRetriever.Enqueue(request);
             }
         }
     }
