@@ -1,10 +1,15 @@
 import Layout from "../../components/layout";
-import BackToTools from "./back-to-tools"
+import BackToTools from "../../components/back-to-tools"
 import { StaticImage } from 'gatsby-plugin-image'
+
+import SEO from '../../components/seo'
+export const Head = () => (
+    <SEO title="Browser extension" />
+)
 
 export default ({ children }) => {
   return (
-    <Layout center={true} title="Telegram bot" maxWidth="lg">
+    <Layout center={true} maxWidth="lg">
       <div className="prose max-w-none">
         {children}
       </div>

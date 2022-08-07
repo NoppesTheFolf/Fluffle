@@ -2,6 +2,11 @@ import "./api.scss"
 
 import { Link } from "gatsby";
 
+import SEO from '../components/seo'
+export const Head = () => (
+    <SEO title="API" />
+)
+
 import hljs from "highlight.js/lib/core";
 
 import python from "highlight.js/lib/languages/python";
@@ -16,7 +21,7 @@ export default ({ children }) => {
     hljs.highlightAll();
   }, []);
   return (
-    <Layout title="API" maxWidth="4xl">
+    <Layout maxWidth="4xl">
       <div className="prose max-w-none">{children}</div>
     </Layout>
   );

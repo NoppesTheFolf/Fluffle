@@ -3,9 +3,14 @@ import * as React from 'react'
 import Layout from '../components/layout'
 import Banner from '../components/banner'
 
+import SEO from '../components/seo'
+export const Head = () => (
+    <SEO title="About" />
+)
+
 const AboutPage = () => {
     return (
-        <Layout center={true} title="About" maxWidth="2xl">
+        <Layout center={true} maxWidth="2xl">
             <div className="my-12 text-center">
                 <Banner></Banner>
             </div>

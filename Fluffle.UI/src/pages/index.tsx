@@ -6,12 +6,16 @@ import ProgressBar from '../components/progress-bar'
 import ProgressBarPart from '../components/progress-bar-part'
 import Api, { SearchResult } from '../services/api'
 import SearchResultDesktop from '../components/search-result-desktop'
-import { Helmet } from 'react-helmet'
 import Icon from '../components/icon'
 import SearchConfig from '../services/search-config'
 import SearchResultMobile from '../components/search-result-mobile'
 import classNames from 'classnames'
 import { dropZone, dropZoneActive } from './index.module.scss'
+
+import SEO from '../components/seo'
+export const Head = () => (
+    <SEO title="Reverse search" description="Reverse image search furry artwork and find the source on Fur Affinity, Twitter, e621 and more!" />
+)
 
 const State = {
     ERROR: -1,
@@ -216,10 +220,7 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
     }
 
     return (
-        <Layout center={true} requireBrowser={true} maxWidth="7xl" title="Reverse search">
-            <Helmet>
-                <meta name="description" content="Reverse image search furry artwork and find the source on Fur Affinity, Twitter, e621 and more!"></meta>
-            </Helmet>
+        <Layout center={true} requireBrowser={true} maxWidth="7xl">
             <div className="w-full flex flex-col items-center space-y-12">
                 <div className="flex flex-col justify-center items-center">
                     <div className="mb-4 flex justify-center w-auto">

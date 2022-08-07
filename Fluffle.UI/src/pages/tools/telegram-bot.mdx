@@ -1,9 +1,14 @@
 import Layout from "../../components/layout"
-import BackToTools from "./back-to-tools"
+import BackToTools from "../../components/back-to-tools"
+
+import SEO from '../../components/seo'
+export const Head = () => (
+    <SEO title="Telegram bot" />
+)
 
 export default ({ children }) => {
   return (
-    <Layout title="Telegram bot" maxWidth="4xl">
+    <Layout maxWidth="4xl">
       <div className="prose max-w-none">
         {children}
       </div>

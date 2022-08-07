@@ -6,6 +6,11 @@ import Layout from '../../components/layout'
 import ShortUuidDateTime from '../../services/short-uuid-date-time'
 import { DateTime } from 'luxon'
 
+import SEO from '../../components/seo'
+export const Head = () => (
+    <SEO title="Reverse search" index={false} />
+)
+
 const ExistingSearchPage = ({ id }) => {
     const retryWindow = 120;
     const retryDelay = 5;
@@ -37,7 +42,7 @@ const ExistingSearchPage = ({ id }) => {
     }, []);
 
     const loadingPage = (
-        <Layout title="Loading..." center={true}>
+        <Layout center={true}>
             <div className="w-full flex flex-col justify-center items-center">
                 <Loader />
                 <div className="italic font-semibold">Retrieving search results...</div>
@@ -46,7 +51,7 @@ const ExistingSearchPage = ({ id }) => {
     );
 
     const messagePage = (
-        <Layout title="Error" center={true}>
+        <Layout center={true}>
             <div className="flex justify-center">
                 {message &&
                     <div className="text-center prose max-w-lg">

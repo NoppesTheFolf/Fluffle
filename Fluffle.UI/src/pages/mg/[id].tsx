@@ -7,6 +7,11 @@ import Loader from '../../components/loader'
 import ShortUuidDateTime from '../../services/short-uuid-date-time'
 import { DateTime } from 'luxon'
 
+import SEO from '../../components/seo'
+export const Head = () => (
+    <SEO title="Album sources" index={false} />
+)
+
 const TelegramAlbumPage = ({ id }) => {
     const messages = {
         PROCESSING: ['Working on it!', 'Fluffle is busy processing this album. Please give it some time.'],
@@ -39,7 +44,7 @@ const TelegramAlbumPage = ({ id }) => {
     }, []);
 
     return (
-        <Layout center={true} title="Album sources">
+        <Layout center={true}>
             {message &&
                 <div className="flex justify-center">
                     <div className="text-center prose max-w-lg">

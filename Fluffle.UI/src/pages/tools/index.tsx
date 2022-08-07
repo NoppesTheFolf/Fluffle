@@ -3,6 +3,11 @@ import Layout from '../../components/layout'
 import Icon from '../../components/icon'
 import { Link } from 'gatsby';
 
+import SEO from '../../components/seo'
+export const Head = () => (
+    <SEO title="Tools" />
+)
+
 const Tool = ({ to, name, icon, children }) => (
     <Link to={to} className="flex items-center w-full sm:h-32 cursor-pointer select-none force-light-100 border-2 p-4 space-x-4 rounded transition-colors border-dark-100 hover:border-primary">
         <Icon name={icon} size="3rem" />
@@ -15,7 +20,7 @@ const Tool = ({ to, name, icon, children }) => (
 
 const ToolsPage = () => {
     return (
-        <Layout center={true} title="Tools" maxWidth="lg">
+        <Layout center={true} maxWidth="lg">
             <div className="space-y-4">
                 <div className="prose text-center max-w-none">
                     <h1 className="m-0">Tools</h1>

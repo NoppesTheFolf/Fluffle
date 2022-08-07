@@ -3,6 +3,11 @@ import Layout from '../components/layout'
 import { StaticImage } from 'gatsby-plugin-image'
 import Icon from '../components/icon'
 
+import SEO from '../components/seo'
+export const Head = () => (
+    <SEO title="Contact" />
+)
+
 const artistName = 'Oggy123'
 const artUrl = 'https://twitter.com/OggyOsbourne/status/1294700124187262976'
 
@@ -22,7 +27,7 @@ const SocialBadge = ({ social }) => {
 
 const ContactPage = () => {
     return (
-        <Layout center={true} title="Contact">
+        <Layout center={true}>
             <div className="flex flex-col items-center space-y-6 text-center">
                 <div>
                     <a href={artUrl} target="_blank" rel="noreferrer">

@@ -4,18 +4,17 @@ require('dotenv').config({
 
 module.exports = {
   siteMetadata: {
-    siteUrl: 'https://fluffle.xyz',
     title: 'Fluffle',
+    siteUrl: 'https://fluffle.xyz'
   },
   plugins: [
     'gatsby-plugin-sass',
     'gatsby-plugin-postcss',
     'gatsby-plugin-image',
-    'gatsby-plugin-react-helmet',
     {
       resolve: 'gatsby-plugin-sitemap',
       options: {
-        excludes: ['/browser-extension/', '/status/', '/mg/*']
+        excludes: ['/browser-extension/', '/status/', '/mg/*', '/q/*']
       }
     },
     'gatsby-plugin-mdx',
@@ -27,7 +26,7 @@ module.exports = {
         name: 'images',
         path: './src/images/',
       },
-      __key: 'images',
+      __key: 'images'
     },
     'gatsby-plugin-force-trailing-slashes'
   ],
