@@ -103,6 +103,14 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
             canvas.width = thumbnailSize[0];
             canvas.height = thumbnailSize[1];
             const ctx = canvas.getContext('2d')!;
+
+            // Add white background
+            ctx.beginPath();
+            ctx.rect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+
+            // Draw to be reverse searched image
             ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
             // Convert image drawn on canvas to blob
