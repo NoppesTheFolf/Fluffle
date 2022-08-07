@@ -116,6 +116,8 @@ namespace Noppes.Fluffle.Search.Api.Controllers
 
                 await result.HandleAsync(_ => Task.FromResult(string.Empty), async response =>
                 {
+                    response.Id = request.QueryId;
+
                     if (!model.CreateLink)
                         return string.Empty;
 
@@ -127,7 +129,6 @@ namespace Noppes.Fluffle.Search.Api.Controllers
 
                 return HandleV1(result, response =>
                 {
-                    response.Id = request.QueryId;
                     request.Count = response.Stats.Count;
 
                     return Ok(response);

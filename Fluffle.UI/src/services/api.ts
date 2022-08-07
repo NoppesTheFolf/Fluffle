@@ -38,6 +38,7 @@ export interface SearchResult {
     parameters: {
         imageUrl: string,
         includeNsfw: boolean
+        fromQuery: boolean
     },
     id: string,
     stats: {
@@ -72,7 +73,7 @@ const Api = function () {
         return urlcat(process.env.GATSBY_SEARCH_RESULT_URL as string, ':fileName', { fileName: `${id}.${extension}` });
     }
 
-    function processSearchData(data, imageUrl, includeNsfw: boolean | undefined = undefined) {
+    function processSearchData(data, imageUrl, includeNsfw: boolean | undefined = undefined, fromQuery = false) {
         const results = data.results.map(r => {
             r.credits = r.credits.map(c => c.name).join(" & ");
             r.score = (r.score - 0.5) * 2;
@@ -84,7 +85,8 @@ const Api = function () {
         return {
             parameters: {
                 imageUrl: imageUrl,
-                includeNsfw: includeNsfw
+                includeNsfw: includeNsfw,
+                fromQuery: fromQuery
             },
             id: data.id,
             stats: data.stats,
@@ -171,7 +173,7 @@ const Api = function () {
 
                     return Promise.reject(message);
                 }).then<SearchResult>(response => {
-                    return processSearchData(response.data, URL.createObjectURL(file), includeNsfw);
+                    return processSearchData(response.data, URL.createObjectURL(file), includeNsfw, false);
                 })
         },
         processSearchData,
@@ -179,7 +181,7 @@ const Api = function () {
         searchResult(id: string, maxAttempts: number, delayDue: number, retryStatusCodes: number[]) {
             return b2Retrieve(searchResultUrl(id, 'json'), undefined, maxAttempts, delayDue, retryStatusCodes).pipe(
                 map(response => {
-                    return processSearchData(response.data, searchResultUrl(id, 'jpg'));
+                    return processSearchData(response.data, searchResultUrl(id, 'jpg'), undefined, true);
                 })
             );
         },

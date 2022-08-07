@@ -77,7 +77,10 @@ const SearchResultMobile = ({ data }: { data: SearchResult }) => {
                 <img className="rounded" src={data.parameters.imageUrl} style={{ maxWidth: "75vw", maxHeight: "50vh" }} />
                 <div className="text-center">
                     <div className="text-muted">
-                        Searched {data.stats.count.toLocaleString()} images in {data.stats.elapsedMilliseconds.toLocaleString()} ms
+                        <span>Searched {data.stats.count.toLocaleString()} images</span>
+                        {!data.parameters.fromQuery &&
+                            <span> in {data.stats.elapsedMilliseconds.toLocaleString()} ms</span>
+                        }
                     </div>
                     <div className="text-3xl">
                         {
@@ -89,7 +92,9 @@ const SearchResultMobile = ({ data }: { data: SearchResult }) => {
                     </div>
                 </div>
             </div>
-            <CreateLinkButton data={data} />
+            {!data.parameters.fromQuery &&
+                <CreateLinkButton data={data} />
+            }
             <div className="space-y-3">
                 <div className="space-y-1">
                     <div className="px-1 space-y-1">

@@ -107,17 +107,22 @@ const SearchResultDesktop = ({ data }: { data: SearchResult }) => {
                 <img className="rounded" src={data.parameters.imageUrl} style={{ maxWidth: "50%", height: "100%", maxHeight: "300px" }} />
                 <div className="max-w-xl">
                     <div className="text-muted">
-                        Searched {data.stats.count.toLocaleString()} images in {data.stats.elapsedMilliseconds.toLocaleString()} ms
+                        <span>Searched {data.stats.count.toLocaleString()} images</span>
+                        {!data.parameters.fromQuery &&
+                            <span> in {data.stats.elapsedMilliseconds.toLocaleString()} ms</span>
+                        }
                     </div>
                     <div className="text-4xl font-light">
                         {
                             {
                                 0: "Looks like we couldn't find what you're looking for",
-                                1: "We found an image similar to the one you submitted"
-                            }[data.probableResults.length] || "We found images similar to the one you submitted"
+                                1: "We found an image similar to the one submitted"
+                            }[data.probableResults.length] || "We found images similar to the one submitted"
                         }
                     </div>
-                    <CreateLinkButton data={data} />
+                    {!data.parameters.fromQuery &&
+                        <CreateLinkButton data={data} />
+                    }
                 </div>
             </div>
             {width != 0 && data.probableResults.length > 0 &&

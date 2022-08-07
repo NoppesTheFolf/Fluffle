@@ -19,6 +19,10 @@ a {
     @apply text-info hover:text-info-light fill-info hover:fill-info-light;
 }
 
+.link-muted {
+    @apply text-muted hover:text-muted fill-muted hover:fill-muted;
+}
+
 .force-light-100 {
     @apply text-light-100 hover:text-light-100 visited:text-light-100 fill-light-100 hover:fill-light-100 visited:fill-light-100;
 }

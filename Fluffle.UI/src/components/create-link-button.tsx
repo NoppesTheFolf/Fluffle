@@ -51,12 +51,12 @@ const CreateLinkButton = ({ data }) => {
     const [text, iconName, animate, color] = presentations[String(state)];
 
     return (
-        <div className="flex flex-col lg:flex-row lg:items-center space-x-1 lg:mt-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-2 lg:mt-4">
             <button className={`btn btn-sm btn-${color} space-x-1`} onClick={createLink}>
                 <Icon className={animate ? "spin" : undefined} name={iconName} />
                 <span>{text}</span>
             </button>
-            <a className="text-sm text-center" href={url} target="_blank">
+            <a className="text-sm text-center link-muted italic" href={url} target="_blank">
                 {url}
             </a>
         </div>

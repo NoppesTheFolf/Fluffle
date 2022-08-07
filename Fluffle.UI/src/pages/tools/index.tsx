@@ -5,7 +5,7 @@ import { Link } from 'gatsby';
 
 import SEO from '../../components/seo'
 export const Head = () => (
-    <SEO title="Tools" />
+    <SEO title="Tools" description="An overview of all tools that integrate with Fluffle." />
 )
 
 const Tool = ({ to, name, icon, children }) => (
