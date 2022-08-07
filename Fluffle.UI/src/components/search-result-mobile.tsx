@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Match, SearchResult, SearchResultItem } from '../services/api';
 import GalleryThumbnail from './gallery-thumbnail';
 import Icon from './icon';
+import CreateLinkButton from '../components/create-link-button'
 
 const GalleryCard = ({ data, enableBlur, onClick, seq }: { data: SearchResultItem, enableBlur: boolean, onClick: Function, seq: number }) => {
     const [hasBeenClicked, setHasBeenClicked] = React.useState(false);
@@ -88,6 +89,7 @@ const SearchResultMobile = ({ data }: { data: SearchResult }) => {
                     </div>
                 </div>
             </div>
+            <CreateLinkButton data={data} />
             <div className="space-y-3">
                 <div className="space-y-1">
                     <div className="px-1 space-y-1">

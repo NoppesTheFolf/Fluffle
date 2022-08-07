@@ -100,3 +100,17 @@ label {
 .hljs {
     background-color: $dark-300 !important;
 }
+
+.spin {
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(1turn);
+    }
+}

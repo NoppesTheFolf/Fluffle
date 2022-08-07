@@ -23,7 +23,7 @@ const State = {
     DONE: 5
 };
 
-const SearchPage = ({ forBrowserExtension }) => {
+const SearchPage = ({ forBrowserExtension, searchResult }) => {
     let searchConfig = SearchConfig();
 
     const containerObserverTimeout = 500;
@@ -34,10 +34,17 @@ const SearchPage = ({ forBrowserExtension }) => {
     const dataUrlRef: React.RefObject<HTMLInputElement | null | undefined> = React.useRef();
 
     const [state, setState] = React.useState(forBrowserExtension ? State.WAITING_FOR_BROWSER_EXTENSION : State.IDLE);
-    const [data, setData] = React.useState<SearchResult | undefined>();
+    const [data, setData] = React.useState<SearchResult | undefined>(searchResult);
     const [errorMessage, setErrorMessage] = React.useState<string | undefined>();
     const [progress, setProgress] = React.useState(0);
     const [hasDrag, setHasDrag] = React.useState(false);
+
+    React.useEffect(() => {
+        if (searchResult != null) {
+            setReverseSearchTime(new Date().getTime());
+            setState(State.DONE);
+        }
+    }, [searchResult]);
 
     function setError(message) {
         setErrorMessage(message);
@@ -87,7 +94,7 @@ const SearchPage = ({ forBrowserExtension }) => {
         const image = new Image();
         const canvas = canvasRef.current!;
         image.onload = () => {
-            const target = 256;
+            const target = 512;
             const thumbnailSize = calculateThumbnailSize(image.width, image.height, target);
 
             // In the first place we scaled down the image to a fixed size (250x250), but that
@@ -99,24 +106,24 @@ const SearchPage = ({ forBrowserExtension }) => {
             ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
             // Convert image drawn on canvas to blob
-            const dataUri = canvas.toDataURL('image/png');
+            const dataUri = canvas.toDataURL('image/jpeg');
             fetch(dataUri).then(response => response.blob()).then(thumbnail => {
-                searchInternal(file, thumbnail);
+                searchInternal(thumbnail);
             });
         };
 
         // The error might simply be that the image format isn't supported by the canvas.
         // Therefore, we should still send it to the server.
         image.onerror = () => {
-            searchInternal(file, file);
+            searchInternal(file);
         }
 
         image.src = URL.createObjectURL(file);
     }
 
-    function searchInternal(file: Blob, thumbnail: Blob) {
+    function searchInternal(file: Blob) {
         setState(State.UPLOADING);
-        Api.search(file, thumbnail, searchConfig.includeNsfw, 32, {
+        Api.search(file, searchConfig.includeNsfw, undefined, false, {
             onUploadProgress: e => {
                 const progress = Math.round(e.loaded / e.total * 100);
 
@@ -211,7 +218,7 @@ const SearchPage = ({ forBrowserExtension }) => {
                         <Link className="flex justify-center sm:block" to="/">
                             <Banner />
                             <span className="absolute text-muted uppercase hidden sm:inline">
-                                {process.env.VERSION}
+                                {process.env.GATSBY_VERSION}
                             </span>
                         </Link>
                     </div>
@@ -278,7 +285,8 @@ const SearchPage = ({ forBrowserExtension }) => {
 }
 
 SearchPage.defaultProps = {
-    forBrowserExtension: false
+    forBrowserExtension: false,
+    searchResult: undefined
 }
 
 export default SearchPage

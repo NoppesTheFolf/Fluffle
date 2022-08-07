@@ -1,13 +1,15 @@
+import classNames from 'classnames';
 import * as React from 'react'
 import Svg from '../services/svg'
 
-const Icon = ({ name, inheritSize, size }: { name: string, inheritSize: boolean, size: string }) => {
+const Icon = ({ className, name, inheritSize, size }: { className: string | undefined, name: string, inheritSize: boolean, size: string }) => {
     return (
-        <span className="flex" style={{ fontSize: size ? size : inheritSize ? 'inherit' : '1.5em' }} dangerouslySetInnerHTML={{ __html: Svg.getRaw(name) }} />
+        <span className={classNames("flex", className)} style={{ fontSize: size ? size : inheritSize ? 'inherit' : '1.5em' }} dangerouslySetInnerHTML={{ __html: Svg.getRaw(name) }} />
     )
 }
 
 Icon.defaultProps = {
+    className: undefined,
     inheritSize: false,
     size: null
 };

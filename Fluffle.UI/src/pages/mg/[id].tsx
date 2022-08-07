@@ -4,6 +4,7 @@ import Api from '../../services/api'
 import GalleryThumbnail from '../../components/gallery-thumbnail'
 import Icon from '../../components/icon'
 import Loader from '../../components/loader'
+import ShortUuidDateTime from '../../services/short-uuid-date-time'
 import { DateTime } from 'luxon'
 
 const TelegramAlbumPage = ({ id }) => {
@@ -12,33 +13,28 @@ const TelegramAlbumPage = ({ id }) => {
         NOT_FOUND: ['Album not found', 'The referenced Telegram album does not seem to exist.'],
         UNAVAILABLE: ['Yikes!', 'The Telegram album could not be loaded at the moment. This might indicate that Fluffle is partially offline. Please try again later.']
     }
-    const [data, setData] = React.useState(null);
-    const [message, setMessage] = React.useState(null);
+    const [data, setData] = React.useState<any>();
+    const [message, setMessage] = React.useState<string[]>();
 
     React.useEffect(() => {
-        Api.mediaGroup(id).subscribe(result => {
-            setData(result.data);
-        }, error => {
-            if (error.response?.status == 404) {
-                let alphabet = {};
-                Array.from('ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789').forEach((char, i) => alphabet[char] = i);
+        Api.mediaGroup(id).subscribe({
+            next: result => {
+                setData(result.data);
+            },
+            error: error => {
+                if (error.response?.status == 404) {
+                    let startedAt = ShortUuidDateTime.fromString(id);
 
-                let year = alphabet[id[0]] + 2020;
-                let month = alphabet[id[1]];
-                let day = alphabet[id[2]];
-                let hour = alphabet[id[3]];
-                let minute = alphabet[id[4]] * 2;
-                let startedAt = DateTime.fromFormat(`${year} ${month} ${day} ${hour} ${minute}`, 'y L d H m', { zone: 'utc' });
+                    let message = DateTime.utc().diff(startedAt, 'minutes').toObject().minutes! < 6
+                        ? messages.PROCESSING
+                        : messages.NOT_FOUND
+                    setMessage(message);
 
-                let message = DateTime.utc().diff(startedAt, 'minutes').toObject().minutes < 6
-                    ? messages.PROCESSING
-                    : messages.NOT_FOUND
-                setMessage(message);
+                    return;
+                }
 
-                return;
+                setMessage(messages.UNAVAILABLE);
             }
-
-            setMessage(messages.UNAVAILABLE);
         });
     }, []);
 

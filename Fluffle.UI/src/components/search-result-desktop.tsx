@@ -3,6 +3,7 @@ import { SearchResult, SearchResultItem } from '../services/api'
 import { Gallery, GalleryRow, GalleryRowImage } from '../services/gallery'
 import GalleryThumbnail from './gallery-thumbnail'
 import Icon from './icon'
+import CreateLinkButton from '../components/create-link-button'
 
 const GalleryDesktopCard = ({ image, shouldBlur }: { image: GalleryRowImage<SearchResultItem>, shouldBlur: boolean }) => {
     const [hasHover, setHasHover] = React.useState(false);
@@ -116,6 +117,7 @@ const SearchResultDesktop = ({ data }: { data: SearchResult }) => {
                             }[data.probableResults.length] || "We found images similar to the one you submitted"
                         }
                     </div>
+                    <CreateLinkButton data={data} />
                 </div>
             </div>
             {width != 0 && data.probableResults.length > 0 &&
