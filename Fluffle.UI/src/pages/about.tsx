@@ -28,12 +28,15 @@ const AboutPage = () => {
                     When you reverse search an image on Fluffle, the image gets stored temporarily on our servers for processing.
                     Processing only contains fingerprinting the image. That is creating an identifier which can be used to compare
                     indexed images. Once the fingerprint is created, the submitted image gets permanently deleted immediately. The
-                    aforementioned fingerprint also doesn’t get stored and neither do the settings used for reverse searching.
+                    aforementioned fingerprint also doesn’t get stored and neither do the settings used for reverse searching. There
+                    is an exception to this rule and that is when you create a permanent link to the search result. At that point, the
+                    used image is stored indefinitely on our servers and so are the results of your search query. After all, these are needed
+                    when someone opens your generated link.
                 </p>
                 <p>
-                    Said settings are stored in your browser its so-called local storage. You can
+                    The settings used when reverse searching are stored in your browser its so-called local storage. You can
                     think of this as a place in which websites can store a small amount of data. These preferences are only
-                    sent to Fluffle whenever you submit an image for reverse searching, and as said before, are immediately
+                    sent to Fluffle whenever you submit an image for reverse searching and are immediately
                     discarded when they are not required anymore for fulfilling your request.
                 </p>
                 <p>

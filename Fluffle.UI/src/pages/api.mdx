@@ -67,6 +67,7 @@ To reverse search an image, you need to send Fluffle a POST-request encoded usin
 | includeNsfw | An optional boolean value indicating whether or not Fluffle should also search through images deemed Not Safe For Work. By default, Fluffle will not search NSFW images. **Fluffle is unable to reliably determine if images from Twitter are NSFW or not. Therefore, to play it safe, all images are considered explicit by default. You should include NSFW images if you want to use Twitter as a source.**                                                                                                                                                                                                                                  |
 | platforms   | The platforms to be included in the reverse search process. Currently supported platforms are Fur Affinity, Twitter, e621, Weasyl and Furry Network. Not providing this field will cause all of the aforementioned platforms to be included. Make sure your application can deal with new platforms: the API its version will not be increased if it is decided to add support for another platform. An alternative would be to send a list of all platforms your application supports with each request. The values provided to this field are casing-insensitive, meaning you can pass them snake cased, camel cased, or whatever you prefer. |
 | limit       | By default, Fluffle will send you a maximum of 32 results. You can tweak this number by providing a value from 8 to 32. Exceeding this range will cause your request to fail.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| createLink  | Whether or not Fluffle should store your search result indefinitely and make it accessible through a link. This parameter defaults to false. After all, it takes up resources to make the search result available. Because of this, please do not set this value to true if a user did not (implicitly or explicitly) request the search result to be used this way. The response will contain an ID. Appending this ID to the end of `https://fluffle.xyz/q/` will allow the search result to be viewed in a browser.                                                                                                                           |
 
 ## Example request
 
@@ -129,6 +130,7 @@ Your request was valid and could therefore be processed. The submitted image has
 
 ```json
 {
+  "id": "CJKVQ9TGyakVCkvtC",
   "stats": {
     "count": 18311838,
     "elapsedMilliseconds": 402
@@ -167,8 +169,9 @@ import Accordion from "../components/accordion";
 
 | Field   | Type       | Description                                             |
 | ------- | ---------- | ------------------------------------------------------- |
-| stats   | `Stats`    | Statistics about the request.                           |
-| results | `Result[]` | The best matching images, ordered by good the match is. |
+| id      | `string`   | The unique ID of your request. If `createLink` was set to true, then this is the ID pointing to where your search results can be found, at: `https://fluffle.xyz/q/{id}`. |
+| stats   | `Stats`    | Statistics about the request.                                                                                                                                             |
+| results | `Result[]` | The best matching images, ordered by good the match is.                                                                                                                   |
 
 #### Stats
 
