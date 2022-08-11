@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Search.Api.LinkCreation
 {
-    public class LinkCreatorRetriever : Producer<SearchRequest>
+    public class LinkCreatorRetriever : Producer<SearchRequestV2>
     {
         private const int BatchSize = 20;
 
@@ -22,13 +22,13 @@ namespace Noppes.Fluffle.Search.Api.LinkCreation
 
         public override async Task WorkAsync()
         {
-            List<SearchRequest> searchRequests;
+            List<SearchRequestV2> searchRequests;
             using (var _ = await LinkCreator.BeingProcessedLock.LockAsync())
             {
                 using var scope = _services.CreateScope();
                 await using var context = scope.ServiceProvider.GetRequiredService<FluffleSearchContext>();
 
-                searchRequests = await context.SearchRequests
+                searchRequests = await context.SearchRequestsV2
                     .Where(sr => !LinkCreator.BeingProcessed.Contains(sr.Id) && sr.LinkCreated == false)
                     .OrderByDescending(sr => sr.Id)
                     .Take(BatchSize)
@@ -45,7 +45,7 @@ namespace Noppes.Fluffle.Search.Api.LinkCreation
                 await Enqueue(searchRequest);
         }
 
-        public async Task Enqueue(SearchRequest searchRequest)
+        public async Task Enqueue(SearchRequestV2 searchRequest)
         {
             using var _ = await LinkCreator.BeingProcessedLock.LockAsync();
 

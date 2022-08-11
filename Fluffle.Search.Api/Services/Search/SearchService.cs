@@ -40,39 +40,43 @@ namespace Noppes.Fluffle.Search.Api.Services
             _context = context;
         }
 
-        public async Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
+        public async Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope)
         {
             // We need to compute a more granular hash too as the 64-bit averaged hash is unable to
             // differentiate between alternate version. We first calculate the complex hashes because
             // the libvips imaging provider can optimize itself when doing this.
             HashCollection CalculateHashes(
                 PerceptualHashImage perceptualHashImage,
-                bool red, Expression<Func<SearchRequest, int?>> timeRed,
-                bool green, Expression<Func<SearchRequest, int?>> timeGreen,
-                bool blue, Expression<Func<SearchRequest, int?>> timeBlue,
-                bool average)
+                bool red, Expression<Func<SearchRequestV2, int?>> timeRed,
+                bool green, Expression<Func<SearchRequestV2, int?>> timeGreen,
+                bool blue, Expression<Func<SearchRequestV2, int?>> timeBlue,
+                bool average, Expression<Func<SearchRequestV2, int?>> timeAverage)
             {
-                scope.Next(timeRed);
+                if (red)
+                    scope.Next(timeRed);
                 var redHash = red ? perceptualHashImage.ComputeHash(Channel.Red) : Array.Empty<byte>();
 
-                scope.Next(timeGreen);
+                if (green)
+                    scope.Next(timeGreen);
                 var greenHash = green ? perceptualHashImage.ComputeHash(Channel.Green) : Array.Empty<byte>();
 
-                scope.Next(timeBlue);
+                if (blue)
+                    scope.Next(timeBlue);
                 var blueHash = blue ? perceptualHashImage.ComputeHash(Channel.Blue) : Array.Empty<byte>();
 
+                if (average)
+                    scope.Next(timeAverage);
                 var averageHash = average ? perceptualHashImage.ComputeHash(Channel.Average) : Array.Empty<byte>();
 
                 return new HashCollection(FluffleHash.ToInt64(redHash), FluffleHash.ToInt64(greenHash), FluffleHash.ToInt64(blueHash), FluffleHash.ToInt64(averageHash));
             }
 
-            scope.Next(t => t.StartExpensiveRgbComputation);
             var hash = _hash.Create(128);
             using var hasher = hash.For(imageLocation);
             HashCollection hashes1024;
             try
             {
-                hashes1024 = CalculateHashes(hasher, true, t => t.ComputeExpensiveRed, true, t => t.ComputeExpensiveGreen, true, t => t.ComputeExpensiveBlue, includeDebug);
+                hashes1024 = CalculateHashes(hasher, true, t => t.Compute1024Red, true, t => t.Compute1024Green, true, t => t.Compute1024Blue, includeDebug, t => t.Compute1024Average);
             }
             catch (ConvertException)
             {
@@ -80,7 +84,7 @@ namespace Noppes.Fluffle.Search.Api.Services
             }
 
             hash.Size = 32;
-            var hashes256 = CalculateHashes(hasher, includeDebug, t => t.ComputeExpensiveRed, includeDebug, t => t.ComputeExpensiveGreen, includeDebug, t => t.ComputeExpensiveBlue, true);
+            var hashes256 = CalculateHashes(hasher, includeDebug, t => t.Compute256Red, includeDebug, t => t.Compute256Green, includeDebug, t => t.Compute256Blue, true, t => t.Compute256Average);
 
             scope.Next(t => t.Compute64Average);
             hash.Size = 8;
@@ -89,7 +93,7 @@ namespace Noppes.Fluffle.Search.Api.Services
             return await SearchAsync(hash64, hashes256, hashes1024, includeNsfw, limit, platforms, includeDebug, scope);
         }
 
-        public Task<SR<SearchResultModel>> SearchAsync(ImageHash hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
+        public Task<SR<SearchResultModel>> SearchAsync(ImageHash hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope)
         {
             var hash64 = FluffleHash.ToUInt64(hash.PhashAverage64);
             var hashes256 = new HashCollection(FluffleHash.ToInt64(hash.PhashRed256), FluffleHash.ToInt64(hash.PhashGreen256), FluffleHash.ToInt64(hash.PhashBlue256), FluffleHash.ToInt64(hash.PhashAverage256));
@@ -107,12 +111,13 @@ namespace Noppes.Fluffle.Search.Api.Services
             public ICollection<CreditableEntity> CreditableEntities { get; set; }
         }
 
-        public async Task<SR<SearchResultModel>> SearchAsync(ulong hash64, HashCollection hashes256, HashCollection hashes1024, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
+        public async Task<SR<SearchResultModel>> SearchAsync(ulong hash64, HashCollection hashes256, HashCollection hashes1024, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope)
         {
-            scope.Next(t => t.Compare64Average);
+            scope.Next(t => t.CompareCoarse);
             var searchResult = await _compareClient.CompareAsync(hash64, hashes256.Average, includeNsfw, limit);
 
             // Bug: The search service returns duplicate images. Update: might not anymore, who knows
+            scope.Next(t => t.ReduceCoarseResults);
             var searchResultImages = searchResult
                 .SelectMany(x => x.Value.Images.Select(i => (platform: (PlatformConstant)x.Key, image: i)))
                 .DistinctBy(x => x.image.Id)
@@ -135,13 +140,13 @@ namespace Noppes.Fluffle.Search.Api.Services
 
             var searchResultLookup = searchResultImages.ToDictionary(i => i.Id);
 
-            scope.Next(t => t.ComplementComparisonResults);
+            scope.Next(t => t.RetrieveImageInfo);
             var images = await _context.DenormalizedImages.AsNoTracking()
                 .Where(i => searchResultImages.Select(r => r.Id).Contains(i.Id) && !i.IsDeleted)
                 .ToListAsync();
             var imagesLookup = images.ToDictionary(i => i.Id);
 
-            scope.Next(t => t.CreateAndRefineOutput);
+            scope.Next(t => t.CompareGranular);
             var searchResults = images
                 .Select(r =>
                 {
@@ -209,6 +214,7 @@ namespace Noppes.Fluffle.Search.Api.Services
             foreach (var result in searchResults)
                 result.Model.Match = Predict(result.CompareResult);
 
+            scope.Next(t => t.ReduceGranularResults);
             searchResults = searchResults
                 .Where(sr => platforms.Contains(sr.Model.Platform))
                 .OrderByDescending(sr => sr.Model.Score)
@@ -216,6 +222,7 @@ namespace Noppes.Fluffle.Search.Api.Services
                 .ToList();
 
             // Clean up the view location
+            scope.Next(t => t.CleanViewLocation);
             foreach (var model in searchResults.Select(x => x.Model))
             {
                 if (model.Platform == PlatformConstant.Weasyl)
@@ -237,11 +244,13 @@ namespace Noppes.Fluffle.Search.Api.Services
                 }
             }
 
+            scope.Next(t => t.RetrieveCreditableEntities);
             var creditableEntityIds = searchResults.SelectMany(sr => imagesLookup[sr.Model.Id].Credits);
             var creditsLookup = await _context.CreditableEntities.AsNoTracking()
                 .Where(ce => creditableEntityIds.Contains(ce.Id))
                 .ToDictionaryAsync(c => c.Id);
 
+            scope.Next(t => t.AppendCreditableEntities);
             IEnumerable<CreditableEntity> GetCredits(IEnumerable<int> creditIds)
             {
                 foreach (var creditId in creditIds)
@@ -259,9 +268,10 @@ namespace Noppes.Fluffle.Search.Api.Services
                     {
                         Id = c.Id,
                         Name = c.Name
-                    });
+                    }).ToList();
             }
 
+            scope.Next(t => t.DetermineFinalOrder);
             foreach (var group in searchResults.Where(sr => sr.Model.Match is ResultMatch.Exact or ResultMatch.TossUp).GroupBy(sr => sr.Model.Platform))
             {
                 var orderedGroup = group
@@ -278,13 +288,15 @@ namespace Noppes.Fluffle.Search.Api.Services
 
             return new SR<SearchResultModel>(new SearchResultModel
             {
-                Results = searchResults.Select(x => x.Model).OrderByDescending(x => x.Match).ThenByDescending(x => x.Score),
+                Results = searchResults.Select(x => x.Model)
+                    .OrderByDescending(x => x.Match)
+                    .ThenByDescending(x => x.Score)
+                    .ToList(),
                 Stats = new SearchResultModel.StatsModel
                 {
                     Count = searchResult
                         .Where(kv => platforms.Contains((PlatformConstant)kv.Key))
-                        .Sum(kv => kv.Value.Count),
-                    ElapsedMilliseconds = (int)scope.Stopwatch.ElapsedMilliseconds
+                        .Sum(kv => kv.Value.Count)
                 }
             });
         }

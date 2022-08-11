@@ -61,7 +61,7 @@ namespace Noppes.Fluffle.Search.Api.Models
                 public string Name { get; set; }
             }
 
-            public IEnumerable<CreditModel> Credits { get; set; }
+            public ICollection<CreditModel> Credits { get; set; }
 
             public class StatsModel
             {
@@ -88,6 +88,6 @@ namespace Noppes.Fluffle.Search.Api.Models
             public StatsModel Stats { get; set; }
         }
 
-        public IEnumerable<ImageModel> Results { get; set; }
+        public ICollection<ImageModel> Results { get; set; }
     }
 }

@@ -61,27 +61,26 @@ namespace Noppes.Fluffle.Search.Api.Controllers
             if (model.File.Length > SearchModelValidator.SizeMax)
                 return HandleV1(SearchError.FileTooLarge(model.File.Length));
 
-            var request = new SearchRequest
+            var request = new SearchRequestV2
             {
+                Id = $"{ShortUuidDateTime.ToString(DateTime.UtcNow)}{ShortUuid.Random(12)}",
+                Version = Project.Version,
                 From = HttpContext.Connection.RemoteIpAddress?.ToString(),
                 UserAgent = Request.Headers["User-Agent"]
             };
-            var stopwatch = CheckpointStopwatch.StartNew(request);
 
             if (request.From == null)
                 _logger.LogWarning("Request is missing remote IP address. Has the server been configured correctly?");
 
-            request.QueryId = $"{ShortUuidDateTime.ToString(DateTime.UtcNow)}{ShortUuid.Random(12)}";
-
             if (model.CreateLink)
                 request.LinkCreated = false;
 
-            var success = false;
             try
             {
-                using var scope = stopwatch.ForCheckpoint(t => t.Flush);
+                var stopwatch = CheckpointStopwatch.StartNew(request);
 
                 // Write the content embedded in the request to a temporary file
+                using var stopwatchScope = stopwatch.ForCheckpoint(t => t.Flush);
                 using var temporaryFile = new TemporaryFile();
                 await using (var temporaryFileStream = temporaryFile.OpenFileStream())
                 {
@@ -95,7 +94,8 @@ namespace Noppes.Fluffle.Search.Api.Controllers
                     request.Format = FileSignatureLookup[formatSignature];
                 }
 
-                scope.Next(t => t.AreaCheck);
+                // Check if the submitted image its area is within what Fluffle considers reasonable
+                stopwatchScope.Next(t => t.AreaCheck);
                 try
                 {
                     var dimensions = _thumbnail.GetDimensions(temporaryFile.Location);
@@ -111,25 +111,33 @@ namespace Noppes.Fluffle.Search.Api.Controllers
                     return HandleV1(SearchError.CorruptImage());
                 }
 
-                var result = await _searchService.SearchAsync(temporaryFile.Location, model.IncludeNsfw, model.Limit, model.Platforms, IsDebug, scope);
+                var result = await _searchService.SearchAsync(temporaryFile.Location, model.IncludeNsfw, model.Limit, model.Platforms, IsDebug, stopwatchScope);
                 StartupFilter.HasStarted = true;
 
+                stopwatchScope.Next(t => t.LinkCreationPreparation);
                 await result.HandleAsync(_ => Task.FromResult(string.Empty), async response =>
                 {
-                    response.Id = request.QueryId;
+                    response.Id = request.Id;
 
                     if (!model.CreateLink)
                         return string.Empty;
 
-                    await _linkCreatorStorage.SaveAsync(request.QueryId, temporaryFile.Location, response);
-                    success = true;
+                    await _linkCreatorStorage.SaveAsync(request.Id, temporaryFile.Location, response);
 
                     return string.Empty;
                 });
 
+                if (model.CreateLink)
+                {
+                    stopwatchScope.Next(t => t.EnqueueLinkCreation);
+                    await _linkCreatorRetriever.Enqueue(request);
+                }
+
+                stopwatchScope.Next(t => t.Finish);
                 return HandleV1(result, response =>
                 {
                     request.Count = response.Stats.Count;
+                    response.Stats.ElapsedMilliseconds = (int)stopwatch.ElapsedMilliseconds;
 
                     return Ok(response);
                 });
@@ -141,11 +149,8 @@ namespace Noppes.Fluffle.Search.Api.Controllers
             }
             finally
             {
-                _context.SearchRequests.Add(request);
+                _context.SearchRequestsV2.Add(request);
                 await _context.SaveChangesAsync();
-
-                if (model.CreateLink && success)
-                    await _linkCreatorRetriever.Enqueue(request);
             }
         }
     }

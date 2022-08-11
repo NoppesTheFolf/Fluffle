@@ -16,7 +16,7 @@ namespace Noppes.Fluffle.Search.Api.LinkCreation
         private static readonly TimeSpan CrashInterval = 30.Seconds();
 
         public static AsyncLock BeingProcessedLock { get; } = new();
-        public static HashSet<int> BeingProcessed { get; } = new();
+        public static HashSet<string> BeingProcessed { get; } = new();
 
         private readonly IServiceProvider _services;
         private readonly ILogger<LinkCreator> _logger;
@@ -35,7 +35,7 @@ namespace Noppes.Fluffle.Search.Api.LinkCreation
                 {
                     BeingProcessed.Clear();
 
-                    var manager = new ProducerConsumerManager<SearchRequest>(_services, 500);
+                    var manager = new ProducerConsumerManager<SearchRequestV2>(_services, 500);
                     manager.AddProducer<LinkCreatorRetriever>(1);
                     manager.AddConsumer<LinkCreatorUploader>(8, 50);
                     manager.AddFinalConsumer<LinkCreatorUpdater>(1);
