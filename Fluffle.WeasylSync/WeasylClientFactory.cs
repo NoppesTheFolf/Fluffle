@@ -14,11 +14,11 @@ namespace Noppes.Fluffle.WeasylSync
         {
         }
 
-        public override Task<WeasylClient> CreateAsync(int interval)
+        public override Task<WeasylClient> CreateAsync(int interval, string applicationName)
         {
             var weasylConf = Configuration.Get<WeasylConfiguration>();
 
-            var client = new WeasylClient("https://www.weasyl.com/", Project.UserAgent, weasylConf.ApiKey)
+            var client = new WeasylClient("https://www.weasyl.com/", Project.UserAgent(applicationName), weasylConf.ApiKey)
             {
                 RateLimiter = new RequestRateLimiter(interval.Milliseconds())
             };

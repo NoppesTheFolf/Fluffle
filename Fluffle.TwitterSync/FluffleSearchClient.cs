@@ -62,15 +62,15 @@ namespace Noppes.Fluffle.TwitterSync
     {
         private readonly IFlurlClient _client;
 
-        public ReverseSearchClient()
+        public ReverseSearchClient(string applicationName)
         {
-            _client = new FlurlClient("https://api.fluffle.xyz/v1");
+            _client = new FlurlClient("https://api.fluffle.xyz/v1")
+                .WithHeader("User-Agent", Project.UserAgent(applicationName));
         }
 
         public async Task<FluffleResponse> ReverseSearchAsync(Func<Stream> openStream, bool includeNsfw, int limit = 32, params FlufflePlatform[] platforms)
         {
             var response = await _client.Request("search")
-                .WithHeader("User-Agent", Project.UserAgent)
                 .PostMultipartAsync(content =>
                 {
                     foreach (var platform in platforms)

@@ -5,9 +5,9 @@ namespace Noppes.Fluffle.FurAffinitySync
 {
     public static class FurAffinityExtensions
     {
-        public static IServiceCollection AddFurAffinityClient(this IServiceCollection services, FluffleConfiguration configuration, int interval)
+        public static IServiceCollection AddFurAffinityClient(this IServiceCollection services, FluffleConfiguration configuration, int interval, string applicationName)
         {
-            var client = new FurAffinityClientFactory(configuration).CreateAsync(interval).Result;
+            var client = new FurAffinityClientFactory(configuration).CreateAsync(interval, applicationName).Result;
 
             return services.AddSingleton(client);
         }

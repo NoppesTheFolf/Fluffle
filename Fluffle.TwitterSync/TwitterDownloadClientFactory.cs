@@ -30,9 +30,9 @@ namespace Noppes.Fluffle.TwitterSync
         {
         }
 
-        public override Task<ITwitterDownloadClient> CreateAsync(int interval)
+        public override Task<ITwitterDownloadClient> CreateAsync(int interval, string applicationName)
         {
-            var client = new TwitterDownloadClient(string.Empty, Project.UserAgent)
+            var client = new TwitterDownloadClient(string.Empty, Project.UserAgent(applicationName))
             {
                 RateLimiter = new RequestRateLimiter(interval.Milliseconds())
             };

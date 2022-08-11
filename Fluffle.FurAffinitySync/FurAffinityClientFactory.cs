@@ -14,11 +14,11 @@ namespace Noppes.Fluffle.FurAffinitySync
         {
         }
 
-        public override Task<FurAffinityClient> CreateAsync(int interval)
+        public override Task<FurAffinityClient> CreateAsync(int interval, string applicationName)
         {
             var faConf = Configuration.Get<FurAffinityConfiguration>();
 
-            var client = new FurAffinityClient("https://www.furaffinity.net", Project.UserAgent, faConf.A, faConf.B)
+            var client = new FurAffinityClient("https://www.furaffinity.net", Project.UserAgent(applicationName), faConf.A, faConf.B)
             {
                 RateLimiter = new RequestRateLimiter(interval.Milliseconds())
             };

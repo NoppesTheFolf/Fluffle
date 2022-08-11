@@ -10,11 +10,6 @@ namespace Noppes.Fluffle.Constants
         public static string Version => Debugger.IsAttached ? "development" : "0.17.0";
 
         /// <summary>
-        /// Base name of the User Agent used by Fluffle its synchronization and indexing bots.
-        /// </summary>
-        public static string UserAgentBase = "fluffle-bot";
-
-        /// <summary>
         /// My username.
         /// </summary>
         public static readonly string DeveloperUsername = "Noppes";
@@ -25,8 +20,13 @@ namespace Noppes.Fluffle.Constants
         public static readonly string DeveloperUrl = "fluffle.xyz/contact";
 
         /// <summary>
-        /// User Agent used by Fluffle its synchronization and indexing bots.
+        /// Base name of the User Agent used by Fluffle's applications.
         /// </summary>
-        public static string UserAgent => $"{UserAgentBase}/{Version} (by {DeveloperUsername} at {DeveloperUrl})";
+        public static string UserAgentBase(string applicationName) => $"fluffle-{applicationName}";
+
+        /// <summary>
+        /// User Agent used by Fluffle's applications.
+        /// </summary>
+        public static string UserAgent(string applicationName) => $"{UserAgentBase(applicationName)}/{Version} (by {DeveloperUsername} at {DeveloperUrl})";
     }
 }

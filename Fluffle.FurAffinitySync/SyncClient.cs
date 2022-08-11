@@ -9,6 +9,8 @@ namespace Noppes.Fluffle.FurAffinitySync
 {
     internal class SyncClient : SyncClient<SyncClient, FurAffinityContentProducer, FaSubmission>
     {
+        private const string UserAgentApplicationName = "fur-affinity-sync";
+
         public SyncClient(IServiceProvider services) : base(services)
         {
         }
@@ -17,7 +19,7 @@ namespace Noppes.Fluffle.FurAffinitySync
         {
             var syncConf = configuration.Get<FurAffinitySyncConfiguration>();
             services.AddSingleton(syncConf);
-            services.AddFurAffinityClient(configuration, syncConf.Interval);
+            services.AddFurAffinityClient(configuration, syncConf.Interval, UserAgentApplicationName);
 
             services.AddTransient<RecentSubmissionProducer>();
             services.AddTransient<RecentSubmissionConsumer>();

@@ -29,9 +29,9 @@ namespace Noppes.Fluffle.TwitterSync
     {
         private readonly SemaphoreInterceptor _classifyInterceptor;
 
-        public PredictionClient(string baseUrl, string apiKey, int classifyDegreeOfParallelism) : base(baseUrl)
+        public PredictionClient(string baseUrl, string applicationName, string apiKey, int classifyDegreeOfParallelism) : base(baseUrl)
         {
-            FlurlClient.WithHeader("User-Agent", Project.UserAgent);
+            FlurlClient.WithHeader("User-Agent", Project.UserAgent(applicationName));
             FlurlClient.WithHeader("Api-Key", apiKey);
             FlurlClient.Settings.JsonSerializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings
             {

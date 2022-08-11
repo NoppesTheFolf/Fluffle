@@ -21,6 +21,8 @@ namespace Noppes.Fluffle.Main.Api
 {
     public class Startup : ApiStartup<Startup, FluffleContext>
     {
+        private const string UserAgentApplicationName = "main";
+
         protected override bool EnableAccessControl => true;
 
         public override void AdditionalConfigureServices(IServiceCollection services)
@@ -45,7 +47,7 @@ namespace Noppes.Fluffle.Main.Api
             services.AddSingleton(bucket);
 
             var faConf = Configuration.Get<FurAffinityConfiguration>();
-            var faClient = new FurAffinityClient("https://www.furaffinity.net", Project.UserAgent, faConf.A, faConf.B);
+            var faClient = new FurAffinityClient("https://www.furaffinity.net", Project.UserAgent(UserAgentApplicationName), faConf.A, faConf.B);
             services.AddSingleton(faClient);
 
             services.RegisterChangeIdIncrementers();

@@ -15,11 +15,11 @@ namespace Noppes.Fluffle.FurryNetworkSync
         {
         }
 
-        public override Task<FurryNetworkClient> CreateAsync(int interval)
+        public override Task<FurryNetworkClient> CreateAsync(int interval, string applicationName)
         {
             var conf = Configuration.Get<FurryNetworkConfiguration>();
 
-            var client = new FurryNetworkClient(BaseUrl, conf.Token, Project.UserAgent)
+            var client = new FurryNetworkClient(BaseUrl, conf.Token, Project.UserAgent(applicationName))
             {
                 RateLimiter = new RequestRateLimiter(interval.Milliseconds())
             };

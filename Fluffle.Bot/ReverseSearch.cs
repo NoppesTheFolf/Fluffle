@@ -142,9 +142,9 @@ namespace Noppes.Fluffle.Bot
 
     public class FluffleClient : ApiClient
     {
-        public FluffleClient(string baseUrl = "https://api.fluffle.xyz") : base(baseUrl)
+        public FluffleClient(string applicationName, string baseUrl = "https://api.fluffle.xyz") : base(baseUrl)
         {
-            FlurlClient.Headers.Add("User-Agent", Project.UserAgent);
+            FlurlClient.Headers.Add("User-Agent", Project.UserAgent(applicationName));
         }
 
         public async Task<FluffleResponse> SearchAsync(Stream stream, bool includeNsfw, int limit)

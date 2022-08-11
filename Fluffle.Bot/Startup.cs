@@ -52,6 +52,8 @@ namespace Noppes.Fluffle.Bot
 
     public class Startup : ApiStartup<Startup>
     {
+        private const string UserAgentApplicationName = "telegram-bot";
+
         protected override bool EnableAccessControl => false;
 
         public override void AdditionalConfigureServices(IServiceCollection services)
@@ -79,7 +81,7 @@ namespace Noppes.Fluffle.Bot
             services.AddSingleton<ITelegramRepository<InputContext, long>, InputContextRepository>();
             services.AddSingleton<InputManager>();
 
-            var fluffleClient = new FluffleClient();
+            var fluffleClient = new FluffleClient(UserAgentApplicationName);
             services.AddSingleton(fluffleClient);
             services.AddSingleton(new ReverseSearchScheduler(botConf.ReverseSearch.Workers, fluffleClient));
             services.AddSingleton<ReverseSearchRequestLimiter>();

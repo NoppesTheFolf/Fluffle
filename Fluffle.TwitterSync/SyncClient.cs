@@ -28,6 +28,8 @@ namespace Noppes.Fluffle.TwitterSync
 {
     public partial class SyncClient : Service.Service<SyncClient>
     {
+        private const string UserAgentApplicationName = "twitter-sync";
+
         private static async Task Main(string[] args) => await RunAsync(args, (conf, services) =>
         {
             // Add sync configuration
@@ -50,20 +52,20 @@ namespace Noppes.Fluffle.TwitterSync
             services.AddSingleton<TweetRetriever>();
 
             // Add client used for downloading images from Twitter
-            var downloadClient = new TwitterDownloadClientFactory(conf).CreateAsync(syncConf.DownloadInterval).Result;
+            var downloadClient = new TwitterDownloadClientFactory(conf).CreateAsync(syncConf.DownloadInterval, UserAgentApplicationName).Result;
             services.AddSingleton(downloadClient);
 
             // Add E621 API client
-            var e621Client = new E621ClientFactory(conf).CreateAsync(E621Constants.RecommendedRequestIntervalInMilliseconds).Result;
+            var e621Client = new E621ClientFactory(conf).CreateAsync(E621Constants.RecommendedRequestIntervalInMilliseconds, UserAgentApplicationName).Result;
             services.AddSingleton(e621Client);
 
             // Add prediction client
             var predictionConf = conf.Get<PredictionConfiguration>();
-            var predictionClient = new PredictionClient(predictionConf.Url, predictionConf.ApiKey, predictionConf.ClassifyDegreeOfParallelism);
+            var predictionClient = new PredictionClient(predictionConf.Url, UserAgentApplicationName, predictionConf.ApiKey, predictionConf.ClassifyDegreeOfParallelism);
             services.AddSingleton<IPredictionClient>(predictionClient);
 
             // Add Fluffle reverse search client
-            var reverseSearchClient = new ReverseSearchClient();
+            var reverseSearchClient = new ReverseSearchClient(UserAgentApplicationName);
             services.AddSingleton<IReverseSearchClient>(reverseSearchClient);
 
             // Add database

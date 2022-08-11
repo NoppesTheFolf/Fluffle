@@ -15,12 +15,12 @@ namespace Noppes.Fluffle.E621Sync
         {
         }
 
-        public override async Task<IE621Client> CreateAsync(int interval)
+        public override async Task<IE621Client> CreateAsync(int interval, string applicationName)
         {
             var conf = Configuration.Get<E621Configuration>();
 
             var e621Client = new E621ClientBuilder()
-                .WithUserAgent(Project.UserAgentBase, Project.Version, Project.DeveloperUsername, Project.DeveloperUrl)
+                .WithUserAgent(Project.UserAgentBase(applicationName), Project.Version, Project.DeveloperUsername, Project.DeveloperUrl)
                 .WithBaseUrl(Imageboard.E621)
                 .WithMaximumConnections(1)
                 .WithRequestInterval(interval.Milliseconds())
