@@ -107,7 +107,13 @@ namespace Noppes.Fluffle.Api
             // ASP.NET Core will always run behind a reverse proxy, so we need to use those headers
             services.Configure<ForwardedHeadersOptions>(options =>
             {
-                options.ForwardedHeaders = ForwardedHeaders.All;
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
+
+                // Only loopback proxies are allowed by default.
+                // Clear that restriction because forwarders are enabled by explicit
+                // configuration.
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
             });
 
             if (EnableAccessControl)
