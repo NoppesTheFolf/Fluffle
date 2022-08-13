@@ -139,14 +139,21 @@ const Api = function () {
             formData.append('createLink', String(createLink));
 
             return axios.post(url('search'), formData, config)
+                .then<SearchResult>(response => {
+                    return processSearchData(response.data, URL.createObjectURL(file), includeNsfw, false);
+                })
                 .catch(error => {
                     let message = 'Something went horribly wrong and we\'re not quite sure what.';
 
-                    if (error.response) {
-                        // The request was made and the server responded with a status code that falls out of the range of 2xx
-                        if (error.response.data.errors) return;
+                    if (error.code === 'ERR_NETWORK') {
+                        message = 'Fluffle seems to be offline, please try again later.';
+                    } else {
+                        const errorCode = error.response.data?.code;
+                        if (errorCode == null) {
+                            return;
+                        }
 
-                        switch (error.response.data.code) {
+                        switch (errorCode) {
                             case 'FILE_TOO_LARGE':
                                 message = 'The submitted file is too large to process.';
                                 break;
@@ -166,14 +173,9 @@ const Api = function () {
                                 message = `You crashed Fluffle, congratulations! Please consider reporting this (see contact). Make sure you can provide the following code if you choose to do so: ${error.response.data.traceId}`;
                                 break;
                         }
-                    } else if (error.request) {
-                        // The request was made but no response was received
-                        message = 'Fluffle seems to be partially offline, please try again later.';
                     }
 
                     return Promise.reject(message);
-                }).then<SearchResult>(response => {
-                    return processSearchData(response.data, URL.createObjectURL(file), includeNsfw, false);
                 })
         },
         processSearchData,
