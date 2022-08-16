@@ -137,8 +137,29 @@ namespace Noppes.Fluffle.Search.Api.Controllers
                 return HandleV1(result, response =>
                 {
                     request.Count = response.Stats.Count;
-                    response.Stats.ElapsedMilliseconds = (int)stopwatch.ElapsedMilliseconds;
 
+                    var resultMatchCounts = Enum.GetValues<ResultMatch>().ToDictionary(rm => rm, _ => 0);
+                    response.Results.GroupBy(r => r.Match).ToList().ForEach(g => resultMatchCounts[g.Key] = g.Count());
+                    foreach (var (key, count) in resultMatchCounts)
+                    {
+                        switch (key)
+                        {
+                            case ResultMatch.Exact:
+                                request.ExactCount = count;
+                                break;
+                            case ResultMatch.TossUp:
+                                request.TossUpCount = count;
+                                break;
+                            case ResultMatch.Alternative:
+                                request.AlternativeCount = count;
+                                break;
+                            case ResultMatch.Unlikely:
+                                request.UnlikelyCount = count;
+                                break;
+                        }
+                    }
+
+                    response.Stats.ElapsedMilliseconds = (int)stopwatch.ElapsedMilliseconds;
                     return Ok(response);
                 });
             }

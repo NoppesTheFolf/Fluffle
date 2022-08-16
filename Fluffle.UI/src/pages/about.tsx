@@ -51,6 +51,7 @@ const AboutPage = () => {
                     <li>The how manyth request it is since the start of the server. Used to assess server performance.</li>
                     <li>A bunch of timings. You can compare this to having a stopwatch and tracking laps, but in application code. How long did it take to create the fingerprint? How long did it take to check if the submitted file was an image? How long did it take to compare the fingerprint? Etc. Used to assess server performance.</li>
                     <li>The number of images compared against. Used to assess server performance.</li>
+                    <li>Per category (exact, toss-up, alternative, unlikely match) the number of images in the search result. Used to assess how effective Fluffle is.</li>
                 </ul>
                 <a id="tracking-and-cookies">
                     <h2>Tracking & cookies</h2>

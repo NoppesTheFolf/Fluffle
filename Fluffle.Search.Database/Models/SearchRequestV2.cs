@@ -63,6 +63,10 @@ namespace Noppes.Fluffle.Search.Database.Models
         public int? Finish { get; set; }
 
         public int? Count { get; set; }
+        public int? UnlikelyCount { get; set; }
+        public int? AlternativeCount { get; set; }
+        public int? TossUpCount { get; set; }
+        public int? ExactCount { get; set; }
 
         public void Configure(EntityTypeBuilder<SearchRequestV2> entity)
         {
@@ -116,6 +120,10 @@ namespace Noppes.Fluffle.Search.Database.Models
             entity.Property(e => e.Finish);
 
             entity.Property(e => e.Count);
+            entity.Property(e => e.UnlikelyCount);
+            entity.Property(e => e.AlternativeCount);
+            entity.Property(e => e.TossUpCount);
+            entity.Property(e => e.ExactCount);
         }
     }
 }
