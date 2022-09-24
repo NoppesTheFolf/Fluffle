@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -76,6 +77,16 @@ namespace Noppes.Fluffle.Api
         public void ConfigureServices(IServiceCollection services)
         {
             BeforeConfigureServices(services);
+
+            services.AddResponseCompression(options =>
+            {
+                // Add gzip compression for the default mime types and responses encoded using MessagePack
+                options.Providers.Add<GzipCompressionProvider>();
+                options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+                {
+                    "application/x-msgpack"
+                }).ToList();
+            });
 
             // Register all the mappers
             Mappers.Initialize();
@@ -209,6 +220,8 @@ namespace Noppes.Fluffle.Api
             var logger = app.ApplicationServices.GetRequiredService<ILogger<ApiStartup>>();
 
             BeforeConfigure(app, env);
+
+            app.UseResponseCompression();
 
             if (env.IsDevelopment())
             {
