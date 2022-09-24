@@ -1,6 +1,8 @@
 ﻿using Flurl.Http;
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
 
 namespace Noppes.Fluffle.Http
 {
@@ -23,7 +25,16 @@ namespace Noppes.Fluffle.Http
 
         protected ApiClient(string baseUrl)
         {
-            FlurlClient = new FlurlClient(baseUrl);
+            // Enable compression if the handler supports it
+            var httpClientHandler = new HttpClientHandler();
+            httpClientHandler.AutomaticDecompression = httpClientHandler.SupportsAutomaticDecompression
+                ? DecompressionMethods.All
+                : DecompressionMethods.None;
+
+            // Configure Flurl to make use of our custom http client and set the base URL
+            var httpClient = new HttpClient(httpClientHandler);
+            FlurlClient = new FlurlClient(httpClient);
+            FlurlClient.BaseUrl = baseUrl;
 
             _interceptors = new List<ICallInterceptor>();
         }
