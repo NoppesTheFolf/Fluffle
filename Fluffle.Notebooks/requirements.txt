@@ -5,7 +5,7 @@ more-itertools==8.12.0
 Pillow==9.2.0
 fastapi==0.71.0
 python-multipart==0.0.5
-joblib==1.1.0
+joblib==1.2.0
 b2sdk==1.14.1
 uvicorn==0.17.0
 pyaml==21.10.1
