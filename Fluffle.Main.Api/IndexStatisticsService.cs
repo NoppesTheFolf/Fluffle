@@ -50,7 +50,7 @@ namespace Noppes.Fluffle.Main.Api
         }
     }
 
-    public class IndexStatisticsService : IService, IInitializable
+    public class IndexStatisticsService : IService
     {
         private readonly IServiceProvider _services;
         private readonly ILogger<IndexStatisticsService> _logger;
@@ -73,8 +73,6 @@ namespace Noppes.Fluffle.Main.Api
 
             return new IndexStatisticsScope(_statistics, readerLock);
         }
-
-        public Task InitializeAsync() => RunAsync();
 
         public async Task RunAsync()
         {
