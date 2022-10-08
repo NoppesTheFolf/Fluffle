@@ -15,11 +15,16 @@ namespace Noppes.Fluffle.Utils
 
     public abstract class WorkScheduler<T, TPriority, TResult> where T : WorkSchedulerItem<TResult>, new()
     {
+        private readonly int _numberOfWorkers;
         private readonly PriorityChannel<T, TPriority> _channel;
+        private readonly AsyncLock _readLock;
+        private DateTime? _lastReadAt;
 
         protected WorkScheduler(int numberOfWorkers)
         {
+            _numberOfWorkers = numberOfWorkers;
             _channel = new PriorityChannel<T, TPriority>();
+            _readLock = new AsyncLock();
 
             for (var i = 0; i < numberOfWorkers; i++)
                 Task.Run(WorkAsync);
@@ -30,7 +35,33 @@ namespace Noppes.Fluffle.Utils
             while (true)
             {
                 // Wait for work to be available
-                var item = await _channel.ReadAsync();
+                T item;
+                using (var _ = await _readLock.LockAsync())
+                {
+                    var interval = GetInterval();
+                    if (interval != null && _numberOfWorkers > 1)
+                        throw new InvalidOperationException("Interval only works with a single worker.");
+
+                    if (interval == null)
+                    {
+                        item = await _channel.ReadAsync();
+                    }
+                    else
+                    {
+                        if (_lastReadAt != null)
+                        {
+                            var waitUntil = ((DateTime)_lastReadAt).AddMilliseconds((int)interval);
+                            var timeToWait = waitUntil - DateTime.UtcNow;
+                            if (timeToWait > TimeSpan.Zero)
+                            {
+                                await Task.Delay(timeToWait);
+                            }
+                        }
+
+                        item = await _channel.ReadAsync();
+                        _lastReadAt = DateTime.UtcNow;
+                    }
+                }
 
                 try
                 {
@@ -47,9 +78,11 @@ namespace Noppes.Fluffle.Utils
             }
         }
 
+        protected virtual int? GetInterval() => null;
+
         protected abstract Task<TResult> HandleAsync(T item);
 
-        public async Task<TResult> ProcessAsync(T item, TPriority priority)
+        public virtual async Task<TResult> ProcessAsync(T item, TPriority priority)
         {
             // Schedule the work to be picked up by a worker
             item.CompletionEvent = new AsyncManualResetEvent();

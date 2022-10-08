@@ -3,6 +3,7 @@ using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.Main.Communication;
 using SerilogTimings;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Sync
@@ -20,7 +21,10 @@ namespace Noppes.Fluffle.Sync
 
         public override async Task<ICollection<PutContentModel>> ConsumeAsync(ICollection<PutContentModel> models)
         {
-            using var _ = Operation.Time("Submitting {contentCount} content pieces", models.Count);
+            if (!models.Any())
+                return models;
+
+            using var _ = Operation.Time($"Submitting {{contentCount}} content {(models.Count == 1 ? "piece" : "pieces")}", models.Count);
 
             await HttpResiliency.RunAsync(async () =>
             {

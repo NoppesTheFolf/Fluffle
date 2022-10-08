@@ -7,10 +7,11 @@ using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.Sync;
-using Noppes.Fluffle.Utils;
+using SerilogTimings;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Log = Serilog.Log;
 
@@ -18,51 +19,22 @@ namespace Noppes.Fluffle.FurAffinitySync
 {
     public class FurAffinityContentProducer : ContentProducer<FaSubmission>
     {
-        public static readonly IReadOnlySet<FaSubmissionCategory> DisallowedCategories = new HashSet<FaSubmissionCategory>
-        {
-            FaSubmissionCategory.Crafting,
-            FaSubmissionCategory.Fursuiting,
-            FaSubmissionCategory.Photography,
-            FaSubmissionCategory.FoodRecipes,
-            FaSubmissionCategory.Sculpting,
-            FaSubmissionCategory.Skins,
-            FaSubmissionCategory.Handhelds,
-            FaSubmissionCategory.Resources,
-            FaSubmissionCategory.Adoptables,
-            FaSubmissionCategory.Auctions,
-            FaSubmissionCategory.Contests,
-            FaSubmissionCategory.CurrentEvents,
-            FaSubmissionCategory.Stockart,
-            FaSubmissionCategory.Screenshots,
-            FaSubmissionCategory.YchSale
-        };
-
-        public static readonly IReadOnlySet<FaSubmissionType> DisallowedTypes = new HashSet<FaSubmissionType>
-        {
-            FaSubmissionType.Tutorials
-        };
-
-        private static readonly TimeSpan CheckInterval = 5.Minutes();
         private readonly SyncStateService<FurAffinitySyncClientState> _syncStateService;
-
-        private ArchiveStrategy _archiveStrategy;
-        private PopularArtistsStrategy _popularArtistsStrategy;
-        private FurAffinityContentProducerStrategy _strategy;
 
         private FurAffinitySyncClientState _syncState;
         private readonly FurAffinityClient _client;
-        private readonly IServiceProvider _services;
         private readonly FurAffinitySyncConfiguration _configuration;
+        private readonly GetSubmissionScheduler _getSubmissionScheduler;
 
         public override int SourceVersion => 3;
 
         public FurAffinityContentProducer(PlatformModel platform, FluffleClient fluffleClient,
-            IHostEnvironment environment, SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client, IServiceProvider services, FurAffinitySyncConfiguration configuration) : base(platform, fluffleClient, environment)
+            IHostEnvironment environment, SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client, FurAffinitySyncConfiguration configuration, GetSubmissionScheduler getSubmissionScheduler) : base(platform, fluffleClient, environment)
         {
             _syncStateService = syncStateService;
             _client = client;
-            _services = services;
             _configuration = configuration;
+            _getSubmissionScheduler = getSubmissionScheduler;
         }
 
         public override async Task<FaSubmission> GetContentAsync(string id)
@@ -74,95 +46,121 @@ namespace Noppes.Fluffle.FurAffinitySync
 
         protected override Task QuickSyncAsync() => throw new NotImplementedException();
 
+        private async Task<StopReason> ProcessRetrieverAsync(SequentialSubmissionRetriever retriever, Func<int, Task> onSubmitAsync = null)
+        {
+            while (true)
+            {
+                var (stopReason, submissionId, faResult) = await retriever.NextAsync();
+                if (stopReason != null)
+                    return (StopReason)stopReason;
+
+                if (faResult != null)
+                    await SubmitContentAsync(new List<FaSubmission> { faResult.Result });
+                else
+                    await FlagForDeletionAsync(submissionId.ToString());
+
+                if (onSubmitAsync != null)
+                    await onSubmitAsync(submissionId);
+            }
+        }
+
         protected override async Task FullSyncAsync()
         {
-            var recentSubmissionsTask = Task.Run(async () =>
+            _syncState = await _syncStateService.InitializeAsync(async state =>
             {
-                var manager = new ProducerConsumerManager<RecentSubmissionData>(_services, 10_000);
-                manager.AddProducer<RecentSubmissionProducer>(1);
-                manager.AddFinalConsumer<RecentSubmissionConsumer>(1);
-
-                await manager.RunAsync();
+                state.Version = 1;
+                state.ArchiveEndId = await FluffleClient.GetMinId(Platform) ?? 38_000_000;
+                state.ArchiveStartId = await FluffleClient.GetMaxId(Platform) ?? 37_999_999;
             });
 
-            var archiveTask = Task.Run(async () =>
+            var buildArchiveTask = Task.Run(async () =>
             {
-                _syncState = await _syncStateService.InitializeAsync(async state =>
+                var startId = _syncState.Acquire(x => x.ArchiveEndId);
+                var retriever = new SequentialSubmissionRetriever(startId, Direction.Backward, null, 0, _getSubmissionScheduler, 2);
+                await ProcessRetrieverAsync(retriever, submissionId =>
                 {
-                    state.Version = 1;
-                    state.ArchiveEndId = await FluffleClient.GetMinId(Platform) ?? 38_000_001;
-                    state.ArchiveStartId = await FluffleClient.GetMaxId(Platform) ?? 38_000_000;
+                    _syncState.Acquire(x => x.ArchiveEndId = submissionId);
+
+                    return Task.CompletedTask;
                 });
-                _archiveStrategy = new ArchiveStrategy(FluffleClient, _client, _syncState);
-                _popularArtistsStrategy = new PopularArtistsStrategy(FluffleClient, _client, _syncState);
-                _strategy = _archiveStrategy;
 
-                var interval = _configuration.BelowBotLimitInterval;
-                for (var i = 1; ; i++)
+                Log.Information("Archive task ended");
+            });
+
+            var checkExistingTask = Task.Run(async () =>
+            {
+                while (true)
                 {
-                    var nextAt = DateTimeOffset.UtcNow.Add(interval.Milliseconds());
-
-                    var (submissionId, result) = await _strategy.NextAsync();
-
-                    if (result?.FaResult != null)
-                        await SubmitContentAsync(new List<FaSubmission> { result.FaResult.Result });
-                    else if (submissionId != null)
-                        await FlagForDeletionAsync(submissionId.ToString());
-
-                    if (i % 10 == 0)
+                    var stopId = await FluffleClient.GetMaxId(Platform);
+                    if (stopId != null)
                     {
-                        await LogEx.TimeAsync(async () =>
+                        var stopTime = 30.Days();
+                        var startId = _syncState.Acquire(x => x.ArchiveStartId);
+                        var retriever = new SequentialSubmissionRetriever(startId, Direction.Forward, stopTime, (int)stopId, _getSubmissionScheduler, 3);
+
+                        await ProcessRetrieverAsync(retriever, submissionId =>
                         {
-                            await HttpResiliency.RunAsync(() => _syncStateService.SyncAsync());
-                        }, "Stored sync state");
+                            _syncState.Acquire(x => x.ArchiveStartId = submissionId);
+
+                            return Task.CompletedTask;
+                        });
                     }
 
-                    if (result == null)
-                    {
-                        if (_strategy is PopularArtistsStrategy)
-                        {
-                            await LogEx.TimeAsync(async () =>
-                            {
-                                await HttpResiliency.RunAsync(() => _syncStateService.SyncAsync());
-                            }, "Stored sync state");
-
-                            Log.Information("Switching back to archive strategy");
-                            _strategy = _archiveStrategy;
-
-                            continue;
-                        }
-
-                        Log.Information("Nothing more to do, waiting...");
-                        await Task.Delay(15.Minutes());
-                        continue;
-                    }
-
-                    // if (i % 7000 == 0 && _strategy is ArchiveStrategy)
-                    // {
-                    //     Log.Information("Switching to popular artists strategy");
-                    //     _strategy = _popularArtistsStrategy;
-                    // }
-
-                    var timeToWait = nextAt.Subtract(DateTimeOffset.UtcNow);
-                    if (timeToWait > TimeSpan.Zero)
-                    {
-                        await Task.Delay(timeToWait);
-                    }
-
-                    if (result.FaResult != null)
-                    {
-                        interval = result.FaResult.Stats.Registered < FurAffinityClient.BotThreshold
-                            ? _configuration.BelowBotLimitInterval
-                            : _configuration.AboveBotLimitInterval;
-                    }
+                    var timeToWait = 5.Minutes();
+                    Log.Information("Waiting for {time} before retrieving recent submissions again.", timeToWait);
+                    await Task.Delay(timeToWait);
                 }
             });
 
-            var task = await Task.WhenAny(recentSubmissionsTask, archiveTask);
-            if (task.Exception != null)
-                throw task.Exception;
+            var syncStateTask = Task.Run(async () =>
+            {
+                var timeToWait = 3.Minutes();
+                while (true)
+                {
+                    Log.Information("Waiting {time} before storing sync state", timeToWait);
+                    await Task.Delay(timeToWait);
 
-            throw new InvalidOperationException("For whatever reason, a task completed.");
+                    await _syncState.AcquireAsync<object>(async _ =>
+                    {
+                        var flushDelay = 3.Seconds();
+                        Log.Information("Waiting {time} before storing sync state to allow pending operations to flush...", flushDelay);
+                        await Task.Delay(flushDelay);
+
+                        using var __ = Operation.Time("Storing sync state");
+                        await HttpResiliency.RunAsync(() => _syncStateService.SyncAsync());
+
+                        return null;
+                    });
+                }
+            });
+
+            var recentSubmissionsTask = Task.Run(async () =>
+            {
+                while (true)
+                {
+                    var recentSubmissions = await _client.GetRecentSubmissions();
+
+                    var stopTime = 5.Minutes();
+                    var stopId = recentSubmissions.OrderByDescending(x => x.Id).First().Id + 1;
+                    var startId = await FluffleClient.GetMaxId(Platform) ?? 37_999_999;
+                    var retriever = new SequentialSubmissionRetriever(startId, Direction.Forward, stopTime, stopId, _getSubmissionScheduler, 1);
+
+                    var stopReason = await ProcessRetrieverAsync(retriever);
+                    if (stopReason != StopReason.Time)
+                        continue;
+
+                    var timeToWait = 5.Minutes();
+                    Log.Information("Waiting for {time} before retrieving recent submissions again.", timeToWait);
+                    await Task.Delay(timeToWait);
+                }
+            });
+
+            // Only the archive task can complete without an error being thrown
+            var task = await Task.WhenAny(recentSubmissionsTask, buildArchiveTask, syncStateTask, checkExistingTask);
+            if (task == buildArchiveTask && task.Exception == null)
+                task = await Task.WhenAny(recentSubmissionsTask, syncStateTask, checkExistingTask);
+
+            throw task.Exception!;
         }
 
         public override string GetId(FaSubmission src) => src.Id.ToString();
@@ -246,6 +244,30 @@ namespace Noppes.Fluffle.FurAffinitySync
         public override string GetDescription(FaSubmission src) => src.Description;
 
         public override IEnumerable<string> GetOtherSources(FaSubmission src) => null;
+
+        public static readonly IReadOnlySet<FaSubmissionCategory> DisallowedCategories = new HashSet<FaSubmissionCategory>
+        {
+            FaSubmissionCategory.Crafting,
+            FaSubmissionCategory.Fursuiting,
+            FaSubmissionCategory.Photography,
+            FaSubmissionCategory.FoodRecipes,
+            FaSubmissionCategory.Sculpting,
+            FaSubmissionCategory.Skins,
+            FaSubmissionCategory.Handhelds,
+            FaSubmissionCategory.Resources,
+            FaSubmissionCategory.Adoptables,
+            FaSubmissionCategory.Auctions,
+            FaSubmissionCategory.Contests,
+            FaSubmissionCategory.CurrentEvents,
+            FaSubmissionCategory.Stockart,
+            FaSubmissionCategory.Screenshots,
+            FaSubmissionCategory.YchSale
+        };
+
+        public static readonly IReadOnlySet<FaSubmissionType> DisallowedTypes = new HashSet<FaSubmissionType>
+        {
+            FaSubmissionType.Tutorials
+        };
 
         public override bool ShouldBeIndexed(FaSubmission src)
         {

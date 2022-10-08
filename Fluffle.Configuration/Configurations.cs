@@ -458,18 +458,12 @@ namespace Noppes.Fluffle.Configuration
     [ConfigurationSection("FurAffinitySync")]
     public class FurAffinitySyncConfiguration : SyncClientConfiguration<FurAffinitySyncConfiguration>
     {
-        public int RecentSubmissionsInterval { get; set; }
-
-        public int RecentSubmissionPriorityThreshold { get; set; }
-
         public int BelowBotLimitInterval { get; set; }
 
         public int AboveBotLimitInterval { get; set; }
 
         public FurAffinitySyncConfiguration()
         {
-            RuleFor(o => o.RecentSubmissionsInterval).GreaterThanOrEqualTo(0);
-            RuleFor(o => o.RecentSubmissionPriorityThreshold).GreaterThanOrEqualTo(0);
             RuleFor(o => o.BelowBotLimitInterval).GreaterThanOrEqualTo(0);
             RuleFor(o => o.AboveBotLimitInterval).GreaterThanOrEqualTo(0);
         }

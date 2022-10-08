@@ -21,8 +21,7 @@ namespace Noppes.Fluffle.FurAffinitySync
             services.AddSingleton(syncConf);
             services.AddFurAffinityClient(configuration, syncConf.Interval, UserAgentApplicationName);
 
-            services.AddTransient<RecentSubmissionProducer>();
-            services.AddTransient<RecentSubmissionConsumer>();
+            services.AddSingleton<GetSubmissionScheduler>();
         });
     }
 }
