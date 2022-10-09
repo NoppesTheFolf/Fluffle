@@ -38,9 +38,9 @@ namespace Noppes.Fluffle.Bot.Utils
                     return await RateLimiter.RunAsync(Chat, () => botClient.EditMessageReplyMarkupAsync(Chat.Id, (int)MessageId, ReplyMarkup));
 
                 if (IsTextCaption)
-                    return await RateLimiter.RunAsync(Chat, () => botClient.EditMessageCaptionAsync(Chat.Id, (int)MessageId, Text, null, TextEntities));
+                    return await RateLimiter.RunAsync(Chat, () => botClient.EditMessageCaptionAsync(Chat.Id, (int)MessageId, Text, null, TextEntities, ReplyMarkup));
 
-                return await RateLimiter.RunAsync(Chat, () => botClient.EditMessageTextAsync(Chat.Id, (int)MessageId, Text, null, TextEntities, true));
+                return await RateLimiter.RunAsync(Chat, () => botClient.EditMessageTextAsync(Chat.Id, (int)MessageId, Text, null, TextEntities, true, ReplyMarkup));
             }
 
             if (FileId != null)
