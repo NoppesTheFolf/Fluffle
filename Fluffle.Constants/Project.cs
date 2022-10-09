@@ -7,7 +7,7 @@ namespace Noppes.Fluffle.Constants
         /// <summary>
         /// Version of Fluffle.
         /// </summary>
-        public static string Version => Debugger.IsAttached ? "development" : "0.17.2";
+        public static string Version => Debugger.IsAttached ? "development" : "0.18.0";
 
         /// <summary>
         /// My username.
