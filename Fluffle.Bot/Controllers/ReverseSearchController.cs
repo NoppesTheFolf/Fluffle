@@ -285,8 +285,12 @@ namespace Noppes.Fluffle.Bot.Controllers
                         response.TextEntities = mongoMessage.CaptionEntities;
                     }
 
-                    // Ignore if the effective text stayed the same
-                    if (response.Text == (message.Text ?? message.Caption))
+                    // Ignore if the effective text and URLs stayed the same
+                    var isTextTheSame = response.Text == (message.Text ?? message.Caption);
+                    var newUrls = response.TextEntities?.Select(x => x.Url) ?? Array.Empty<string>();
+                    var oldUrls = (message.Entities ?? message.CaptionEntities)?.Select(x => x.Url) ?? Array.Empty<string>();
+                    var areUrlsTheSame = newUrls.SequenceEqual(oldUrls);
+                    if (isTextTheSame && areUrlsTheSame)
                         return;
 
                     // Clear caption if no reverse search results were returned
