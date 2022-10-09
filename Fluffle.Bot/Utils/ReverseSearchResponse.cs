@@ -44,9 +44,9 @@ namespace Noppes.Fluffle.Bot.Utils
             }
 
             if (FileId != null)
-                return await RateLimiter.RunAsync(Chat, () => botClient.SendPhotoAsync(Chat.Id, new InputMedia(FileId), Text, null, TextEntities, true, ReplyToMessageId, null, ReplyMarkup));
+                return await RateLimiter.RunAsync(Chat, () => botClient.SendPhotoAsync(Chat.Id, new InputMedia(FileId), Text, null, TextEntities, true, false, ReplyToMessageId, null, ReplyMarkup));
 
-            return await RateLimiter.RunAsync(Chat, () => botClient.SendTextMessageAsync(Chat.Id, Text, null, TextEntities, true, true, ReplyToMessageId, null, ReplyMarkup));
+            return await RateLimiter.RunAsync(Chat, () => botClient.SendTextMessageAsync(Chat.Id, Text, null, TextEntities, true, true, false, ReplyToMessageId, null, ReplyMarkup));
         }
     }
 }
