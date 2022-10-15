@@ -31,7 +31,7 @@ namespace Noppes.Fluffle.Main.Api.Controllers
                 .Select(p =>
                 {
                     var (total, indexed, historyLast30Days, historyLast24Hours) =
-                        scope.Get(p.Id, (int)MediaTypeConstant.Image);
+                        scope.Get(p.Id, (int)MediaTypeConstant.Image, (int)MediaTypeConstant.AnimatedImage);
 
                     var model = new StatusModel
                     {

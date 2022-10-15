@@ -32,14 +32,49 @@ namespace Noppes.Fluffle.Main.Api
             _disposableLock = disposableLock;
         }
 
+        public (int total, int indexed, IEnumerable<StatusModelHistory> historyLast30Days, IEnumerable<StatusModelHistory> historyLast24Hours) Get(int platformId, params int[] mediaTypeIds)
+        {
+            void AppendHistory(IDictionary<DateTimeOffset, StatusModelHistory> history, IEnumerable<StatusModelHistory> historyToAdd)
+            {
+                foreach (var entryToAdd in historyToAdd)
+                {
+                    if (!history.TryGetValue(entryToAdd.When, out var entry))
+                    {
+                        entry = new StatusModelHistory { When = entryToAdd.When };
+                        history[entryToAdd.When] = entry;
+                    }
+
+                    entry.ScrapedCount += entryToAdd.ScrapedCount;
+                    entry.IndexedCount += entryToAdd.IndexedCount;
+                    entry.ErrorCount += entryToAdd.ErrorCount;
+                }
+            }
+
+            var total = 0;
+            var indexed = 0;
+            var historyLast30Days = new Dictionary<DateTimeOffset, StatusModelHistory>();
+            var historyLast24Hours = new Dictionary<DateTimeOffset, StatusModelHistory>();
+
+            foreach (var result in mediaTypeIds.Select(x => Get(platformId, x)))
+            {
+                total += result.total;
+                indexed += result.indexed;
+
+                AppendHistory(historyLast24Hours, result.historyLast24Hours);
+                AppendHistory(historyLast30Days, result.historyLast30Days);
+            }
+
+            return (total, indexed, historyLast30Days.Values, historyLast24Hours.Values);
+        }
+
         public (int total, int indexed, IEnumerable<StatusModelHistory> historyLast30Days, IEnumerable<StatusModelHistory> historyLast24Hours) Get(int platformId, int mediaTypeId)
         {
             var (total, indexed) = _statistics.Total.TryGetValue((platformId, mediaTypeId), out var statistics)
                 ? statistics
                 : (0, 0);
 
-            var historyLast30Days = _statistics.HistoryLast30Days[platformId];
             var historyLast24Hours = _statistics.HistoryLast24Hours[platformId];
+            var historyLast30Days = _statistics.HistoryLast30Days[platformId];
 
             return (total, indexed, historyLast30Days, historyLast24Hours);
         }
