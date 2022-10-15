@@ -41,10 +41,7 @@ namespace Noppes.Fluffle.Index
 
             var fluffleHash = new FluffleHash();
             services.AddSingleton(fluffleHash);
-            services.AddSingleton(_ => new FluffleHashSelfTestRunner(fluffleHash)
-            {
-                Log = Log.Information
-            });
+            services.AddSingleton(_ => new FluffleHashSelfTestRunner(fluffleHash, Log.Information));
 
             var thumbConf = configuration.Get<ThumbnailConfiguration>();
             var b2Conf = configuration.Get<BackblazeB2Configuration>();

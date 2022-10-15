@@ -1,6 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
+		<OutputType>Exe</OutputType>
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>disable</Nullable>
 		<ImplicitUsings>disable</ImplicitUsings>
@@ -15,12 +16,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Fluffle.Configuration\Fluffle.Configuration.csproj" />
 		<ProjectReference Include="..\Fluffle.Vips\Fluffle.Vips.csproj" />
 		<ProjectReference Include="..\Fluffle.Utils\Fluffle.Utils.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="FluffleHashTests\**" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="FluffleHashTestsCreate\**" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
 </Project>

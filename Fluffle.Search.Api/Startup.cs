@@ -1,3 +1,4 @@
+using System;
 using Humanizer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -54,11 +55,10 @@ namespace Noppes.Fluffle.Search.Api
 
             var fluffleHash = new FluffleHash();
             services.AddSingleton(fluffleHash);
-            services.AddSingleton(services => new FluffleHashSelfTestRunner(fluffleHash)
+            services.AddSingleton(services =>
             {
-                Log = message => services
-                    .GetRequiredService<ILogger<FluffleHashSelfTestRunner>>()
-                    .LogInformation(message)
+                var logger = services.GetRequiredService<ILogger<FluffleHashSelfTestRunner>>();
+                return new FluffleHashSelfTestRunner(fluffleHash, x => logger.LogInformation(x));
             });
 
             var compareConf = Configuration.Get<CompareConfiguration>();

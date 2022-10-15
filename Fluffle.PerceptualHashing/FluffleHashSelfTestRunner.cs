@@ -18,25 +18,25 @@ namespace Noppes.Fluffle.PerceptualHashing
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public Action<string> Log { get; set; }
-
         private readonly FluffleHash _fluffleHash;
+        private readonly Action<string> _log;
 
-        public FluffleHashSelfTestRunner(FluffleHash fluffleHash)
+        public FluffleHashSelfTestRunner(FluffleHash fluffleHash, Action<string> log)
         {
             _fluffleHash = fluffleHash;
+            _log = log;
         }
 
         public void Run()
         {
-            Log("Running self test...");
+            _log("Running self test...");
 
-            foreach (var jsonFile in Directory.GetFiles(TestsLocation, "*.json"))
+            foreach (var testResultsLocation in Directory.GetFiles(TestsLocation, "*.json"))
             {
-                var imageFile = Path.Combine(Path.GetDirectoryName(jsonFile) ?? string.Empty, Path.GetFileNameWithoutExtension(jsonFile));
+                var imageFile = Path.Combine(Path.GetDirectoryName(testResultsLocation) ?? string.Empty, Path.GetFileNameWithoutExtension(testResultsLocation));
 
-                var hashesJson = File.ReadAllText(jsonFile);
-                var expected = JsonSerializer.Deserialize<FluffleHashSelfTestResult>(hashesJson, SerializerOptions);
+                var testResultsJson = File.ReadAllText(testResultsLocation);
+                var expected = JsonSerializer.Deserialize<FluffleHashSelfTestResults>(testResultsJson, SerializerOptions)!;
 
                 var hash = _fluffleHash.Create(128);
                 using var hasher = hash.For(imageFile);
@@ -60,7 +60,7 @@ namespace Noppes.Fluffle.PerceptualHashing
                 Compare(name, expected.PhashAverage64, hasher, Channel.Average);
             }
 
-            Log("Self test ran successfully.");
+            _log("Self test ran successfully.");
         }
 
         private void Compare(string name, ReadOnlySpan<byte> expected, PerceptualHashImage image, Channel channel)
@@ -74,7 +74,7 @@ namespace Noppes.Fluffle.PerceptualHashing
             var percentageWrong = (int)mismatchCount / (double)lengthInBits;
             var percentageWrongAllowed = AllowedMismatchCount / (double)lengthInBits;
 
-            Log($"Test {name} {channel}@{expected.Length} | mismatch: {percentageWrong}, allowed: {percentageWrongAllowed}");
+            _log($"Test {name} {channel}@{expected.Length} | mismatch: {percentageWrong}, allowed: {percentageWrongAllowed}");
 
             if (percentageWrong > percentageWrongAllowed)
                 throw new InvalidOperationException($"Hashing did not produce expected result.");

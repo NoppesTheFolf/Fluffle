@@ -8,3 +8,5 @@ The images used in the self test suite are pulled from Pixabay (https://pixabay.
 | dog            | Mike_68   | https://pixabay.com/photos/dog-canine-run-snow-lake-cold-5924174       |
 | fox            | Pexels    | https://pixabay.com/photos/fox-sleeping-resting-relaxing-red-1284512   |
 | lavanttal      | liggraphy | https://pixabay.com/photos/lavanttal-koralpe-carinthia-austria-5988332 |
+
+All other images were created specifically for Fluffle and therefore fall under the same licence as the project.

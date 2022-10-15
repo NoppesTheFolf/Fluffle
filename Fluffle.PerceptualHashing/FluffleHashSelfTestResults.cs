@@ -1,6 +1,6 @@
 ﻿namespace Noppes.Fluffle.PerceptualHashing
 {
-    public class FluffleHashSelfTestResult
+    public class FluffleHashSelfTestResults
     {
         public byte[] PhashRed64 { get; set; }
         public byte[] PhashGreen64 { get; set; }
