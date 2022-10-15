@@ -17,8 +17,7 @@ namespace Noppes.Fluffle.Index
         private readonly FluffleHash _fluffleHash;
         private readonly FluffleThumbnail _thumbnailer;
 
-        public ImageHasher(FluffleClient fluffleClient, FluffleHash fluffleHash,
-            FluffleThumbnail thumbnailer) : base(fluffleClient)
+        public ImageHasher(FluffleClient fluffleClient, FluffleHash fluffleHash, FluffleThumbnail thumbnailer) : base(fluffleClient)
         {
             _fluffleHash = fluffleHash;
             _thumbnailer = thumbnailer;

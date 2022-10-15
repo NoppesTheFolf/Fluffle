@@ -41,6 +41,18 @@ namespace Noppes.Fluffle.Constants
         /// </summary>
         public static bool SupportsTransparency(this FileFormatConstant fileFormat) => SupportTransparency.Contains(fileFormat);
 
+        private static readonly HashSet<FileFormatConstant> SupportAnimation = new HashSet<FileFormatConstant>
+        {
+            FileFormatConstant.Gif,
+            FileFormatConstant.WebP
+            // Technically PNGs should be part of this list too... but we don't really want to download all full sized PNGs
+        };
+
+        /// <summary>
+        /// Whether the file format supports animations (sequence of images) or not.
+        /// </summary>
+        public static bool SupportsAnimation(this FileFormatConstant fileFormat) => SupportAnimation.Contains(fileFormat);
+
         /// <summary>
         /// Maps the provided extension to a <see cref="FileFormatConstant"/>.
         /// </summary>

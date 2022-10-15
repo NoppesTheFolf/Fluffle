@@ -36,7 +36,7 @@ namespace Noppes.Fluffle.Main.Api.Services
                 .Include(c => c.Platform)
                 .Include(c => c.Files)
                 .Where(c => c.ReservedUntil < now)
-                .Where(c => c.PlatformId == platform.Id && c.MediaTypeId == (int)MediaTypeConstant.Image)
+                .Where(c => c.PlatformId == platform.Id)
                 .Where(c => c.RequiresIndexing)
                 .OrderBy(c => c.IsIndexed) // This puts images without hashes first
                 .ThenByDescending(c => c.Priority)

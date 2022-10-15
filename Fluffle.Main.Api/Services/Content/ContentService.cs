@@ -290,6 +290,7 @@ namespace Noppes.Fluffle.Main.Api.Services
                 var content = contentModels.Select(c => c.MediaType switch
                 {
                     MediaTypeConstant.Image => c.MapTo<Image>(),
+                    MediaTypeConstant.AnimatedImage => c.MapTo<Image>(),
                     _ => c.MapTo<Content>()
                 }).Select(c =>
                 {
@@ -420,7 +421,7 @@ namespace Noppes.Fluffle.Main.Api.Services
         {
             return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
-                var models = await _context.GetUnprocessedAsync<Image, UnprocessedImageModel>(c => c.Images, platform, mapModel:
+                var models = await _context.GetUnprocessedAsync<Image, UnprocessedImageModel>(x => x.Images, platform, mapModel:
                    (image, model) =>
                    {
                        // If the image to be indexed has transparency, we should only provide the
@@ -428,16 +429,27 @@ namespace Noppes.Fluffle.Main.Api.Services
                        if (image.HasTransparency)
                        {
                            model.Files = image.Files
-                               .Where(f => ((FileFormatConstant)f.FileFormatId).SupportsTransparency())
-                               .Select(sc => new UnprocessedContentModel.FileModel
+                               .Where(x => ((FileFormatConstant)x.FileFormatId).SupportsTransparency())
+                               .Select(x => new UnprocessedContentModel.FileModel
                                {
-                                   Width = sc.Width,
-                                   Height = sc.Height,
-                                   Location = sc.Location
+                                   Width = x.Width,
+                                   Height = x.Height,
+                                   Location = x.Location
                                });
                        }
 
                        model.HasTransparency = image.HasTransparency;
+
+                       var possiblyAnimatedImages = image.Files.Where(x => ((FileFormatConstant)x.FileFormatId).SupportsAnimation()).ToList();
+                       if (possiblyAnimatedImages.Any())
+                       {
+                           model.Files = possiblyAnimatedImages.Select(x => new UnprocessedContentModel.FileModel
+                           {
+                               Width = x.Width,
+                               Height = x.Height,
+                               Location = x.Location
+                           });
+                       }
                    });
 
                 return new SR<IEnumerable<UnprocessedImageModel>>(models);
