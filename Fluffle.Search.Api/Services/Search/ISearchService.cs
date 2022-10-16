@@ -20,7 +20,7 @@ namespace Noppes.Fluffle.Search.Api.Services
         private const string AreaTooLargeCode = "AREA_TOO_LARGE";
 
         public static SE UnsupportedFileType() => new(UnsupportedFileTypeCode, HttpStatusCode.UnsupportedMediaType,
-            "The type of the submitted file isn't supported. Only JPEG, PNG and WebP are. " +
+            "The type of the submitted file isn't supported. Only JPEG, PNG, WebP and GIF are. " +
             "If you're getting this error even though the image seems te be valid, check if the image is properly encoded.");
 
         public static SE CorruptImage() => new(CorruptImageCode, HttpStatusCode.UnprocessableEntity,

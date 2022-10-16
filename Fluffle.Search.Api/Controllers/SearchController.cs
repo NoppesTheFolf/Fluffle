@@ -30,6 +30,7 @@ namespace Noppes.Fluffle.Search.Api.Controllers
             {
                 {new JpegSignature(), FileFormatConstant.Jpeg},
                 {new PngSignature(), FileFormatConstant.Png},
+                {new GifSignature(), FileFormatConstant.Gif},
                 {new WebPSignature(), FileFormatConstant.WebP}
             };
 
