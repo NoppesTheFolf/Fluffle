@@ -67,13 +67,15 @@ namespace Noppes.Fluffle.Utils
                 {
                     // Handle the work the implementation decides on
                     item.Result = await HandleAsync(item);
-
-                    // Signal the work has been completed
-                    item.CompletionEvent.Set();
                 }
                 catch (Exception e)
                 {
                     item.Exception = e;
+                }
+                finally
+                {
+                    // Signal the work has been completed
+                    item.CompletionEvent.Set();
                 }
             }
         }
