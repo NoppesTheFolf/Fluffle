@@ -16,8 +16,7 @@ const AboutPage = () => {
             </div>
             <div className="prose max-w-none">
                 <p>
-                    Fluffle is an initiative taken by me, <Link to="/contact/" >Noppes</Link>, with the goal to create a single
-                    unified platform for fellow furries with which they can reverse search artwork from a variety of sources. It is
+                    Fluffle is an initiative taken with the goal to create platform for fellow furries with which they can reverse search artwork on a variety of sources. It is
                     an open source project licensed under the MIT license. If you'd like to check it out, the project can be found
                     on <a href="https://github.com/NoppesTheFolf/Fluffle" target="_blank" rel="noreferrer">GitHub</a>.
                 </p>

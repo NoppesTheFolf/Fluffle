@@ -1,7 +1,7 @@
 import * as React from 'react'
 import Layout from '../components/layout'
 import Banner from '../components/banner'
-import { Link } from 'gatsby'
+import { Link, navigate } from 'gatsby'
 import ProgressBar from '../components/progress-bar'
 import ProgressBarPart from '../components/progress-bar-part'
 import Api, { SearchResult } from '../services/api'
@@ -182,6 +182,11 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
 
     function onProgrammaticSubmit(event) {
         const dataUrl = dataUrlRef.current!.value;
+        if (dataUrl == null || dataUrl === '') {
+            navigate('/');
+            return;
+        }
+
         fetch(dataUrl).then(request => request.blob()).then(blob => {
             search(blob);
         });
@@ -278,7 +283,7 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
                         <ProgressBar>
                             <ProgressBarPart color="bg-primary" isStriped={true} isAnimated={true} percentage={progress}></ProgressBarPart>
                         </ProgressBar>
-                        <span className="text-center">{state === State.WAITING_FOR_BROWSER_EXTENSION ? 'Waiting for the browser extension to download the image' : state === State.PREPROCESSING ? "Preprocessing" : state === State.UPLOADING ? "Uploading" : "Processing"}...</span>
+                        <span className="text-center">{state === State.WAITING_FOR_BROWSER_EXTENSION ? 'Waiting for the browser extension to interact with Fluffle' : state === State.PREPROCESSING ? "Preprocessing" : state === State.UPLOADING ? "Uploading" : "Processing"}...</span>
                     </div>
                 }
 

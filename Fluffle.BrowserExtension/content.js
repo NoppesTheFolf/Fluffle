@@ -1,4 +1,4 @@
-const renderCheckInterval = 500;
+const renderCheckInterval = 250;
 
 // Blobs can only be read from the content script, not from within the service worker
 function handleDownloadBlob(request) {
@@ -13,21 +13,37 @@ function handleDownloadBlob(request) {
     })
 }
 
-function handleReverseSearch(request) {
+function getElementById(id, cb) {
     // Fluffle uses React as its front-end framework. The entire page might not have
     // been rendered yet even though all the files have been loaded. Here we wait for
     // React to render everything on the page before submitting the image for reverse searching.
-    (function reverseSearch() {
-        let fileField = document.getElementById('image-data-url');
-        if (fileField == null) {
-            setTimeout(reverseSearch, renderCheckInterval);
+    (function _getElementById() {
+        let element = document.getElementById(id);
+        if (element == null) {
+            setTimeout(_getElementById, renderCheckInterval);
             return;
         }
-        fileField.value = request.data;
 
-        let submitButton = document.getElementById('programmatic-submit');
-        submitButton.click();
+        cb(element);
     })();
+}
+
+function programmaticSubmit() {
+    getElementById('programmatic-submit', submitButton => {
+        submitButton.click();
+    });
+}
+
+function handleReverseSearch(request) {
+    getElementById('image-data-url', dataUrlField => {
+        dataUrlField.value = request.data;
+
+        programmaticSubmit();
+    });
+}
+
+function handleNothingQueued(request) {
+    programmaticSubmit();
 }
 
 chrome.runtime.onMessage.addListener(
@@ -36,6 +52,8 @@ chrome.runtime.onMessage.addListener(
             handleDownloadBlob(request);
         } else if (request.id === 'reverse-search') {
             handleReverseSearch(request);
+        } else if (request.id === 'nothing-queued') {
+            handleNothingQueued(request);
         }
     }
 );

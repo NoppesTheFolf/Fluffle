@@ -1,4 +1,4 @@
-// Where Fluffle its web UI is hosted
+// Where Fluffle's web UI is hosted
 const fluffleUrl = 'https://fluffle.xyz/browser-extension';
 
 // Register the reverse search context menu item
@@ -26,6 +26,9 @@ chrome.tabs.onUpdated.addListener(function (tabId, info, tab) {
     chrome.storage.local.get('reverseSearchRequest', item => {
         // Check if the request exists
         if (!('reverseSearchRequest' in item)) {
+            chrome.tabs.sendMessage(tabId, {
+                id: 'nothing-queued'
+            });
             return;
         }
 
