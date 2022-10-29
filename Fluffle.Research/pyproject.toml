@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "fluffle-research"
+version = "1.0"
+description = "Provides an environment to execute Jupyter notebooks in"
+authors = ["NoppesTheFolf <48657170+NoppesTheFolf@users.noreply.github.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+jupyter = "^1.0.0"
+pandas = "^1.5.1"
+more-itertools = "^9.0.0"
+requests = "^2.28.1"
+PyYAML = "^6.0"
+tqdm = "^4.64.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
