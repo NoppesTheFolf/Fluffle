@@ -56,17 +56,17 @@ namespace Noppes.Fluffle.Database
                 .Where(x => x.Interface != null);
 
             var builderMethodInfo = typeof(ModelBuilder)
-                .GetMethod(nameof(ModelBuilder.Entity), 1, Type.EmptyTypes);
+                .GetMethod(nameof(ModelBuilder.Entity), 1, Type.EmptyTypes)!;
 
             foreach (var entity in entities)
             {
                 var instance = Activator.CreateInstance(entity.Type);
 
-                var interfaceType = entity.Interface.GetGenericArguments()[0];
+                var interfaceType = entity.Interface!.GetGenericArguments()[0];
 
                 var configureMethod = typeof(IConfigurable<>)
                     .MakeGenericType(interfaceType)
-                    .GetMethod(nameof(IConfigurable<object>.Configure));
+                    .GetMethod(nameof(IConfigurable<object>.Configure))!;
 
                 var builderMethod = builderMethodInfo.MakeGenericMethod(interfaceType);
 

@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -52,7 +51,7 @@ namespace Noppes.Fluffle.Database.Queue
             if (entity == null)
                 return null;
 
-            var data = JsonSerializer.Deserialize<TData>(Encoding.UTF8.GetString(entity.Data));
+            var data = JsonSerializer.Deserialize<TData>(entity.Data);
             return new QueueItem<TData>
             {
                 Id = entity.Id,
