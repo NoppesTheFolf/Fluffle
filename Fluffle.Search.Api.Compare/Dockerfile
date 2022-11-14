@@ -1,4 +1,4 @@
-FROM rust:1.59 as build-env
+FROM rust:1.65 as build-env
 WORKDIR /src
 
 COPY ./Fluffle.Search.Api.Compare/ .
