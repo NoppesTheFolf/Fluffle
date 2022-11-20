@@ -45,7 +45,7 @@ namespace Noppes.Fluffle.Main.Database.Models
         public virtual DbSet<Image> Images { get; set; }
         public virtual DbSet<FileFormat> FileFormats { get; set; }
         public virtual DbSet<ImageHash> ImageHashes { get; set; }
-        public virtual DbSet<ContentRating> ImageRatings { get; set; }
+        public virtual DbSet<ContentRating> ContentRatings { get; set; }
         public virtual DbSet<MediaType> MediaTypes { get; set; }
         public virtual DbSet<Platform> Platforms { get; set; }
         public virtual DbSet<SyncState> SyncStates { get; set; }

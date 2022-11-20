@@ -87,7 +87,7 @@ namespace Noppes.Fluffle.Main.Database.Models
 
             entity.Property(e => e.IdOnPlatform)
                 .IsRequired()
-                .HasMaxLength(32);
+                .HasMaxLength(64);
 
             entity.HasIndex(e => e.IdOnPlatform);
 

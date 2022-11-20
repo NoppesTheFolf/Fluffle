@@ -40,7 +40,7 @@ namespace Noppes.Fluffle.Search.Database.Models
 
             entity.Property(e => e.IdOnPlatform)
                 .IsRequired()
-                .HasMaxLength(32);
+                .HasMaxLength(64);
 
             entity.Property(e => e.ChangeId);
             entity.HasIndex(e => new { e.PlatformId, e.ChangeId }).IsUnique();
