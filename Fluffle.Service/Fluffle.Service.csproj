@@ -16,6 +16,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Fluffle.Configuration\Fluffle.Configuration.csproj" />
+		<ProjectReference Include="..\Fluffle.Queue\Fluffle.Queue.csproj" />
 	</ItemGroup>
 
 </Project>

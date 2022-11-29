@@ -2,7 +2,7 @@
 
 namespace Noppes.Fluffle.Database.KeyValue
 {
-    public class KeyValuePair : BaseEntity, IConfigurable<KeyValuePair>
+    public abstract class KeyValuePair : BaseEntity, IConfigurable<KeyValuePair>
     {
         public string Key { get; set; }
 

@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<RootNamespace>Noppes.Fluffle.DeviantArt.Client</RootNamespace>
+		<AssemblyName>Noppes.Fluffle.DeviantArt.Client</AssemblyName>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Fluffle.Http\Fluffle.Http.csproj" />
+	</ItemGroup>
+
+</Project>

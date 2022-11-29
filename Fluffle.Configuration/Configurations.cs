@@ -529,6 +529,8 @@ namespace Noppes.Fluffle.Configuration
 
         public ClientConfiguration Twitter { get; set; }
 
+        public ClientConfiguration DeviantArt { get; set; }
+
         public IndexConfiguration()
         {
             RuleFor(o => o.ImageHasher).NotEmpty().SetValidator(o => o.ImageHasher);
@@ -541,6 +543,7 @@ namespace Noppes.Fluffle.Configuration
             RuleFor(o => o.FurAffinity).NotEmpty().SetValidator(o => o.FurAffinity);
             RuleFor(o => o.Weasyl).NotEmpty().SetValidator(o => o.Weasyl);
             RuleFor(o => o.Twitter).NotEmpty().SetValidator(o => o.Twitter);
+            RuleFor(o => o.DeviantArt).NotEmpty().SetValidator(o => o.DeviantArt);
         }
     }
 

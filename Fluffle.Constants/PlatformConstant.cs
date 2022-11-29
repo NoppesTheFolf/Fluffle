@@ -9,6 +9,7 @@
         FurryNetwork = 2,
         FurAffinity = 3,
         Weasyl = 4,
-        Twitter = 5
+        Twitter = 5,
+        DeviantArt = 6
     }
 }

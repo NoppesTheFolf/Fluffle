@@ -42,6 +42,12 @@ namespace Noppes.Fluffle.Main.Api.Helpers
                     EstimatedContentCount = -1,
                     HomeLocation = "https://twitter.com"
                 },
+                PlatformConstant.DeviantArt => new Platform
+                {
+                    Name = "DeviantArt",
+                    EstimatedContentCount = -1,
+                    HomeLocation = "https://www.deviantart.com"
+                },
                 _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
             };
 
@@ -179,6 +185,12 @@ namespace Noppes.Fluffle.Main.Api.Helpers
                     Name = "Binary",
                     Abbreviation = "Binary",
                     Extension = ".bin"
+                },
+                FileFormatConstant.Mp4 => new FileFormat
+                {
+                    Name = "MPEG-4 Part 14",
+                    Abbreviation = "MP4",
+                    Extension = ".mp4"
                 },
                 _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
             };
