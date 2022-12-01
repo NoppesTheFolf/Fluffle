@@ -77,7 +77,7 @@ internal class Program : QueuePollingService<Program, CheckFurryArtistQueueItem>
         await _queue.EnqueueAsync(new ScrapeGalleryQueueItem
         {
             Id = deviant.Id
-        });
+        }, 5.Minutes(), null);
 
         deviant.IsFurryArtist = isFurryArtist;
         await context.SaveChangesAsync();

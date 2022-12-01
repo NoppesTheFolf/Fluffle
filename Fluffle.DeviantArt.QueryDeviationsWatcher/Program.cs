@@ -15,13 +15,13 @@ public class Program : ScheduledService<Program>
     private const int BatchEnqueueSize = 100;
 
     private readonly DeviantArtClient _client;
-    private readonly IQueue<ProcessDeviationQueueItem> _queue;
+    private readonly ProcessDeviationQueue _queue;
     private readonly DeviantArtTags _tags;
     private readonly IQueryDeviationsLatestPublishedWhenStore _latestPublishedWhenStore;
     private readonly DeviantArtQueryDeviationsWatcherConfiguration _configuration;
     private readonly ILogger<Program> _logger;
 
-    public Program(IServiceProvider services, DeviantArtClient client, IQueue<ProcessDeviationQueueItem> queue,
+    public Program(IServiceProvider services, DeviantArtClient client, ProcessDeviationQueue queue,
         DeviantArtTags tags, IQueryDeviationsLatestPublishedWhenStore latestPublishedWhenStore,
         DeviantArtQueryDeviationsWatcherConfiguration configuration, ILogger<Program> logger) : base(services)
     {
@@ -71,10 +71,7 @@ public class Program : ScheduledService<Program>
         // Submit all unique deviations in batches so logging looks a bit more... alive
         foreach (var batch in uniqueDeviations.Chunk(BatchEnqueueSize))
         {
-            await _queue.EnqueueManyAsync(batch.Select(x => new ProcessDeviationQueueItem
-            {
-                Id = x.Id
-            }));
+            await _queue.EnqueueManyAsync(batch);
             _logger.LogInformation("Added {count} deviations to the queue", batch.Length);
         }
 

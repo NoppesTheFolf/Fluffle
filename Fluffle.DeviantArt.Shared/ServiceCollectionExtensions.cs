@@ -44,6 +44,7 @@ public static class ServiceCollectionExtensions
         {
             services.UseStorageQueue(daConf.StorageAccount.ConnectionString);
             services.AddQueue<ProcessDeviationQueueItem>("new-deviations");
+            services.AddSingleton<ProcessDeviationQueue>();
             services.AddQueue<CheckFurryArtistQueueItem>("user-is-furry-check");
             services.AddQueue<ScrapeGalleryQueueItem>("scrape-gallery");
         }

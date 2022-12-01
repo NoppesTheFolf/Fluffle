@@ -125,7 +125,7 @@ public class DeviationsProcessor
                 await _userIsFurryCheckQueue.EnqueueAsync(new CheckFurryArtistQueueItem
                 {
                     Id = deviant.Id
-                });
+                }, 5.Minutes(), null);
 
                 await context.SaveChangesAsync();
             }

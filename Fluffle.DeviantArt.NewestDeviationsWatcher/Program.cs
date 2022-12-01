@@ -16,12 +16,12 @@ namespace Noppes.Fluffle.DeviantArt.NewestDeviationsWatcher
         protected override TimeSpan Interval => _configuration.Interval.Seconds();
 
         private readonly DeviantArtClient _client;
-        private readonly IQueue<ProcessDeviationQueueItem> _queue;
+        private readonly ProcessDeviationQueue _queue;
         private readonly INewestDeviationsLatestPublishedWhenStore _latestPublishedWhenStore;
         private readonly DeviantArtNewestDeviationsWatcherConfiguration _configuration;
         private readonly ILogger<Program> _logger;
 
-        public Program(IServiceProvider services, DeviantArtClient client, IQueue<ProcessDeviationQueueItem> queue,
+        public Program(IServiceProvider services, DeviantArtClient client, ProcessDeviationQueue queue,
             INewestDeviationsLatestPublishedWhenStore latestPublishedWhenStore,
             DeviantArtNewestDeviationsWatcherConfiguration configuration, ILogger<Program> logger) : base(services)
         {
@@ -62,10 +62,7 @@ namespace Noppes.Fluffle.DeviantArt.NewestDeviationsWatcher
             var deviationsFromFurryDeviants = furryDeviants.SelectMany(x => deviationsPerDeviant[x.Id]).ToList();
             _logger.LogInformation("Of the retrieved {count} deviations {furryCount} are from known furry artists", deviations.Count, deviationsFromFurryDeviants.Count);
 
-            await _queue.EnqueueManyAsync(deviationsFromFurryDeviants.Select(x => new ProcessDeviationQueueItem
-            {
-                Id = x.Id
-            }));
+            await _queue.EnqueueManyAsync(deviationsFromFurryDeviants);
             _logger.LogInformation("Added {count} deviations to the queue", deviationsFromFurryDeviants.Count);
 
             var mostRecentDeviation = deviations.OrderByDescending(x => x.PublishedWhen).First();

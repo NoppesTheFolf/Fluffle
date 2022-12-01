@@ -5,12 +5,12 @@ public interface IQueue<T>
     /// <summary>
     /// Enqueue an item.
     /// </summary>
-    public Task EnqueueAsync(T? value);
+    public Task EnqueueAsync(T? value, TimeSpan? visibleAfter, TimeSpan? expireAfter);
 
     /// <summary>
     /// Enqueue items.
     /// </summary>
-    public Task EnqueueManyAsync(IEnumerable<T?> values);
+    public Task EnqueueManyAsync(IEnumerable<T?> values, TimeSpan? visibleAfter, TimeSpan? expireAfter);
 
     /// <summary>
     /// Dequeue an item.

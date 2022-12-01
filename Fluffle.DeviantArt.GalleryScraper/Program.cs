@@ -16,11 +16,11 @@ public class Program : QueuePollingService<Program, ScrapeGalleryQueueItem>
     protected override TimeSpan Interval => _configuration.Interval.Seconds();
 
     private readonly DeviantArtClient _client;
-    private readonly IQueue<ProcessDeviationQueueItem> _queue;
+    private readonly ProcessDeviationQueue _queue;
     private readonly DeviantArtGalleryScraperConfiguration _configuration;
     private readonly ILogger<Program> _logger;
 
-    public Program(IServiceProvider services, DeviantArtClient client, IQueue<ProcessDeviationQueueItem> queue,
+    public Program(IServiceProvider services, DeviantArtClient client, ProcessDeviationQueue queue,
         DeviantArtGalleryScraperConfiguration configuration, ILogger<Program> logger) : base(services)
     {
         _client = client;
@@ -60,10 +60,7 @@ public class Program : QueuePollingService<Program, ScrapeGalleryQueueItem>
             .ToList();
 
         _logger.LogInformation("Adding {count} deviations to the queue.", deviations.Count);
-        await _queue.EnqueueManyAsync(deviations.Select(x => new ProcessDeviationQueueItem
-        {
-            Id = x.Id
-        }));
+        await _queue.EnqueueManyAsync(deviations);
 
         deviant.GalleryScrapedWhen = DateTime.UtcNow;
         await context.SaveChangesAsync();
