@@ -110,7 +110,7 @@ public class DeviationsProcessor
             }
 
             var activeFor = DateTime.UtcNow.Subtract(deviant.JoinedWhen);
-            if (activeFor < _configuration.AtleastActiveFor.Days())
+            if (activeFor < _configuration.AtLeastActiveFor.Days())
             {
                 _logger.LogInformation("Deviant {id} ({username}) has not had an account for long enough to be eligible for indexing.", deviant.Id, deviant.Username);
                 continue;
