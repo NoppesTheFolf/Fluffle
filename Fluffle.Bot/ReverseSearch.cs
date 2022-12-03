@@ -149,12 +149,16 @@ namespace Noppes.Fluffle.Bot
 
         public async Task<FluffleResponse> SearchAsync(Stream stream, bool includeNsfw, int limit)
         {
+            var platforms = Enum.GetNames<FlufflePlatform>();
             var response = await Request("v1", "search")
                 .PostMultipartAsync(content =>
                 {
                     content.AddFile("file", stream, "dummy");
                     content.AddString("includeNsfw", includeNsfw.ToString());
                     content.AddString("limit", limit.ToString());
+
+                    foreach (var platform in platforms)
+                        content.AddString("platforms", platform);
                 });
 
             return await response.GetJsonAsync<FluffleResponse>();

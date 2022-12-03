@@ -156,7 +156,7 @@ namespace Noppes.Fluffle.Bot
             // Setup webhook on app startup
             _logger.LogInformation("Setting webhook...");
 
-            var url = @$"https://{_botConfiguration.TelegramHost}/{_botConfiguration.TelegramToken}";
+            var url = $"https://{_botConfiguration.TelegramHost}/{_botConfiguration.TelegramToken}";
             await _botClient.SetWebhookAsync(url, cancellationToken: cancellationToken);
         }
 
