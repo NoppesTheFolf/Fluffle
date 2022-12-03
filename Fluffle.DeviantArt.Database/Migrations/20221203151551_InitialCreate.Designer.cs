@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Noppes.Fluffle.DeviantArt.Database.Migrations
 {
     [DbContext(typeof(DeviantArtContext))]
-    [Migration("20221120151925_InitialCreate")]
+    [Migration("20221203151551_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -97,6 +97,10 @@ namespace Noppes.Fluffle.DeviantArt.Database.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("location");
+
+                    b.Property<DateTime>("ProcessedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("processed_at");
 
                     b.Property<string[]>("Tags")
                         .IsRequired()

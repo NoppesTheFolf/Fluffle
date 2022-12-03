@@ -96,6 +96,10 @@ namespace Noppes.Fluffle.DeviantArt.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("location");
 
+                    b.Property<DateTime>("ProcessedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("processed_at");
+
                     b.Property<string[]>("Tags")
                         .IsRequired()
                         .HasColumnType("text[]")

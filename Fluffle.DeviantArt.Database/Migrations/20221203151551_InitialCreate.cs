@@ -38,6 +38,7 @@ namespace Noppes.Fluffle.DeviantArt.Database.Migrations
                     title = table.Column<string>(type: "text", nullable: false),
                     tags = table.Column<string[]>(type: "text[]", nullable: false),
                     deviant_id = table.Column<string>(type: "text", nullable: false),
+                    processed_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },

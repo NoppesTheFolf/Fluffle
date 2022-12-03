@@ -57,6 +57,7 @@ public class DeviationsSubmitter
                 await context.Deviations.AddAsync(dbDeviation);
             }
 
+            dbDeviation.ProcessedAt = DateTime.UtcNow;
             dbDeviation.Location = deviation.Url;
             dbDeviation.Title = deviation.Title;
             dbDeviation.Tags = metadata.Tags.Select(x => x.Name).ToArray();

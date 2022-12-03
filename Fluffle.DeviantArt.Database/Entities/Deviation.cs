@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Noppes.Fluffle.Database;
+using System;
 
 namespace Noppes.Fluffle.DeviantArt.Database.Entities;
 
@@ -16,6 +17,8 @@ public class Deviation : TrackedBaseEntity, IConfigurable<Deviation>
 
     public string DeviantId { get; set; }
     public virtual Deviant Deviant { get; set; }
+
+    public DateTime ProcessedAt { get; set; }
 
     public void Configure(EntityTypeBuilder<Deviation> entity)
     {
@@ -33,5 +36,7 @@ public class Deviation : TrackedBaseEntity, IConfigurable<Deviation>
             .WithMany(x => x.Deviations)
             .HasForeignKey(x => x.DeviantId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        entity.Property(x => x.ProcessedAt);
     }
 }
