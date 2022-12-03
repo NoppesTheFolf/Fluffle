@@ -39,20 +39,12 @@ public class DeviantArtConfiguration : FluffleConfigurationPart<DeviantArtConfig
     }
 }
 
-public class DeviantArtGalleryScraperConfiguration : AbstractValidator<DeviantArtGalleryScraperConfiguration>
+public class DeviantArtGalleryScraperConfiguration : DeviantArtApplicationConfiguration<DeviantArtGalleryScraperConfiguration>
 {
-    public int Interval { get; set; }
-
-    public DeviantArtGalleryScraperConfiguration()
-    {
-        RuleFor(x => x.Interval).NotEmpty();
-    }
 }
 
-public class DeviantArtFurryArtistCheckerConfiguration : AbstractValidator<DeviantArtFurryArtistCheckerConfiguration>
+public class DeviantArtFurryArtistCheckerConfiguration : DeviantArtApplicationConfiguration<DeviantArtFurryArtistCheckerConfiguration>
 {
-    public int Interval { get; set; }
-
     /// <summary>
     /// The number of deviations to get.
     /// </summary>
@@ -65,42 +57,35 @@ public class DeviantArtFurryArtistCheckerConfiguration : AbstractValidator<Devia
 
     public DeviantArtFurryArtistCheckerConfiguration()
     {
-        RuleFor(x => x.Interval).NotEmpty();
         RuleFor(x => x.N).GreaterThanOrEqualTo(1);
         RuleFor(x => x.NFurry).GreaterThanOrEqualTo(0);
     }
 }
 
-public class DeviantArtDeviationsProcessorConfiguration : AbstractValidator<DeviantArtDeviationsProcessorConfiguration>
+public class DeviantArtApplicationConfiguration<T> : AbstractValidator<T> where T : DeviantArtApplicationConfiguration<T>
 {
     public int Interval { get; set; }
 
+    public int? ClientThrottle { get; set; }
+
+    public DeviantArtApplicationConfiguration()
+    {
+        RuleFor(x => x.Interval).NotEmpty().GreaterThanOrEqualTo(0);
+        RuleFor(x => x.ClientThrottle).GreaterThanOrEqualTo(0);
+    }
+}
+
+public class DeviantArtDeviationsProcessorConfiguration : DeviantArtApplicationConfiguration<DeviantArtDeviationsProcessorConfiguration>
+{
     public int AtLeastActiveFor { get; set; }
-
-    public DeviantArtDeviationsProcessorConfiguration()
-    {
-        RuleFor(x => x.Interval).NotEmpty();
-    }
 }
 
-public class DeviantArtNewestDeviationsWatcherConfiguration : AbstractValidator<DeviantArtNewestDeviationsWatcherConfiguration>
+public class DeviantArtNewestDeviationsWatcherConfiguration : DeviantArtApplicationConfiguration<DeviantArtNewestDeviationsWatcherConfiguration>
 {
-    public int Interval { get; set; }
-
-    public DeviantArtNewestDeviationsWatcherConfiguration()
-    {
-        RuleFor(x => x.Interval).NotEmpty();
-    }
 }
 
-public class DeviantArtQueryDeviationsWatcherConfiguration : AbstractValidator<DeviantArtQueryDeviationsWatcherConfiguration>
+public class DeviantArtQueryDeviationsWatcherConfiguration : DeviantArtApplicationConfiguration<DeviantArtQueryDeviationsWatcherConfiguration>
 {
-    public int Interval { get; set; }
-
-    public DeviantArtQueryDeviationsWatcherConfiguration()
-    {
-        RuleFor(x => x.Interval).NotEmpty();
-    }
 }
 
 public class AzureStorageAccount : AbstractValidator<AzureStorageAccount>

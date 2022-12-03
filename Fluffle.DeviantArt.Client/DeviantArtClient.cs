@@ -17,7 +17,7 @@ public class DeviantArtClient : ApiClient
     private DateTime? _accessTokenRetrievedAt;
     private string? _accessToken;
 
-    public DeviantArtClient(string clientId, string clientSecret, string baseUrl = "https://www.deviantart.com") : base(baseUrl)
+    public DeviantArtClient(string clientId, string clientSecret, string userAgent, string baseUrl = "https://www.deviantart.com") : base(baseUrl)
     {
         _clientId = clientId;
         _clientSecret = clientSecret;
@@ -25,6 +25,8 @@ public class DeviantArtClient : ApiClient
         _authorizationLock = new AsyncLock();
         _accessTokenRetrievedAt = null;
         _accessToken = null;
+
+        FlurlClient.WithHeader("User-Agent", userAgent);
 
         FlurlClient.Configure(settings =>
         {
