@@ -72,6 +72,13 @@ public class DeviationsProcessor
                 continue;
             }
 
+            // Ignore deviations which are only visible to watchers or are paid
+            if (deviation.PremiumFolderData != null)
+            {
+                _logger.LogInformation("Deviation with ID {id} is locked behind the following wall: {type}.", deviation.Id, deviation.PremiumFolderData.Type);
+                continue;
+            }
+
             var metadata = metadatas[id];
             var tagNames = metadata.Tags.Select(x => x.Name);
             var tagNamesIsFurry = tagNames.Select(_tags.IsFurry).ToList();

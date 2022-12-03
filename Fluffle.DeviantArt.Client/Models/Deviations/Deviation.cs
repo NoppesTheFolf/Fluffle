@@ -33,4 +33,6 @@ public class Deviation
     public DeviationFlashFile? Flash { get; set; }
 
     public DeviationTier? Tier { get; set; }
+
+    public PremiumFolderData? PremiumFolderData { get; set; }
 }
