@@ -21,7 +21,7 @@ public class DeviationsProcessor
     private const string Platform = "DeviantArt";
 
     private readonly IServiceProvider _services;
-    private readonly IQueue<CheckFurryArtistQueueItem> _userIsFurryCheckQueue;
+    private readonly IQueue<CheckIfFurryArtistQueueItem> _userIsFurryCheckQueue;
     private readonly DeviantArtClient _deviantArtClient;
     private readonly FluffleClient _fluffleClient;
     private readonly DeviantArtTags _tags;
@@ -29,7 +29,7 @@ public class DeviationsProcessor
     private readonly ILogger<DeviationsProcessor> _logger;
     private readonly DeviantArtDeviationsProcessorConfiguration _configuration;
 
-    public DeviationsProcessor(IServiceProvider services, IQueue<CheckFurryArtistQueueItem> userIsFurryCheckQueue,
+    public DeviationsProcessor(IServiceProvider services, IQueue<CheckIfFurryArtistQueueItem> userIsFurryCheckQueue,
         DeviantArtClient deviantArtClient, FluffleClient fluffleClient, DeviantArtTags tags,
         DeviationsSubmitter submitter, ILogger<DeviationsProcessor> logger, DeviantArtDeviationsProcessorConfiguration configuration)
     {
@@ -129,7 +129,7 @@ public class DeviationsProcessor
             {
                 _logger.LogInformation("Enqueuing deviant {deviantUsername} for the furry artist check because deviation with ID {deviationId} contains a tag known to relate to the furry fandom.", deviant.Username, deviation.Id);
                 deviant.IsFurryArtistEnqueuedWhen = DateTime.UtcNow;
-                await _userIsFurryCheckQueue.EnqueueAsync(new CheckFurryArtistQueueItem
+                await _userIsFurryCheckQueue.EnqueueAsync(new CheckIfFurryArtistQueueItem
                 {
                     Id = deviant.Id
                 }, 5.Minutes(), null);

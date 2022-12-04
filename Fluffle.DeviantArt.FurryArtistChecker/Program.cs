@@ -11,7 +11,7 @@ using Noppes.Fluffle.Service;
 
 namespace Noppes.Fluffle.DeviantArt.FurryArtistChecker;
 
-internal class Program : QueuePollingService<Program, CheckFurryArtistQueueItem>
+internal class Program : QueuePollingService<Program, CheckIfFurryArtistQueueItem>
 {
     protected override TimeSpan Interval => _configuration.Interval.Seconds();
 
@@ -36,7 +36,7 @@ internal class Program : QueuePollingService<Program, CheckFurryArtistQueueItem>
         services.AddDeviantArt(conf, x => x.FurryArtistChecker, true, true, true, false);
     });
 
-    public override async Task ProcessAsync(CheckFurryArtistQueueItem value, CancellationToken cancellationToken)
+    public override async Task ProcessAsync(CheckIfFurryArtistQueueItem value, CancellationToken cancellationToken)
     {
         var deviantId = value.Id;
 

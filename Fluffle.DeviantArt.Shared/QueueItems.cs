@@ -5,7 +5,7 @@ public class ScrapeGalleryQueueItem
     public string Id { get; set; } = null!;
 }
 
-public class CheckFurryArtistQueueItem
+public class CheckIfFurryArtistQueueItem
 {
     public string Id { get; set; } = null!;
 }

@@ -50,9 +50,9 @@ public static class ServiceCollectionExtensions
         if (addQueues)
         {
             services.UseStorageQueue(daConf.StorageAccount.ConnectionString);
-            services.AddQueue<ProcessDeviationQueueItem>("new-deviations");
+            services.AddQueue<ProcessDeviationQueueItem>("process-deviation");
             services.AddSingleton<ProcessDeviationQueue>();
-            services.AddQueue<CheckFurryArtistQueueItem>("user-is-furry-check");
+            services.AddQueue<CheckIfFurryArtistQueueItem>("check-if-furry-artist");
             services.AddQueue<ScrapeGalleryQueueItem>("scrape-gallery");
         }
 
