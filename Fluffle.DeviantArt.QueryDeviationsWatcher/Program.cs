@@ -38,11 +38,15 @@ public class Program : ScheduledService<Program>
 
     protected override async Task RunAsync(CancellationToken stoppingToken)
     {
+        // Retrieve a dictionary containing the search phrases and the time of latest deviations previously retrieved
+        var latestPublishedWhenPerQuery = (await _latestPublishedWhenStore.GetAsync())?.Value ?? new Dictionary<string, DateTimeOffset>();
+
         // Browse the newest deviations with queries using tags we know are related to the furry fandom
         var results = new List<QueryResult>();
         foreach (var tag in _tags)
         {
-            var retrievedPreviouslyWhen = (await _latestPublishedWhenStore.GetAsync(tag.Name))?.Value ?? DateTimeOffset.MinValue;
+            if (!latestPublishedWhenPerQuery.TryGetValue(tag.Name, out var retrievedPreviouslyWhen))
+                retrievedPreviouslyWhen = DateTimeOffset.MinValue;
 
             _logger.LogInformation("Retrieving deviations using query {query}", tag.Name);
             var deviations = await _client.EnumerateBrowseNewestAsync(tag.Name)
@@ -77,8 +81,10 @@ public class Program : ScheduledService<Program>
         foreach (var result in results)
         {
             var mostRecentDeviation = result.Deviations.OrderByDescending(x => x.PublishedWhen).First();
-            await _latestPublishedWhenStore.SetAsync(result.Query, mostRecentDeviation.PublishedWhen);
-            _logger.LogInformation("Updated the publishing time for query {query}", result.Query);
+            latestPublishedWhenPerQuery[result.Query] = mostRecentDeviation.PublishedWhen;
         }
+
+        await _latestPublishedWhenStore.SetAsync(latestPublishedWhenPerQuery);
+        _logger.LogInformation("Updated the publishing time for all queries");
     }
 }
