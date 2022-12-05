@@ -1,16 +1,14 @@
-﻿using Humanizer;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.DeviantArt.Client;
 using Noppes.Fluffle.DeviantArt.Shared;
-using Noppes.Fluffle.Queue;
 using Noppes.Fluffle.Service;
 
 namespace Noppes.Fluffle.DeviantArt.QueryDeviationsWatcher;
 
 public class Program : ScheduledService<Program>
 {
-    protected override TimeSpan Interval => _configuration.Interval.Seconds();
+    protected override TimeSpan Interval => _configuration.Interval;
 
     private const int BatchEnqueueSize = 100;
 

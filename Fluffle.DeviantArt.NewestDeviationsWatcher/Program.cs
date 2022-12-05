@@ -1,19 +1,17 @@
-﻿using Humanizer;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.DeviantArt.Client;
 using Noppes.Fluffle.DeviantArt.Database;
 using Noppes.Fluffle.DeviantArt.Shared;
-using Noppes.Fluffle.Queue;
 using Noppes.Fluffle.Service;
 
 namespace Noppes.Fluffle.DeviantArt.NewestDeviationsWatcher
 {
     public class Program : ScheduledService<Program>
     {
-        protected override TimeSpan Interval => _configuration.Interval.Seconds();
+        protected override TimeSpan Interval => _configuration.Interval;
 
         private readonly DeviantArtClient _client;
         private readonly ProcessDeviationQueue _queue;

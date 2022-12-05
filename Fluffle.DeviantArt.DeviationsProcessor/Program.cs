@@ -1,5 +1,4 @@
-﻿using Humanizer;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.DeviantArt.Shared;
 using Noppes.Fluffle.Main.Client;
@@ -9,7 +8,8 @@ namespace Noppes.Fluffle.DeviantArt.DeviationsProcessor;
 
 internal class Program : QueuePollingBatchService<Program, ProcessDeviationQueueItem>
 {
-    protected override TimeSpan Interval => _configuration.Interval.Seconds();
+    protected override TimeSpan Interval => _configuration.Interval;
+    protected override TimeSpan VisibleAfter => _configuration.QueueMessagesVisibleAfter ?? TimeSpan.Zero;
 
     private readonly DeviationsProcessor _processor;
     private readonly DeviantArtDeviationsProcessorConfiguration _configuration;

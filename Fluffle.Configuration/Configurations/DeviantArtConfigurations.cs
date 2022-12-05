@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using System;
+using FluentValidation;
 using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Configuration;
@@ -64,14 +65,17 @@ public class DeviantArtFurryArtistCheckerConfiguration : DeviantArtApplicationCo
 
 public class DeviantArtApplicationConfiguration<T> : AbstractValidator<T> where T : DeviantArtApplicationConfiguration<T>
 {
-    public int Interval { get; set; }
+    public TimeSpan Interval { get; set; }
 
-    public int? ClientThrottle { get; set; }
+    public TimeSpan? QueueMessagesVisibleAfter { get; set; }
+
+    public TimeSpan? ClientThrottle { get; set; }
 
     public DeviantArtApplicationConfiguration()
     {
-        RuleFor(x => x.Interval).NotEmpty().GreaterThanOrEqualTo(0);
-        RuleFor(x => x.ClientThrottle).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.Interval).NotEmpty().GreaterThanOrEqualTo(TimeSpan.Zero);
+        RuleFor(x => x.QueueMessagesVisibleAfter).GreaterThanOrEqualTo(TimeSpan.Zero);
+        RuleFor(x => x.ClientThrottle).GreaterThanOrEqualTo(TimeSpan.Zero);
     }
 }
 

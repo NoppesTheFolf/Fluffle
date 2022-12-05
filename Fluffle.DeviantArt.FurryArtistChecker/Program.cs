@@ -13,7 +13,8 @@ namespace Noppes.Fluffle.DeviantArt.FurryArtistChecker;
 
 internal class Program : QueuePollingService<Program, CheckIfFurryArtistQueueItem>
 {
-    protected override TimeSpan Interval => _configuration.Interval.Seconds();
+    protected override TimeSpan Interval => _configuration.Interval;
+    protected override TimeSpan VisibleAfter => _configuration.QueueMessagesVisibleAfter ?? TimeSpan.Zero;
 
     private readonly DeviantArtClient _client;
     private readonly IQueue<ScrapeGalleryQueueItem> _queue;
@@ -22,12 +23,12 @@ internal class Program : QueuePollingService<Program, CheckIfFurryArtistQueueIte
     private readonly ILogger<Program> _logger;
 
     public Program(IServiceProvider services, DeviantArtClient client, IQueue<ScrapeGalleryQueueItem> queue,
-        DeviantArtTags tags, DeviantArtConfiguration configuration, ILogger<Program> logger) : base(services)
+        DeviantArtTags tags, DeviantArtFurryArtistCheckerConfiguration configuration, ILogger<Program> logger) : base(services)
     {
         _client = client;
         _queue = queue;
         _tags = tags;
-        _configuration = configuration.FurryArtistChecker;
+        _configuration = configuration;
         _logger = logger;
     }
 

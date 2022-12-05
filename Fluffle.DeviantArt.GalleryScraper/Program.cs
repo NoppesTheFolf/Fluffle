@@ -1,19 +1,18 @@
-﻿using Humanizer;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.DeviantArt.Client;
 using Noppes.Fluffle.DeviantArt.Database;
 using Noppes.Fluffle.DeviantArt.Shared;
-using Noppes.Fluffle.Queue;
 using Noppes.Fluffle.Service;
 
 namespace Noppes.Fluffle.DeviantArt.GalleryScraper;
 
 public class Program : QueuePollingService<Program, ScrapeGalleryQueueItem>
 {
-    protected override TimeSpan Interval => _configuration.Interval.Seconds();
+    protected override TimeSpan Interval => _configuration.Interval;
+    protected override TimeSpan VisibleAfter => _configuration.QueueMessagesVisibleAfter ?? TimeSpan.Zero;
 
     private readonly DeviantArtClient _client;
     private readonly ProcessDeviationQueue _queue;

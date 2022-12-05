@@ -15,11 +15,11 @@ public interface IQueue<T>
     /// <summary>
     /// Dequeue an item.
     /// </summary>
-    public Task<QueueItem<T?>?> DequeueAsync();
+    public Task<QueueItem<T?>?> DequeueAsync(TimeSpan visibleAfter);
 
     /// <summary>
     /// Dequeue a batch of items at once. If <paramref name="limit"/> is null, then allow the
     /// implementation to decide how many items to dequeue.
     /// </summary>
-    public Task<ICollection<QueueItem<T?>>> DequeueManyAsync(int? limit = null);
+    public Task<ICollection<QueueItem<T?>>> DequeueManyAsync(TimeSpan visibleAfter, int? limit = null);
 }

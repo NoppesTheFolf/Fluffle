@@ -1,5 +1,4 @@
-﻿using Humanizer;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Database;
@@ -42,7 +41,7 @@ public static class ServiceCollectionExtensions
             var userAgent = Project.UserAgent("deviant-art-sync");
             var client = new DeviantArtClient(daConf.Credentials.ClientId, daConf.Credentials.ClientSecret, userAgent);
             if (subConf.ClientThrottle != null)
-                client.RateLimiter = new RequestRateLimiter(((int)subConf.ClientThrottle).Milliseconds());
+                client.RateLimiter = new RequestRateLimiter((TimeSpan)subConf.ClientThrottle);
 
             services.AddSingleton(client);
         }

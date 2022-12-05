@@ -10,6 +10,8 @@ namespace Noppes.Fluffle.Service;
 
 public abstract class BaseQueuePollingService<TService, TQueueEntity> : ScheduledService<TService> where TService : Service
 {
+    protected abstract TimeSpan VisibleAfter { get; }
+
     private readonly IQueue<TQueueEntity> _queue;
     private readonly ILogger<TService> _logger;
 
@@ -23,7 +25,7 @@ public abstract class BaseQueuePollingService<TService, TQueueEntity> : Schedule
     {
         while (true)
         {
-            var items = await _queue.DequeueManyAsync();
+            var items = await _queue.DequeueManyAsync(VisibleAfter);
             if (items.Count == 0)
             {
                 _logger.LogDebug("No more items left in queue.");

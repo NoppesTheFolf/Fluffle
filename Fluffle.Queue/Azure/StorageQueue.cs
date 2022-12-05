@@ -5,9 +5,9 @@ using System.Text.Json.Serialization;
 
 namespace Noppes.Fluffle.Queue.Azure;
 
-internal class StorageQueue<T> : IQueue<T>
+internal class StorageQueue
 {
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+    public static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Converters =
@@ -15,7 +15,10 @@ internal class StorageQueue<T> : IQueue<T>
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
         }
     };
+}
 
+internal class StorageQueue<T> : IQueue<T>
+{
     private readonly QueueClient _queueClient;
 
     public StorageQueue(QueueClient queueClient)
@@ -25,7 +28,7 @@ internal class StorageQueue<T> : IQueue<T>
 
     public async Task EnqueueAsync(T? value, TimeSpan? visibleAfter, TimeSpan? expireAfter)
     {
-        var body = JsonSerializer.SerializeToUtf8Bytes(value, JsonSerializerOptions);
+        var body = JsonSerializer.SerializeToUtf8Bytes(value, StorageQueue.JsonSerializerOptions);
         var data = new BinaryData(body);
 
         var timeToLive = expireAfter ?? TimeSpan.FromSeconds(-1);
@@ -38,9 +41,9 @@ internal class StorageQueue<T> : IQueue<T>
             await EnqueueAsync(value, visibleAfter, expireAfter);
     }
 
-    public async Task<QueueItem<T?>?> DequeueAsync()
+    public async Task<QueueItem<T?>?> DequeueAsync(TimeSpan visibleAfter)
     {
-        var response = await _queueClient.ReceiveMessageAsync();
+        var response = await _queueClient.ReceiveMessageAsync(visibleAfter);
         var message = response.Value;
 
         if (message == null)
@@ -53,13 +56,13 @@ internal class StorageQueue<T> : IQueue<T>
     private StorageQueueItem<T?> MessageToQueueItem(QueueMessage message)
     {
         var body = message.Body.ToArray();
-        var value = JsonSerializer.Deserialize<T>(body, JsonSerializerOptions);
+        var value = JsonSerializer.Deserialize<T>(body, StorageQueue.JsonSerializerOptions);
         var item = new StorageQueueItem<T?>(value, _queueClient, message.MessageId, message.PopReceipt);
 
         return item;
     }
 
-    public async Task<ICollection<QueueItem<T?>>> DequeueManyAsync(int? limit = null)
+    public async Task<ICollection<QueueItem<T?>>> DequeueManyAsync(TimeSpan visibleAfter, int? limit = null)
     {
         var remaining = limit ?? _queueClient.MaxPeekableMessages;
 
@@ -67,7 +70,7 @@ internal class StorageQueue<T> : IQueue<T>
         while (true)
         {
             var maxMessages = Math.Min(remaining, _queueClient.MaxPeekableMessages);
-            var response = await _queueClient.ReceiveMessagesAsync(maxMessages);
+            var response = await _queueClient.ReceiveMessagesAsync(maxMessages, visibleAfter);
             var messages = response.Value;
 
             items.AddRange(messages.Select(MessageToQueueItem));
