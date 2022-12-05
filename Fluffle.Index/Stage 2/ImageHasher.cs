@@ -25,17 +25,26 @@ namespace Noppes.Fluffle.Index
 
         public override Task<ChannelImage> ConsumeAsync(ChannelImage image)
         {
-            var dimensions = _thumbnailer.GetDimensions(image.File.Location);
+            ImageDimensions dimensions;
+            try
+            {
+                dimensions = _thumbnailer.GetDimensions(image.File.Location);
+            }
+            catch (InvalidOperationException e)
+            {
+                return Error(image, e.ToString());
+            }
+
+            if (dimensions.Width <= 0 || dimensions.Height <= 0)
+                return Error(image, "Image has invalid (negative) dimensions.");
+
             var max = Math.Max(dimensions.Width, dimensions.Height);
             var min = Math.Min(dimensions.Width, dimensions.Height);
             var difference = max / (double)min;
 
             // TODO: This should not be considered an error, instead it should simply not be considered for indexation next time
             if (difference > DifferenceThreshold)
-            {
-                image.Error = "The image its aspect ratio is too extreme to process.";
-                return Task.FromResult(image);
-            }
+                return Error(image, "The image its aspect ratio is too extreme to process.");
 
             try
             {
@@ -69,6 +78,12 @@ namespace Noppes.Fluffle.Index
                 image.Error = e.ToString();
             }
 
+            return Task.FromResult(image);
+        }
+
+        private static Task<ChannelImage> Error(ChannelImage image, string message)
+        {
+            image.Error = message;
             return Task.FromResult(image);
         }
     }
