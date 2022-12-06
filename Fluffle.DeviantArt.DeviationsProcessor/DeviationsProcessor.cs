@@ -96,12 +96,13 @@ public class DeviationsProcessor
             // We track all deviants regardless if they're furry artists or not
             if (deviant == null)
             {
-                var profile = await _deviantArtClient.GetProfileAsync(deviation.Author.Username);
-                if (profile == null)
+                var profileResponse = await _deviantArtClient.GetProfileAsync(deviation.Author.Username);
+                if (profileResponse.Error != null)
                 {
-                    _logger.LogInformation("No deviant exists with username {username}.", deviation.Author.Username);
+                    _logger.LogInformation("Retrieving deviant with username {username} resulted in a {errorType} error.", deviation.Author.Username, profileResponse.Error);
                     continue;
                 }
+                var profile = profileResponse.Value!;
 
                 deviant = new Deviant
                 {

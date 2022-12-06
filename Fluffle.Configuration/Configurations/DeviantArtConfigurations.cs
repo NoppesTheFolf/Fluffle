@@ -74,7 +74,7 @@ public class DeviantArtApplicationConfiguration<T> : AbstractValidator<T> where 
     public DeviantArtApplicationConfiguration()
     {
         RuleFor(x => x.Interval).NotEmpty().GreaterThanOrEqualTo(TimeSpan.Zero);
-        RuleFor(x => x.QueueMessagesVisibleAfter).GreaterThanOrEqualTo(TimeSpan.Zero);
+        RuleFor(x => x.QueueMessagesVisibleAfter).GreaterThan(TimeSpan.Zero);
         RuleFor(x => x.ClientThrottle).GreaterThanOrEqualTo(TimeSpan.Zero);
     }
 }

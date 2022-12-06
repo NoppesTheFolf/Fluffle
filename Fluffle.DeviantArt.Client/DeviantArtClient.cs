@@ -42,14 +42,20 @@ public class DeviantArtClient : ApiClient
         });
     }
 
-    public async Task<User?> GetProfileAsync(string username)
+    public async Task<DeviantArtResponse<User, UserError?>> GetProfileAsync(string username)
     {
         var request = (await AuthenticatedRequest("/api/v1/oauth2/user/profile", username))
             .SetQueryParam("expand", "user.details")
             .SetQueryParam("mature_content", true);
 
-        var response = await request.GetJsonAsync<UserResponse>();
-        return response.User;
+        var result = await MakeRequestAsync<User, UserError?>(async () =>
+        {
+            var response = await request.GetJsonAsync<UserResponse>();
+
+            return response.User;
+        });
+
+        return result;
     }
 
     public async Task<BrowseDeviationsResponse> BrowseGalleryAsync(string folderId, string username, int? offset = null, int? limit = null)
@@ -102,6 +108,29 @@ public class DeviantArtClient : ApiClient
                 return null;
 
             throw;
+        }
+    }
+
+    private static async Task<DeviantArtResponse<T, TError>> MakeRequestAsync<T, TError>(Func<Task<T>> makeRequestAsync)
+    {
+        try
+        {
+            var response = await makeRequestAsync();
+            return new DeviantArtResponse<T, TError>(response);
+        }
+        catch (FlurlHttpException httpException)
+        {
+            if (httpException.Call.Response == null || httpException.StatusCode != 400)
+                throw;
+
+            var errorResponse = await httpException.Call.Response.GetJsonAsync<Error>();
+            if (errorResponse.Code == null)
+                throw;
+
+            var enumType = typeof(TError).GenericTypeArguments.Single();
+            var error = (TError)Enum.ToObject(enumType, errorResponse.Code);
+
+            return new DeviantArtResponse<T, TError>(error);
         }
     }
 
