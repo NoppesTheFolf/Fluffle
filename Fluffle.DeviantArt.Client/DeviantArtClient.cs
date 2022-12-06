@@ -42,13 +42,13 @@ public class DeviantArtClient : ApiClient
         });
     }
 
-    public async Task<DeviantArtResponse<User, UserError?>> GetProfileAsync(string username)
+    public async Task<DeviantArtResponse<User?, UserError?>> GetProfileAsync(string username)
     {
         var request = (await AuthenticatedRequest("/api/v1/oauth2/user/profile", username))
             .SetQueryParam("expand", "user.details")
             .SetQueryParam("mature_content", true);
 
-        var result = await MakeRequestAsync<User, UserError?>(async () =>
+        var result = await MakeRequestAsync<User?, UserError?>(async () =>
         {
             var response = await request.GetJsonAsync<UserResponse>();
 
@@ -90,25 +90,12 @@ public class DeviantArtClient : ApiClient
     public IAsyncEnumerable<Deviation> EnumerateBrowseNewestAsync(string? q = null) =>
         EnumerateDeviationsAsync(async offset => await BrowseNewestAsync(q, offset, 120));
 
-    public async Task<Deviation?> GetDeviationAsync(string id)
+    public async Task<DeviantArtResponse<Deviation?, DeviationError?>> GetDeviationAsync(string id)
     {
         var request = await AuthenticatedRequest("/api/v1/oauth2/deviation", id);
-        try
-        {
-            var response = await request.GetJsonAsync<Deviation>();
-            return response;
-        }
-        catch (FlurlHttpException httpException)
-        {
-            if (httpException.Call.Response == null || httpException.StatusCode != 400)
-                throw;
+        var response = await MakeRequestAsync<Deviation?, DeviationError?>(async () => await request.GetJsonAsync<Deviation>());
 
-            var error = await httpException.Call.Response.GetJsonAsync<Error>();
-            if (error.Code == GetDeviationErrorCodes.NotFound)
-                return null;
-
-            throw;
-        }
+        return response;
     }
 
     private static async Task<DeviantArtResponse<T, TError>> MakeRequestAsync<T, TError>(Func<Task<T>> makeRequestAsync)

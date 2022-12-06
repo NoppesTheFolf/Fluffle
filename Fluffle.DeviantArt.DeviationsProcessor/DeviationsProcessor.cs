@@ -52,25 +52,32 @@ public class DeviationsProcessor
         foreach (var id in deviationIds)
         {
             _logger.LogInformation("Retrieving deviation with ID {id}", id);
-            var deviation = await _deviantArtClient.GetDeviationAsync(id);
-            if (deviation == null)
+            var deviationResponse = await _deviantArtClient.GetDeviationAsync(id);
+            if (deviationResponse.Error != null)
             {
-                _logger.LogInformation("Deviation with ID {id} does not exist. Marking for deletion at Fluffle.", id);
-
-                try
+                if (deviationResponse.Error == DeviationError.NotFound)
                 {
-                    await HttpResiliency.RunAsync(() => _fluffleClient.DeleteContentAsync(Platform, id));
+                    _logger.LogInformation("Deviation with ID {id} does not exist. Marking for deletion at Fluffle.", id);
+                    try
+                    {
+                        await HttpResiliency.RunAsync(() => _fluffleClient.DeleteContentAsync(Platform, id));
+                    }
+                    catch (FlurlHttpException httpException)
+                    {
+                        if (httpException.StatusCode == 404)
+                            continue;
+
+                        throw;
+                    }
                 }
-                catch (FlurlHttpException httpException)
+                else
                 {
-                    if (httpException.StatusCode == 404)
-                        continue;
-
-                    throw;
+                    _logger.LogInformation("Retrieving deviation with ID {id} resulted in an {errorType} error.", id, deviationResponse.Error);
                 }
 
                 continue;
             }
+            var deviation = deviationResponse.Value!;
 
             // Ignore deviations which are only visible to watchers or are paid
             if (deviation.PremiumFolderData != null)
