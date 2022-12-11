@@ -26,7 +26,7 @@ namespace Noppes.Fluffle.E621Sync
                 .WithRequestInterval(interval.Milliseconds())
                 .Build();
 
-            var loginSuccess = await E621HttpResiliency.RunAsync(() => e621Client.LogInAsync(conf.Username, conf.ApiKey));
+            var loginSuccess = await E621HttpResiliency.RunAsync(() => e621Client.LogInAsync(conf.Username, conf.ApiKey, true));
 
             if (!loginSuccess)
             {
