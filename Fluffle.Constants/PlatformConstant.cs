@@ -10,6 +10,7 @@
         FurAffinity = 3,
         Weasyl = 4,
         Twitter = 5,
-        DeviantArt = 6
+        DeviantArt = 6,
+        Inkbunny = 7
     }
 }

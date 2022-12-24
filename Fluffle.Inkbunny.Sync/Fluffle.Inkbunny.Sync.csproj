@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AssemblyName>Noppes.Fluffle.Inkbunny.Sync</AssemblyName>
+		<RootNamespace>Noppes.Fluffle.Inkbunny.Sync</RootNamespace>
+		<UserSecretsId>c344b214-e437-47e5-a817-7bad0ef8c3cb</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
+		<ProjectReference Include="..\Fluffle.Inkbunny.Client\Fluffle.Inkbunny.Client.csproj" />
+		<ProjectReference Include="..\Fluffle.Sync\Fluffle.Sync.csproj" />
+	</ItemGroup>
+
+</Project>

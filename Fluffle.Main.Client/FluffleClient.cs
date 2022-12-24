@@ -42,6 +42,13 @@ namespace Noppes.Fluffle.Main.Client
                 .GetMessagePackAsync<IList<FaPopularArtistModel>>();
         }
 
+        public Task<ICollection<string>> SearchContentAsync(string platformName, string idStartsWith)
+        {
+            return Request(Endpoints.SearchContent(platformName))
+                .SetQueryParam("idStartsWith", idStartsWith)
+                .GetJsonAsync<ICollection<string>>();
+        }
+
         public Task PutContentAsync(string platformName, IEnumerable<PutContentModel> models)
         {
             return Request(Endpoints.PutContent(platformName))
@@ -72,10 +79,10 @@ namespace Noppes.Fluffle.Main.Client
                 .DeleteJsonReceiveJsonAsync<ICollection<int>>(model);
         }
 
-        public Task DeleteContentAsync(string platformName, string platformContentId)
+        public Task<ICollection<string>> DeleteContentAsync(string platformName, IEnumerable<string> platformContentIds)
         {
-            return Request(Endpoints.DeleteContent(platformName, platformContentId))
-                .DeleteAsync();
+            return Request(Endpoints.DeleteContent(platformName))
+                .DeleteJsonReceiveJsonAsync<ICollection<string>>(platformContentIds);
         }
 
         public Task<PlatformModel> GetPlatformAsync(string name)

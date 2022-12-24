@@ -25,7 +25,8 @@ namespace Noppes.Fluffle.Constants
         Wav = 15,
         Mid = 16,
         Binary = 17,
-        Mp4 = 18
+        Mp4 = 18,
+        Flv = 19
     }
 
     public static class FileFormatHelper
@@ -94,6 +95,7 @@ namespace Noppes.Fluffle.Constants
                 "bin" => FileFormatConstant.Binary,
                 "" => FileFormatConstant.Binary,
                 "mp4" => FileFormatConstant.Mp4,
+                "flv" => FileFormatConstant.Flv,
                 _ => fallback ?? throw new InvalidOperationException($"Extension `{extension}` could not be found")
             };
         }
@@ -111,6 +113,12 @@ namespace Noppes.Fluffle.Constants
                 "video/webm" => FileFormatConstant.WebM,
                 "application/x-shockwave-flash" => FileFormatConstant.Swf,
                 "text/html" => FileFormatConstant.Html,
+                "text/rtf" => FileFormatConstant.Rtf,
+                "text/plain" => FileFormatConstant.Txt,
+                "audio/mpeg" => FileFormatConstant.Mp3,
+                "application/msword" => FileFormatConstant.Doc,
+                "video/mp4" => FileFormatConstant.Mp4,
+                "video/x-flv" => FileFormatConstant.Flv,
                 _ => throw new InvalidOperationException($"MIME type `{mimeType}` could not be found")
             };
         }

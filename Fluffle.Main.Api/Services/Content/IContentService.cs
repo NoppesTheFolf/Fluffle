@@ -19,7 +19,9 @@ namespace Noppes.Fluffle.Main.Api.Services
 
     public interface IContentService
     {
-        public Task<SE> MarkForDeletionAsync(string platformName, string idOnPlatform, bool saveChanges = true);
+        public Task<SR<IEnumerable<string>>> SearchContentAsync(string platformName, string idOnPlatformStartsWith);
+
+        public Task<SR<IEnumerable<string>>> MarkManyForDeletionAsync(string platformName, IEnumerable<string> idsOnPlatform, bool saveChanges = true);
 
         public Task<SR<IEnumerable<int>>> MarkRangeForDeletionAsync(string platformName, DeleteContentRangeModel model);
 

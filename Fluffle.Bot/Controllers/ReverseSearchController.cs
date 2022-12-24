@@ -97,7 +97,7 @@ namespace Noppes.Fluffle.Bot.Controllers
             // Get the chat from the database
             var chat = await _context.Chats.FirstAsync(x => x.Id == message.Chat.Id);
 
-            // Skip messages in supergroups of which the message in forwarded from their linked channel
+            // Skip messages in supergroups of which the message are forwarded from their linked channel
             if (message.Chat.Type == ChatType.Supergroup && message.ForwardFromChat != null && message.ForwardFromChat.Id == chat.LinkedChatId)
                 return;
 

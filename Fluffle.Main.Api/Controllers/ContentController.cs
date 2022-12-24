@@ -20,6 +20,15 @@ namespace Noppes.Fluffle.Main.Api.Controllers
             _contentService = contentService;
         }
 
+        [HttpGet(PluralRoute + "/search")]
+        [Permissions(ContentPermissions.ReadSearch)]
+        public async Task<IActionResult> Search([FromRoute] string platformName, [FromQuery] string idStartsWith)
+        {
+            var result = await _contentService.SearchContentAsync(platformName, idStartsWith);
+
+            return HandleV1(result);
+        }
+
         [HttpGet(PluralRoute + "/min-id")]
         [Permissions(ContentPermissions.ReadMinId)]
         public async Task<IActionResult> GetMinId(string platformName)
@@ -47,13 +56,13 @@ namespace Noppes.Fluffle.Main.Api.Controllers
             return HandleV1(result);
         }
 
-        [HttpDelete(SingularRoute)]
+        [HttpDelete(PluralRoute)]
         [Permissions(ContentPermissions.Delete)]
-        public async Task<IActionResult> Delete(string platformName, string platformContentId)
+        public async Task<IActionResult> Delete(string platformName, [FromBody] IEnumerable<string> platformContentIds)
         {
-            var error = await _contentService.MarkForDeletionAsync(platformName, platformContentId);
+            var result = await _contentService.MarkManyForDeletionAsync(platformName, platformContentIds);
 
-            return HandleV1(error);
+            return HandleV1(result);
         }
 
         [HttpPut(PluralRoute)]
@@ -101,6 +110,18 @@ namespace Noppes.Fluffle.Main.Api.Controllers
         public const string Create = Prefix + "CREATE";
 
         [Permission]
+        public const string ReadSearch = Prefix + "READ_SEARCH";
+
+        [Permission]
+        public const string ReadUnprocessed = Prefix + "READ_UNPROCESSED";
+
+        [Permission]
+        public const string ReadMaxId = Prefix + "READ_MAX_ID";
+
+        [Permission]
+        public const string ReadMinId = Prefix + "READ_MIN_ID";
+
+        [Permission]
         public const string Update = Prefix + "UPDATE";
 
         [Permission]
@@ -111,14 +132,5 @@ namespace Noppes.Fluffle.Main.Api.Controllers
 
         [Permission]
         public const string AddError = Prefix + "ADD_ERROR";
-
-        [Permission]
-        public const string ReadUnprocessed = Prefix + "READ_UNPROCESSED";
-
-        [Permission]
-        public const string ReadMaxId = Prefix + "READ_MAX_ID";
-
-        [Permission]
-        public const string ReadMinId = Prefix + "READ_MIN_ID";
     }
 }

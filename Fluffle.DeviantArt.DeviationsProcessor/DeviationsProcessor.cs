@@ -58,17 +58,7 @@ public class DeviationsProcessor
                 if (deviationResponse.Error == DeviationError.NotFound)
                 {
                     _logger.LogInformation("Deviation with ID {id} does not exist. Marking for deletion at Fluffle.", id);
-                    try
-                    {
-                        await HttpResiliency.RunAsync(() => _fluffleClient.DeleteContentAsync(Platform, id));
-                    }
-                    catch (FlurlHttpException httpException)
-                    {
-                        if (httpException.StatusCode == 404)
-                            continue;
-
-                        throw;
-                    }
+                    await HttpResiliency.RunAsync(() => _fluffleClient.DeleteContentAsync(Platform, new[] { id }));
                 }
                 else
                 {

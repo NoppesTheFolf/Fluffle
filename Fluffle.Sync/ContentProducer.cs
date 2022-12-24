@@ -1,7 +1,5 @@
-﻿using Flurl.Http;
-using Humanizer;
+﻿using Humanizer;
 using Microsoft.Extensions.Hosting;
-using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
@@ -107,23 +105,22 @@ namespace Noppes.Fluffle.Sync
 
         public virtual int SourceVersion => 0;
 
-        public async Task FlagForDeletionAsync(string contentId)
-        {
-            try
-            {
-                await LogEx.TimeAsync(() =>
-                {
-                    return HttpResiliency.RunAsync(() =>
-                        FluffleClient.DeleteContentAsync(Platform, contentId));
-                }, "Flagging content with ID {contentId} for deletion", contentId);
-            }
-            catch (FlurlHttpException e)
-            {
-                if (e.StatusCode == 404)
-                    return;
+        public async Task FlagForDeletionAsync(string contentId) => await FlagForDeletionAsync(new[] { contentId });
 
-                throw;
+        public async Task FlagForDeletionAsync(ICollection<string> contentIds, bool onlyPrintActuallyDeleted = false)
+        {
+            var deletedIds = await HttpResiliency.RunAsync(() => FluffleClient.DeleteContentAsync(Platform, contentIds));
+            if (onlyPrintActuallyDeleted && !deletedIds.Any())
+                return;
+
+            var ids = onlyPrintActuallyDeleted ? deletedIds : contentIds;
+            if (ids.Count == 1)
+            {
+                Log.Information("Content with ID {id} was marked for deletion", ids.First());
+                return;
             }
+
+            Log.Information("Content with IDs {ids} were marked for deletion", ids);
         }
 
         protected async Task FlagRangeForDeletionAsync(int exclusiveStart, int inclusiveEnd, ICollection<TContent> content)

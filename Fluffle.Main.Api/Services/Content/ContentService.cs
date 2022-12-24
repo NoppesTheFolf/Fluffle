@@ -51,19 +51,42 @@ namespace Noppes.Fluffle.Main.Api.Services
             _logger = logger;
         }
 
-        public async Task<SE> MarkForDeletionAsync(string platformName, string idOnPlatform, bool saveChanges = true)
+        public async Task<SR<IEnumerable<string>>> SearchContentAsync(string platformName, string idOnPlatformStartsWith)
         {
-            return await _context.Content.GetContentAsync(_context.Platforms, platformName, idOnPlatform, async content =>
+            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
-                content.HasFatalErrors = false;
+                var escapedIdOnPlatformStartsWith = idOnPlatformStartsWith.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+                var ids = await _context.Content
+                    .Where(x => x.PlatformId == platform.Id)
+                    .Where(x => EF.Functions.Like(x.IdOnPlatform, escapedIdOnPlatformStartsWith + "%", "\\"))
+                    .Select(x => x.IdOnPlatform)
+                    .ToListAsync();
 
-                if (!content.IsDeleted)
-                    content.IsMarkedForDeletion = true;
+                return new SR<IEnumerable<string>>(ids);
+            });
+        }
+
+        public async Task<SR<IEnumerable<string>>> MarkManyForDeletionAsync(string platformName, IEnumerable<string> idsOnPlatform, bool saveChanges = true)
+        {
+            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
+            {
+                var contents = await _context.Content
+                    .Where(x => x.PlatformId == platform.Id)
+                    .Where(x => idsOnPlatform.Contains(x.IdOnPlatform))
+                    .ToListAsync();
+
+                foreach (var content in contents)
+                {
+                    content.HasFatalErrors = false;
+
+                    if (!content.IsDeleted)
+                        content.IsMarkedForDeletion = true;
+                }
 
                 if (saveChanges)
                     await _context.SaveChangesAsync();
 
-                return null;
+                return new SR<IEnumerable<string>>(contents.Select(x => x.IdOnPlatform).ToList());
             });
         }
 

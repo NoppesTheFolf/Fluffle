@@ -48,6 +48,12 @@ namespace Noppes.Fluffle.Main.Api.Helpers
                     EstimatedContentCount = -1,
                     HomeLocation = "https://www.deviantart.com"
                 },
+                PlatformConstant.Inkbunny => new Platform
+                {
+                    Name = "Inkbunny",
+                    EstimatedContentCount = -1,
+                    HomeLocation = "https://inkbunny.net"
+                },
                 _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
             };
 
@@ -191,6 +197,12 @@ namespace Noppes.Fluffle.Main.Api.Helpers
                     Name = "MPEG-4 Part 14",
                     Abbreviation = "MP4",
                     Extension = ".mp4"
+                },
+                FileFormatConstant.Flv => new FileFormat
+                {
+                    Name = "Flash Video",
+                    Abbreviation = "FLV",
+                    Extension = ".flv"
                 },
                 _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
             };

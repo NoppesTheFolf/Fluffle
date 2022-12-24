@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<RootNamespace>Noppes.Fluffle.Inkbunny.Client</RootNamespace>
+		<AssemblyName>Noppes.Fluffle.Inkbunny.Client</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Humanizer.Core" Version="2.14.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Fluffle.Http\Fluffle.Http.csproj" />
+	</ItemGroup>
+
+</Project>
