@@ -4,4 +4,4 @@
 
 # Fluffle
 
-A reverse image search service tailored to the furry community
+A reverse image search service for the furry community

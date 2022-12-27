@@ -237,7 +237,7 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
                         </Link>
                     </div>
                     <div className="text-muted text-center italic">
-                        A reverse image search service tailored to the furry community
+                        A reverse image search service for the furry community
                     </div>
                 </div>
                 <input className="hidden" type="file" id="image" onChange={onSelect} />

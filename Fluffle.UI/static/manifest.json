@@ -1,7 +1,7 @@
 {
   "name": "Fluffle",
   "short_name": "Fluffle",
-  "description": "A reverse image search service tailored to the furry community.",
+  "description": "A reverse image search service for the furry community.",
   "dir": "auto",
   "lang": "en-US",
   "display": "standalone",
