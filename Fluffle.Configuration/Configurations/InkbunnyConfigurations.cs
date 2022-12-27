@@ -35,10 +35,16 @@ public class InkbunnyCredentialsConfiguration : AbstractValidator<InkbunnyCreden
 
 public class InkbunnySyncConfiguration : AbstractValidator<InkbunnySyncConfiguration>
 {
-    public TimeSpan? Throttle { get; set; }
+    public TimeSpan? ApiThrottle { get; set; }
+
+    public int NIdsToGoBack { get; set; }
+
+    public TimeSpan SubmissionMinimumAge { get; set; }
 
     public InkbunnySyncConfiguration()
     {
-        RuleFor(x => x.Throttle).GreaterThan(TimeSpan.Zero);
+        RuleFor(x => x.ApiThrottle).GreaterThan(TimeSpan.Zero);
+        RuleFor(x => x.NIdsToGoBack).NotEmpty().GreaterThanOrEqualTo(1);
+        RuleFor(x => x.SubmissionMinimumAge).NotEmpty().GreaterThanOrEqualTo(TimeSpan.Zero);
     }
 }

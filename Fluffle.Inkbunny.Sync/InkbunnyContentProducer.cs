@@ -1,5 +1,5 @@
-﻿using Humanizer;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
+using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Inkbunny.Client;
@@ -9,20 +9,22 @@ using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.Sync;
 using Serilog;
 using SerilogTimings;
-using System.Collections.Concurrent;
 
 namespace Noppes.Fluffle.Inkbunny.Sync;
 
 public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
 {
+    private readonly InkbunnySyncConfiguration _configuration;
     private readonly IInkbunnyClient _inkbunnyClient;
     private readonly SyncStateService<InkbunnySyncState> _syncStateService;
 
     private InkbunnySyncState? _syncState;
 
     public InkbunnyContentProducer(PlatformModel platform, FluffleClient fluffleClient, IHostEnvironment environment,
-        IInkbunnyClient inkbunnyClient, SyncStateService<InkbunnySyncState> syncStateService) : base(platform, fluffleClient, environment)
+        InkbunnySyncConfiguration configuration, IInkbunnyClient inkbunnyClient,
+        SyncStateService<InkbunnySyncState> syncStateService) : base(platform, fluffleClient, environment)
     {
+        _configuration = configuration;
         _inkbunnyClient = inkbunnyClient;
         _syncStateService = syncStateService;
     }
@@ -42,7 +44,7 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
             return Task.CompletedTask;
         });
 
-        var start = _syncState.LatestId - 2000;
+        var start = _syncState.LatestId - _configuration.NIdsToGoBack;
         start = start < 1 ? 1 : start;
 
         var retrieveUntilId = await GetLatestIdAsync();
@@ -53,23 +55,18 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
             using (Operation.Time("Retrieving {n} submissions starting from ID {id}", InkbunnyConstants.MaximumSubmissionsPerCall, start))
                 submissions = (await _inkbunnyClient.GetSubmissionsAsync(ids)).Submissions;
 
-            var idsOnFluffle = new ConcurrentBag<string>();
-            await Parallel.ForEachAsync(ids, new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (x, _) =>
-            {
-                var fluffleIds = await HttpResiliency.RunAsync(() => FluffleClient.SearchContentAsync(Platform, x + "-"));
-                foreach (var fluffleId in fluffleIds)
-                    idsOnFluffle.Add(fluffleId);
-            });
-
+            var idsOnFluffle = await HttpResiliency.RunAsync(() => FluffleClient.SearchContentAsync(Platform, ids.Select(x => x + "-")));
             var idsInBatch = submissions.SelectMany(x => x.Files.Select(y => GetId(x.Id, y.Id))).ToList();
             var idsToDelete = idsOnFluffle.Except(idsInBatch).ToList();
             if (idsToDelete.Any())
                 await FlagForDeletionAsync(idsToDelete);
 
-            // Filter out posts not older than 15 minutes
+            // Filter out posts not older than x
+            Log.Information("Retrieved {n} submissions", submissions.Count);
             submissions = submissions
-                .Where(x => DateTimeOffset.UtcNow.Subtract(x.CreatedWhen) > 15.Minutes())
+                .Where(x => DateTimeOffset.UtcNow.Subtract(x.CreatedWhen) > _configuration.SubmissionMinimumAge)
                 .ToList();
+            Log.Information("{n} submissions remained after filtering", submissions.Count);
 
             // Make sure none of the submissions contain any files of which the submission parent
             // does not match. Just a piece of mind check
@@ -88,11 +85,11 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
                 break;
             }
 
-            start += 100;
+            start += InkbunnyConstants.MaximumSubmissionsPerCall;
         } while (true);
 
         _syncState.LatestId = int.Parse(retrieveUntilId);
-        await _syncStateService.SyncAsync();
+        await HttpResiliency.RunAsync(() => _syncStateService.SyncAsync());
     }
 
     private async Task<string> GetLatestIdAsync()

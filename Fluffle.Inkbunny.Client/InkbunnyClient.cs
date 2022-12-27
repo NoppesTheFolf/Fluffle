@@ -3,6 +3,7 @@ using Flurl.Http.Configuration;
 using Humanizer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Nito.AsyncEx;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Inkbunny.Client.Models;
 
@@ -11,15 +12,19 @@ namespace Noppes.Fluffle.Inkbunny.Client;
 public class InkbunnyClient : ApiClient, IInkbunnyClient
 {
     private const string BaseUrl = "https://inkbunny.net";
+    private static readonly TimeSpan SidExpirationTime = 1.Hours();
 
     private readonly string _username;
     private readonly string? _password;
+    private readonly AsyncLock _sidLock;
     private string? _sid;
+    private DateTime _sidRefreshedWhen;
 
     public InkbunnyClient(string username, string? password, string userAgent) : base(BaseUrl)
     {
         _username = username;
         _password = password;
+        _sidLock = new AsyncLock();
 
         FlurlClient.WithHeader("User-Agent", userAgent);
         FlurlClient.Configure(settings =>
@@ -38,7 +43,7 @@ public class InkbunnyClient : ApiClient, IInkbunnyClient
 
     public async Task<SubmissionsResponse> GetSubmissionsAsync(IEnumerable<string> ids)
     {
-        await RefreshSid();
+        await RefreshSidAsync();
 
         var request = Request("api_submissions.php")
             .SetQueryParam("submission_ids", string.Join(",", ids))
@@ -50,7 +55,7 @@ public class InkbunnyClient : ApiClient, IInkbunnyClient
 
     public async Task<SubmissionsResponse> SearchSubmissionsAsync(SubmissionSearchOrder order)
     {
-        await RefreshSid();
+        await RefreshSidAsync();
 
         var request = Request("api_search.php")
             .SetQueryParam("order", order.ToString().Underscore());
@@ -69,13 +74,16 @@ public class InkbunnyClient : ApiClient, IInkbunnyClient
         return response;
     }
 
-    private async Task RefreshSid()
+    private async Task RefreshSidAsync()
     {
-        if (_sid != null)
-            return;
+        using var _ = await _sidLock.LockAsync();
 
-        var login = await LoginAsync(_username, _password);
-        _sid = login.Sid;
+        if (_sid == null || DateTime.UtcNow.Subtract(_sidRefreshedWhen) > SidExpirationTime)
+        {
+            var login = await LoginAsync(_username, _password);
+            _sid = login.Sid;
+            _sidRefreshedWhen = DateTime.UtcNow;
+        }
     }
 
     public override IFlurlRequest Request(params object[] urlSegments)

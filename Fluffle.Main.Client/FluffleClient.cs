@@ -2,7 +2,9 @@
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Communication;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Main.Client
@@ -40,6 +42,19 @@ namespace Noppes.Fluffle.Main.Client
         {
             return Request(Endpoints.GetFaPopularArtists())
                 .GetMessagePackAsync<IList<FaPopularArtistModel>>();
+        }
+
+        public async Task<ICollection<string>> SearchContentAsync(string platformName, IEnumerable<string> idStartsWithMany)
+        {
+            var allIds = new ConcurrentBag<string>();
+            await Parallel.ForEachAsync(idStartsWithMany, new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (idStartsWith, _) =>
+            {
+                var ids = await SearchContentAsync(platformName, idStartsWith);
+                foreach (var id in ids)
+                    allIds.Add(id);
+            });
+
+            return allIds.Distinct().ToList();
         }
 
         public Task<ICollection<string>> SearchContentAsync(string platformName, string idStartsWith)

@@ -19,11 +19,12 @@ internal class SyncClient : SyncClient<SyncClient, InkbunnyContentProducer, File
     {
         var inkbunnyConf = conf.Get<InkbunnyConfiguration>();
         var inkbunnyCredentials = inkbunnyConf.Credentials;
+        services.AddSingleton(inkbunnyConf.Sync);
 
         var userAgent = Project.UserAgent(ApplicationName);
         var client = new InkbunnyClient(inkbunnyCredentials.Username, inkbunnyCredentials.Password, userAgent);
-        if (inkbunnyConf.Sync.Throttle != null)
-            client.RateLimiter = new RequestRateLimiter((TimeSpan)inkbunnyConf.Sync.Throttle);
+        if (inkbunnyConf.Sync.ApiThrottle != null)
+            client.RateLimiter = new RequestRateLimiter((TimeSpan)inkbunnyConf.Sync.ApiThrottle);
 
         services.AddSingleton<IInkbunnyClient>(client);
     });
