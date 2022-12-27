@@ -1,5 +1,6 @@
 ﻿using Flurl.Http;
 using Noppes.Fluffle.Constants;
+using Noppes.Fluffle.Http;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -71,7 +72,7 @@ namespace Noppes.Fluffle.TwitterSync
         public async Task<FluffleResponse> ReverseSearchAsync(Func<Stream> openStream, bool includeNsfw, int limit = 32, params FlufflePlatform[] platforms)
         {
             var response = await _client.Request("search")
-                .PostMultipartAsync(content =>
+                .PostMultipartReceiveJsonExplicitlyAsync<FluffleResponse>(content =>
                 {
                     foreach (var platform in platforms)
                         content.AddString("platforms", Enum.GetName(platform));
@@ -81,7 +82,7 @@ namespace Noppes.Fluffle.TwitterSync
                     content.AddFile("file", openStream(), "file");
                 });
 
-            return await response.GetJsonAsync<FluffleResponse>();
+            return response;
         }
     }
 }

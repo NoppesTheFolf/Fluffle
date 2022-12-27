@@ -33,7 +33,7 @@ namespace Noppes.Fluffle.Weasyl
         public async Task<IList<FontPageSubmission>> GetFrontPageAsync()
         {
             return await Request(true, "api", "submissions", "frontpage")
-                .GetJsonAsync<IList<FontPageSubmission>>();
+                .GetJsonExplicitlyAsync<IList<FontPageSubmission>>();
         }
 
         public async Task<Submission> GetSubmissionAsync(int id)
@@ -41,7 +41,7 @@ namespace Noppes.Fluffle.Weasyl
             try
             {
                 return await Request(true, "api", "submissions", id, "view")
-                    .GetJsonAsync<Submission>();
+                    .GetJsonExplicitlyAsync<Submission>();
             }
             catch (FlurlHttpException e)
             {

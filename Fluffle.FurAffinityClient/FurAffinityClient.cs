@@ -27,7 +27,7 @@ namespace Noppes.Fluffle.FurAffinity
 
         public async Task<FaOnlineStats> GetRegisteredUsersOnlineAsync()
         {
-            var response = await Request().GetHtmlAsync();
+            var response = await Request().GetHtmlExplicitlyAsync();
 
             return ExtractOnlineStats(response);
         }
@@ -43,7 +43,7 @@ namespace Noppes.Fluffle.FurAffinity
             };
 
             var response = await Request(submission.ViewLocation.AbsolutePath)
-                .GetHtmlAsync();
+                .GetHtmlExplicitlyAsync();
 
             var containsSubmission = response.GetElementbyId("submission_page") != null;
             if (!containsSubmission)
@@ -182,7 +182,7 @@ namespace Noppes.Fluffle.FurAffinity
         private async Task<FaResult<FaGallery>> GetGalleryAsync(string artistId, string url, int page, FaFolder folder = null)
         {
             url += $"/{page}";
-            var response = await Request(url).GetHtmlAsync();
+            var response = await Request(url).GetHtmlExplicitlyAsync();
             ValidateLogin(response);
 
             if (CheckIfDisabled(response.DocumentNode))
@@ -260,7 +260,7 @@ namespace Noppes.Fluffle.FurAffinity
 
         public async Task<ICollection<FaGallerySubmission>> GetRecentSubmissions()
         {
-            var response = await Request().GetHtmlAsync();
+            var response = await Request().GetHtmlExplicitlyAsync();
             ValidateLogin(response);
 
             var node = response.GetElementbyId("gallery-frontpage-submissions");

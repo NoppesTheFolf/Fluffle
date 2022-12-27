@@ -66,7 +66,7 @@ namespace Noppes.Fluffle.B2
                         request = request.WithHeader($"X-Bz-Info-{name}", HttpUtility.UrlEncode(value));
 
                     return await request
-                        .PostContentReceiveJsonAsync<B2UploadResponse>(new StreamContent(stream));
+                        .PostContentReceiveJsonExplicitlyAsync<B2UploadResponse>(new StreamContent(stream));
                 }
                 catch (FlurlHttpException httpException)
                 {
@@ -102,7 +102,7 @@ namespace Noppes.Fluffle.B2
         /// </summary>
         private async Task<B2UploadInformation> GetUploadInformationAsync()
         {
-            return await _client.AuthorizedRequestAsync(request => request.PostJsonReceiveJsonAsync<B2UploadInformation>(new
+            return await _client.AuthorizedRequestAsync(request => request.PostJsonReceiveJsonExplicitlyAsync<B2UploadInformation>(new
             {
                 BucketId = _bucket.Id
             }), B2Endpoints.GetUploadUrl);

@@ -59,15 +59,14 @@ namespace Noppes.Fluffle.TwitterSync
             var batchSize = await GetClassifyBatchSizeAsync();
             foreach (var batch in streams.Batch(batchSize))
             {
-                var response = await Request("image-classifier-v2")
+                var result = await Request("image-classifier-v2")
                     .AddInterceptor(_classifyInterceptor)
-                    .PostMultipartAsync(content =>
+                    .PostMultipartReceiveJsonExplicitlyAsync<ICollection<IDictionary<bool, double>>>(content =>
                     {
                         foreach (var stream in batch)
                             content.AddFile("files", stream(), "dummy");
                     });
 
-                var result = await response.GetJsonAsync<ICollection<IDictionary<bool, double>>>();
                 results.AddRange(result);
             }
 
@@ -76,25 +75,21 @@ namespace Noppes.Fluffle.TwitterSync
 
         public Task<int> GetClassifyBatchSizeAsync()
         {
-            return Request("image-classifier-v2/batch-size").GetJsonAsync<int>();
+            return Request("image-classifier-v2/batch-size").GetJsonExplicitlyAsync<int>();
         }
 
         public async Task<ICollection<bool>> IsFurryArtAsync(IEnumerable<IDictionary<bool, double>> classes)
         {
-            var response = await Request("is-furry-art-v2").PostJsonAsync(classes);
-
-            return await response.GetJsonAsync<ICollection<bool>>();
+            return await Request("is-furry-art-v2").PostJsonReceiveJsonExplicitlyAsync<ICollection<bool>>(classes);
         }
 
         public async Task<bool> IsFurryArtistAsync(IEnumerable<IDictionary<bool, double>> classes, IEnumerable<int> artistIds)
         {
-            var response = await Request("is-furry-artist-v2").PostJsonAsync(new
+            return await Request("is-furry-artist-v2").PostJsonReceiveJsonExplicitlyAsync<bool>(new
             {
                 Classes = classes,
                 ArtistIds = artistIds
             });
-
-            return await response.GetJsonAsync<bool>();
         }
     }
 }

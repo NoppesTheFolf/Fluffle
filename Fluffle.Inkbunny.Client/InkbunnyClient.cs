@@ -48,7 +48,7 @@ public class InkbunnyClient : ApiClient, IInkbunnyClient
         var request = Request("api_submissions.php")
             .SetQueryParam("submission_ids", string.Join(",", ids))
             .SetQueryParam("show_description", "yes");
-        var response = await request.GetJsonAsync<SubmissionsResponse>();
+        var response = await request.GetJsonExplicitlyAsync<SubmissionsResponse>();
 
         return response;
     }
@@ -59,7 +59,7 @@ public class InkbunnyClient : ApiClient, IInkbunnyClient
 
         var request = Request("api_search.php")
             .SetQueryParam("order", order.ToString().Underscore());
-        var response = await request.GetJsonAsync<SubmissionsResponse>();
+        var response = await request.GetJsonExplicitlyAsync<SubmissionsResponse>();
 
         return response;
     }
@@ -69,7 +69,7 @@ public class InkbunnyClient : ApiClient, IInkbunnyClient
         var request = Request("api_login.php")
             .SetQueryParam("username", username)
             .SetQueryParam("password", password);
-        var response = await request.GetJsonAsync<Login>();
+        var response = await request.GetJsonExplicitlyAsync<Login>();
 
         return response;
     }

@@ -50,7 +50,7 @@ public class DeviantArtClient : ApiClient
 
         var result = await MakeRequestAsync<User?, UserError?>(async () =>
         {
-            var response = await request.GetJsonAsync<UserResponse>();
+            var response = await request.GetJsonExplicitlyAsync<UserResponse>();
 
             return response.User;
         });
@@ -68,7 +68,7 @@ public class DeviantArtClient : ApiClient
             .SetQueryParam("limit", limit)
             .SetQueryParam("mature_content", true);
 
-        var response = await request.GetJsonAsync<BrowseDeviationsResponse>();
+        var response = await request.GetJsonExplicitlyAsync<BrowseDeviationsResponse>();
         return response;
     }
 
@@ -83,7 +83,7 @@ public class DeviantArtClient : ApiClient
             .SetQueryParam("limit", limit)
             .SetQueryParam("mature_content", true);
 
-        var response = await request.GetJsonAsync<BrowseDeviationsResponse>();
+        var response = await request.GetJsonExplicitlyAsync<BrowseDeviationsResponse>();
         return response;
     }
 
@@ -93,7 +93,7 @@ public class DeviantArtClient : ApiClient
     public async Task<DeviantArtResponse<Deviation?, DeviationError?>> GetDeviationAsync(string id)
     {
         var request = await AuthenticatedRequest("/api/v1/oauth2/deviation", id);
-        var response = await MakeRequestAsync<Deviation?, DeviationError?>(async () => await request.GetJsonAsync<Deviation>());
+        var response = await MakeRequestAsync<Deviation?, DeviationError?>(async () => await request.GetJsonExplicitlyAsync<Deviation>());
 
         return response;
     }
@@ -130,7 +130,7 @@ public class DeviantArtClient : ApiClient
                 .SetQueryParam("deviationids[]", chunk)
                 .SetQueryParam("ext_stats", true);
 
-            var response = await request.GetJsonAsync<DeviationMetadataResponse>();
+            var response = await request.GetJsonExplicitlyAsync<DeviationMetadataResponse>();
             metadata.AddRange(response.Metadata);
         }
 
@@ -178,7 +178,7 @@ public class DeviantArtClient : ApiClient
             .SetQueryParam("client_id", _clientId)
             .SetQueryParam("client_secret", _clientSecret);
 
-        var response = await request.GetJsonAsync<TokenResponse>();
+        var response = await request.GetJsonExplicitlyAsync<TokenResponse>();
         _accessToken = response.AccessToken;
         _accessTokenRetrievedAt = DateTime.UtcNow;
     }

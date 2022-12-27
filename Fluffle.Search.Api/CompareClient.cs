@@ -45,7 +45,7 @@ namespace Noppes.Fluffle.Search.Api
         {
             return FlurlClient
                 .Request("compare", hash64, hash256[0], hash256[1], hash256[2], hash256[3], includeNsfw.ToString().ToLowerInvariant(), limit)
-                .GetJsonAsync<IDictionary<int, CompareResult>>();
+                .GetJsonExplicitlyAsync<IDictionary<int, CompareResult>>();
         }
     }
 }

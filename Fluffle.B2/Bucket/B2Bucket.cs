@@ -38,7 +38,7 @@ namespace Noppes.Fluffle.B2
         /// </summary>
         public Task DeleteFileVersionAsync(string fileName, string fileId)
         {
-            return _client.AuthorizedRequestAsync(request => request.PostJsonAsync(new
+            return _client.AuthorizedRequestAsync(request => request.AcceptJson().PostJsonAsync(new
             {
                 fileName,
                 fileId
@@ -51,7 +51,7 @@ namespace Noppes.Fluffle.B2
         /// </summary>
         public Task<B2ListFileNamesResponse> ListFileNamesAsync(int maxFileCount = 1000, string startFileName = null)
         {
-            return _client.AuthorizedRequestAsync(request => request.PostJsonReceiveJsonAsync<B2ListFileNamesResponse>(new
+            return _client.AuthorizedRequestAsync(request => request.PostJsonReceiveJsonExplicitlyAsync<B2ListFileNamesResponse>(new
             {
                 bucketId = Id,
                 maxFileCount,

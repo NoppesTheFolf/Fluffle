@@ -29,19 +29,19 @@ namespace Noppes.Fluffle.Main.Client
         public Task<SyncStateModel> GetSyncStateAsync(string platformName)
         {
             return Request(Endpoints.SyncState(platformName))
-                .GetJsonAsync<SyncStateModel>();
+                .GetJsonExplicitlyAsync<SyncStateModel>();
         }
 
         public Task<bool> GetFaBotsAllowedAsync()
         {
             return Request(Endpoints.GetFaBotsAllowed())
-                .GetJsonAsync<bool>();
+                .GetJsonExplicitlyAsync<bool>();
         }
 
         public Task<IList<FaPopularArtistModel>> GetFaPopularArtistsAsync()
         {
             return Request(Endpoints.GetFaPopularArtists())
-                .GetMessagePackAsync<IList<FaPopularArtistModel>>();
+                .GetMessagePackExplicitlyAsync<IList<FaPopularArtistModel>>();
         }
 
         public async Task<ICollection<string>> SearchContentAsync(string platformName, IEnumerable<string> idStartsWithMany)
@@ -61,7 +61,7 @@ namespace Noppes.Fluffle.Main.Client
         {
             return Request(Endpoints.SearchContent(platformName))
                 .SetQueryParam("idStartsWith", idStartsWith)
-                .GetJsonAsync<ICollection<string>>();
+                .GetJsonExplicitlyAsync<ICollection<string>>();
         }
 
         public Task PutContentAsync(string platformName, IEnumerable<PutContentModel> models)
@@ -91,19 +91,19 @@ namespace Noppes.Fluffle.Main.Client
         public Task<ICollection<int>> DeleteContentRangeAsync(string platformName, DeleteContentRangeModel model)
         {
             return Request(Endpoints.DeleteContentRange(platformName))
-                .DeleteJsonReceiveJsonAsync<ICollection<int>>(model);
+                .DeleteJsonReceiveJsonExplicitlyAsync<ICollection<int>>(model);
         }
 
         public Task<ICollection<string>> DeleteContentAsync(string platformName, IEnumerable<string> platformContentIds)
         {
             return Request(Endpoints.DeleteContent(platformName))
-                .DeleteJsonReceiveJsonAsync<ICollection<string>>(platformContentIds);
+                .DeleteJsonReceiveJsonExplicitlyAsync<ICollection<string>>(platformContentIds);
         }
 
         public Task<PlatformModel> GetPlatformAsync(string name)
         {
             return Request(Endpoints.GetPlatform(name))
-                .GetJsonAsync<PlatformModel>();
+                .GetJsonExplicitlyAsync<PlatformModel>();
         }
 
         public Task SignalPlatformSyncAsync(string platformName, SyncTypeConstant syncType)
@@ -115,66 +115,66 @@ namespace Noppes.Fluffle.Main.Client
         public Task<IList<PlatformModel>> GetPlatformsAsync()
         {
             return Request(Endpoints.GetPlatforms)
-                .GetJsonAsync<IList<PlatformModel>>();
+                .GetJsonExplicitlyAsync<IList<PlatformModel>>();
         }
 
         public Task<IList<UnprocessedImageModel>> GetUnprocessedImagesAsync(string platformName)
         {
             return Request(Endpoints.GetUnprocessedImages(platformName))
-                .GetMessagePackAsync<IList<UnprocessedImageModel>>();
+                .GetMessagePackExplicitlyAsync<IList<UnprocessedImageModel>>();
         }
 
         public Task<string> GetContentToRetryAsync(string platformName)
         {
-            return Request(Endpoints.GetContentToRetry(platformName)).GetJsonAsync<string>();
+            return Request(Endpoints.GetContentToRetry(platformName)).GetJsonExplicitlyAsync<string>();
         }
 
         public Task<IList<StatusModel>> GetStatusAsync()
         {
             return Request(Endpoints.GetStatus)
-                .GetJsonAsync<IList<StatusModel>>();
+                .GetJsonExplicitlyAsync<IList<StatusModel>>();
         }
 
         public Task<int?> GetMinId(string platformName)
         {
             return Request(Endpoints.GetMinId(platformName))
-                .GetJsonAsync<int?>();
+                .GetJsonExplicitlyAsync<int?>();
         }
 
         public Task<int?> GetMaxId(string platformName)
         {
             return Request(Endpoints.GetMaxId(platformName))
-                .GetJsonAsync<int?>();
+                .GetJsonExplicitlyAsync<int?>();
         }
 
         public Task<PlatformSyncModel> GetPlatformSync(string platformName)
         {
             return Request(Endpoints.GetPlatformSync(platformName))
-                .GetJsonAsync<PlatformSyncModel>();
+                .GetJsonExplicitlyAsync<PlatformSyncModel>();
         }
 
         public Task<ImagesSyncModel> GetSyncImagesAsync(string platformName, long afterChangeId)
         {
             return Request(Endpoints.GetSyncImages(platformName, afterChangeId))
-                .GetMessagePackAsync<ImagesSyncModel>();
+                .GetMessagePackExplicitlyAsync<ImagesSyncModel>();
         }
 
         public Task<CreditableEntitiesSyncModel> GetSyncCreditableEntitiesAsync(string platformName, long afterChangeId)
         {
             return Request(Endpoints.GetSyncCreditableEntities(platformName, afterChangeId))
-                .GetMessagePackAsync<CreditableEntitiesSyncModel>();
+                .GetMessagePackExplicitlyAsync<CreditableEntitiesSyncModel>();
         }
 
         public Task<ICollection<OtherSourceModel>> GetOtherSourcesAsync(int afterId)
         {
             return Request(Endpoints.GetOtherSources(afterId))
-                .GetMessagePackAsync<ICollection<OtherSourceModel>>();
+                .GetMessagePackExplicitlyAsync<ICollection<OtherSourceModel>>();
         }
 
         public Task<int?> GetCreditableEntitiesMaxPriority(string platformName, string creditableEntityName)
         {
             return Request(Endpoints.GetCreditablyEntityMaxPriority(platformName, creditableEntityName))
-                .GetJsonAsync<int?>();
+                .GetJsonExplicitlyAsync<int?>();
         }
 
         public override IFlurlRequest Request(params object[] urlSegments)

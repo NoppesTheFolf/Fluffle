@@ -1,5 +1,4 @@
-﻿using Flurl.Http;
-using Humanizer;
+﻿using Humanizer;
 using Nito.AsyncEx;
 using Noppes.Fluffle.Bot.Database;
 using Noppes.Fluffle.Configuration;
@@ -151,7 +150,7 @@ namespace Noppes.Fluffle.Bot
         {
             var platforms = Enum.GetNames<FlufflePlatform>();
             var response = await Request("v1", "search")
-                .PostMultipartAsync(content =>
+                .PostMultipartReceiveJsonExplicitlyAsync<FluffleResponse>(content =>
                 {
                     content.AddFile("file", stream, "dummy");
                     content.AddString("includeNsfw", includeNsfw.ToString());
@@ -161,7 +160,7 @@ namespace Noppes.Fluffle.Bot
                         content.AddString("platforms", platform);
                 });
 
-            return await response.GetJsonAsync<FluffleResponse>();
+            return response;
         }
     }
 

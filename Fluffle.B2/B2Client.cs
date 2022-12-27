@@ -3,6 +3,7 @@ using Flurl.Http.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Nito.AsyncEx;
+using Noppes.Fluffle.Http;
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -104,7 +105,7 @@ namespace Noppes.Fluffle.B2
 
             var response = await Request(B2Endpoints.Authorize)
                 .WithHeader("Authorization", $"Basic {_credentials}")
-                .GetJsonAsync<B2AuthorizeResponse>();
+                .GetJsonExplicitlyAsync<B2AuthorizeResponse>();
 
             if (!_hasCustomDownloadUri)
                 DownloadUri = new Uri(response.DownloadUrl, UriKind.Absolute);

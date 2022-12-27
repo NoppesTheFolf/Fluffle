@@ -51,7 +51,7 @@ namespace Noppes.Fluffle.FurryNetworkSync
         {
             try
             {
-                return await AuthorizedRequest(null, r => r.GetJsonAsync<FnSpecificSubmission>(), "api/artwork", id);
+                return await AuthorizedRequest(null, r => r.GetJsonExplicitlyAsync<FnSpecificSubmission>(), "api/artwork", id);
             }
             catch (FlurlHttpException e)
             {
@@ -73,7 +73,7 @@ namespace Noppes.Fluffle.FurryNetworkSync
                     from,
                     size
                 });
-            }, r => r.GetJsonAsync<FnSearchResult>(), "api/search/artwork");
+            }, r => r.GetJsonExplicitlyAsync<FnSearchResult>(), "api/search/artwork");
         }
 
         public Task<Stream> GetStreamAsync(string url)
@@ -142,7 +142,7 @@ namespace Noppes.Fluffle.FurryNetworkSync
         private Task<FnToken> GetTokenAsync()
         {
             return Request("api/oauth/token")
-                .PostContentReceiveJsonAsync<FnToken>(new FormUrlEncodedContent(new[]
+                .PostContentReceiveJsonExplicitlyAsync<FnToken>(new FormUrlEncodedContent(new[]
                 {
                     new KeyValuePair<string, string>("client_id", "123"), // No idea what this is, but this is what the browser sends to the server as well
                     new KeyValuePair<string, string>("grant_type", "refresh_token"),
