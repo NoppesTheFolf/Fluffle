@@ -78,7 +78,7 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
 
             if (submissions.Any())
             {
-                var content = submissions.SelectMany(x => x.Files.Select(y => new FileForSubmission(x, y))).ToList();
+                var content = submissions.SelectMany(x => x.Files.OrderBy(x => x.Order).Select((y, i) => new FileForSubmission(x, y, i))).ToList();
                 await SubmitContentAsync(content);
             }
 
@@ -123,7 +123,8 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
         if (file == null)
             return null;
 
-        return new FileForSubmission(submission, file);
+        var page = submission.Files.OrderBy(x => x.Order).ToList().IndexOf(file);
+        return new FileForSubmission(submission, file, page);
     }
 
     public override string GetId(FileForSubmission src) => GetId(src.Submission.Id, src.File.Id);
@@ -160,8 +161,8 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
     {
         var baseUrl = $"https://inkbunny.net/s/{src.Submission.Id}";
 
-        if (src.File.Order != 0)
-            baseUrl += $"-p{src.File.Order + 1}";
+        if (src.Page != 0)
+            baseUrl += $"-p{src.Page + 1}";
 
         return baseUrl;
     }

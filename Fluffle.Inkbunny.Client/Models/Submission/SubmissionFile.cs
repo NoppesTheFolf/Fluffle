@@ -10,7 +10,7 @@ public class SubmissionFile
     public string SubmissionId { get; set; } = null!;
 
     [JsonProperty("submission_file_order")]
-    public int Order { get; set; }
+    public double Order { get; set; }
 
     [JsonProperty("file_url_full")]
     public string? FullFileUrl { get; set; }

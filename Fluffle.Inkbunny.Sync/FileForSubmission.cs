@@ -8,9 +8,12 @@ public class FileForSubmission
 
     public SubmissionFile File { get; }
 
-    public FileForSubmission(Submission submission, SubmissionFile file)
+    public int Page { get; }
+
+    public FileForSubmission(Submission submission, SubmissionFile file, int page)
     {
         Submission = submission;
         File = file;
+        Page = page;
     }
 }
