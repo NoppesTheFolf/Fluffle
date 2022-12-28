@@ -16,6 +16,7 @@ namespace Noppes.Fluffle.Sync
         {
             var dest = new PutContentModel
             {
+                Reference = GetReference(src),
                 IdOnPlatform = GetId(src),
                 Rating = GetRating(src),
                 Title = GetTitle(src),
@@ -46,6 +47,8 @@ namespace Noppes.Fluffle.Sync
         }
 
         public string GetId(T src);
+
+        public string GetReference(T src);
 
         public ContentRatingConstant GetRating(T src);
 

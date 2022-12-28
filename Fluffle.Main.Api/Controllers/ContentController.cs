@@ -20,11 +20,11 @@ namespace Noppes.Fluffle.Main.Api.Controllers
             _contentService = contentService;
         }
 
-        [HttpGet(PluralRoute + "/search")]
+        [HttpPost(PluralRoute + "/search")]
         [Permissions(ContentPermissions.ReadSearch)]
-        public async Task<IActionResult> Search([FromRoute] string platformName, [FromQuery] string idStartsWith)
+        public async Task<IActionResult> Search([FromRoute] string platformName, SearchContentModel model)
         {
-            var result = await _contentService.SearchContentAsync(platformName, idStartsWith);
+            var result = await _contentService.GetContentByReferences(platformName, model.References);
 
             return HandleV1(result);
         }

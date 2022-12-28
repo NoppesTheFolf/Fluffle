@@ -19,7 +19,7 @@ namespace Noppes.Fluffle.Main.Api.Services
 
     public interface IContentService
     {
-        public Task<SR<IEnumerable<string>>> SearchContentAsync(string platformName, string idOnPlatformStartsWith);
+        public Task<SR<IEnumerable<string>>> GetContentByReferences(string platformName, IEnumerable<string> references);
 
         public Task<SR<IEnumerable<string>>> MarkManyForDeletionAsync(string platformName, IEnumerable<string> idsOnPlatform, bool saveChanges = true);
 

@@ -79,6 +79,8 @@ namespace Noppes.Fluffle.Sync
 
         public abstract string GetId(TContent src);
 
+        public virtual string GetReference(TContent src) => null;
+
         public abstract ContentRatingConstant GetRating(TContent src);
 
         public abstract IEnumerable<PutContentModel.CreditableEntityModel> GetCredits(TContent src);

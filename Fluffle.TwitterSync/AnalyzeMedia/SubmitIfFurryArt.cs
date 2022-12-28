@@ -83,6 +83,8 @@ namespace Noppes.Fluffle.TwitterSync.AnalyzeMedia
 
         public string GetId(AnalyzeMediaResult src) => src.Media.Id;
 
+        public string GetReference(AnalyzeMediaResult src) => null;
+
         public ContentRatingConstant GetRating(AnalyzeMediaResult src) => ContentRatingConstant.Explicit;
 
         public IEnumerable<PutContentModel.CreditableEntityModel> GetCredits(AnalyzeMediaResult src)

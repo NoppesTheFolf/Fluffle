@@ -7,6 +7,8 @@ namespace Noppes.Fluffle.Main.Communication
     {
         public string IdOnPlatform { get; set; }
 
+        public string Reference { get; set; }
+
         public string ViewLocation { get; set; }
 
         public string Title { get; set; }

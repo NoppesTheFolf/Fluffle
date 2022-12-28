@@ -31,7 +31,7 @@ namespace Noppes.Fluffle.Main.Database.Models
         public int Id { get; set; }
         public int PlatformId { get; set; }
         public string IdOnPlatform { get; set; }
-
+        public string Reference { get; set; }
         /// <summary>
         /// Platforms commonly use auto increment integers to differentiate content. Having this ID
         /// available as integer can be very useful for syncing purposes.
@@ -90,6 +90,9 @@ namespace Noppes.Fluffle.Main.Database.Models
                 .HasMaxLength(64);
 
             entity.HasIndex(e => e.IdOnPlatform);
+
+            entity.Property(e => e.Reference);
+            entity.HasIndex(e => new { e.PlatformId, e.Reference });
 
             entity.Property(e => e.PlatformId);
             entity.HasIndex(e => new { e.PlatformId, PlatformContentId = e.IdOnPlatform }).IsUnique();

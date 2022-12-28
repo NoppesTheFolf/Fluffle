@@ -8,6 +8,7 @@ namespace Noppes.Fluffle.Main.Api.Mappers
     {
         public void MapFrom(PutContentModel src, Content dest)
         {
+            dest.Reference = src.Reference;
             dest.IdOnPlatform = src.IdOnPlatform;
 
             if (int.TryParse(src.IdOnPlatform, out var idOnPlatformAsInteger))

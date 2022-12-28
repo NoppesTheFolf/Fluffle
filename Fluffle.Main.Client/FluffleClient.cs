@@ -44,24 +44,10 @@ namespace Noppes.Fluffle.Main.Client
                 .GetMessagePackExplicitlyAsync<IList<FaPopularArtistModel>>();
         }
 
-        public async Task<ICollection<string>> SearchContentAsync(string platformName, IEnumerable<string> idStartsWithMany)
-        {
-            var allIds = new ConcurrentBag<string>();
-            await Parallel.ForEachAsync(idStartsWithMany, new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (idStartsWith, _) =>
-            {
-                var ids = await SearchContentAsync(platformName, idStartsWith);
-                foreach (var id in ids)
-                    allIds.Add(id);
-            });
-
-            return allIds.Distinct().ToList();
-        }
-
-        public Task<ICollection<string>> SearchContentAsync(string platformName, string idStartsWith)
+        public Task<ICollection<string>> SearchContentAsync(string platformName, SearchContentModel model)
         {
             return Request(Endpoints.SearchContent(platformName))
-                .SetQueryParam("idStartsWith", idStartsWith)
-                .GetJsonExplicitlyAsync<ICollection<string>>();
+                .PostJsonReceiveJsonExplicitlyAsync<ICollection<string>>(model);
         }
 
         public Task PutContentAsync(string platformName, IEnumerable<PutContentModel> models)

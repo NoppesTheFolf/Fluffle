@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Noppes.Fluffle.Main.Database.Models;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Noppes.Fluffle.Main.Database.Migrations
 {
     [DbContext(typeof(FluffleContext))]
-    partial class FluffleContextModelSnapshot : ModelSnapshot
+    [Migration("20221228131533_RemoveWildcardIndexForContentIdOnPlatform")]
+    partial class RemoveWildcardIndexForContentIdOnPlatform
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -161,10 +163,6 @@ namespace Noppes.Fluffle.Main.Database.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("rating_id");
 
-                    b.Property<string>("Reference")
-                        .HasColumnType("text")
-                        .HasColumnName("reference");
-
                     b.Property<bool>("RequiresIndexing")
                         .HasColumnType("boolean")
                         .HasColumnName("requires_indexing");
@@ -253,9 +251,6 @@ namespace Noppes.Fluffle.Main.Database.Migrations
                     b.HasIndex("PlatformId", "IdOnPlatform")
                         .IsUnique()
                         .HasDatabaseName("uq_content_platform_id_and_id_on_platform");
-
-                    b.HasIndex("PlatformId", "Reference")
-                        .HasDatabaseName("idx_content_platform_id_and_reference");
 
                     b.HasIndex("Discriminator", "Id", "PlatformId")
                         .HasDatabaseName("idx_content_discriminator_and_id_and_platform_id");

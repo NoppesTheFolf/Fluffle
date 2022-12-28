@@ -51,14 +51,13 @@ namespace Noppes.Fluffle.Main.Api.Services
             _logger = logger;
         }
 
-        public async Task<SR<IEnumerable<string>>> SearchContentAsync(string platformName, string idOnPlatformStartsWith)
+        public async Task<SR<IEnumerable<string>>> GetContentByReferences(string platformName, IEnumerable<string> references)
         {
             return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
-                var escapedIdOnPlatformStartsWith = idOnPlatformStartsWith.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
                 var ids = await _context.Content
                     .Where(x => x.PlatformId == platform.Id)
-                    .Where(x => EF.Functions.Like(x.IdOnPlatform, escapedIdOnPlatformStartsWith + "%", "\\"))
+                    .Where(x => references.Contains(x.Reference))
                     .Select(x => x.IdOnPlatform)
                     .ToListAsync();
 
@@ -207,6 +206,7 @@ namespace Noppes.Fluffle.Main.Api.Services
                     contentModel.OtherSources ??= new List<string>();
 
                     // Remove NULL characters from user provided data as PostgreSQL does not support it
+                    contentModel.Reference = contentModel.Reference?.RemoveNullChar();
                     contentModel.Title = contentModel.Title?.RemoveNullChar();
                     contentModel.Description = contentModel.Description?.RemoveNullChar();
                     contentModel.Tags = contentModel.Tags.Select(t => t.RemoveNullChar()).ToList();
@@ -360,6 +360,7 @@ namespace Noppes.Fluffle.Main.Api.Services
                         return Task.CompletedTask;
                     }, updateAnywayAsync: (src, dest) =>
                     {
+                        dest.Reference = src.Reference;
                         dest.Title = src.Title;
                         dest.Description = src.Description;
                         dest.Priority = src.Priority;

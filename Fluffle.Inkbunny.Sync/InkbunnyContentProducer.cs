@@ -55,7 +55,10 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
             using (Operation.Time("Retrieving {n} submissions starting from ID {id}", InkbunnyConstants.MaximumSubmissionsPerCall, start))
                 submissions = (await _inkbunnyClient.GetSubmissionsAsync(ids)).Submissions;
 
-            var idsOnFluffle = await HttpResiliency.RunAsync(() => FluffleClient.SearchContentAsync(Platform, ids.Select(x => x + "-")));
+            var idsOnFluffle = await HttpResiliency.RunAsync(() => FluffleClient.SearchContentAsync(Platform, new SearchContentModel
+            {
+                References = ids
+            }));
             var idsInBatch = submissions.SelectMany(x => x.Files.Select(y => GetId(x.Id, y.Id))).ToList();
             var idsToDelete = idsOnFluffle.Except(idsInBatch).ToList();
             if (idsToDelete.Any())
@@ -126,6 +129,8 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
     public override string GetId(FileForSubmission src) => GetId(src.Submission.Id, src.File.Id);
 
     private static string GetId(string submissionId, string fileId) => $"{submissionId}-{fileId}";
+
+    public override string GetReference(FileForSubmission src) => src.Submission.Id;
 
     public override ContentRatingConstant GetRating(FileForSubmission src)
     {

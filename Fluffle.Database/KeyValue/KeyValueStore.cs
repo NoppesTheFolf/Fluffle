@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Database.KeyValue
 {
-    public class KeyValueStore<TContext, TEntity> : IKeyValueStore where TContext : DbContext where TEntity : KeyValuePair, new()
+    public class KeyValueStore<TContext, TEntity> : IKeyValueStore where TContext : DbContext where TEntity : KeyValuePair<TEntity>, new()
     {
         private readonly IServiceProvider _services;
         private readonly AsyncLock _lock;
