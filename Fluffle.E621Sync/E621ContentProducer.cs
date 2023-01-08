@@ -18,8 +18,7 @@ namespace Noppes.Fluffle.E621Sync
     {
         private readonly IE621Client _e621Client;
 
-        public E621ContentProducer(PlatformModel platform, FluffleClient fluffleClient,
-            IHostEnvironment environment, IE621Client e621Client) : base(platform, fluffleClient, environment)
+        public E621ContentProducer(IServiceProvider services, IE621Client e621Client) : base(services)
         {
             _e621Client = e621Client;
         }

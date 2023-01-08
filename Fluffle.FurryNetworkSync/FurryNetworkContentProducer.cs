@@ -17,8 +17,7 @@ namespace Noppes.Fluffle.FurryNetworkSync
     {
         private readonly FurryNetworkClient _client;
 
-        public FurryNetworkContentProducer(PlatformModel platform, FluffleClient fluffleClient,
-            IHostEnvironment environment, FurryNetworkClient client) : base(platform, fluffleClient, environment)
+        public FurryNetworkContentProducer(IServiceProvider services, FurryNetworkClient client) : base(services)
         {
             _client = client;
         }

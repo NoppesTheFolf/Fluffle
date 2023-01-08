@@ -37,12 +37,11 @@ namespace Noppes.Fluffle.Main.Api.Controllers
             return HandleV1(result);
         }
 
-
-        [HttpGet(SingularRoute + "/sync")]
+        [HttpGet(SingularRoute + "/sync/{syncType}")]
         [Permissions(PlatformPermissions.ReadSync)]
-        public async Task<IActionResult> GetSync(string platformName)
+        public async Task<IActionResult> GetSync(string platformName, SyncTypeConstant syncType)
         {
-            var result = await _platformService.GetSync(platformName);
+            var result = await _platformService.GetSync(platformName, syncType);
 
             return HandleV1(result);
         }

@@ -28,8 +28,9 @@ namespace Noppes.Fluffle.FurAffinitySync
 
         public override int SourceVersion => 3;
 
-        public FurAffinityContentProducer(PlatformModel platform, FluffleClient fluffleClient,
-            IHostEnvironment environment, SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client, FurAffinitySyncConfiguration configuration, GetSubmissionScheduler getSubmissionScheduler) : base(platform, fluffleClient, environment)
+        public FurAffinityContentProducer(IServiceProvider services,
+            SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client,
+            FurAffinitySyncConfiguration configuration, GetSubmissionScheduler getSubmissionScheduler) : base(services)
         {
             _syncStateService = syncStateService;
             _client = client;

@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using CommandLine;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Noppes.Fluffle.Configuration;
 using Serilog;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Service
@@ -24,6 +26,21 @@ namespace Noppes.Fluffle.Service
     {
         protected Service(IServiceProvider services) : base(services)
         {
+        }
+
+        public static async Task RunAsync<TCommandLineOptions>(string[] args, Action<TCommandLineOptions, FluffleConfiguration, IServiceCollection> configureServices = null)
+        {
+            var commandLineParseResult = new Parser(x => x.CaseInsensitiveEnumValues = true).ParseArguments<TCommandLineOptions>(args);
+            if (commandLineParseResult.Errors.Any())
+            {
+                Log.Fatal("Parsing command line arguments failed.");
+                System.Environment.Exit(-1);
+            }
+
+            await RunAsync(args, (configuration, services) =>
+            {
+                configureServices?.Invoke(commandLineParseResult.Value, configuration, services);
+            });
         }
 
         public static async Task RunAsync(string[] args, Action<FluffleConfiguration, IServiceCollection> configureServices = null)

@@ -1,4 +1,5 @@
 ﻿using Humanizer;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
@@ -14,25 +15,31 @@ namespace Noppes.Fluffle.Sync
 {
     public abstract class ContentProducer<TContent> : SyncProducer, IContentMapper<TContent>
     {
+        protected readonly SyncConfiguration SyncConfiguration;
         protected readonly string Platform;
         protected readonly FluffleClient FluffleClient;
         protected readonly IHostEnvironment Environment;
 
-        protected ContentProducer(PlatformModel platform, FluffleClient fluffleClient, IHostEnvironment environment)
+        protected ContentProducer(IServiceProvider services)
         {
-            Platform = platform.NormalizedName;
-            FluffleClient = fluffleClient;
-            Environment = environment;
+            SyncConfiguration = services.GetRequiredService<SyncConfiguration>();
+            Platform = SyncConfiguration.Platform.NormalizedName;
+            FluffleClient = services.GetRequiredService<FluffleClient>();
+            Environment = services.GetRequiredService<IHostEnvironment>();
         }
 
-        public override async Task WorkAsync()
-        {
-            var (syncType, timeToWait) = await GetSyncInfoAsync();
+        public override async Task WorkAsync() => await WorkAsync(SyncConfiguration.SyncType);
 
-            if (timeToWait != TimeSpan.Zero)
+        private async Task WorkAsync(SyncTypeConstant syncType)
+        {
+            var syncInfo = await HttpResiliency.RunAsync(() => FluffleClient.GetPlatformSync(Platform, syncType));
+            if (syncInfo.TimeToWait > TimeSpan.Zero)
             {
-                Log.Information($"Waiting for {{timeToWait}} till {syncType.ToString().ToLowerInvariant()} sync...", timeToWait.Humanize());
-                await Task.Delay(timeToWait);
+                var ttw = new[] { syncInfo.TimeToWait, 15.Minutes() }.Min();
+                Log.Information($"Waiting for {{timeToWait}} till checking if a {syncType.ToString().ToLowerInvariant()} sync is required again...", ttw.Humanize());
+
+                await Task.Delay(ttw);
+                return;
             }
 
             Func<Task> syncMethodAsync = syncType switch
@@ -47,19 +54,6 @@ namespace Noppes.Fluffle.Sync
 
             await HttpResiliency.RunAsync(() =>
                 FluffleClient.SignalPlatformSyncAsync(Platform, syncType));
-        }
-
-        protected async Task<(SyncTypeConstant syncType, TimeSpan timeToWait)> GetSyncInfoAsync()
-        {
-            var syncInfo = await HttpResiliency.RunAsync(() => FluffleClient.GetPlatformSync(Platform));
-
-            if (syncInfo.Next == null)
-            {
-                Log.Fatal("Platform doesn't have any ways to sync.");
-                System.Environment.Exit(-1);
-            }
-
-            return (syncInfo.Next.Type, syncInfo.Next.TimeToWait);
         }
 
         protected abstract Task QuickSyncAsync();

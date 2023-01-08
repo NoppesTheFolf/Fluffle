@@ -19,8 +19,7 @@ namespace Noppes.Fluffle.WeasylSync
     {
         private readonly WeasylClient _weasylClient;
 
-        public WeasylContentProducer(PlatformModel platform, FluffleClient fluffleClient,
-            IHostEnvironment environment, WeasylClient weasylClient) : base(platform, fluffleClient, environment)
+        public WeasylContentProducer(IServiceProvider services, WeasylClient weasylClient) : base(services)
         {
             _weasylClient = weasylClient;
         }

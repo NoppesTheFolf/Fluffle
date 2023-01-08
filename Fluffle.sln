@@ -95,7 +95,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Inkbunny", "Inkbunny", "{69
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fluffle.Inkbunny.Client", "Fluffle.Inkbunny.Client\Fluffle.Inkbunny.Client.csproj", "{AF3AC104-0B27-477F-808D-EFED547D1693}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Inkbunny.Sync", "Fluffle.Inkbunny.Sync\Fluffle.Inkbunny.Sync.csproj", "{C0852089-2153-4594-B2E9-07069BED0741}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fluffle.Inkbunny.Sync", "Fluffle.Inkbunny.Sync\Fluffle.Inkbunny.Sync.csproj", "{C0852089-2153-4594-B2E9-07069BED0741}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -20,9 +20,8 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
 
     private InkbunnySyncState? _syncState;
 
-    public InkbunnyContentProducer(PlatformModel platform, FluffleClient fluffleClient, IHostEnvironment environment,
-        InkbunnySyncConfiguration configuration, IInkbunnyClient inkbunnyClient,
-        SyncStateService<InkbunnySyncState> syncStateService) : base(platform, fluffleClient, environment)
+    public InkbunnyContentProducer(IServiceProvider services, InkbunnySyncConfiguration configuration,
+        IInkbunnyClient inkbunnyClient, SyncStateService<InkbunnySyncState> syncStateService) : base(services)
     {
         _configuration = configuration;
         _inkbunnyClient = inkbunnyClient;

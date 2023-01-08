@@ -17,7 +17,7 @@ namespace Noppes.Fluffle.Sync
         where TService : SyncClient<TService, TContentProducer, TContent>
         where TContentProducer : ContentProducer<TContent>
     {
-        protected PlatformModel Platform;
+        protected SyncConfiguration SyncConfiguration;
         protected FluffleClient FluffleClient;
 
         public SyncClient(IServiceProvider services) : base(services)
@@ -26,15 +26,15 @@ namespace Noppes.Fluffle.Sync
 
         public static Task RunAsync(string[] args, string platformName, Action<FluffleConfiguration, IServiceCollection> configure = null)
         {
-            return RunAsync(args, (configuration, services) =>
+            return RunAsync<SyncCommandLineOptions>(args, (options, configuration, services) =>
             {
                 var mainConfiguration = configuration.Get<MainConfiguration>();
                 var fluffleClient = new FluffleClient(mainConfiguration.Url, mainConfiguration.ApiKey);
                 services.AddSingleton(fluffleClient);
 
-                var platformModel = HttpResiliency.RunAsync(
-                    async () => await fluffleClient.GetPlatformAsync(platformName)).Result;
-                services.AddSingleton(platformModel);
+                var platform = HttpResiliency.RunAsync(() => fluffleClient.GetPlatformAsync(platformName)).Result;
+                services.AddSingleton(platform);
+                services.AddSingleton(new SyncConfiguration(platform, options.SyncType));
 
                 services.AddTransient<RetryContentProducer<TContentProducer, TContent>>();
 
@@ -48,7 +48,7 @@ namespace Noppes.Fluffle.Sync
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-            Platform = Services.GetRequiredService<PlatformModel>();
+            SyncConfiguration = Services.GetRequiredService<SyncConfiguration>();
             FluffleClient = Services.GetRequiredService<FluffleClient>();
 
             return base.StartAsync(cancellationToken);
@@ -56,7 +56,7 @@ namespace Noppes.Fluffle.Sync
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Log.Information($"Starting {Platform.Name} syncing client...");
+            Log.Information($"Starting {SyncConfiguration.Platform.Name} syncing client...");
 
             var retryManager = new ProducerConsumerManager<ICollection<PutContentModel>>(Services, 1);
             retryManager.AddProducer<RetryContentProducer<TContentProducer, TContent>>(1);

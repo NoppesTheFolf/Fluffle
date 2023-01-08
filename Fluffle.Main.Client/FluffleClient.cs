@@ -133,9 +133,9 @@ namespace Noppes.Fluffle.Main.Client
                 .GetJsonExplicitlyAsync<int?>();
         }
 
-        public Task<PlatformSyncModel> GetPlatformSync(string platformName)
+        public Task<PlatformSyncModel> GetPlatformSync(string platformName, SyncTypeConstant syncType)
         {
-            return Request(Endpoints.GetPlatformSync(platformName))
+            return Request(Endpoints.GetPlatformSync(platformName, syncType))
                 .GetJsonExplicitlyAsync<PlatformSyncModel>();
         }
 

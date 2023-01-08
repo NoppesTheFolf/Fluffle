@@ -7,7 +7,6 @@ using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.Main.Database.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Main.Api.Services
@@ -37,41 +36,27 @@ namespace Noppes.Fluffle.Main.Api.Services
             });
         }
 
-        public async Task<SR<PlatformSyncModel>> GetSync(string platformName)
+        public async Task<SR<PlatformSyncModel>> GetSync(string platformName, SyncTypeConstant constant)
         {
-            var query = _context.Platforms
-                .Include(p => p.PlatformSyncs);
-
-            return await query.GetPlatformAsync(platformName, platform =>
+            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
             {
+                var platformSync = await _context.PlatformSyncs
+                    .FirstOrDefaultAsync(x => x.PlatformId == platform.Id && x.SyncTypeId == (int)constant);
+
+                if (platformSync == null)
+                    return new SR<PlatformSyncModel>(PlatformSyncError.PlatformSyncNotFound(platform.Name, constant));
+
                 var now = DateTime.UtcNow;
+                var when = platformSync.When.ToUniversalTime();
+                var timePassedSinceLastSync = now - when;
+                var ttw = platformSync.Interval - timePassedSinceLastSync;
+                ttw = ttw < TimeSpan.Zero ? TimeSpan.Zero : ttw;
 
-                var models = platform.PlatformSyncs
-                    .Select(ps => new PlatformSyncModel.SyncInfo
-                    {
-                        Type = (SyncTypeConstant)ps.SyncTypeId,
-                        When = ps.When.ToUniversalTime(),
-                        TimeToWait = ps.Interval - (now - ps.When.ToUniversalTime())
-                    })
-                    .Select(m =>
-                    {
-                        if (m.TimeToWait.Ticks < 0)
-                            m.TimeToWait = TimeSpan.Zero;
-
-                        return m;
-                    })
-                    .OrderBy(m => m.TimeToWait)
-                    .ThenBy(m => m.Type)
-                    .ToList();
-
-                var model = new PlatformSyncModel
+                return new SR<PlatformSyncModel>(new PlatformSyncModel
                 {
-                    Next = models.FirstOrDefault()
-                };
-                model.Other = models.Where(m => m != model.Next).ToList();
-
-                var result = new SR<PlatformSyncModel>(model);
-                return Task.FromResult(result);
+                    When = when,
+                    TimeToWait = ttw
+                });
             });
         }
 
