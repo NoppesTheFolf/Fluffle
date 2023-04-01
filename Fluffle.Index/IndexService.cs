@@ -33,7 +33,7 @@ namespace Noppes.Fluffle.Index
         {
         }
 
-        private static async Task Main(string[] args) => await Service<IndexService>.RunAsync(args, (configuration, services) =>
+        private static async Task Main(string[] args) => await Service<IndexService>.RunAsync(args, "Index", (configuration, services) =>
         {
             var mainConf = configuration.Get<MainConfiguration>();
             var fluffleClient = new FluffleClient(mainConf.Url, mainConf.ApiKey);
@@ -92,7 +92,7 @@ namespace Noppes.Fluffle.Index
             await base.StartAsync(cancellationToken);
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteServiceAsync(CancellationToken stoppingToken)
         {
             if (Environment.IsProduction())
             {

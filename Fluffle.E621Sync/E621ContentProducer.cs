@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
-using Noppes.E621;
+﻿using Noppes.E621;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;

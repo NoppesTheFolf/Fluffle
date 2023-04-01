@@ -13,6 +13,7 @@
 		<ProjectReference Include="..\Fluffle.Configuration\Fluffle.Configuration.csproj" />
 		<ProjectReference Include="..\Fluffle.Database\Fluffle.Database.csproj" />
 		<ProjectReference Include="..\Fluffle.Http\Fluffle.Http.csproj" />
+		<ProjectReference Include="..\Fluffle.Telemetry\Fluffle.Telemetry.csproj" />
 		<ProjectReference Include="..\Fluffle.Utils\Fluffle.Utils.csproj" />
 	</ItemGroup>
 

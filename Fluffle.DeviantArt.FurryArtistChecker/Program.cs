@@ -32,7 +32,7 @@ internal class Program : QueuePollingService<Program, CheckIfFurryArtistQueueIte
         _logger = logger;
     }
 
-    private static async Task Main(string[] args) => await RunAsync(args, (conf, services) =>
+    private static async Task Main(string[] args) => await RunAsync(args, "DeviantArtFurryArtistChecker", (conf, services) =>
     {
         services.AddDeviantArt(conf, x => x.FurryArtistChecker, true, true, true, false);
     });

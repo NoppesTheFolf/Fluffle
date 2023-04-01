@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Humanizer;
+using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
@@ -15,7 +16,7 @@ internal class SyncClient : SyncClient<SyncClient, InkbunnyContentProducer, File
     {
     }
 
-    private static async Task Main(string[] args) => await RunAsync(args, "Inkbunny", (conf, services) =>
+    private static async Task Main(string[] args) => await RunAsync(args, ApplicationName.Replace("-", "_").Pascalize(), "Inkbunny", (conf, services) =>
     {
         var inkbunnyConf = conf.Get<InkbunnyConfiguration>();
         var inkbunnyCredentials = inkbunnyConf.Credentials;

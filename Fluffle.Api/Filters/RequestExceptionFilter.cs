@@ -4,9 +4,10 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Database;
 using Noppes.Fluffle.Http;
+using Noppes.Fluffle.Telemetry;
 using Npgsql;
-using System;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Api.Filters
 {
@@ -14,24 +15,23 @@ namespace Noppes.Fluffle.Api.Filters
     /// Handles exceptions thrown by controller actions. Logs the exception to the console,
     /// including the trace ID, and returns an error response in the <see cref="TracedV1Error"/> format.
     /// </summary>
-    public class RequestExceptionFilter : IActionFilter
+    public class RequestExceptionFilter : IAsyncExceptionFilter
     {
+        private readonly ITelemetryClient _telemetryClient;
         private readonly ILogger<RequestExceptionFilter> _logger;
 
-        public RequestExceptionFilter(ILogger<RequestExceptionFilter> logger)
+        public RequestExceptionFilter(ITelemetryClientFactory telemetryClientFactory, ILogger<RequestExceptionFilter> logger)
         {
+            _telemetryClient = telemetryClientFactory.Create(nameof(RequestExceptionFilter));
             _logger = logger;
         }
 
-        public void OnActionExecuted(ActionExecutedContext context)
+        public async Task OnExceptionAsync(ExceptionContext context)
         {
-            if (context.Exception == null || context.ExceptionHandled)
+            if (context.ExceptionHandled)
                 return;
 
-            if (!(context.Controller is ControllerBase fluffleController))
-                throw new InvalidOperationException($"The {nameof(RequestExceptionFilter)} can only be used on instances of {nameof(ControllerBase)}.");
-
-            var requestId = fluffleController.HttpContext.TraceIdentifier;
+            var requestId = context.HttpContext.TraceIdentifier;
             _logger.LogError(context.Exception, "Exception caught for request with ID {requestId}.", requestId);
 
             TracedV1Error error = new()
@@ -45,7 +45,7 @@ namespace Noppes.Fluffle.Api.Filters
             {
                 error.Code = "UNAVAILABLE";
                 error.Message = "Fluffle is partially offline.";
-                Handle(context, error, (int)HttpStatusCode.ServiceUnavailable);
+                Handle(context, error, HttpStatusCode.ServiceUnavailable);
                 return;
             }
 
@@ -53,20 +53,18 @@ namespace Noppes.Fluffle.Api.Filters
             error.Message = "A non-transient error occurred at Fluffle's side. " +
                             "If you can reproduce this issue, then please consider contacting us so that we can resolve the issue (see https://fluffle.xyz/contact).";
 
-            Handle(context, error, 500); // 500 Internal server error
+            await _telemetryClient.TrackExceptionAsync(context.Exception, requestId);
+
+            Handle(context, error, HttpStatusCode.InternalServerError);
         }
 
-        private static void Handle<T>(ActionExecutedContext context, T value, int statusCode)
+        private static void Handle(ExceptionContext context, TracedV1Error error, HttpStatusCode statusCode)
         {
-            context.Result = new ObjectResult(value)
+            context.Result = new ObjectResult(error)
             {
-                StatusCode = statusCode
+                StatusCode = (int)statusCode
             };
             context.ExceptionHandled = true;
-        }
-
-        public void OnActionExecuting(ActionExecutingContext context)
-        {
         }
     }
 }

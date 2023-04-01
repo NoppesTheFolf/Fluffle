@@ -30,7 +30,7 @@ namespace Noppes.Fluffle.TwitterSync
     {
         private const string UserAgentApplicationName = "twitter-sync";
 
-        private static async Task Main(string[] args) => await RunAsync(args, (conf, services) =>
+        private static async Task Main(string[] args) => await RunAsync(args, "TwitterSync", (conf, services) =>
         {
             // Add sync configuration
             var syncConf = conf.Get<TwitterSyncConfiguration>();
@@ -115,7 +115,7 @@ namespace Noppes.Fluffle.TwitterSync
             await context.Database.MigrateAsync();
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteServiceAsync(CancellationToken stoppingToken)
         {
             await ApplyMigrationsAsync();
 
@@ -178,7 +178,9 @@ namespace Noppes.Fluffle.TwitterSync
             }, stoppingToken);
 
             var task = await Task.WhenAny(taskOne, taskTwo, taskThree, taskFour, taskFive);
-            if (task.Exception != null) throw task.Exception;
+            if (task.Exception != null)
+                throw task.Exception;
+
             throw new InvalidOperationException("One of the tasks exited. This should not be possible.");
 
             // This were the accounts used to train some models on. Kept here for future use.

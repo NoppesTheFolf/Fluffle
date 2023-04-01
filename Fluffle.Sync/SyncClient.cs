@@ -13,20 +13,20 @@ using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Sync
 {
-    public class SyncClient<TService, TContentProducer, TContent> : Service<TService>
+    public abstract class SyncClient<TService, TContentProducer, TContent> : Service<TService>
         where TService : SyncClient<TService, TContentProducer, TContent>
         where TContentProducer : ContentProducer<TContent>
     {
         protected SyncConfiguration SyncConfiguration;
         protected FluffleClient FluffleClient;
 
-        public SyncClient(IServiceProvider services) : base(services)
+        protected SyncClient(IServiceProvider services) : base(services)
         {
         }
 
-        public static Task RunAsync(string[] args, string platformName, Action<FluffleConfiguration, IServiceCollection> configure = null)
+        public static Task RunAsync(string[] args, string applicationName, string platformName, Action<FluffleConfiguration, IServiceCollection> configure = null)
         {
-            return RunAsync<SyncCommandLineOptions>(args, (options, configuration, services) =>
+            return RunAsync<SyncCommandLineOptions>(args, applicationName, (options, configuration, services) =>
             {
                 var mainConfiguration = configuration.Get<MainConfiguration>();
                 var fluffleClient = new FluffleClient(mainConfiguration.Url, mainConfiguration.ApiKey);
@@ -54,7 +54,7 @@ namespace Noppes.Fluffle.Sync
             return base.StartAsync(cancellationToken);
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteServiceAsync(CancellationToken stoppingToken)
         {
             Log.Information($"Starting {SyncConfiguration.Platform.Name} syncing client...");
 

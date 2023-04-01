@@ -54,6 +54,8 @@ namespace Noppes.Fluffle.Bot
     {
         private const string UserAgentApplicationName = "telegram-bot";
 
+        protected override string ApplicationName => "TelegramBot";
+
         protected override bool EnableAccessControl => false;
 
         public override void AdditionalConfigureServices(IServiceCollection services)

@@ -23,6 +23,7 @@ using Noppes.Fluffle.Api.Mapping;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.Api.Services;
 using Noppes.Fluffle.Configuration;
+using Noppes.Fluffle.Telemetry;
 using Noppes.Fluffle.Utils;
 using System;
 using System.Linq;
@@ -59,6 +60,8 @@ namespace Noppes.Fluffle.Api
     {
         private const string DevelopmentCorsPolicyName = "_development";
         private const string ProductionCorsPolicyName = "_production";
+
+        protected abstract string ApplicationName { get; }
 
         /// <summary>
         /// Whether or not to enable access control through API keys and permissions.
@@ -192,6 +195,9 @@ namespace Noppes.Fluffle.Api
                 options.RegisterValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
                 options.DisableDataAnnotationsValidation = true;
             });
+
+            services.AddTelemetry(Configuration, ApplicationName);
+            services.AddHostedService<TelemetryBufferFlusher>();
 
             services.AddHostedService<ServiceShutdownSignaler>();
             services.AddSingleton<ServiceBuilder>();

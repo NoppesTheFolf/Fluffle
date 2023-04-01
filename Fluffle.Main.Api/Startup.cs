@@ -23,6 +23,8 @@ namespace Noppes.Fluffle.Main.Api
     {
         private const string UserAgentApplicationName = "main";
 
+        protected override string ApplicationName => "MainApi";
+
         protected override bool EnableAccessControl => true;
 
         public override void AdditionalConfigureServices(IServiceCollection services)

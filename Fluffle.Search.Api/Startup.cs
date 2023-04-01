@@ -1,4 +1,3 @@
-using System;
 using Humanizer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +26,8 @@ namespace Noppes.Fluffle.Search.Api
 
     public class Startup : ApiStartup<Startup, FluffleSearchContext>
     {
+        protected override string ApplicationName => "SearchApi";
+
         protected override bool EnableAccessControl => true;
 
         public override void AdditionalConfigureServices(IServiceCollection services)

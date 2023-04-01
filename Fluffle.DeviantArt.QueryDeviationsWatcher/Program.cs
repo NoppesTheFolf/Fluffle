@@ -31,7 +31,7 @@ public class Program : ScheduledService<Program>
         _logger = logger;
     }
 
-    private static async Task Main(string[] args) => await RunAsync(args, (conf, services) =>
+    private static async Task Main(string[] args) => await RunAsync(args, "DeviantArtQueryDeviationsWatcher", (conf, services) =>
     {
         services.AddDeviantArt(conf, x => x.QueryDeviationsWatcher, false, true, true, true);
     });

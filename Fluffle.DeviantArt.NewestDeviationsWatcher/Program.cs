@@ -30,7 +30,7 @@ namespace Noppes.Fluffle.DeviantArt.NewestDeviationsWatcher
             _logger = logger;
         }
 
-        private static async Task Main(string[] args) => await RunAsync(args, (conf, services) =>
+        private static async Task Main(string[] args) => await RunAsync(args, "DeviantArtNewestDeviationsWatcher", (conf, services) =>
         {
             services.AddDeviantArt(conf, x => x.NewestDeviationsWatcher, true, true, true, true);
         });

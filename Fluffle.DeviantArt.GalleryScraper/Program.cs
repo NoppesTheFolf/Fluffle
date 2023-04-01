@@ -28,7 +28,7 @@ public class Program : QueuePollingService<Program, ScrapeGalleryQueueItem>
         _logger = logger;
     }
 
-    private static async Task Main(string[] args) => await RunAsync(args, (conf, services) =>
+    private static async Task Main(string[] args) => await RunAsync(args, "DeviantArtGalleryScraper", (conf, services) =>
     {
         services.AddDeviantArt(conf, x => x.GalleryScraper, true, true, true, false);
     });

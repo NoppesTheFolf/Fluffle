@@ -20,7 +20,7 @@ internal class Program : QueuePollingBatchService<Program, ProcessDeviationQueue
         _configuration = configuration;
     }
 
-    private static async Task Main(string[] args) => await RunAsync(args, (conf, services) =>
+    private static async Task Main(string[] args) => await RunAsync(args, "DeviantArtDeviationsProcessor", (conf, services) =>
     {
         services.AddDeviantArt(conf, x => x.DeviationsProcessor, true, true, true, false);
 

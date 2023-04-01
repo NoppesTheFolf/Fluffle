@@ -17,7 +17,7 @@ public abstract class ScheduledService<TService> : Service<TService> where TServ
         _logger = services.GetRequiredService<ILogger<TService>>();
     }
 
-    protected sealed override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected sealed override async Task ExecuteServiceAsync(CancellationToken stoppingToken)
     {
         while (true)
         {
