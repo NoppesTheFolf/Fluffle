@@ -133,7 +133,7 @@ dependencies = [
 
 [[package]]
 name = "fluffle-compare"
-version = "0.20.3"
+version = "0.21.0"
 dependencies = [
  "bincode",
  "blake2",
