@@ -1,5 +1,4 @@
-﻿using Flurl.Http;
-using Humanizer;
+﻿using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -130,7 +129,7 @@ public class DeviationsProcessor
                 await _userIsFurryCheckQueue.EnqueueAsync(new CheckIfFurryArtistQueueItem
                 {
                     Id = deviant.Id
-                }, 5.Minutes(), null);
+                }, null, 5.Minutes(), null);
 
                 await context.SaveChangesAsync();
             }

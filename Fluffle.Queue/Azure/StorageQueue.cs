@@ -26,7 +26,7 @@ internal class StorageQueue<T> : IQueue<T>
         _queueClient = queueClient;
     }
 
-    public async Task EnqueueAsync(T? value, TimeSpan? visibleAfter, TimeSpan? expireAfter)
+    public async Task EnqueueAsync(T? value, int? priority, TimeSpan? visibleAfter, TimeSpan? expireAfter)
     {
         var body = JsonSerializer.SerializeToUtf8Bytes(value, StorageQueue.JsonSerializerOptions);
         var data = new BinaryData(body);
@@ -35,10 +35,10 @@ internal class StorageQueue<T> : IQueue<T>
         await _queueClient.SendMessageAsync(data, visibleAfter, timeToLive);
     }
 
-    public async Task EnqueueManyAsync(IEnumerable<T?> values, TimeSpan? visibleAfter, TimeSpan? expireAfter)
+    public async Task EnqueueManyAsync(IEnumerable<T?> values, int? priority, TimeSpan? visibleAfter, TimeSpan? expireAfter)
     {
         foreach (var value in values)
-            await EnqueueAsync(value, visibleAfter, expireAfter);
+            await EnqueueAsync(value, priority, visibleAfter, expireAfter);
     }
 
     public async Task<QueueItem<T?>?> DequeueAsync(TimeSpan visibleAfter)

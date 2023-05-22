@@ -36,6 +36,6 @@ public class ProcessDeviationQueue
         await _queue.EnqueueAsync(new ProcessDeviationQueueItem
         {
             Id = deviation.Id
-        }, visibleAfter, null);
+        }, null, visibleAfter, null);
     }
 }

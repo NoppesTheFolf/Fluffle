@@ -14,4 +14,8 @@
 		<PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\Fluffle.Http\Fluffle.Http.csproj" />
+	</ItemGroup>
+
 </Project>
