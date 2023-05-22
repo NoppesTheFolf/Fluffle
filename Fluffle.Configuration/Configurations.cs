@@ -4,6 +4,19 @@ using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Configuration
 {
+    public class MongoDbConfiguration : FluffleConfigurationPart<MongoDbConfiguration>
+    {
+        public string ConnectionString { get; set; }
+
+        public string Database { get; set; }
+
+        public MongoDbConfiguration()
+        {
+            RuleFor(o => o.ConnectionString).NotEmpty();
+            RuleFor(o => o.Database).NotEmpty();
+        }
+    }
+
     /// <summary>
     /// A very basic configuration class for databases. Provides a connection string for Entity
     /// Framework Core.
@@ -105,7 +118,6 @@ namespace Noppes.Fluffle.Configuration
         public SearchServerConfiguration()
         {
             RuleFor(o => o.SearchResultsTemporaryLocation).NotEmpty();
-
             RuleFor(o => o.SearchResultsBackblazeB2).NotEmpty().SetValidator(o => o.SearchResultsBackblazeB2);
         }
     }
@@ -411,6 +423,48 @@ namespace Noppes.Fluffle.Configuration
         }
     }
 
+    [ConfigurationSection("Queuey")]
+    public class QueueyConfiguration : FluffleConfigurationPart<QueueyConfiguration>
+    {
+        public string Url { get; set; }
+
+        public string ApiKey { get; set; }
+
+        public QueueyConfiguration()
+        {
+            RuleFor(o => o.Url).NotEmpty();
+            RuleFor(o => o.ApiKey).NotEmpty();
+        }
+    }
+
+    [ConfigurationSection("MlApi")]
+    public class MlApiConfiguration : FluffleConfigurationPart<MlApiConfiguration>
+    {
+        public string Url { get; set; }
+
+        public string ApiKey { get; set; }
+
+        public MlApiConfiguration()
+        {
+            RuleFor(o => o.Url).NotEmpty();
+            RuleFor(o => o.ApiKey).NotEmpty();
+        }
+    }
+
+    [ConfigurationSection("TwitterApi")]
+    public class TwitterApiConfiguration : FluffleConfigurationPart<TwitterApiConfiguration>
+    {
+        public string Url { get; set; }
+
+        public string ApiKey { get; set; }
+
+        public TwitterApiConfiguration()
+        {
+            RuleFor(o => o.Url).NotEmpty();
+            RuleFor(o => o.ApiKey).NotEmpty();
+        }
+    }
+
     /// <summary>
     /// Configuration regarding twitter.com.
     /// </summary>
@@ -436,9 +490,12 @@ namespace Noppes.Fluffle.Configuration
     {
         public int DownloadInterval { get; set; } = 200;
 
+        public MongoDbConfiguration MongoDb { get; set; }
+
         public TwitterSyncConfiguration()
         {
             RuleFor(o => o.DownloadInterval).GreaterThanOrEqualTo(0);
+            RuleFor(o => o.MongoDb).NotEmpty().SetValidator(o => o.MongoDb);
         }
     }
 
