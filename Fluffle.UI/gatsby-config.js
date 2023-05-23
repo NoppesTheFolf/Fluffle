@@ -17,7 +17,16 @@ module.exports = {
         excludes: ['/browser-extension/', '/status/', '/mg/*', '/q/*']
       }
     },
-    'gatsby-plugin-mdx',
+    {
+      resolve: 'gatsby-plugin-mdx',
+      options: {
+        mdxOptions: {
+          remarkPlugins: [
+            require('remark-gfm')
+          ]
+        }
+      }
+    },
     'gatsby-plugin-sharp',
     'gatsby-transformer-sharp',
     {
@@ -28,6 +37,13 @@ module.exports = {
       },
       __key: 'images'
     },
-    'gatsby-plugin-force-trailing-slashes'
+    {
+      resolve: 'gatsby-source-filesystem',
+      options: {
+        'name': 'pages',
+        'path': './src/pages/'
+      },
+      __key: 'pages'
+    }
   ],
 }
