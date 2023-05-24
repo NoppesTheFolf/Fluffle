@@ -2,13 +2,12 @@
 using Noppes.Fluffle.Search.Database.Models;
 using System.Linq;
 
-namespace Noppes.Fluffle.Search.Database
+namespace Noppes.Fluffle.Search.Database;
+
+public static class ModelExtensions
 {
-    public static class ModelExtensions
+    public static IQueryable<TContent> IncludeThumbnails<TContent>(this IQueryable<TContent> queryable) where TContent : Content
     {
-        public static IQueryable<TContent> IncludeThumbnails<TContent>(this IQueryable<TContent> queryable) where TContent : Content
-        {
-            return queryable.Include(c => c.Thumbnail);
-        }
+        return queryable.Include(c => c.Thumbnail);
     }
 }

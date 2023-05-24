@@ -6,58 +6,57 @@ using System.Linq;
 using Tweetinvi.Models;
 using Tweetinvi.Models.Entities;
 
-namespace Noppes.Fluffle.TwitterSync
+namespace Noppes.Fluffle.TwitterSync;
+
+public static class TweetinviExtensions
 {
-    public static class TweetinviExtensions
+    public static IList<ITweet> Flatten(this IList<ITweet> tweets)
     {
-        public static IList<ITweet> Flatten(this IList<ITweet> tweets)
+        int previousCount;
+        do
         {
-            int previousCount;
-            do
-            {
-                previousCount = tweets.Count;
+            previousCount = tweets.Count;
 
-                tweets = tweets
-                    .SelectMany(t => new[] { t, t.RetweetedTweet, t.QuotedTweet })
-                    .Where(t => t != null)
-                    .DistinctBy(t => t.IdStr)
-                    .ToList();
-            } while (tweets.Count != previousCount);
+            tweets = tweets
+                .SelectMany(t => new[] { t, t.RetweetedTweet, t.QuotedTweet })
+                .Where(t => t != null)
+                .DistinctBy(t => t.IdStr)
+                .ToList();
+        } while (tweets.Count != previousCount);
 
-            return tweets;
-        }
+        return tweets;
+    }
 
-        public static MediaTypeConstant MediaType(this IMediaEntity mediaEntity)
+    public static MediaTypeConstant MediaType(this IMediaEntity mediaEntity)
+    {
+        return mediaEntity.MediaType switch
         {
-            return mediaEntity.MediaType switch
-            {
-                "photo" => MediaTypeConstant.Image,
-                "animated_gif" => MediaTypeConstant.AnimatedImage,
-                "video" => MediaTypeConstant.Video,
-                _ => throw new ArgumentOutOfRangeException(nameof(mediaEntity))
-            };
-        }
+            "photo" => MediaTypeConstant.Image,
+            "animated_gif" => MediaTypeConstant.AnimatedImage,
+            "video" => MediaTypeConstant.Video,
+            _ => throw new ArgumentOutOfRangeException(nameof(mediaEntity))
+        };
+    }
 
-        public static ResizeMode Resize(this IMediaEntitySize size)
+    public static ResizeMode Resize(this IMediaEntitySize size)
+    {
+        return size.Resize switch
         {
-            return size.Resize switch
-            {
-                "crop" => ResizeMode.Crop,
-                "fit" => ResizeMode.Fit,
-                _ => throw new ArgumentOutOfRangeException(nameof(size))
-            };
-        }
+            "crop" => ResizeMode.Crop,
+            "fit" => ResizeMode.Fit,
+            _ => throw new ArgumentOutOfRangeException(nameof(size))
+        };
+    }
 
-        public static MediaSizeConstant Size(this KeyValuePair<string, IMediaEntitySize> kv)
+    public static MediaSizeConstant Size(this KeyValuePair<string, IMediaEntitySize> kv)
+    {
+        return kv.Key switch
         {
-            return kv.Key switch
-            {
-                "thumb" => MediaSizeConstant.Thumb,
-                "small" => MediaSizeConstant.Small,
-                "medium" => MediaSizeConstant.Medium,
-                "large" => MediaSizeConstant.Large,
-                _ => throw new ArgumentOutOfRangeException(nameof(kv))
-            };
-        }
+            "thumb" => MediaSizeConstant.Thumb,
+            "small" => MediaSizeConstant.Small,
+            "medium" => MediaSizeConstant.Medium,
+            "large" => MediaSizeConstant.Large,
+            _ => throw new ArgumentOutOfRangeException(nameof(kv))
+        };
     }
 }

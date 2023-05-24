@@ -7,53 +7,52 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Search.Api.LinkCreation
+namespace Noppes.Fluffle.Search.Api.LinkCreation;
+
+public class LinkCreatorRetriever : Producer<SearchRequestV2>
 {
-    public class LinkCreatorRetriever : Producer<SearchRequestV2>
+    private const int BatchSize = 20;
+
+    private readonly IServiceProvider _services;
+
+    public LinkCreatorRetriever(IServiceProvider services)
     {
-        private const int BatchSize = 20;
+        _services = services;
+    }
 
-        private readonly IServiceProvider _services;
-
-        public LinkCreatorRetriever(IServiceProvider services)
+    public override async Task WorkAsync()
+    {
+        List<SearchRequestV2> searchRequests;
+        using (var _ = await LinkCreator.BeingProcessedLock.LockAsync())
         {
-            _services = services;
+            using var scope = _services.CreateScope();
+            await using var context = scope.ServiceProvider.GetRequiredService<FluffleSearchContext>();
+
+            searchRequests = await context.SearchRequestsV2
+                .Where(sr => !LinkCreator.BeingProcessed.Contains(sr.Id) && sr.LinkCreated == false)
+                .OrderByDescending(sr => sr.Id)
+                .Take(BatchSize)
+                .ToListAsync();
         }
 
-        public override async Task WorkAsync()
+        if (searchRequests.Count == 0)
         {
-            List<SearchRequestV2> searchRequests;
-            using (var _ = await LinkCreator.BeingProcessedLock.LockAsync())
-            {
-                using var scope = _services.CreateScope();
-                await using var context = scope.ServiceProvider.GetRequiredService<FluffleSearchContext>();
-
-                searchRequests = await context.SearchRequestsV2
-                    .Where(sr => !LinkCreator.BeingProcessed.Contains(sr.Id) && sr.LinkCreated == false)
-                    .OrderByDescending(sr => sr.Id)
-                    .Take(BatchSize)
-                    .ToListAsync();
-            }
-
-            if (searchRequests.Count == 0)
-            {
-                await Task.Delay(60_000);
-                return;
-            }
-
-            foreach (var searchRequest in searchRequests)
-                await Enqueue(searchRequest);
+            await Task.Delay(60_000);
+            return;
         }
 
-        public async Task Enqueue(SearchRequestV2 searchRequest)
-        {
-            using var _ = await LinkCreator.BeingProcessedLock.LockAsync();
+        foreach (var searchRequest in searchRequests)
+            await Enqueue(searchRequest);
+    }
 
-            if (LinkCreator.BeingProcessed.Contains(searchRequest.Id))
-                return;
+    public async Task Enqueue(SearchRequestV2 searchRequest)
+    {
+        using var _ = await LinkCreator.BeingProcessedLock.LockAsync();
 
-            LinkCreator.BeingProcessed.Add(searchRequest.Id);
-            await ProduceAsync(searchRequest);
-        }
+        if (LinkCreator.BeingProcessed.Contains(searchRequest.Id))
+            return;
+
+        LinkCreator.BeingProcessed.Add(searchRequest.Id);
+        await ProduceAsync(searchRequest);
     }
 }

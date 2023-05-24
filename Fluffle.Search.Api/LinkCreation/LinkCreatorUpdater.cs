@@ -5,31 +5,30 @@ using Noppes.Fluffle.Utils;
 using System;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Search.Api.LinkCreation
+namespace Noppes.Fluffle.Search.Api.LinkCreation;
+
+public class LinkCreatorUpdater : Consumer<SearchRequestV2>
 {
-    public class LinkCreatorUpdater : Consumer<SearchRequestV2>
+    private readonly IServiceProvider _services;
+
+    public LinkCreatorUpdater(IServiceProvider services)
     {
-        private readonly IServiceProvider _services;
+        _services = services;
+    }
 
-        public LinkCreatorUpdater(IServiceProvider services)
-        {
-            _services = services;
-        }
+    public override async Task<SearchRequestV2> ConsumeAsync(SearchRequestV2 data)
+    {
+        using var _ = await LinkCreator.BeingProcessedLock.LockAsync();
 
-        public override async Task<SearchRequestV2> ConsumeAsync(SearchRequestV2 data)
-        {
-            using var _ = await LinkCreator.BeingProcessedLock.LockAsync();
+        using var scope = _services.CreateScope();
+        await using var context = scope.ServiceProvider.GetRequiredService<FluffleSearchContext>();
 
-            using var scope = _services.CreateScope();
-            await using var context = scope.ServiceProvider.GetRequiredService<FluffleSearchContext>();
+        var searchRequest = await context.SearchRequestsV2.SingleAsync(sr => sr.Id == data.Id);
+        searchRequest.LinkCreated = true;
 
-            var searchRequest = await context.SearchRequestsV2.SingleAsync(sr => sr.Id == data.Id);
-            searchRequest.LinkCreated = true;
+        await context.SaveChangesAsync();
+        LinkCreator.BeingProcessed.Remove(searchRequest.Id);
 
-            await context.SaveChangesAsync();
-            LinkCreator.BeingProcessed.Remove(searchRequest.Id);
-
-            return searchRequest;
-        }
+        return searchRequest;
     }
 }

@@ -5,65 +5,64 @@ using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Database.KeyValue
+namespace Noppes.Fluffle.Database.KeyValue;
+
+public class KeyValueStore<TContext, TEntity> : IKeyValueStore where TContext : DbContext where TEntity : KeyValuePair<TEntity>, new()
 {
-    public class KeyValueStore<TContext, TEntity> : IKeyValueStore where TContext : DbContext where TEntity : KeyValuePair<TEntity>, new()
+    private readonly IServiceProvider _services;
+    private readonly AsyncLock _lock;
+
+    public KeyValueStore(IServiceProvider services)
     {
-        private readonly IServiceProvider _services;
-        private readonly AsyncLock _lock;
+        _services = services;
+        _lock = new AsyncLock();
+    }
 
-        public KeyValueStore(IServiceProvider services)
+    public async Task<KeyValueResult<T>> GetAsync<T>(string key)
+    {
+        return await UseKeyValueStoreAsync(async (_, set) =>
         {
-            _services = services;
-            _lock = new AsyncLock();
-        }
+            var entity = await set.SingleOrDefaultAsync(x => x.Key == key);
+            if (entity == null)
+                return null;
 
-        public async Task<KeyValueResult<T>> GetAsync<T>(string key)
+            var value = JsonSerializer.Deserialize<T>(entity.Value);
+            return new KeyValueResult<T>(value);
+        });
+    }
+
+    public async Task SetAsync<T>(string key, T value)
+    {
+        await UseKeyValueStoreAsync(async (context, set) =>
         {
-            return await UseKeyValueStoreAsync(async (_, set) =>
+            var valueBytes = JsonSerializer.SerializeToUtf8Bytes(value);
+
+            var entity = await set.SingleOrDefaultAsync(x => x.Key == key);
+            if (entity == null)
             {
-                var entity = await set.SingleOrDefaultAsync(x => x.Key == key);
-                if (entity == null)
-                    return null;
-
-                var value = JsonSerializer.Deserialize<T>(entity.Value);
-                return new KeyValueResult<T>(value);
-            });
-        }
-
-        public async Task SetAsync<T>(string key, T value)
-        {
-            await UseKeyValueStoreAsync(async (context, set) =>
-            {
-                var valueBytes = JsonSerializer.SerializeToUtf8Bytes(value);
-
-                var entity = await set.SingleOrDefaultAsync(x => x.Key == key);
-                if (entity == null)
+                entity = new TEntity
                 {
-                    entity = new TEntity
-                    {
-                        Key = key
-                    };
-                    await set.AddAsync(entity);
-                }
+                    Key = key
+                };
+                await set.AddAsync(entity);
+            }
 
-                entity.Value = valueBytes;
-                await context.SaveChangesAsync();
+            entity.Value = valueBytes;
+            await context.SaveChangesAsync();
 
-                return string.Empty;
-            });
-        }
+            return string.Empty;
+        });
+    }
 
-        private async Task<T> UseKeyValueStoreAsync<T>(Func<TContext, DbSet<TEntity>, Task<T>> operationAsync)
-        {
-            using var _ = await _lock.LockAsync();
+    private async Task<T> UseKeyValueStoreAsync<T>(Func<TContext, DbSet<TEntity>, Task<T>> operationAsync)
+    {
+        using var _ = await _lock.LockAsync();
 
-            using var scope = _services.CreateScope();
-            await using var context = scope.ServiceProvider.GetRequiredService<TContext>();
-            var set = context.Set<TEntity>();
-            var result = await operationAsync(context, set);
+        using var scope = _services.CreateScope();
+        await using var context = scope.ServiceProvider.GetRequiredService<TContext>();
+        var set = context.Set<TEntity>();
+        var result = await operationAsync(context, set);
 
-            return result;
-        }
+        return result;
     }
 }

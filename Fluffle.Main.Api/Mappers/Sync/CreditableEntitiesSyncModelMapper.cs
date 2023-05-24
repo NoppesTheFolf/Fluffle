@@ -2,19 +2,18 @@
 using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.Main.Database.Models;
 
-namespace Noppes.Fluffle.Main.Api.Mappers
+namespace Noppes.Fluffle.Main.Api.Mappers;
+
+public class CreditableEntitiesSyncModelMapper : IMapper<CreditableEntity, CreditableEntitiesSyncModel.CreditableEntityModel>
 {
-    public class CreditableEntitiesSyncModelMapper : IMapper<CreditableEntity, CreditableEntitiesSyncModel.CreditableEntityModel>
+    public void MapFrom(CreditableEntity src, CreditableEntitiesSyncModel.CreditableEntityModel dest)
     {
-        public void MapFrom(CreditableEntity src, CreditableEntitiesSyncModel.CreditableEntityModel dest)
-        {
-            dest.Id = src.Id;
-            dest.Name = src.Name;
-            dest.Type = src.Type;
-            dest.PlatformId = src.PlatformId;
-            dest.ChangeId = (long)src.ChangeId;
-            dest.IdOnPlatform = src.IdOnPlatform;
-            dest.Priority = src.Priority;
-        }
+        dest.Id = src.Id;
+        dest.Name = src.Name;
+        dest.Type = src.Type;
+        dest.PlatformId = src.PlatformId;
+        dest.ChangeId = (long)src.ChangeId;
+        dest.IdOnPlatform = src.IdOnPlatform;
+        dest.Priority = src.Priority;
     }
 }

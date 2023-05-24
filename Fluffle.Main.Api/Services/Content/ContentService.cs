@@ -19,515 +19,514 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Main.Api.Services
+namespace Noppes.Fluffle.Main.Api.Services;
+
+public class ContentService : Service, IContentService
 {
-    public class ContentService : Service, IContentService
+    private const string TransparentBackgroundTag = "transparent-background";
+
+    private static readonly AsyncLock TagsSyncMutex = new();
+    private static readonly IDictionary<PlatformConstant, AsyncLock> PlatformSyncMutexes =
+        Enum.GetValues<PlatformConstant>()
+        .ToDictionary(p => p, _ => new AsyncLock());
+
+    private readonly FluffleContext _context;
+    private readonly TagBlacklistCollection _tagBlacklist;
+    private readonly IThumbnailService _thumbnailService;
+    private readonly ChangeIdIncrementer<Content> _contentCii;
+    private readonly ChangeIdIncrementer<CreditableEntity> _creditableEntityCii;
+    private readonly ClaimsPrincipal _user;
+    private readonly ILogger<ContentService> _logger;
+
+    public ContentService(FluffleContext context, TagBlacklistCollection tagBlacklist, IThumbnailService thumbnailService,
+        ChangeIdIncrementer<Content> contentCii, ChangeIdIncrementer<CreditableEntity> creditableEntityCii,
+        ClaimsPrincipal user, ILogger<ContentService> logger)
     {
-        private const string TransparentBackgroundTag = "transparent-background";
+        _context = context;
+        _tagBlacklist = tagBlacklist;
+        _thumbnailService = thumbnailService;
+        _contentCii = contentCii;
+        _creditableEntityCii = creditableEntityCii;
+        _user = user;
+        _logger = logger;
+    }
 
-        private static readonly AsyncLock TagsSyncMutex = new();
-        private static readonly IDictionary<PlatformConstant, AsyncLock> PlatformSyncMutexes =
-            Enum.GetValues<PlatformConstant>()
-            .ToDictionary(p => p, _ => new AsyncLock());
-
-        private readonly FluffleContext _context;
-        private readonly TagBlacklistCollection _tagBlacklist;
-        private readonly IThumbnailService _thumbnailService;
-        private readonly ChangeIdIncrementer<Content> _contentCii;
-        private readonly ChangeIdIncrementer<CreditableEntity> _creditableEntityCii;
-        private readonly ClaimsPrincipal _user;
-        private readonly ILogger<ContentService> _logger;
-
-        public ContentService(FluffleContext context, TagBlacklistCollection tagBlacklist, IThumbnailService thumbnailService,
-            ChangeIdIncrementer<Content> contentCii, ChangeIdIncrementer<CreditableEntity> creditableEntityCii,
-            ClaimsPrincipal user, ILogger<ContentService> logger)
+    public async Task<SR<IEnumerable<string>>> GetContentByReferences(string platformName, IEnumerable<string> references)
+    {
+        return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
         {
-            _context = context;
-            _tagBlacklist = tagBlacklist;
-            _thumbnailService = thumbnailService;
-            _contentCii = contentCii;
-            _creditableEntityCii = creditableEntityCii;
-            _user = user;
-            _logger = logger;
-        }
+            var ids = await _context.Content
+                .Where(x => x.PlatformId == platform.Id)
+                .Where(x => references.Contains(x.Reference))
+                .Select(x => x.IdOnPlatform)
+                .ToListAsync();
 
-        public async Task<SR<IEnumerable<string>>> GetContentByReferences(string platformName, IEnumerable<string> references)
+            return new SR<IEnumerable<string>>(ids);
+        });
+    }
+
+    public async Task<SR<IEnumerable<string>>> MarkManyForDeletionAsync(string platformName, IEnumerable<string> idsOnPlatform, bool saveChanges = true)
+    {
+        return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
         {
-            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
+            var contents = await _context.Content
+                .Where(x => x.PlatformId == platform.Id)
+                .Where(x => idsOnPlatform.Contains(x.IdOnPlatform))
+                .ToListAsync();
+
+            foreach (var content in contents)
             {
-                var ids = await _context.Content
-                    .Where(x => x.PlatformId == platform.Id)
-                    .Where(x => references.Contains(x.Reference))
-                    .Select(x => x.IdOnPlatform)
-                    .ToListAsync();
+                content.HasFatalErrors = false;
 
-                return new SR<IEnumerable<string>>(ids);
-            });
-        }
-
-        public async Task<SR<IEnumerable<string>>> MarkManyForDeletionAsync(string platformName, IEnumerable<string> idsOnPlatform, bool saveChanges = true)
-        {
-            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
-            {
-                var contents = await _context.Content
-                    .Where(x => x.PlatformId == platform.Id)
-                    .Where(x => idsOnPlatform.Contains(x.IdOnPlatform))
-                    .ToListAsync();
-
-                foreach (var content in contents)
-                {
-                    content.HasFatalErrors = false;
-
-                    if (!content.IsDeleted)
-                        content.IsMarkedForDeletion = true;
-                }
-
-                if (saveChanges)
-                    await _context.SaveChangesAsync();
-
-                return new SR<IEnumerable<string>>(contents.Select(x => x.IdOnPlatform).ToList());
-            });
-        }
-
-        public async Task<SR<IEnumerable<int>>> MarkRangeForDeletionAsync(string platformName, DeleteContentRangeModel model)
-        {
-            var deletedIdsOnPlatform = new List<int>();
-
-            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
-            {
-                var imagesToDelete = _context.Content
-                    .Where(i => i.PlatformId == platform.Id)
-                    .Where(i => i.IdOnPlatformAsInteger > model.ExclusiveStart && i.IdOnPlatformAsInteger <= model.InclusiveEnd)
-                    .Where(i => !i.IsMarkedForDeletion && !i.IsDeleted) // Exclude those already marked for deletion or are already deleted
-                    .Where(i => !model.ExcludedIds.Select(ei => (int?)ei).Contains(i.IdOnPlatformAsInteger));
-
-                foreach (var imageToDelete in imagesToDelete)
-                {
-                    imageToDelete.HasFatalErrors = false;
-                    imageToDelete.IsMarkedForDeletion = true;
-                    deletedIdsOnPlatform.Add((int)imageToDelete.IdOnPlatformAsInteger);
-                }
-
-                await _context.SaveChangesAsync();
-
-                return new SR<IEnumerable<int>>(deletedIdsOnPlatform);
-            });
-        }
-
-        public async Task<SE> DeleteAsync(string platformName, string idOnPlatform)
-        {
-            var query = _context.Content
-                .Include(c => c.Platform)
-                .IncludeThumbnails();
-
-            return await query.GetContentAsync(_context.Platforms, platformName, idOnPlatform, async content =>
-            {
-                var thumbnails = content.EnumerateThumbnails();
-                await _thumbnailService.DeleteAsync(thumbnails, false);
-
-                // Remove the image hash if the content happens to be an image
-                if (content is Image image)
-                {
-                    var imageHash = await _context.ImageHashes.ForAsync(image);
-
-                    if (imageHash != null)
-                        _context.ImageHashes.Remove(imageHash);
-                }
-
-                content.IsIndexed = false;
-                content.RequiresIndexing = true;
-
-                using var _ = _contentCii.Lock((PlatformConstant)content.PlatformId, out var contentCii);
-
-                if (content.ChangeId != null)
-                    contentCii.Next(content);
-
-                // Switch for marked for deletion to actually deleted
-                content.IsMarkedForDeletion = false;
-                content.IsDeleted = true;
-
-                await _context.SaveChangesAsync();
-
-                return null;
-            });
-        }
-
-        public async Task<SE> PutWarningAsync(string platformName, string platformContentId, PutWarningModel model)
-        {
-            return await _context.Content.GetContentAsync(_context.Platforms, platformName, platformContentId, async content =>
-            {
-                content.Warnings.Add(new ContentWarning
-                {
-                    Message = model.Warning
-                });
-
-                await _context.SaveChangesAsync();
-
-                return null;
-            });
-        }
-
-        public async Task<SE> PutErrorAsync(string platformName, string platformContentId, PutErrorModel model)
-        {
-            var query = _context.Content
-                .Include(i => i.Platform);
-
-            return await query.GetContentAsync(_context.Platforms, platformName, platformContentId, async content =>
-            {
-                content.Errors.Add(new Database.Models.ContentError
-                {
-                    Message = model.Error,
-                    IsFatal = model.IsFatal
-                });
-
-                if (model.IsFatal)
-                {
-                    content.HasFatalErrors = true;
+                if (!content.IsDeleted)
                     content.IsMarkedForDeletion = true;
-                }
+            }
 
+            if (saveChanges)
                 await _context.SaveChangesAsync();
 
-                return null;
-            });
-        }
+            return new SR<IEnumerable<string>>(contents.Select(x => x.IdOnPlatform).ToList());
+        });
+    }
 
-        public async Task<SE> PutContentAsync(string platformName, IList<PutContentModel> contentModels)
+    public async Task<SR<IEnumerable<int>>> MarkRangeForDeletionAsync(string platformName, DeleteContentRangeModel model)
+    {
+        var deletedIdsOnPlatform = new List<int>();
+
+        return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
         {
-            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
+            var imagesToDelete = _context.Content
+                .Where(i => i.PlatformId == platform.Id)
+                .Where(i => i.IdOnPlatformAsInteger > model.ExclusiveStart && i.IdOnPlatformAsInteger <= model.InclusiveEnd)
+                .Where(i => !i.IsMarkedForDeletion && !i.IsDeleted) // Exclude those already marked for deletion or are already deleted
+                .Where(i => !model.ExcludedIds.Select(ei => (int?)ei).Contains(i.IdOnPlatformAsInteger));
+
+            foreach (var imageToDelete in imagesToDelete)
             {
-                // Clean up the submitted models
-                foreach (var contentModel in contentModels)
+                imageToDelete.HasFatalErrors = false;
+                imageToDelete.IsMarkedForDeletion = true;
+                deletedIdsOnPlatform.Add((int)imageToDelete.IdOnPlatformAsInteger);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new SR<IEnumerable<int>>(deletedIdsOnPlatform);
+        });
+    }
+
+    public async Task<SE> DeleteAsync(string platformName, string idOnPlatform)
+    {
+        var query = _context.Content
+            .Include(c => c.Platform)
+            .IncludeThumbnails();
+
+        return await query.GetContentAsync(_context.Platforms, platformName, idOnPlatform, async content =>
+        {
+            var thumbnails = content.EnumerateThumbnails();
+            await _thumbnailService.DeleteAsync(thumbnails, false);
+
+            // Remove the image hash if the content happens to be an image
+            if (content is Image image)
+            {
+                var imageHash = await _context.ImageHashes.ForAsync(image);
+
+                if (imageHash != null)
+                    _context.ImageHashes.Remove(imageHash);
+            }
+
+            content.IsIndexed = false;
+            content.RequiresIndexing = true;
+
+            using var _ = _contentCii.Lock((PlatformConstant)content.PlatformId, out var contentCii);
+
+            if (content.ChangeId != null)
+                contentCii.Next(content);
+
+            // Switch for marked for deletion to actually deleted
+            content.IsMarkedForDeletion = false;
+            content.IsDeleted = true;
+
+            await _context.SaveChangesAsync();
+
+            return null;
+        });
+    }
+
+    public async Task<SE> PutWarningAsync(string platformName, string platformContentId, PutWarningModel model)
+    {
+        return await _context.Content.GetContentAsync(_context.Platforms, platformName, platformContentId, async content =>
+        {
+            content.Warnings.Add(new ContentWarning
+            {
+                Message = model.Warning
+            });
+
+            await _context.SaveChangesAsync();
+
+            return null;
+        });
+    }
+
+    public async Task<SE> PutErrorAsync(string platformName, string platformContentId, PutErrorModel model)
+    {
+        var query = _context.Content
+            .Include(i => i.Platform);
+
+        return await query.GetContentAsync(_context.Platforms, platformName, platformContentId, async content =>
+        {
+            content.Errors.Add(new Database.Models.ContentError
+            {
+                Message = model.Error,
+                IsFatal = model.IsFatal
+            });
+
+            if (model.IsFatal)
+            {
+                content.HasFatalErrors = true;
+                content.IsMarkedForDeletion = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return null;
+        });
+    }
+
+    public async Task<SE> PutContentAsync(string platformName, IList<PutContentModel> contentModels)
+    {
+        return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
+        {
+            // Clean up the submitted models
+            foreach (var contentModel in contentModels)
+            {
+                // Substitute null values for empty collections as those are easier to work with
+                contentModel.CreditableEntities ??= new List<PutContentModel.CreditableEntityModel>();
+                contentModel.Files ??= new List<PutContentModel.FileModel>();
+                contentModel.Tags ??= new List<string>();
+                contentModel.OtherSources ??= new List<string>();
+
+                // Remove NULL characters from user provided data as PostgreSQL does not support it
+                contentModel.Reference = contentModel.Reference?.RemoveNullChar();
+                contentModel.Title = contentModel.Title?.RemoveNullChar();
+                contentModel.Description = contentModel.Description?.RemoveNullChar();
+                contentModel.Tags = contentModel.Tags.Select(t => t.RemoveNullChar()).ToList();
+                contentModel.OtherSources = contentModel.OtherSources.Select(os => os.RemoveNullChar()).ToList();
+                foreach (var creditableEntity in contentModel.CreditableEntities)
                 {
-                    // Substitute null values for empty collections as those are easier to work with
-                    contentModel.CreditableEntities ??= new List<PutContentModel.CreditableEntityModel>();
-                    contentModel.Files ??= new List<PutContentModel.FileModel>();
-                    contentModel.Tags ??= new List<string>();
-                    contentModel.OtherSources ??= new List<string>();
-
-                    // Remove NULL characters from user provided data as PostgreSQL does not support it
-                    contentModel.Reference = contentModel.Reference?.RemoveNullChar();
-                    contentModel.Title = contentModel.Title?.RemoveNullChar();
-                    contentModel.Description = contentModel.Description?.RemoveNullChar();
-                    contentModel.Tags = contentModel.Tags.Select(t => t.RemoveNullChar()).ToList();
-                    contentModel.OtherSources = contentModel.OtherSources.Select(os => os.RemoveNullChar()).ToList();
-                    foreach (var creditableEntity in contentModel.CreditableEntities)
-                    {
-                        creditableEntity.Id = creditableEntity.Id.RemoveNullChar();
-                        creditableEntity.Name = creditableEntity.Name.RemoveNullChar();
-                    }
-
-                    // Only allow valid URIs
-                    contentModel.OtherSources = contentModel.OtherSources
-                        .Where(os => Uri.TryCreate(os, UriKind.RelativeOrAbsolute, out _))
-                        .ToList();
+                    creditableEntity.Id = creditableEntity.Id.RemoveNullChar();
+                    creditableEntity.Name = creditableEntity.Name.RemoveNullChar();
                 }
 
-                // We'll mark it as deleted at a later time to prevent saving these changes before
-                // the tag synchronization lock has been released.
-                var blacklistedContent = contentModels
-                    .Where(cm => _tagBlacklist.Any(cm.Tags, cm.Rating))
+                // Only allow valid URIs
+                contentModel.OtherSources = contentModel.OtherSources
+                    .Where(os => Uri.TryCreate(os, UriKind.RelativeOrAbsolute, out _))
                     .ToList();
+            }
 
-                // Get all of the models which don't contained blacklisted tags
-                contentModels = contentModels.Except(blacklistedContent).ToList();
+            // We'll mark it as deleted at a later time to prevent saving these changes before
+            // the tag synchronization lock has been released.
+            var blacklistedContent = contentModels
+                .Where(cm => _tagBlacklist.Any(cm.Tags, cm.Rating))
+                .ToList();
 
-                var modelLookup = contentModels
-                    .ToDictionary(c => c.IdOnPlatform, c => c);
+            // Get all of the models which don't contained blacklisted tags
+            contentModels = contentModels.Except(blacklistedContent).ToList();
 
-                // First we synchronize the tags. Some different tags might be normalized to the same
-                // string. To prevent constraint violations, we remove duplicates
-                foreach (var model in contentModels)
-                    model.Tags = model.Tags.Select(TagHelper.Normalize).Distinct().ToList();
+            var modelLookup = contentModels
+                .ToDictionary(c => c.IdOnPlatform, c => c);
 
-                var tags = contentModels
-                    .SelectMany(c => c.Tags)
-                    .Distinct()
-                    .Select(t => new Tag
-                    {
-                        Name = t
-                    })
-                    .ToList();
+            // First we synchronize the tags. Some different tags might be normalized to the same
+            // string. To prevent constraint violations, we remove duplicates
+            foreach (var model in contentModels)
+                model.Tags = model.Tags.Select(TagHelper.Normalize).Distinct().ToList();
 
-                SynchronizeResult<Tag> tagsSynchronizeResult;
-                using (var tagsLock = await TagsSyncMutex.LockAsync())
+            var tags = contentModels
+                .SelectMany(c => c.Tags)
+                .Distinct()
+                .Select(t => new Tag
                 {
-                    var existingTags = await _context.Tags
-                        .Where(t => tags.Select(t => t.Name).Contains(t.Name))
-                        .ToDictionaryAsync(t => t.Name);
+                    Name = t
+                })
+                .ToList();
 
-                    foreach (var tag in tags)
-                        if (existingTags.TryGetValue(tag.Name, out var dbTag))
-                            tag.Id = dbTag.Id;
+            SynchronizeResult<Tag> tagsSynchronizeResult;
+            using (var tagsLock = await TagsSyncMutex.LockAsync())
+            {
+                var existingTags = await _context.Tags
+                    .Where(t => tags.Select(t => t.Name).Contains(t.Name))
+                    .ToDictionaryAsync(t => t.Name);
 
-                    tagsSynchronizeResult = await _context.SynchronizeTagsAsync(existingTags.Values, tags);
-                    await _context.SaveChangesAsync();
-                }
+                foreach (var tag in tags)
+                    if (existingTags.TryGetValue(tag.Name, out var dbTag))
+                        tag.Id = dbTag.Id;
 
-                var tagEntitiesLookup = tagsSynchronizeResult.Entities()
-                    .ToDictionary(t => t.Name);
+                tagsSynchronizeResult = await _context.SynchronizeTagsAsync(existingTags.Values, tags);
+                await _context.SaveChangesAsync();
+            }
 
-                using var platformLock = await PlatformSyncMutexes[(PlatformConstant)platform.Id].LockAsync();
+            var tagEntitiesLookup = tagsSynchronizeResult.Entities()
+                .ToDictionary(t => t.Name);
 
-                // Mark existing blacklisted content for deletion. Content which hasn't been added
-                // will simply by ignored
-                var existingBlacklistedContent = _context.Content
-                    .Where(c => c.PlatformId == platform.Id)
-                    .Where(c => blacklistedContent.Select(bc => bc.IdOnPlatform).Contains(c.IdOnPlatform));
+            using var platformLock = await PlatformSyncMutexes[(PlatformConstant)platform.Id].LockAsync();
 
-                foreach (var existingBlacklistedContentPiece in existingBlacklistedContent)
-                    if (!existingBlacklistedContentPiece.IsDeleted)
-                        existingBlacklistedContentPiece.IsMarkedForDeletion = true;
+            // Mark existing blacklisted content for deletion. Content which hasn't been added
+            // will simply by ignored
+            var existingBlacklistedContent = _context.Content
+                .Where(c => c.PlatformId == platform.Id)
+                .Where(c => blacklistedContent.Select(bc => bc.IdOnPlatform).Contains(c.IdOnPlatform));
 
-                // Then we synchronize creditable entities
-                var creditableEntities = contentModels
-                    .Where(c => c.CreditableEntities != null)
-                    .SelectMany(c => c.CreditableEntities)
-                    .DistinctBy(ce => ce.Id)
-                    .Select(ce => new CreditableEntity
-                    {
-                        IdOnPlatform = ce.Id,
-                        Name = ce.Name,
-                        Type = ce.Type,
-                        Platform = platform,
-                    })
-                    .ToList();
+            foreach (var existingBlacklistedContentPiece in existingBlacklistedContent)
+                if (!existingBlacklistedContentPiece.IsDeleted)
+                    existingBlacklistedContentPiece.IsMarkedForDeletion = true;
 
-                var existingCreditableEntities = await _context.CreditableEntities
-                    .Where(ce => ce.PlatformId == platform.Id)
-                    .Where(dbce => creditableEntities.Select(ce => ce.IdOnPlatform).Contains(dbce.IdOnPlatform))
-                    .ToDictionaryAsync(ce => ce.IdOnPlatform, ce => ce);
-
-                foreach (var creditableEntity in creditableEntities)
-                    if (existingCreditableEntities.TryGetValue(creditableEntity.IdOnPlatform, out var existingCreditableEntity))
-                        creditableEntity.Id = existingCreditableEntity.Id;
-
-                using var creditableEntityCiiLock = _creditableEntityCii.Lock((PlatformConstant)platform.Id, out var creditableEntityCii);
-                var creditableEntitiesSynchronizeResult = await _context.SynchronizeCreditableEntitiesAsync(
-                    existingCreditableEntities.Values, creditableEntities, creditableEntityCii);
-
-                var creditableEntitiesLookup = creditableEntitiesSynchronizeResult.Entities()
-                    .ToDictionary(ce => ce.IdOnPlatform);
-
-                // And at last we synchronize the actual content
-                var content = contentModels.Select(c => c.MediaType switch
+            // Then we synchronize creditable entities
+            var creditableEntities = contentModels
+                .Where(c => c.CreditableEntities != null)
+                .SelectMany(c => c.CreditableEntities)
+                .DistinctBy(ce => ce.Id)
+                .Select(ce => new CreditableEntity
                 {
-                    MediaTypeConstant.Image => c.MapTo<Image>(),
-                    MediaTypeConstant.AnimatedImage => c.MapTo<Image>(),
-                    _ => c.MapTo<Content>()
-                }).Select(c =>
-                {
-                    c.PlatformId = platform.Id;
+                    IdOnPlatform = ce.Id,
+                    Name = ce.Name,
+                    Type = ce.Type,
+                    Platform = platform,
+                })
+                .ToList();
 
-                    return c;
+            var existingCreditableEntities = await _context.CreditableEntities
+                .Where(ce => ce.PlatformId == platform.Id)
+                .Where(dbce => creditableEntities.Select(ce => ce.IdOnPlatform).Contains(dbce.IdOnPlatform))
+                .ToDictionaryAsync(ce => ce.IdOnPlatform, ce => ce);
+
+            foreach (var creditableEntity in creditableEntities)
+                if (existingCreditableEntities.TryGetValue(creditableEntity.IdOnPlatform, out var existingCreditableEntity))
+                    creditableEntity.Id = existingCreditableEntity.Id;
+
+            using var creditableEntityCiiLock = _creditableEntityCii.Lock((PlatformConstant)platform.Id, out var creditableEntityCii);
+            var creditableEntitiesSynchronizeResult = await _context.SynchronizeCreditableEntitiesAsync(
+                existingCreditableEntities.Values, creditableEntities, creditableEntityCii);
+
+            var creditableEntitiesLookup = creditableEntitiesSynchronizeResult.Entities()
+                .ToDictionary(ce => ce.IdOnPlatform);
+
+            // And at last we synchronize the actual content
+            var content = contentModels.Select(c => c.MediaType switch
+            {
+                MediaTypeConstant.Image => c.MapTo<Image>(),
+                MediaTypeConstant.AnimatedImage => c.MapTo<Image>(),
+                _ => c.MapTo<Content>()
+            }).Select(c =>
+            {
+                c.PlatformId = platform.Id;
+
+                return c;
+            }).ToList();
+
+            var existingContent = await _context.Content.AsSingleQuery()
+                .Include(ec => ec.Files)
+                .Include(ec => ec.Credits)
+                .Include(ec => ec.Tags)
+                .Include(ec => ec.OtherSources)
+                .Where(c => c.PlatformId == platform.Id && contentModels.Select(c => c.IdOnPlatform).Contains(c.IdOnPlatform))
+                .ToDictionaryAsync(c => c.IdOnPlatform, c => c);
+
+            foreach (var contentPiece in content)
+                if (existingContent.TryGetValue(contentPiece.IdOnPlatform, out var existingContentPiece))
+                    contentPiece.Id = existingContentPiece.Id;
+
+            var contentSynchronizeResult = await _context.SynchronizeAsync(c => c.Content, existingContent.Values, content,
+                (c1, c2) =>
+                {
+                    return c1.Id == c2.Id;
+                }, newContent =>
+                {
+                    newContent.LastEditedById = _user.GetApiKeyId();
+
+                    return Task.CompletedTask;
+                }, (src, dest) =>
+                {
+                    dest.IdOnPlatform = src.IdOnPlatform;
+                    dest.IdOnPlatformAsInteger = src.IdOnPlatformAsInteger;
+                    dest.ViewLocation = src.ViewLocation;
+                    dest.RatingId = src.RatingId;
+                    dest.MediaTypeId = src.MediaTypeId;
+
+                    // Some images might have failed to be downloaded. We therefore need to
+                    // resume them if they're submitted again.
+                    dest.HasFatalErrors = false;
+                    dest.IsMarkedForDeletion = false;
+                    dest.IsDeleted = false;
+
+                    return Task.CompletedTask;
+                }, updateAnywayAsync: (src, dest) =>
+                {
+                    dest.Reference = src.Reference;
+                    dest.Title = src.Title;
+                    dest.Description = src.Description;
+                    dest.Priority = src.Priority;
+                    dest.LastEditedById = _user.GetApiKeyId();
+                    dest.Source = src.Source;
+                    dest.SourceVersion = src.SourceVersion;
+
+                    return Task.CompletedTask;
+                });
+
+            using var contentCiiLock = _contentCii.Lock((PlatformConstant)platform.Id, out var contentCii);
+            foreach (var synchronizeResult in contentSynchronizeResult.Results())
+            {
+                var contentPiece = synchronizeResult.Entity;
+                var contentModel = modelLookup[contentPiece.IdOnPlatform];
+
+                var contentFiles = contentModel.Files.Select(f => new ContentFile
+                {
+                    Content = contentPiece,
+                    Width = f.Width,
+                    Height = f.Height,
+                    Location = f.Location,
+                    FileFormatId = (int)f.Format
                 }).ToList();
+                var synchronizeFilesResult = await _context.SynchronizeFilesAsync(contentPiece.Files, contentFiles);
 
-                var existingContent = await _context.Content.AsSingleQuery()
-                    .Include(ec => ec.Files)
-                    .Include(ec => ec.Credits)
-                    .Include(ec => ec.Tags)
-                    .Include(ec => ec.OtherSources)
-                    .Where(c => c.PlatformId == platform.Id && contentModels.Select(c => c.IdOnPlatform).Contains(c.IdOnPlatform))
-                    .ToDictionaryAsync(c => c.IdOnPlatform, c => c);
-
-                foreach (var contentPiece in content)
-                    if (existingContent.TryGetValue(contentPiece.IdOnPlatform, out var existingContentPiece))
-                        contentPiece.Id = existingContentPiece.Id;
-
-                var contentSynchronizeResult = await _context.SynchronizeAsync(c => c.Content, existingContent.Values, content,
-                    (c1, c2) =>
-                    {
-                        return c1.Id == c2.Id;
-                    }, newContent =>
-                    {
-                        newContent.LastEditedById = _user.GetApiKeyId();
-
-                        return Task.CompletedTask;
-                    }, (src, dest) =>
-                    {
-                        dest.IdOnPlatform = src.IdOnPlatform;
-                        dest.IdOnPlatformAsInteger = src.IdOnPlatformAsInteger;
-                        dest.ViewLocation = src.ViewLocation;
-                        dest.RatingId = src.RatingId;
-                        dest.MediaTypeId = src.MediaTypeId;
-
-                        // Some images might have failed to be downloaded. We therefore need to
-                        // resume them if they're submitted again.
-                        dest.HasFatalErrors = false;
-                        dest.IsMarkedForDeletion = false;
-                        dest.IsDeleted = false;
-
-                        return Task.CompletedTask;
-                    }, updateAnywayAsync: (src, dest) =>
-                    {
-                        dest.Reference = src.Reference;
-                        dest.Title = src.Title;
-                        dest.Description = src.Description;
-                        dest.Priority = src.Priority;
-                        dest.LastEditedById = _user.GetApiKeyId();
-                        dest.Source = src.Source;
-                        dest.SourceVersion = src.SourceVersion;
-
-                        return Task.CompletedTask;
-                    });
-
-                using var contentCiiLock = _contentCii.Lock((PlatformConstant)platform.Id, out var contentCii);
-                foreach (var synchronizeResult in contentSynchronizeResult.Results())
+                var contentCreditableEntities = contentModel.CreditableEntities.Select(c => new ContentCreditableEntity
                 {
-                    var contentPiece = synchronizeResult.Entity;
-                    var contentModel = modelLookup[contentPiece.IdOnPlatform];
+                    Content = contentPiece,
+                    CreditableEntity = creditableEntitiesLookup[c.Id]
+                }).ToList();
+                var synchronizeCredits = await _context.SynchronizeContentCreditsAsync(contentPiece.ContentCreditableEntity, contentCreditableEntities);
 
-                    var contentFiles = contentModel.Files.Select(f => new ContentFile
+                var contentTags = contentModel.Tags.Select(t => new ContentTag
+                {
+                    Content = contentPiece,
+                    Tag = tagEntitiesLookup[t]
+                }).ToList();
+                var synchronizeTagsResult = await _context.SynchronizeContentTagsAsync(contentPiece.ContentTags, contentTags);
+
+                var contentOtherSources = contentModel.OtherSources.Select(os => new ContentOtherSource
+                {
+                    Content = contentPiece,
+                    Location = os
+                }).ToList();
+                var synchronizeOtherSourcesResult = await _context.SynchronizeAsync(c => c.ContentOtherSources,
+                    contentPiece.OtherSources, contentOtherSources,
+                    (os1, os2) => (os1.Content, os1.Location) == (os2.Content, os2.Location));
+
+                var isContentChanged = synchronizeResult.HasChanges || synchronizeFilesResult.HasChanges || synchronizeCredits.HasChanges;
+                if (contentPiece.ChangeId != null && isContentChanged)
+                    contentCii.Next(contentPiece);
+
+                // Transparency fix, this is only required for e621 due to them being the only
+                // one flattening their images with a black background. This causes problems
+                // when, for example, the background of a sketch is transparent.
+                if (contentPiece.PlatformId == (int)PlatformConstant.E621 && contentPiece is Image image)
+                {
+                    var hasTransparency = contentTags.Any(ct => ct.Tag.Name == TransparentBackgroundTag);
+
+                    // The image has transparency and has already been indexed, yet was not
+                    // marked as having transparency when it got indexed.
+                    if (hasTransparency && image.IsIndexed && !image.HasTransparency)
                     {
-                        Content = contentPiece,
-                        Width = f.Width,
-                        Height = f.Height,
-                        Location = f.Location,
-                        FileFormatId = (int)f.Format
-                    }).ToList();
-                    var synchronizeFilesResult = await _context.SynchronizeFilesAsync(contentPiece.Files, contentFiles);
+                        image.RequiresIndexing = true;
 
-                    var contentCreditableEntities = contentModel.CreditableEntities.Select(c => new ContentCreditableEntity
-                    {
-                        Content = contentPiece,
-                        CreditableEntity = creditableEntitiesLookup[c.Id]
-                    }).ToList();
-                    var synchronizeCredits = await _context.SynchronizeContentCreditsAsync(contentPiece.ContentCreditableEntity, contentCreditableEntities);
-
-                    var contentTags = contentModel.Tags.Select(t => new ContentTag
-                    {
-                        Content = contentPiece,
-                        Tag = tagEntitiesLookup[t]
-                    }).ToList();
-                    var synchronizeTagsResult = await _context.SynchronizeContentTagsAsync(contentPiece.ContentTags, contentTags);
-
-                    var contentOtherSources = contentModel.OtherSources.Select(os => new ContentOtherSource
-                    {
-                        Content = contentPiece,
-                        Location = os
-                    }).ToList();
-                    var synchronizeOtherSourcesResult = await _context.SynchronizeAsync(c => c.ContentOtherSources,
-                        contentPiece.OtherSources, contentOtherSources,
-                        (os1, os2) => (os1.Content, os1.Location) == (os2.Content, os2.Location));
-
-                    var isContentChanged = synchronizeResult.HasChanges || synchronizeFilesResult.HasChanges || synchronizeCredits.HasChanges;
-                    if (contentPiece.ChangeId != null && isContentChanged)
-                        contentCii.Next(contentPiece);
-
-                    // Transparency fix, this is only required for e621 due to them being the only
-                    // one flattening their images with a black background. This causes problems
-                    // when, for example, the background of a sketch is transparent.
-                    if (contentPiece.PlatformId == (int)PlatformConstant.E621 && contentPiece is Image image)
-                    {
-                        var hasTransparency = contentTags.Any(ct => ct.Tag.Name == TransparentBackgroundTag);
-
-                        // The image has transparency and has already been indexed, yet was not
-                        // marked as having transparency when it got indexed.
-                        if (hasTransparency && image.IsIndexed && !image.HasTransparency)
-                        {
-                            image.RequiresIndexing = true;
-
-                            _logger.LogInformation("Applied transparency fix to image with ID {idOnPlatform} on {platform}",
-                                image.IdOnPlatform, platform.Name);
-                        }
-
-                        image.HasTransparency = hasTransparency;
+                        _logger.LogInformation("Applied transparency fix to image with ID {idOnPlatform} on {platform}",
+                            image.IdOnPlatform, platform.Name);
                     }
+
+                    image.HasTransparency = hasTransparency;
                 }
+            }
 
-                await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-                return null;
-            });
-        }
+            return null;
+        });
+    }
 
-        public async Task<SR<IEnumerable<UnprocessedImageModel>>> GetUnprocessedImages(string platformName)
+    public async Task<SR<IEnumerable<UnprocessedImageModel>>> GetUnprocessedImages(string platformName)
+    {
+        return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
         {
-            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
-            {
-                var models = await _context.GetUnprocessedAsync<Image, UnprocessedImageModel>(x => x.Images, platform, mapModel:
-                   (image, model) =>
+            var models = await _context.GetUnprocessedAsync<Image, UnprocessedImageModel>(x => x.Images, platform, mapModel:
+               (image, model) =>
+               {
+                   // If the image to be indexed has transparency, we should only provide the
+                   // indexer with formats that support transparency to ensure correct processing
+                   if (image.HasTransparency)
                    {
-                       // If the image to be indexed has transparency, we should only provide the
-                       // indexer with formats that support transparency to ensure correct processing
-                       if (image.HasTransparency)
-                       {
-                           model.Files = image.Files
-                               .Where(x => ((FileFormatConstant)x.FileFormatId).SupportsTransparency())
-                               .Select(x => new UnprocessedContentModel.FileModel
-                               {
-                                   Width = x.Width,
-                                   Height = x.Height,
-                                   Location = x.Location
-                               });
-                       }
-
-                       model.HasTransparency = image.HasTransparency;
-
-                       var possiblyAnimatedImages = image.Files.Where(x => ((FileFormatConstant)x.FileFormatId).SupportsAnimation()).ToList();
-                       if (possiblyAnimatedImages.Any())
-                       {
-                           model.Files = possiblyAnimatedImages.Select(x => new UnprocessedContentModel.FileModel
+                       model.Files = image.Files
+                           .Where(x => ((FileFormatConstant)x.FileFormatId).SupportsTransparency())
+                           .Select(x => new UnprocessedContentModel.FileModel
                            {
                                Width = x.Width,
                                Height = x.Height,
                                Location = x.Location
                            });
-                       }
-                   });
+                   }
 
-                return new SR<IEnumerable<UnprocessedImageModel>>(models);
-            });
-        }
+                   model.HasTransparency = image.HasTransparency;
 
-        private const int RetryIncrementThreshold = 3;
-        private static readonly TimeSpan RetryReservationTime = 3.Days();
+                   var possiblyAnimatedImages = image.Files.Where(x => ((FileFormatConstant)x.FileFormatId).SupportsAnimation()).ToList();
+                   if (possiblyAnimatedImages.Any())
+                   {
+                       model.Files = possiblyAnimatedImages.Select(x => new UnprocessedContentModel.FileModel
+                       {
+                           Width = x.Width,
+                           Height = x.Height,
+                           Location = x.Location
+                       });
+                   }
+               });
 
-        public async Task<SR<string>> GetContentToRetry(string platformName)
+            return new SR<IEnumerable<UnprocessedImageModel>>(models);
+        });
+    }
+
+    private const int RetryIncrementThreshold = 3;
+    private static readonly TimeSpan RetryReservationTime = 3.Days();
+
+    public async Task<SR<string>> GetContentToRetry(string platformName)
+    {
+        return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
         {
-            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
-            {
-                var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                var entity = await _context.Content
-                    .Where(i => i.PlatformId == platform.Id)
-                    .Where(i => i.HasFatalErrors && i.RetryIncrement < RetryIncrementThreshold)
-                    .Where(i => i.RetryReservedUntil < now)
-                    .OrderByDescending(i => i.Id)
-                    .FirstOrDefaultAsync();
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var entity = await _context.Content
+                .Where(i => i.PlatformId == platform.Id)
+                .Where(i => i.HasFatalErrors && i.RetryIncrement < RetryIncrementThreshold)
+                .Where(i => i.RetryReservedUntil < now)
+                .OrderByDescending(i => i.Id)
+                .FirstOrDefaultAsync();
 
-                if (entity == null)
-                    return new SR<string>((string)null);
+            if (entity == null)
+                return new SR<string>((string)null);
 
-                entity.RetryIncrement++;
-                entity.RetryReservedUntil = DateTimeOffset.UtcNow.Add(RetryReservationTime).ToUnixTimeSeconds();
-                await _context.SaveChangesAsync();
+            entity.RetryIncrement++;
+            entity.RetryReservedUntil = DateTimeOffset.UtcNow.Add(RetryReservationTime).ToUnixTimeSeconds();
+            await _context.SaveChangesAsync();
 
-                return new SR<string>(entity.IdOnPlatform);
-            });
-        }
+            return new SR<string>(entity.IdOnPlatform);
+        });
+    }
 
-        public async Task<SR<int?>> GetMinIdOnPlatform(string platformName)
+    public async Task<SR<int?>> GetMinIdOnPlatform(string platformName)
+    {
+        return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
         {
-            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
-            {
-                var minId = await _context.Content
-                    .Where(c => c.PlatformId == platform.Id)
-                    .MinAsync(c => c.IdOnPlatformAsInteger);
+            var minId = await _context.Content
+                .Where(c => c.PlatformId == platform.Id)
+                .MinAsync(c => c.IdOnPlatformAsInteger);
 
-                return new SR<int?>(minId);
-            });
-        }
+            return new SR<int?>(minId);
+        });
+    }
 
-        public async Task<SR<int?>> GetMaxIdOnPlatform(string platformName)
+    public async Task<SR<int?>> GetMaxIdOnPlatform(string platformName)
+    {
+        return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
         {
-            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
-            {
-                var maxId = await _context.Content
-                    .Where(c => c.PlatformId == platform.Id)
-                    .MaxAsync(c => c.IdOnPlatformAsInteger);
+            var maxId = await _context.Content
+                .Where(c => c.PlatformId == platform.Id)
+                .MaxAsync(c => c.IdOnPlatformAsInteger);
 
-                return new SR<int?>(maxId);
-            });
-        }
+            return new SR<int?>(maxId);
+        });
     }
 }

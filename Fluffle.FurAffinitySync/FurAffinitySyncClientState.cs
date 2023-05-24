@@ -4,37 +4,36 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.FurAffinitySync
+namespace Noppes.Fluffle.FurAffinitySync;
+
+public class FurAffinitySyncClientState : SyncState
 {
-    public class FurAffinitySyncClientState : SyncState
+    public int ArchiveStartId { get; set; }
+
+    public int ArchiveEndId { get; set; }
+
+    public ICollection<string> ProcessedArtists { get; set; }
+
+    private readonly AsyncLock _lock;
+
+    public FurAffinitySyncClientState()
     {
-        public int ArchiveStartId { get; set; }
+        _lock = new AsyncLock();
 
-        public int ArchiveEndId { get; set; }
+        ProcessedArtists = new List<string>();
+    }
 
-        public ICollection<string> ProcessedArtists { get; set; }
+    public T Acquire<T>(Func<FurAffinitySyncClientState, T> use)
+    {
+        using var _ = _lock.Lock();
 
-        private readonly AsyncLock _lock;
+        return use(this);
+    }
 
-        public FurAffinitySyncClientState()
-        {
-            _lock = new AsyncLock();
+    public async Task<T> AcquireAsync<T>(Func<FurAffinitySyncClientState, Task<T>> useAsync)
+    {
+        using var _ = await _lock.LockAsync();
 
-            ProcessedArtists = new List<string>();
-        }
-
-        public T Acquire<T>(Func<FurAffinitySyncClientState, T> use)
-        {
-            using var _ = _lock.Lock();
-
-            return use(this);
-        }
-
-        public async Task<T> AcquireAsync<T>(Func<FurAffinitySyncClientState, Task<T>> useAsync)
-        {
-            using var _ = await _lock.LockAsync();
-
-            return await useAsync(this);
-        }
+        return await useAsync(this);
     }
 }

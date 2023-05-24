@@ -1,5 +1,5 @@
-﻿using System;
-using FluentValidation;
+﻿using FluentValidation;
+using System;
 using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Configuration;

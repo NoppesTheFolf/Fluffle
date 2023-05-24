@@ -12,90 +12,89 @@ using Tweetinvi;
 using Tweetinvi.Exceptions;
 using Tweetinvi.Models;
 
-namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
+namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers;
+
+public abstract class BaseUserSupplier<T> : Producer<T> where T : IUserTweetsSupplierData, new()
 {
-    public abstract class BaseUserSupplier<T> : Producer<T> where T : IUserTweetsSupplierData, new()
+    protected abstract TimeSpan ReservationTime { get; }
+    protected abstract TimeSpan Interval { get; }
+
+    private readonly IServiceProvider _services;
+    private readonly ITwitterClient _twitterClient;
+    private readonly TweetRetriever _tweetRetriever;
+
+    protected BaseUserSupplier(IServiceProvider services, ITwitterClient twitterClient, TweetRetriever tweetRetriever)
     {
-        protected abstract TimeSpan ReservationTime { get; }
-        protected abstract TimeSpan Interval { get; }
+        _services = services;
+        _twitterClient = twitterClient;
+        _tweetRetriever = tweetRetriever;
+    }
 
-        private readonly IServiceProvider _services;
-        private readonly ITwitterClient _twitterClient;
-        private readonly TweetRetriever _tweetRetriever;
+    public override async Task WorkAsync()
+    {
+        using var scope = _services.CreateScope();
+        await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
+        var users = await GetUsersAsync(context);
 
-        protected BaseUserSupplier(IServiceProvider services, ITwitterClient twitterClient, TweetRetriever tweetRetriever)
+        if (users.Count == 0)
         {
-            _services = services;
-            _twitterClient = twitterClient;
-            _tweetRetriever = tweetRetriever;
+            Log.Information("Waiting for {interval} before trying to supply users again", Interval);
+            await Task.Delay(Interval);
+            return;
         }
 
-        public override async Task WorkAsync()
+        IUser twitterUser = null;
+        foreach (var user in users)
         {
-            using var scope = _services.CreateScope();
-            await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
-            var users = await GetUsersAsync(context);
+            var produced = new T();
 
-            if (users.Count == 0)
+            try
             {
-                Log.Information("Waiting for {interval} before trying to supply users again", Interval);
-                await Task.Delay(Interval);
+                twitterUser = await HttpResiliency.RunAsync(() => _twitterClient.Users.GetUserAsync(long.Parse(user.Id)));
+
+                user.ReservedUntil = DateTimeOffset.UtcNow.Add(ReservationTime).ToUnixTimeSeconds();
+                user.Name = twitterUser.Name;
+                user.Username = twitterUser.ScreenName;
+                user.IsProtected = twitterUser.Protected;
+                user.FollowersCount = twitterUser.FollowersCount;
+            }
+            catch (TwitterException e)
+            {
+                switch (e.StatusCode)
+                {
+                    case 403:
+                        user.IsSuspended = true;
+                        break;
+                    case 404:
+                        user.IsDeleted = true;
+                        break;
+                    default:
+                        throw;
+                }
+            }
+
+            await context.SaveChangesAsync();
+
+            if (user.IsProtected || user.IsSuspended || user.IsDeleted)
+            {
+                Log.Information("Skipping user @{username} because their is either protected, suspended or deleted", user.Username);
                 return;
             }
 
-            IUser twitterUser = null;
-            foreach (var user in users)
-            {
-                var produced = new T();
+            produced.Id = user.Id;
+            produced.Username = user.Username;
 
-                try
-                {
-                    twitterUser = await HttpResiliency.RunAsync(() => _twitterClient.Users.GetUserAsync(long.Parse(user.Id)));
+            var existingTweets = user.Tweets.Any() ? user.Tweets.Select(t => t.Id).ToImmutableHashSet() : null;
+            produced.Timeline = await TimelineCollection.CreateAsync(_twitterClient, _tweetRetriever, twitterUser, existingTweets);
 
-                    user.ReservedUntil = DateTimeOffset.UtcNow.Add(ReservationTime).ToUnixTimeSeconds();
-                    user.Name = twitterUser.Name;
-                    user.Username = twitterUser.ScreenName;
-                    user.IsProtected = twitterUser.Protected;
-                    user.FollowersCount = twitterUser.FollowersCount;
-                }
-                catch (TwitterException e)
-                {
-                    switch (e.StatusCode)
-                    {
-                        case 403:
-                            user.IsSuspended = true;
-                            break;
-                        case 404:
-                            user.IsDeleted = true;
-                            break;
-                        default:
-                            throw;
-                    }
-                }
+            if (!await BeforeProduceAsync(context, user, produced))
+                continue;
 
-                await context.SaveChangesAsync();
-
-                if (user.IsProtected || user.IsSuspended || user.IsDeleted)
-                {
-                    Log.Information("Skipping user @{username} because their is either protected, suspended or deleted", user.Username);
-                    return;
-                }
-
-                produced.Id = user.Id;
-                produced.Username = user.Username;
-
-                var existingTweets = user.Tweets.Any() ? user.Tweets.Select(t => t.Id).ToImmutableHashSet() : null;
-                produced.Timeline = await TimelineCollection.CreateAsync(_twitterClient, _tweetRetriever, twitterUser, existingTweets);
-
-                if (!await BeforeProduceAsync(context, user, produced))
-                    continue;
-
-                await ProduceAsync(produced);
-            }
+            await ProduceAsync(produced);
         }
-
-        protected abstract Task<List<User>> GetUsersAsync(TwitterContext context);
-
-        protected abstract Task<bool> BeforeProduceAsync(TwitterContext context, User user, T produced);
     }
+
+    protected abstract Task<List<User>> GetUsersAsync(TwitterContext context);
+
+    protected abstract Task<bool> BeforeProduceAsync(TwitterContext context, User user, T produced);
 }

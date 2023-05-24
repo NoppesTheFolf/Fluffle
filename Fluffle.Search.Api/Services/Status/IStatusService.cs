@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Search.Api.Services
+namespace Noppes.Fluffle.Search.Api.Services;
+
+public interface IStatusService
 {
-    public interface IStatusService
-    {
-        Task<IList<StatusModel>> GetStatusAsync();
-    }
+    Task<IList<StatusModel>> GetStatusAsync();
 }

@@ -8,66 +8,65 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace Noppes.Fluffle.PerceptualHashing
+namespace Noppes.Fluffle.PerceptualHashing;
+
+/// <summary>
+/// Provides an imaging provider implementation using libvips interop.
+/// </summary>
+public class VipsImagingProvider : FileImagingProvider
 {
-    /// <summary>
-    /// Provides an imaging provider implementation using libvips interop.
-    /// </summary>
-    public class VipsImagingProvider : FileImagingProvider
+    private readonly SemaphoreSlim _mutex;
+    private readonly IDictionary<Resolution, TemporaryFile> _cache;
+
+    public VipsImagingProvider()
     {
-        private readonly SemaphoreSlim _mutex;
-        private readonly IDictionary<Resolution, TemporaryFile> _cache;
+        _mutex = new SemaphoreSlim(1);
+        _cache = new Dictionary<Resolution, TemporaryFile>();
+    }
 
-        public VipsImagingProvider()
+    public override Image Prepare(string inputPath, in Resolution resolution)
+    {
+        _mutex.Wait();
+        try
         {
-            _mutex = new SemaphoreSlim(1);
-            _cache = new Dictionary<Resolution, TemporaryFile>();
-        }
-
-        public override Image Prepare(string inputPath, in Resolution resolution)
-        {
-            _mutex.Wait();
-            try
+            if (!_cache.TryGetValue(resolution, out var temporaryFile))
             {
-                if (!_cache.TryGetValue(resolution, out var temporaryFile))
-                {
-                    var areaSqrt = Math.Sqrt(resolution.Area);
-                    var (_, value) = _cache
-                        .Where(kv => Math.Sqrt(kv.Key.Area) / areaSqrt >= 2)
-                        .OrderBy(kv => kv.Key.Area)
-                        .FirstOrDefault();
+                var areaSqrt = Math.Sqrt(resolution.Area);
+                var (_, value) = _cache
+                    .Where(kv => Math.Sqrt(kv.Key.Area) / areaSqrt >= 2)
+                    .OrderBy(kv => kv.Key.Area)
+                    .FirstOrDefault();
 
-                    var sourceLocation = value == null ? inputPath : value.Location;
+                var sourceLocation = value == null ? inputPath : value.Location;
 
-                    temporaryFile = new TemporaryFile();
-                    FluffleVips.ThumbnailPpm(sourceLocation, temporaryFile.Location, resolution.Width, resolution.Height);
+                temporaryFile = new TemporaryFile();
+                FluffleVips.ThumbnailPpm(sourceLocation, temporaryFile.Location, resolution.Width, resolution.Height);
 
-                    _cache[resolution] = temporaryFile;
-                }
-
-                return NetpbmReader.Get(temporaryFile.Location);
+                _cache[resolution] = temporaryFile;
             }
-            finally
-            {
-                _mutex.Release();
-            }
+
+            return NetpbmReader.Get(temporaryFile.Location);
         }
-
-        public override void Dispose()
+        finally
         {
-            foreach (var temporaryFile in _cache.Values)
-                temporaryFile.Dispose();
+            _mutex.Release();
         }
     }
 
-    /// <summary>
-    /// Creates instances of <see cref="VipsImagingProvider"/>.
-    /// </summary>
-    public class VipsInteropImagingProviderFactory : ImagingProviderFactory
+    public override void Dispose()
     {
-        public override ImagingProvider CreateImagingProvider()
-        {
-            return new VipsImagingProvider();
-        }
+        foreach (var temporaryFile in _cache.Values)
+            temporaryFile.Dispose();
+    }
+}
+
+/// <summary>
+/// Creates instances of <see cref="VipsImagingProvider"/>.
+/// </summary>
+public class VipsInteropImagingProviderFactory : ImagingProviderFactory
+{
+    public override ImagingProvider CreateImagingProvider()
+    {
+        return new VipsImagingProvider();
     }
 }

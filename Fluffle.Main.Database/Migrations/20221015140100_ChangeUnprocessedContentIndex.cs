@@ -2,15 +2,15 @@
 
 #nullable disable
 
-namespace Noppes.Fluffle.Main.Database.Migrations
-{
-    public partial class ChangeUnprocessedContentIndex : Migration
-    {
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.Sql("DROP INDEX idx_content_unprocessed;");
+namespace Noppes.Fluffle.Main.Database.Migrations;
 
-            migrationBuilder.Sql(@"
+public partial class ChangeUnprocessedContentIndex : Migration
+{
+    protected override void Up(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.Sql("DROP INDEX idx_content_unprocessed;");
+
+        migrationBuilder.Sql(@"
 CREATE INDEX idx_content_unprocessed ON content (
     discriminator,
     is_marked_for_deletion DESC,
@@ -22,13 +22,13 @@ CREATE INDEX idx_content_unprocessed ON content (
     created_at DESC
 );
 ");
-        }
+    }
 
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.Sql("DROP INDEX idx_content_unprocessed;");
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.Sql("DROP INDEX idx_content_unprocessed;");
 
-            migrationBuilder.Sql(@"
+        migrationBuilder.Sql(@"
 CREATE INDEX idx_content_unprocessed ON content (
     discriminator,
     is_marked_for_deletion DESC,
@@ -41,6 +41,5 @@ CREATE INDEX idx_content_unprocessed ON content (
     created_at DESC
 );
 ");
-        }
     }
 }

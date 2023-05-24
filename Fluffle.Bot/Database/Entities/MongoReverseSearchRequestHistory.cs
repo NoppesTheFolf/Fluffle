@@ -1,13 +1,12 @@
 ﻿using System;
 
-namespace Noppes.Fluffle.Bot.Database
+namespace Noppes.Fluffle.Bot.Database;
+
+public class MongoReverseSearchRequestHistory
 {
-    public class MongoReverseSearchRequestHistory
-    {
-        public long Id { get; set; }
+    public long Id { get; set; }
 
-        public DateTime[] Values { get; set; }
+    public DateTime[] Values { get; set; }
 
-        public int Increment { get; set; }
-    }
+    public int Increment { get; set; }
 }

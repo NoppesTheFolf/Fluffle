@@ -1,20 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Noppes.Fluffle.Main.Database.Migrations
+namespace Noppes.Fluffle.Main.Database.Migrations;
+
+public partial class DeriveThumbnailFilename : Migration
 {
-    public partial class DeriveThumbnailFilename : Migration
+    protected override void Up(MigrationBuilder migrationBuilder)
     {
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.Sql(@"
+        migrationBuilder.Sql(@"
 UPDATE thumbnail
 SET filename = substring(location, '^https:\/\/.+?\/.+?\/.+?\/(.+)$');
 ");
-        }
+    }
 
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
 
-        }
     }
 }

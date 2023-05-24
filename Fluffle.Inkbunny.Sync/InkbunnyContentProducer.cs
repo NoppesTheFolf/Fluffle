@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
-using Noppes.Fluffle.Configuration;
+﻿using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Inkbunny.Client;

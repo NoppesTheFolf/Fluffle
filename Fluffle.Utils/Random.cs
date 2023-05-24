@@ -2,37 +2,36 @@
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
-namespace Noppes.Fluffle.Utils
+namespace Noppes.Fluffle.Utils;
+
+public static class Random
 {
-    public static class Random
+    private static readonly Regex AllowedCharacter = new("[a-zA-Z0-9]", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Generates a random string of the specified length in a secure manner.
+    /// </summary>
+    public static string GenerateString(int length)
     {
-        private static readonly Regex AllowedCharacter = new("[a-zA-Z0-9]", RegexOptions.Compiled);
+        if (length < 1)
+            throw new ArgumentOutOfRangeException(nameof(length), "Length must be equal to or greater than 1.");
 
-        /// <summary>
-        /// Generates a random string of the specified length in a secure manner.
-        /// </summary>
-        public static string GenerateString(int length)
+        var rngStr = new char[length];
+        for (var i = 0; i < length; i++)
         {
-            if (length < 1)
-                throw new ArgumentOutOfRangeException(nameof(length), "Length must be equal to or greater than 1.");
-
-            var rngStr = new char[length];
-            for (var i = 0; i < length; i++)
+            while (true)
             {
-                while (true)
-                {
-                    var buffer = RandomNumberGenerator.GetBytes(1);
-                    var character = (char)buffer[0];
+                var buffer = RandomNumberGenerator.GetBytes(1);
+                var character = (char)buffer[0];
 
-                    if (!AllowedCharacter.IsMatch(char.ToString(character)))
-                        continue;
+                if (!AllowedCharacter.IsMatch(char.ToString(character)))
+                    continue;
 
-                    rngStr[i] = character;
-                    break;
-                }
+                rngStr[i] = character;
+                break;
             }
-
-            return new string(rngStr);
         }
+
+        return new string(rngStr);
     }
 }

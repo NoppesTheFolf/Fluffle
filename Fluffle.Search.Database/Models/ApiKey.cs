@@ -2,9 +2,8 @@
 
 #nullable disable
 
-namespace Noppes.Fluffle.Search.Database.Models
+namespace Noppes.Fluffle.Search.Database.Models;
+
+public partial class ApiKey : ApiKey<ApiKey, Permission, ApiKeyPermission>
 {
-    public partial class ApiKey : ApiKey<ApiKey, Permission, ApiKeyPermission>
-    {
-    }
 }

@@ -9,36 +9,35 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Search.Api.Controllers
+namespace Noppes.Fluffle.Search.Api.Controllers;
+
+public class StatusController : SearchApiControllerV1
 {
-    public class StatusController : SearchApiControllerV1
+    private const string StatusCacheKey = "_Status";
+    private static readonly TimeSpan ExpirationInterval = 4.Seconds();
+    private static readonly AsyncLock Mutex = new();
+
+    private readonly IStatusService _statusService;
+    private readonly IMemoryCache _cache;
+
+    public StatusController(IStatusService statusService, IMemoryCache cache)
     {
-        private const string StatusCacheKey = "_Status";
-        private static readonly TimeSpan ExpirationInterval = 4.Seconds();
-        private static readonly AsyncLock Mutex = new();
+        _statusService = statusService;
+        _cache = cache;
+    }
 
-        private readonly IStatusService _statusService;
-        private readonly IMemoryCache _cache;
+    [AllowAnonymous]
+    [HttpGet("status")]
+    public async Task<IActionResult> GetStatus()
+    {
+        using var _ = await Mutex.LockAsync();
 
-        public StatusController(IStatusService statusService, IMemoryCache cache)
-        {
-            _statusService = statusService;
-            _cache = cache;
-        }
-
-        [AllowAnonymous]
-        [HttpGet("status")]
-        public async Task<IActionResult> GetStatus()
-        {
-            using var _ = await Mutex.LockAsync();
-
-            if (_cache.TryGetValue<IList<StatusModel>>(StatusCacheKey, out var model))
-                return Ok(model);
-
-            model = await _statusService.GetStatusAsync();
-            _cache.Set(StatusCacheKey, model, ExpirationInterval);
-
+        if (_cache.TryGetValue<IList<StatusModel>>(StatusCacheKey, out var model))
             return Ok(model);
-        }
+
+        model = await _statusService.GetStatusAsync();
+        _cache.Set(StatusCacheKey, model, ExpirationInterval);
+
+        return Ok(model);
     }
 }

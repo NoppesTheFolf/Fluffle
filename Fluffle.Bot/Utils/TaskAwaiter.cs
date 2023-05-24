@@ -5,71 +5,70 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Bot.Utils
+namespace Noppes.Fluffle.Bot.Utils;
+
+public class TaskAwaiter<T>
 {
-    public class TaskAwaiter<T>
+    public CancellationTokenSource CancellationTokenSource { get; }
+
+    private readonly HashSet<Task> _tasks;
+    private readonly ILogger<T> _logger;
+    private readonly Task _continuouslyRemoveCompletedTask;
+
+    public TaskAwaiter(ILogger<T> logger)
     {
-        public CancellationTokenSource CancellationTokenSource { get; }
+        _logger = logger;
+        CancellationTokenSource = new CancellationTokenSource();
+        _tasks = new HashSet<Task>();
+        _continuouslyRemoveCompletedTask = Task.Run(ContinuouslyRemoveCompleted);
+    }
 
-        private readonly HashSet<Task> _tasks;
-        private readonly ILogger<T> _logger;
-        private readonly Task _continuouslyRemoveCompletedTask;
+    public void Add(Task task)
+    {
+        if (CancellationTokenSource.IsCancellationRequested)
+            throw new InvalidOperationException();
 
-        public TaskAwaiter(ILogger<T> logger)
+        lock (_tasks)
         {
-            _logger = logger;
-            CancellationTokenSource = new CancellationTokenSource();
-            _tasks = new HashSet<Task>();
-            _continuouslyRemoveCompletedTask = Task.Run(ContinuouslyRemoveCompleted);
+            _tasks.Add(task);
         }
+    }
 
-        public void Add(Task task)
+    private async Task ContinuouslyRemoveCompleted()
+    {
+        while (true)
         {
             if (CancellationTokenSource.IsCancellationRequested)
-                throw new InvalidOperationException();
+                return;
 
             lock (_tasks)
             {
-                _tasks.Add(task);
+                var removedCount = _tasks.RemoveWhere(x => x.IsCompleted);
+                if (removedCount > 0)
+                    _logger.LogDebug("Removed {count} tasks.", removedCount);
             }
+
+            await Task.Delay(500);
         }
+    }
 
-        private async Task ContinuouslyRemoveCompleted()
+    public async Task WaitTillAllCompleted()
+    {
+        await _continuouslyRemoveCompletedTask;
+
+        while (true)
         {
-            while (true)
+            lock (_tasks)
             {
-                if (CancellationTokenSource.IsCancellationRequested)
-                    return;
+                var areAllCompleted = _tasks.All(x => x.IsCompleted);
 
-                lock (_tasks)
-                {
-                    var removedCount = _tasks.RemoveWhere(x => x.IsCompleted);
-                    if (removedCount > 0)
-                        _logger.LogDebug("Removed {count} tasks.", removedCount);
-                }
+                if (areAllCompleted)
+                    break;
 
-                await Task.Delay(500);
+                _logger.LogDebug("Waiting for remaining tasks to complete...");
             }
-        }
 
-        public async Task WaitTillAllCompleted()
-        {
-            await _continuouslyRemoveCompletedTask;
-
-            while (true)
-            {
-                lock (_tasks)
-                {
-                    var areAllCompleted = _tasks.All(x => x.IsCompleted);
-
-                    if (areAllCompleted)
-                        break;
-
-                    _logger.LogDebug("Waiting for remaining tasks to complete...");
-                }
-
-                await Task.Delay(200);
-            }
+            await Task.Delay(200);
         }
     }
 }

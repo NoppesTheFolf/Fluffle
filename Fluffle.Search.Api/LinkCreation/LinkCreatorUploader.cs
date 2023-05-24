@@ -4,39 +4,38 @@ using Noppes.Fluffle.Utils;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Search.Api.LinkCreation
+namespace Noppes.Fluffle.Search.Api.LinkCreation;
+
+public class LinkCreatorUploader : Consumer<SearchRequestV2>
 {
-    public class LinkCreatorUploader : Consumer<SearchRequestV2>
+    private readonly LinkCreatorStorage _storage;
+    private readonly B2Bucket _bucket;
+
+    public LinkCreatorUploader(LinkCreatorStorage storage, B2ClientCollection b2ClientCollection)
     {
-        private readonly LinkCreatorStorage _storage;
-        private readonly B2Bucket _bucket;
+        _storage = storage;
+        _bucket = b2ClientCollection.SearchResultsClient;
+    }
 
-        public LinkCreatorUploader(LinkCreatorStorage storage, B2ClientCollection b2ClientCollection)
-        {
-            _storage = storage;
-            _bucket = b2ClientCollection.SearchResultsClient;
-        }
+    public override async Task<SearchRequestV2> ConsumeAsync(SearchRequestV2 data)
+    {
+        var thumbnailLocation = _storage.GetThumbnailLocation(data.Id);
+        await UploadAsync(data.Id, thumbnailLocation, "image/jpeg");
 
-        public override async Task<SearchRequestV2> ConsumeAsync(SearchRequestV2 data)
-        {
-            var thumbnailLocation = _storage.GetThumbnailLocation(data.Id);
-            await UploadAsync(data.Id, thumbnailLocation, "image/jpeg");
+        var searchResultsLocation = _storage.GetSearchResultsLocation(data.Id);
+        await UploadAsync(data.Id, searchResultsLocation, "application/json");
 
-            var searchResultsLocation = _storage.GetSearchResultsLocation(data.Id);
-            await UploadAsync(data.Id, searchResultsLocation, "application/json");
+        return data;
+    }
 
-            return data;
-        }
+    private async Task UploadAsync(string id, string location, string contentType)
+    {
+        if (!File.Exists(location))
+            return;
 
-        private async Task UploadAsync(string id, string location, string contentType)
-        {
-            if (!File.Exists(location))
-                return;
+        var extension = Path.GetExtension(location);
+        await _bucket.UploadAsync(() => File.OpenRead(location), $"{id}{extension}", contentType);
 
-            var extension = Path.GetExtension(location);
-            await _bucket.UploadAsync(() => File.OpenRead(location), $"{id}{extension}", contentType);
-
-            File.Delete(location);
-        }
+        File.Delete(location);
     }
 }

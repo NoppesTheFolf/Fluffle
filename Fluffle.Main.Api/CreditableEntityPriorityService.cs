@@ -11,80 +11,79 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Main.Api
+namespace Noppes.Fluffle.Main.Api;
+
+public class CreditableEntityPriorityService : IService
 {
-    public class CreditableEntityPriorityService : IService
+    private const int BatchSize = 10_000;
+
+    private readonly MainServerConfiguration _configuration;
+    private readonly IServiceProvider _services;
+    private readonly ILogger<CreditableEntityPriorityService> _logger;
+    private readonly ChangeIdIncrementer<CreditableEntity> _cci;
+
+    public CreditableEntityPriorityService(MainServerConfiguration configuration, IServiceProvider services, ILogger<CreditableEntityPriorityService> logger, ChangeIdIncrementer<CreditableEntity> cci)
     {
-        private const int BatchSize = 10_000;
+        _configuration = configuration;
+        _services = services;
+        _logger = logger;
+        _cci = cci;
+    }
 
-        private readonly MainServerConfiguration _configuration;
-        private readonly IServiceProvider _services;
-        private readonly ILogger<CreditableEntityPriorityService> _logger;
-        private readonly ChangeIdIncrementer<CreditableEntity> _cci;
-
-        public CreditableEntityPriorityService(MainServerConfiguration configuration, IServiceProvider services, ILogger<CreditableEntityPriorityService> logger, ChangeIdIncrementer<CreditableEntity> cci)
+    public async Task RunAsync()
+    {
+        while (true)
         {
-            _configuration = configuration;
-            _services = services;
-            _logger = logger;
-            _cci = cci;
-        }
+            using var scope = _services.CreateScope();
+            await using var context = scope.ServiceProvider.GetRequiredService<FluffleContext>();
 
-        public async Task RunAsync()
-        {
-            while (true)
-            {
-                using var scope = _services.CreateScope();
-                await using var context = scope.ServiceProvider.GetRequiredService<FluffleContext>();
+            var now = DateTime.UtcNow;
+            var creditableEntities = await context.CreditableEntities
+                .OrderByDescending(ce => ce.PriorityUpdatedAt == null)
+                .ThenBy(ce => ce.PriorityUpdatedAt)
+                .Take(BatchSize)
+                .ToListAsync();
 
-                var now = DateTime.UtcNow;
-                var creditableEntities = await context.CreditableEntities
-                    .OrderByDescending(ce => ce.PriorityUpdatedAt == null)
-                    .ThenBy(ce => ce.PriorityUpdatedAt)
-                    .Take(BatchSize)
-                    .ToListAsync();
+            creditableEntities = creditableEntities
+                .Where(ce => ce.PriorityUpdatedAt == null || ce.PriorityUpdatedAt < now.Subtract(_configuration.CreditableEntityPriorityExpirationTime.Minutes()))
+                .ToList();
 
-                creditableEntities = creditableEntities
-                    .Where(ce => ce.PriorityUpdatedAt == null || ce.PriorityUpdatedAt < now.Subtract(_configuration.CreditableEntityPriorityExpirationTime.Minutes()))
-                    .ToList();
+            if (creditableEntities.Count == 0)
+                break;
 
-                if (creditableEntities.Count == 0)
-                    break;
+            _logger.LogInformation("Calculating priorities for {count} creditable entities.", creditableEntities.Count);
 
-                _logger.LogInformation("Calculating priorities for {count} creditable entities.", creditableEntities.Count);
-
-                var creditableEntitiesStats = await context.ContentCreditableEntities
-                    .Where(cce => creditableEntities.Select(ce => ce.Id).Contains(cce.CreditableEntityId))
-                    .GroupBy(cce => cce.CreditableEntityId)
-                    .Select(g => new
-                    {
-                        Id = g.Key,
-                        Priority = g.Max(cce => cce.Content.Priority)
-                    }).ToDictionaryAsync(x => x.Id, x => (int?)x.Priority);
-
-                foreach (var creditableEntity in creditableEntities)
+            var creditableEntitiesStats = await context.ContentCreditableEntities
+                .Where(cce => creditableEntities.Select(ce => ce.Id).Contains(cce.CreditableEntityId))
+                .GroupBy(cce => cce.CreditableEntityId)
+                .Select(g => new
                 {
-                    creditableEntitiesStats.TryGetValue(creditableEntity.Id, out var priority);
-                    creditableEntity.Priority = priority ?? int.MinValue;
+                    Id = g.Key,
+                    Priority = g.Max(cce => cce.Content.Priority)
+                }).ToDictionaryAsync(x => x.Id, x => (int?)x.Priority);
 
-                    var creditableEntityState = context.Entry(creditableEntity).State;
-                    if (creditableEntityState == EntityState.Detached)
-                        throw new InvalidOperationException();
+            foreach (var creditableEntity in creditableEntities)
+            {
+                creditableEntitiesStats.TryGetValue(creditableEntity.Id, out var priority);
+                creditableEntity.Priority = priority ?? int.MinValue;
 
-                    if (creditableEntityState is EntityState.Modified)
-                    {
-                        using var _ = _cci.Lock((PlatformConstant)creditableEntity.PlatformId, out var incrementer);
-                        incrementer.Next(creditableEntity);
-                    }
+                var creditableEntityState = context.Entry(creditableEntity).State;
+                if (creditableEntityState == EntityState.Detached)
+                    throw new InvalidOperationException();
 
-                    creditableEntity.PriorityUpdatedAt = now;
+                if (creditableEntityState is EntityState.Modified)
+                {
+                    using var _ = _cci.Lock((PlatformConstant)creditableEntity.PlatformId, out var incrementer);
+                    incrementer.Next(creditableEntity);
                 }
 
-                await context.SaveChangesAsync();
-
-                if (creditableEntities.Count < BatchSize)
-                    break;
+                creditableEntity.PriorityUpdatedAt = now;
             }
+
+            await context.SaveChangesAsync();
+
+            if (creditableEntities.Count < BatchSize)
+                break;
         }
     }
 }

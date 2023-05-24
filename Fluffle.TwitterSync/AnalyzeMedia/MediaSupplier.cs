@@ -10,67 +10,66 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.TwitterSync.AnalyzeMedia
+namespace Noppes.Fluffle.TwitterSync.AnalyzeMedia;
+
+public class MediaSupplier : Producer<AnalyzeMediaData>
 {
-    public class MediaSupplier : Producer<AnalyzeMediaData>
+    private const int BatchSize = 20;
+    private static readonly TimeSpan Interval = 1.Minutes();
+    private static readonly TimeSpan ReservationTime = 1.Hours();
+
+    private readonly IServiceProvider _services;
+
+    public MediaSupplier(IServiceProvider services)
     {
-        private const int BatchSize = 20;
-        private static readonly TimeSpan Interval = 1.Minutes();
-        private static readonly TimeSpan ReservationTime = 1.Hours();
+        _services = services;
+    }
 
-        private readonly IServiceProvider _services;
+    public override async Task WorkAsync()
+    {
+        using var scope = _services.CreateScope();
+        await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
 
-        public MediaSupplier(IServiceProvider services)
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var tweets = await context.Tweets
+            .Include(t => t.Media.Where(m => !m.IsNotAvailable && m.MediaType == MediaTypeConstant.Image))
+            .ThenInclude(t => t.Sizes.Where(s => s.ResizeMode == ResizeMode.Fit))
+            .Where(t => t.ReservedUntil < now && t.ShouldBeAnalyzed && t.AnalyzedAt == null)
+            .OrderByDescending(t => t.FavoriteCount)
+            .Take(BatchSize)
+            .ToListAsync();
+
+        if (tweets.Count == 0)
         {
-            _services = services;
+            Log.Information("Waiting for {interval} before trying to supply media again", Interval);
+            await Task.Delay(Interval);
+            return;
         }
 
-        public override async Task WorkAsync()
+        var images = tweets.SelectMany(t => t.Media.Select(m => new RetrieverImage
         {
-            using var scope = _services.CreateScope();
-            await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
-
-            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var tweets = await context.Tweets
-                .Include(t => t.Media.Where(m => !m.IsNotAvailable && m.MediaType == MediaTypeConstant.Image))
-                .ThenInclude(t => t.Sizes.Where(s => s.ResizeMode == ResizeMode.Fit))
-                .Where(t => t.ReservedUntil < now && t.ShouldBeAnalyzed && t.AnalyzedAt == null)
-                .OrderByDescending(t => t.FavoriteCount)
-                .Take(BatchSize)
-                .ToListAsync();
-
-            if (tweets.Count == 0)
+            TweetId = t.Id,
+            MediaId = m.Id,
+            Url = m.Url,
+            Sizes = m.Sizes.Select(s => new RetrieverSize
             {
-                Log.Information("Waiting for {interval} before trying to supply media again", Interval);
-                await Task.Delay(Interval);
-                return;
-            }
+                Width = s.Width,
+                Height = s.Height,
+                Resize = s.ResizeMode,
+                Size = s.Size
+            }).ToList()
+        })).DistinctBy(rt => rt.MediaId).ToList();
 
-            var images = tweets.SelectMany(t => t.Media.Select(m => new RetrieverImage
-            {
-                TweetId = t.Id,
-                MediaId = m.Id,
-                Url = m.Url,
-                Sizes = m.Sizes.Select(s => new RetrieverSize
-                {
-                    Width = s.Width,
-                    Height = s.Height,
-                    Resize = s.ResizeMode,
-                    Size = s.Size
-                }).ToList()
-            })).DistinctBy(rt => rt.MediaId).ToList();
-
-            foreach (var tweet in tweets)
-            {
-                tweet.ReservedUntil = DateTimeOffset.UtcNow.Add(ReservationTime).ToUnixTimeSeconds();
-            }
-            await context.SaveChangesAsync();
-
-            await ProduceAsync(new AnalyzeMediaData
-            {
-                TweetIds = tweets.Select(t => t.Id).ToList(),
-                Images = images
-            });
+        foreach (var tweet in tweets)
+        {
+            tweet.ReservedUntil = DateTimeOffset.UtcNow.Add(ReservationTime).ToUnixTimeSeconds();
         }
+        await context.SaveChangesAsync();
+
+        await ProduceAsync(new AnalyzeMediaData
+        {
+            TweetIds = tweets.Select(t => t.Id).ToList(),
+            Images = images
+        });
     }
 }

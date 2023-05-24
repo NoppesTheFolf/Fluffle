@@ -6,24 +6,23 @@ using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Sync;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.FurAffinitySync
+namespace Noppes.Fluffle.FurAffinitySync;
+
+public class FurAffinityClientFactory : ClientFactory<FurAffinityClient>
 {
-    public class FurAffinityClientFactory : ClientFactory<FurAffinityClient>
+    public FurAffinityClientFactory(FluffleConfiguration configuration) : base(configuration)
     {
-        public FurAffinityClientFactory(FluffleConfiguration configuration) : base(configuration)
+    }
+
+    public override Task<FurAffinityClient> CreateAsync(int interval, string applicationName)
+    {
+        var faConf = Configuration.Get<FurAffinityConfiguration>();
+
+        var client = new FurAffinityClient("https://www.furaffinity.net", Project.UserAgent(applicationName), faConf.A, faConf.B)
         {
-        }
+            RateLimiter = new RequestRateLimiter(interval.Milliseconds())
+        };
 
-        public override Task<FurAffinityClient> CreateAsync(int interval, string applicationName)
-        {
-            var faConf = Configuration.Get<FurAffinityConfiguration>();
-
-            var client = new FurAffinityClient("https://www.furaffinity.net", Project.UserAgent(applicationName), faConf.A, faConf.B)
-            {
-                RateLimiter = new RequestRateLimiter(interval.Milliseconds())
-            };
-
-            return Task.FromResult(client);
-        }
+        return Task.FromResult(client);
     }
 }

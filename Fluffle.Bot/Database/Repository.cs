@@ -5,84 +5,83 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Bot.Database
+namespace Noppes.Fluffle.Bot.Database;
+
+public interface IRepository<T> where T : class
 {
-    public interface IRepository<T> where T : class
+    public Task InsertAsync(T document);
+
+    public Task ReplaceAsync(Expression<Func<T, bool>> predicate, T document);
+
+    public Task UpsertAsync(Expression<Func<T, bool>> predicate, T document);
+
+    public Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate) => QueryFirstOrDefaultAsync(x => x.Where(predicate));
+
+    public Task<T> QueryFirstOrDefaultAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+
+    public Task<T> FirstAsync(Expression<Func<T, bool>> predicate) => QueryFirstAsync(x => x.Where(predicate));
+
+    public Task<T> QueryFirstAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+
+    public Task<List<T>> ManyAsync(Expression<Func<T, bool>> predicate) => QueryManyAsync(x => x.Where(predicate));
+
+    public Task<List<T>> QueryManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+
+    public Task<long> DeleteManyAsync(Expression<Func<T, bool>> predicate);
+
+    public Task<bool> AnyAsync(Expression<Func<T, bool>> predicate) => QueryAnyAsync(x => x.Where(predicate));
+
+    public Task<bool> QueryAnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+}
+
+public abstract class Repository<T> : IRepository<T> where T : class, new()
+{
+    private readonly IMongoCollection<T> _collection;
+
+    protected Repository(IMongoCollection<T> collection)
     {
-        public Task InsertAsync(T document);
-
-        public Task ReplaceAsync(Expression<Func<T, bool>> predicate, T document);
-
-        public Task UpsertAsync(Expression<Func<T, bool>> predicate, T document);
-
-        public Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate) => QueryFirstOrDefaultAsync(x => x.Where(predicate));
-
-        public Task<T> QueryFirstOrDefaultAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
-
-        public Task<T> FirstAsync(Expression<Func<T, bool>> predicate) => QueryFirstAsync(x => x.Where(predicate));
-
-        public Task<T> QueryFirstAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
-
-        public Task<List<T>> ManyAsync(Expression<Func<T, bool>> predicate) => QueryManyAsync(x => x.Where(predicate));
-
-        public Task<List<T>> QueryManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
-
-        public Task<long> DeleteManyAsync(Expression<Func<T, bool>> predicate);
-
-        public Task<bool> AnyAsync(Expression<Func<T, bool>> predicate) => QueryAnyAsync(x => x.Where(predicate));
-
-        public Task<bool> QueryAnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+        _collection = collection;
     }
 
-    public abstract class Repository<T> : IRepository<T> where T : class, new()
+    public Task InsertAsync(T document)
     {
-        private readonly IMongoCollection<T> _collection;
+        return _collection.InsertOneAsync(document);
+    }
 
-        protected Repository(IMongoCollection<T> collection)
-        {
-            _collection = collection;
-        }
+    public Task ReplaceAsync(Expression<Func<T, bool>> predicate, T document)
+    {
+        return _collection.ReplaceOneAsync(predicate, document);
+    }
 
-        public Task InsertAsync(T document)
-        {
-            return _collection.InsertOneAsync(document);
-        }
+    public Task<List<T>> QueryManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+    {
+        return applyFilter(_collection.AsQueryable()).ToListAsync();
+    }
 
-        public Task ReplaceAsync(Expression<Func<T, bool>> predicate, T document)
-        {
-            return _collection.ReplaceOneAsync(predicate, document);
-        }
+    public async Task<long> DeleteManyAsync(Expression<Func<T, bool>> predicate)
+    {
+        var result = await _collection.DeleteManyAsync(predicate);
 
-        public Task<List<T>> QueryManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
-        {
-            return applyFilter(_collection.AsQueryable()).ToListAsync();
-        }
+        return result.DeletedCount;
+    }
 
-        public async Task<long> DeleteManyAsync(Expression<Func<T, bool>> predicate)
-        {
-            var result = await _collection.DeleteManyAsync(predicate);
+    public Task<bool> QueryAnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+    {
+        return applyFilter(_collection.AsQueryable()).AnyAsync();
+    }
 
-            return result.DeletedCount;
-        }
+    public Task<T> QueryFirstAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+    {
+        return applyFilter(_collection.AsQueryable()).FirstAsync();
+    }
 
-        public Task<bool> QueryAnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
-        {
-            return applyFilter(_collection.AsQueryable()).AnyAsync();
-        }
+    public Task<T> QueryFirstOrDefaultAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+    {
+        return applyFilter(_collection.AsQueryable()).FirstOrDefaultAsync();
+    }
 
-        public Task<T> QueryFirstAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
-        {
-            return applyFilter(_collection.AsQueryable()).FirstAsync();
-        }
-
-        public Task<T> QueryFirstOrDefaultAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
-        {
-            return applyFilter(_collection.AsQueryable()).FirstOrDefaultAsync();
-        }
-
-        public Task UpsertAsync(Expression<Func<T, bool>> predicate, T document)
-        {
-            return _collection.ReplaceOneAsync(predicate, document, new ReplaceOptions { IsUpsert = true });
-        }
+    public Task UpsertAsync(Expression<Func<T, bool>> predicate, T document)
+    {
+        return _collection.ReplaceOneAsync(predicate, document, new ReplaceOptions { IsUpsert = true });
     }
 }

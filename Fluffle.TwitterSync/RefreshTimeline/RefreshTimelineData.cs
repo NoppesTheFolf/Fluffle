@@ -1,13 +1,12 @@
 ﻿using Noppes.Fluffle.TwitterSync.AnalyzeUsers;
 using System;
 
-namespace Noppes.Fluffle.TwitterSync.RefreshTimeline
+namespace Noppes.Fluffle.TwitterSync.RefreshTimeline;
+
+public class RefreshTimelineData : IUserTweetsSupplierData
 {
-    public class RefreshTimelineData : IUserTweetsSupplierData
-    {
-        public string Id { get; set; }
-        public string Username { get; set; }
-        public TimelineCollection Timeline { get; set; }
-        public DateTimeOffset TimelineRetrievedAt { get; set; }
-    }
+    public string Id { get; set; }
+    public string Username { get; set; }
+    public TimelineCollection Timeline { get; set; }
+    public DateTimeOffset TimelineRetrievedAt { get; set; }
 }

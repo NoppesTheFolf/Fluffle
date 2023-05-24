@@ -12,178 +12,177 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
+namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers;
+
+public class RetrieverImage
 {
-    public class RetrieverImage
+    public string TweetId { get; set; }
+
+    public string MediaId { get; set; }
+
+    public string Url { get; set; }
+
+    public ICollection<RetrieverSize> Sizes { get; set; }
+}
+
+public class RetrieverSize
+{
+    public MediaSizeConstant Size { get; set; }
+
+    public int Height { get; set; }
+
+    public int Width { get; set; }
+
+    public ResizeMode Resize { get; set; }
+}
+
+public interface IImageRetrieverData : IDisposable
+{
+    public ICollection<RetrieverImage> Images { get; set; }
+    public ICollection<Stream> Streams { get; set; }
+    public ICollection<Func<Stream>> OpenStreams { get; set; }
+
+    void IDisposable.Dispose()
     {
-        public string TweetId { get; set; }
+        if (Streams == null)
+            return;
 
-        public string MediaId { get; set; }
+        foreach (var stream in Streams)
+            stream.Dispose();
+    }
+}
 
-        public string Url { get; set; }
+public class ImageRetriever<T> : Consumer<T> where T : IImageRetrieverData
+{
+    private const int TargetSize = 456;
+    private static readonly int OriginalSize = (int)Math.Floor(Math.Sqrt(int.MaxValue));
 
-        public ICollection<RetrieverSize> Sizes { get; set; }
+    private readonly IServiceProvider _services;
+    private readonly ITwitterDownloadClient _downloadClient;
+    private readonly IPredictionClient _predictionClient;
+
+    public ImageRetriever(IServiceProvider services, ITwitterDownloadClient downloadClient, IPredictionClient predictionClient)
+    {
+        _services = services;
+        _downloadClient = downloadClient;
+        _predictionClient = predictionClient;
     }
 
-    public class RetrieverSize
+    public override async Task<T> ConsumeAsync(T data)
     {
-        public MediaSizeConstant Size { get; set; }
-
-        public int Height { get; set; }
-
-        public int Width { get; set; }
-
-        public ResizeMode Resize { get; set; }
-    }
-
-    public interface IImageRetrieverData : IDisposable
-    {
-        public ICollection<RetrieverImage> Images { get; set; }
-        public ICollection<Stream> Streams { get; set; }
-        public ICollection<Func<Stream>> OpenStreams { get; set; }
-
-        void IDisposable.Dispose()
+        // Download the images from Twitter
+        data.Streams = new List<Stream>();
+        data.OpenStreams = new List<Func<Stream>>();
+        foreach (var image in data.Images.ToList()) // Make a copy so we can remove items from the original collection
         {
-            if (Streams == null)
-                return;
-
-            foreach (var stream in Streams)
-                stream.Dispose();
-        }
-    }
-
-    public class ImageRetriever<T> : Consumer<T> where T : IImageRetrieverData
-    {
-        private const int TargetSize = 456;
-        private static readonly int OriginalSize = (int)Math.Floor(Math.Sqrt(int.MaxValue));
-
-        private readonly IServiceProvider _services;
-        private readonly ITwitterDownloadClient _downloadClient;
-        private readonly IPredictionClient _predictionClient;
-
-        public ImageRetriever(IServiceProvider services, ITwitterDownloadClient downloadClient, IPredictionClient predictionClient)
-        {
-            _services = services;
-            _downloadClient = downloadClient;
-            _predictionClient = predictionClient;
-        }
-
-        public override async Task<T> ConsumeAsync(T data)
-        {
-            // Download the images from Twitter
-            data.Streams = new List<Stream>();
-            data.OpenStreams = new List<Func<Stream>>();
-            foreach (var image in data.Images.ToList()) // Make a copy so we can remove items from the original collection
+            async Task<Stream> DownloadImageAsync(Stack<(RetrieverSize image, bool isOriginal)> items)
             {
-                async Task<Stream> DownloadImageAsync(Stack<(RetrieverSize image, bool isOriginal)> items)
-                {
-                    if (items.Count == 0)
-                        return null;
+                if (items.Count == 0)
+                    return null;
 
-                    FlurlHttpException exitException = null;
-                    while (items.TryPop(out var x))
+                FlurlHttpException exitException = null;
+                while (items.TryPop(out var x))
+                {
+                    Stream stream = null;
+                    try
                     {
-                        Stream stream = null;
+                        var url = x.isOriginal ? image.Url : $"{image.Url}?name={Enum.GetName(x.image.Size)!.ToLowerInvariant()}";
+
+                        using var _ = Operation.Time("Downloading media with ID {mediaId} for tweet with ID {tweetId} at size {size}", image.MediaId, image.TweetId, x.image.Size);
+                        stream = await HttpResiliency.RunAsync(() => _downloadClient.GetStreamAsync(url));
+
                         try
                         {
-                            var url = x.isOriginal ? image.Url : $"{image.Url}?name={Enum.GetName(x.image.Size)!.ToLowerInvariant()}";
+                            var streamCopy = new MemoryStream();
+                            await stream.CopyToAsync(streamCopy);
+                            streamCopy.Position = 0;
+                            stream.Position = 0;
 
-                            using var _ = Operation.Time("Downloading media with ID {mediaId} for tweet with ID {tweetId} at size {size}", image.MediaId, image.TweetId, x.image.Size);
-                            stream = await HttpResiliency.RunAsync(() => _downloadClient.GetStreamAsync(url));
-
-                            try
-                            {
-                                var streamCopy = new MemoryStream();
-                                await stream.CopyToAsync(streamCopy);
-                                streamCopy.Position = 0;
-                                stream.Position = 0;
-
-                                await _predictionClient.VerifyImage(streamCopy);
-                            }
-                            catch (FlurlHttpException exception)
-                            {
-                                if (exception.StatusCode == 400)
-                                {
-                                    Log.Warning(exception, "Failed reading media with ID {mediaId} as image for tweet with ID {tweetId} at size {size}", image.MediaId, image.TweetId, x.image.Size);
-                                    return null;
-                                }
-
-                                await stream.DisposeAsync();
-                                throw;
-                            }
-
-                            return stream;
+                            await _predictionClient.VerifyImage(streamCopy);
                         }
                         catch (FlurlHttpException exception)
                         {
-                            exitException = exception;
+                            if (exception.StatusCode == 400)
+                            {
+                                Log.Warning(exception, "Failed reading media with ID {mediaId} as image for tweet with ID {tweetId} at size {size}", image.MediaId, image.TweetId, x.image.Size);
+                                return null;
+                            }
 
-                            Log.Warning("Failed downloading media with ID {mediaId} for tweet with ID {tweetId} at size {size} ({statusCode})", image.MediaId, image.TweetId, x.image.Size, exception.StatusCode);
-
-                            if (stream != null)
-                                await stream.DisposeAsync();
+                            await stream.DisposeAsync();
+                            throw;
                         }
+
+                        return stream;
                     }
+                    catch (FlurlHttpException exception)
+                    {
+                        exitException = exception;
 
-                    if (exitException!.StatusCode is 403 or 404)
-                        return null;
+                        Log.Warning("Failed downloading media with ID {mediaId} for tweet with ID {tweetId} at size {size} ({statusCode})", image.MediaId, image.TweetId, x.image.Size, exception.StatusCode);
 
-                    throw exitException!;
+                        if (stream != null)
+                            await stream.DisposeAsync();
+                    }
                 }
 
-                IEnumerable<(RetrieverSize image, bool isOriginal)> sizes = image.Sizes
-                    .Where(s => s.Resize == ResizeMode.Fit)
-                    .Select(s => (s, false))
-                    .Concat(new[]
-                    {
-                        (new RetrieverSize
-                        {
-                            Width = OriginalSize,
-                            Height = OriginalSize
-                        }, true)
-                    });
+                if (exitException!.StatusCode is 403 or 404)
+                    return null;
 
-                var preferredSizes = ImageSizeHelper.OrderByDownloadPreference(sizes, x => x.image.Width, x => x.image.Height, TargetSize);
-                var images = new Stack<(RetrieverSize image, bool isOriginal)>(preferredSizes.Reverse());
-                await using var stream = await DownloadImageAsync(images);
-
-                if (stream == null)
-                {
-                    using var scope = _services.CreateScope();
-                    await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
-
-                    var media = await context.Media.FirstOrDefaultAsync(m => m.Id == image.MediaId);
-                    if (media != null)
-                    {
-                        Log.Information("Marking media with ID {mediaId} as not available", media.Id);
-                        media.IsNotAvailable = true;
-
-                        await context.SaveChangesAsync();
-                    }
-
-                    data.Images.Remove(data.Images.First(i => i.MediaId == image.MediaId));
-                    continue;
-                }
-
-                var memoryStream = new MemoryStream();
-                data.Streams.Add(memoryStream);
-
-                await stream.CopyToAsync(memoryStream);
-                memoryStream.Position = 0;
-
-                data.OpenStreams.Add(() =>
-                {
-                    var copy = new MemoryStream();
-
-                    memoryStream.Position = 0;
-                    memoryStream.CopyTo(copy);
-                    copy.Position = 0;
-
-                    return copy;
-                });
+                throw exitException!;
             }
 
-            return data;
+            IEnumerable<(RetrieverSize image, bool isOriginal)> sizes = image.Sizes
+                .Where(s => s.Resize == ResizeMode.Fit)
+                .Select(s => (s, false))
+                .Concat(new[]
+                {
+                    (new RetrieverSize
+                    {
+                        Width = OriginalSize,
+                        Height = OriginalSize
+                    }, true)
+                });
+
+            var preferredSizes = ImageSizeHelper.OrderByDownloadPreference(sizes, x => x.image.Width, x => x.image.Height, TargetSize);
+            var images = new Stack<(RetrieverSize image, bool isOriginal)>(preferredSizes.Reverse());
+            await using var stream = await DownloadImageAsync(images);
+
+            if (stream == null)
+            {
+                using var scope = _services.CreateScope();
+                await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
+
+                var media = await context.Media.FirstOrDefaultAsync(m => m.Id == image.MediaId);
+                if (media != null)
+                {
+                    Log.Information("Marking media with ID {mediaId} as not available", media.Id);
+                    media.IsNotAvailable = true;
+
+                    await context.SaveChangesAsync();
+                }
+
+                data.Images.Remove(data.Images.First(i => i.MediaId == image.MediaId));
+                continue;
+            }
+
+            var memoryStream = new MemoryStream();
+            data.Streams.Add(memoryStream);
+
+            await stream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            data.OpenStreams.Add(() =>
+            {
+                var copy = new MemoryStream();
+
+                memoryStream.Position = 0;
+                memoryStream.CopyTo(copy);
+                copy.Position = 0;
+
+                return copy;
+            });
         }
+
+        return data;
     }
 }

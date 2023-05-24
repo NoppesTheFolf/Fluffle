@@ -1,43 +1,42 @@
-﻿namespace Noppes.Fluffle.PerceptualHashing
+﻿namespace Noppes.Fluffle.PerceptualHashing;
+
+public readonly struct HashedImage
 {
-    public readonly struct HashedImage
+    public int Id { get; }
+
+    public ulong Hash { get; }
+
+    public HashedImage(int id, ulong hash)
     {
-        public int Id { get; }
-
-        public ulong Hash { get; }
-
-        public HashedImage(int id, ulong hash)
-        {
-            Id = id;
-            Hash = hash;
-        }
-
-        public bool Equals(HashedImage other)
-        {
-            return Id == other.Id;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return obj is HashedImage other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            return Id;
-        }
+        Id = id;
+        Hash = hash;
     }
 
-    public readonly struct ComparedImage
+    public bool Equals(HashedImage other)
     {
-        public int Id { get; }
+        return Id == other.Id;
+    }
 
-        public ulong MismatchCount { get; }
+    public override bool Equals(object obj)
+    {
+        return obj is HashedImage other && Equals(other);
+    }
 
-        public ComparedImage(int id, ulong mismatchCount)
-        {
-            Id = id;
-            MismatchCount = mismatchCount;
-        }
+    public override int GetHashCode()
+    {
+        return Id;
+    }
+}
+
+public readonly struct ComparedImage
+{
+    public int Id { get; }
+
+    public ulong MismatchCount { get; }
+
+    public ComparedImage(int id, ulong mismatchCount)
+    {
+        Id = id;
+        MismatchCount = mismatchCount;
     }
 }

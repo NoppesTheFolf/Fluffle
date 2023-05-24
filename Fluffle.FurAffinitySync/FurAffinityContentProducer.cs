@@ -1,5 +1,4 @@
 ﻿using Humanizer;
-using Microsoft.Extensions.Hosting;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.FurAffinity;
@@ -15,276 +14,275 @@ using System.Linq;
 using System.Threading.Tasks;
 using Log = Serilog.Log;
 
-namespace Noppes.Fluffle.FurAffinitySync
+namespace Noppes.Fluffle.FurAffinitySync;
+
+public class FurAffinityContentProducer : ContentProducer<FaSubmission>
 {
-    public class FurAffinityContentProducer : ContentProducer<FaSubmission>
+    private readonly SyncStateService<FurAffinitySyncClientState> _syncStateService;
+
+    private FurAffinitySyncClientState _syncState;
+    private readonly FurAffinityClient _client;
+    private readonly FurAffinitySyncConfiguration _configuration;
+    private readonly GetSubmissionScheduler _getSubmissionScheduler;
+
+    public override int SourceVersion => 3;
+
+    public FurAffinityContentProducer(IServiceProvider services,
+        SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client,
+        FurAffinitySyncConfiguration configuration, GetSubmissionScheduler getSubmissionScheduler) : base(services)
     {
-        private readonly SyncStateService<FurAffinitySyncClientState> _syncStateService;
+        _syncStateService = syncStateService;
+        _client = client;
+        _configuration = configuration;
+        _getSubmissionScheduler = getSubmissionScheduler;
+    }
 
-        private FurAffinitySyncClientState _syncState;
-        private readonly FurAffinityClient _client;
-        private readonly FurAffinitySyncConfiguration _configuration;
-        private readonly GetSubmissionScheduler _getSubmissionScheduler;
+    public override async Task<FaSubmission> GetContentAsync(string id)
+    {
+        var result = await HttpResiliency.RunAsync(() => _client.GetSubmissionAsync(int.Parse(id)));
 
-        public override int SourceVersion => 3;
+        return result?.Result;
+    }
 
-        public FurAffinityContentProducer(IServiceProvider services,
-            SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client,
-            FurAffinitySyncConfiguration configuration, GetSubmissionScheduler getSubmissionScheduler) : base(services)
+    protected override Task QuickSyncAsync() => throw new NotImplementedException();
+
+    private async Task<StopReason> ProcessRetrieverAsync(SequentialSubmissionRetriever retriever, Func<int, Task> onSubmitAsync = null)
+    {
+        while (true)
         {
-            _syncStateService = syncStateService;
-            _client = client;
-            _configuration = configuration;
-            _getSubmissionScheduler = getSubmissionScheduler;
-        }
+            var (stopReason, submissionId, faResult) = await retriever.NextAsync();
+            if (stopReason != null)
+                return (StopReason)stopReason;
 
-        public override async Task<FaSubmission> GetContentAsync(string id)
+            if (faResult != null)
+                await SubmitContentAsync(new List<FaSubmission> { faResult.Result });
+            else
+                await FlagForDeletionAsync(submissionId.ToString());
+
+            if (onSubmitAsync != null)
+                await onSubmitAsync(submissionId);
+        }
+    }
+
+    protected override async Task FullSyncAsync()
+    {
+        _syncState = await _syncStateService.InitializeAsync(async state =>
         {
-            var result = await HttpResiliency.RunAsync(() => _client.GetSubmissionAsync(int.Parse(id)));
+            state.Version = 1;
+            state.ArchiveEndId = await FluffleClient.GetMinId(Platform) ?? 38_000_000;
+            state.ArchiveStartId = await FluffleClient.GetMaxId(Platform) ?? 37_999_999;
+        });
 
-            return result?.Result;
-        }
+        var buildArchiveTask = Task.Run(async () =>
+        {
+            var startId = _syncState.Acquire(x => x.ArchiveEndId);
+            var retriever = new SequentialSubmissionRetriever(startId, Direction.Backward, null, 0, _getSubmissionScheduler, 2);
+            await ProcessRetrieverAsync(retriever, submissionId =>
+            {
+                _syncState.Acquire(x => x.ArchiveEndId = submissionId);
 
-        protected override Task QuickSyncAsync() => throw new NotImplementedException();
+                return Task.CompletedTask;
+            });
 
-        private async Task<StopReason> ProcessRetrieverAsync(SequentialSubmissionRetriever retriever, Func<int, Task> onSubmitAsync = null)
+            Log.Information("Archive task ended");
+        });
+
+        var checkExistingTask = Task.Run(async () =>
         {
             while (true)
             {
-                var (stopReason, submissionId, faResult) = await retriever.NextAsync();
-                if (stopReason != null)
-                    return (StopReason)stopReason;
-
-                if (faResult != null)
-                    await SubmitContentAsync(new List<FaSubmission> { faResult.Result });
-                else
-                    await FlagForDeletionAsync(submissionId.ToString());
-
-                if (onSubmitAsync != null)
-                    await onSubmitAsync(submissionId);
-            }
-        }
-
-        protected override async Task FullSyncAsync()
-        {
-            _syncState = await _syncStateService.InitializeAsync(async state =>
-            {
-                state.Version = 1;
-                state.ArchiveEndId = await FluffleClient.GetMinId(Platform) ?? 38_000_000;
-                state.ArchiveStartId = await FluffleClient.GetMaxId(Platform) ?? 37_999_999;
-            });
-
-            var buildArchiveTask = Task.Run(async () =>
-            {
-                var startId = _syncState.Acquire(x => x.ArchiveEndId);
-                var retriever = new SequentialSubmissionRetriever(startId, Direction.Backward, null, 0, _getSubmissionScheduler, 2);
-                await ProcessRetrieverAsync(retriever, submissionId =>
+                var stopId = await FluffleClient.GetMaxId(Platform);
+                if (stopId != null)
                 {
-                    _syncState.Acquire(x => x.ArchiveEndId = submissionId);
+                    var stopTime = 30.Days();
+                    var startId = _syncState.Acquire(x => x.ArchiveStartId);
+                    var retriever = new SequentialSubmissionRetriever(startId, Direction.Forward, stopTime, (int)stopId, _getSubmissionScheduler, 3);
 
-                    return Task.CompletedTask;
-                });
-
-                Log.Information("Archive task ended");
-            });
-
-            var checkExistingTask = Task.Run(async () =>
-            {
-                while (true)
-                {
-                    var stopId = await FluffleClient.GetMaxId(Platform);
-                    if (stopId != null)
+                    await ProcessRetrieverAsync(retriever, submissionId =>
                     {
-                        var stopTime = 30.Days();
-                        var startId = _syncState.Acquire(x => x.ArchiveStartId);
-                        var retriever = new SequentialSubmissionRetriever(startId, Direction.Forward, stopTime, (int)stopId, _getSubmissionScheduler, 3);
+                        _syncState.Acquire(x => x.ArchiveStartId = submissionId);
 
-                        await ProcessRetrieverAsync(retriever, submissionId =>
-                        {
-                            _syncState.Acquire(x => x.ArchiveStartId = submissionId);
-
-                            return Task.CompletedTask;
-                        });
-                    }
-
-                    var timeToWait = 5.Minutes();
-                    Log.Information("Waiting for {time} before retrieving recent submissions again.", timeToWait);
-                    await Task.Delay(timeToWait);
-                }
-            });
-
-            var syncStateTask = Task.Run(async () =>
-            {
-                var timeToWait = 3.Minutes();
-                while (true)
-                {
-                    Log.Information("Waiting {time} before storing sync state", timeToWait);
-                    await Task.Delay(timeToWait);
-
-                    await _syncState.AcquireAsync<object>(async _ =>
-                    {
-                        var flushDelay = 3.Seconds();
-                        Log.Information("Waiting {time} before storing sync state to allow pending operations to flush...", flushDelay);
-                        await Task.Delay(flushDelay);
-
-                        using var __ = Operation.Time("Storing sync state");
-                        await HttpResiliency.RunAsync(() => _syncStateService.SyncAsync());
-
-                        return null;
+                        return Task.CompletedTask;
                     });
                 }
-            });
 
-            var recentSubmissionsTask = Task.Run(async () =>
-            {
-                while (true)
-                {
-                    var recentSubmissions = await _client.GetRecentSubmissions();
-
-                    var stopTime = 5.Minutes();
-                    var stopId = recentSubmissions.OrderByDescending(x => x.Id).First().Id + 1;
-                    var startId = await FluffleClient.GetMaxId(Platform) ?? 37_999_999;
-                    var retriever = new SequentialSubmissionRetriever(startId, Direction.Forward, stopTime, stopId, _getSubmissionScheduler, 1);
-
-                    var stopReason = await ProcessRetrieverAsync(retriever);
-                    if (stopReason != StopReason.Time)
-                        continue;
-
-                    var timeToWait = 5.Minutes();
-                    Log.Information("Waiting for {time} before retrieving recent submissions again.", timeToWait);
-                    await Task.Delay(timeToWait);
-                }
-            });
-
-            // Only the archive task can complete without an error being thrown
-            var task = await Task.WhenAny(recentSubmissionsTask, buildArchiveTask, syncStateTask, checkExistingTask);
-            if (task == buildArchiveTask && task.Exception == null)
-                task = await Task.WhenAny(recentSubmissionsTask, syncStateTask, checkExistingTask);
-
-            throw task.Exception!;
-        }
-
-        public override string GetId(FaSubmission src) => src.Id.ToString();
-
-        public override ContentRatingConstant GetRating(FaSubmission src)
-        {
-            return src.Rating switch
-            {
-                FaSubmissionRating.General => ContentRatingConstant.Safe,
-                FaSubmissionRating.Mature => ContentRatingConstant.Questionable,
-                FaSubmissionRating.Adult => ContentRatingConstant.Explicit,
-                _ => throw new ArgumentOutOfRangeException(nameof(src))
-            };
-        }
-
-        public override IEnumerable<PutContentModel.CreditableEntityModel> GetCredits(FaSubmission src)
-        {
-            yield return new PutContentModel.CreditableEntityModel
-            {
-                Id = src.Owner.Id,
-                Name = src.Owner.Name,
-                Type = CreditableEntityType.Owner
-            };
-        }
-
-        public override string GetViewLocation(FaSubmission src) => src.ViewLocation.AbsoluteUri;
-
-        public override IEnumerable<PutContentModel.FileModel> GetFiles(FaSubmission src)
-        {
-            PutContentModel.FileModel Thumbnail(int targetMax)
-            {
-                var thumbnail = src.GetThumbnail(targetMax);
-
-                return new PutContentModel.FileModel
-                {
-                    Location = thumbnail.Location.AbsoluteUri,
-                    Format = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(thumbnail.Location.AbsoluteUri)),
-                    Width = thumbnail.Width,
-                    Height = thumbnail.Height
-                };
+                var timeToWait = 5.Minutes();
+                Log.Information("Waiting for {time} before retrieving recent submissions again.", timeToWait);
+                await Task.Delay(timeToWait);
             }
+        });
 
-            return new List<PutContentModel.FileModel>
+        var syncStateTask = Task.Run(async () =>
+        {
+            var timeToWait = 3.Minutes();
+            while (true)
             {
-                new()
+                Log.Information("Waiting {time} before storing sync state", timeToWait);
+                await Task.Delay(timeToWait);
+
+                await _syncState.AcquireAsync<object>(async _ =>
                 {
-                    Location = src.FileLocation.AbsoluteUri,
-                    Width = src.Size?.Width ?? -1,
-                    Height = src.Size?.Height ?? -1,
-                    Format = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(src.FileLocation.AbsoluteUri), FileFormatConstant.Binary)
-                },
-                Thumbnail(200),
-                Thumbnail(300),
-                Thumbnail(400),
-                Thumbnail(600),
-                Thumbnail(800)
-            };
-        }
+                    var flushDelay = 3.Seconds();
+                    Log.Information("Waiting {time} before storing sync state to allow pending operations to flush...", flushDelay);
+                    await Task.Delay(flushDelay);
 
-        public override IEnumerable<string> GetTags(FaSubmission src) => src.Tags;
+                    using var __ = Operation.Time("Storing sync state");
+                    await HttpResiliency.RunAsync(() => _syncStateService.SyncAsync());
 
-        public override MediaTypeConstant GetMediaType(FaSubmission src)
+                    return null;
+                });
+            }
+        });
+
+        var recentSubmissionsTask = Task.Run(async () =>
         {
-            var fileFormat = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(src.FileLocation.AbsoluteUri), FileFormatConstant.Binary);
-
-            return fileFormat switch
+            while (true)
             {
-                FileFormatConstant.Png => MediaTypeConstant.Image,
-                FileFormatConstant.Jpeg => MediaTypeConstant.Image,
-                FileFormatConstant.WebP => MediaTypeConstant.Image,
-                FileFormatConstant.Gif => MediaTypeConstant.AnimatedImage,
-                FileFormatConstant.WebM => MediaTypeConstant.Video,
-                _ => MediaTypeConstant.Other,
-            };
-        }
+                var recentSubmissions = await _client.GetRecentSubmissions();
 
-        public override int GetPriority(FaSubmission src) => src.Stats.Views + src.Stats.Favorites * 4 + src.Stats.Comments * 8;
+                var stopTime = 5.Minutes();
+                var stopId = recentSubmissions.OrderByDescending(x => x.Id).First().Id + 1;
+                var startId = await FluffleClient.GetMaxId(Platform) ?? 37_999_999;
+                var retriever = new SequentialSubmissionRetriever(startId, Direction.Forward, stopTime, stopId, _getSubmissionScheduler, 1);
 
-        public override string GetTitle(FaSubmission src) => src.Title;
+                var stopReason = await ProcessRetrieverAsync(retriever);
+                if (stopReason != StopReason.Time)
+                    continue;
 
-        public override string GetDescription(FaSubmission src) => src.Description;
+                var timeToWait = 5.Minutes();
+                Log.Information("Waiting for {time} before retrieving recent submissions again.", timeToWait);
+                await Task.Delay(timeToWait);
+            }
+        });
 
-        public override IEnumerable<string> GetOtherSources(FaSubmission src) => null;
+        // Only the archive task can complete without an error being thrown
+        var task = await Task.WhenAny(recentSubmissionsTask, buildArchiveTask, syncStateTask, checkExistingTask);
+        if (task == buildArchiveTask && task.Exception == null)
+            task = await Task.WhenAny(recentSubmissionsTask, syncStateTask, checkExistingTask);
 
-        public static readonly IReadOnlySet<FaSubmissionCategory> DisallowedCategories = new HashSet<FaSubmissionCategory>
+        throw task.Exception!;
+    }
+
+    public override string GetId(FaSubmission src) => src.Id.ToString();
+
+    public override ContentRatingConstant GetRating(FaSubmission src)
+    {
+        return src.Rating switch
         {
-            FaSubmissionCategory.Crafting,
-            FaSubmissionCategory.Fursuiting,
-            FaSubmissionCategory.Photography,
-            FaSubmissionCategory.FoodRecipes,
-            FaSubmissionCategory.Sculpting,
-            FaSubmissionCategory.Skins,
-            FaSubmissionCategory.Handhelds,
-            FaSubmissionCategory.Resources,
-            FaSubmissionCategory.Adoptables,
-            FaSubmissionCategory.Auctions,
-            FaSubmissionCategory.Contests,
-            FaSubmissionCategory.CurrentEvents,
-            FaSubmissionCategory.Stockart,
-            FaSubmissionCategory.Screenshots,
-            FaSubmissionCategory.YchSale
+            FaSubmissionRating.General => ContentRatingConstant.Safe,
+            FaSubmissionRating.Mature => ContentRatingConstant.Questionable,
+            FaSubmissionRating.Adult => ContentRatingConstant.Explicit,
+            _ => throw new ArgumentOutOfRangeException(nameof(src))
         };
+    }
 
-        public static readonly IReadOnlySet<FaSubmissionType> DisallowedTypes = new HashSet<FaSubmissionType>
+    public override IEnumerable<PutContentModel.CreditableEntityModel> GetCredits(FaSubmission src)
+    {
+        yield return new PutContentModel.CreditableEntityModel
         {
-            FaSubmissionType.Tutorials
+            Id = src.Owner.Id,
+            Name = src.Owner.Name,
+            Type = CreditableEntityType.Owner
         };
+    }
 
-        public override bool ShouldBeIndexed(FaSubmission src)
+    public override string GetViewLocation(FaSubmission src) => src.ViewLocation.AbsoluteUri;
+
+    public override IEnumerable<PutContentModel.FileModel> GetFiles(FaSubmission src)
+    {
+        PutContentModel.FileModel Thumbnail(int targetMax)
         {
-            if (DisallowedCategories.Contains(src.Category))
-            {
-                Log.Information("Not indexing submission with ID {id} due to its category ({category})", src.Id, src.Category);
-                return false;
-            }
+            var thumbnail = src.GetThumbnail(targetMax);
 
-            if (DisallowedTypes.Contains(src.Type))
+            return new PutContentModel.FileModel
             {
-                Log.Information("Not indexing submission with ID {id} due to its type ({category})", src.Id, src.Type);
-                return false;
-            }
-
-            return true;
+                Location = thumbnail.Location.AbsoluteUri,
+                Format = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(thumbnail.Location.AbsoluteUri)),
+                Width = thumbnail.Width,
+                Height = thumbnail.Height
+            };
         }
+
+        return new List<PutContentModel.FileModel>
+        {
+            new()
+            {
+                Location = src.FileLocation.AbsoluteUri,
+                Width = src.Size?.Width ?? -1,
+                Height = src.Size?.Height ?? -1,
+                Format = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(src.FileLocation.AbsoluteUri), FileFormatConstant.Binary)
+            },
+            Thumbnail(200),
+            Thumbnail(300),
+            Thumbnail(400),
+            Thumbnail(600),
+            Thumbnail(800)
+        };
+    }
+
+    public override IEnumerable<string> GetTags(FaSubmission src) => src.Tags;
+
+    public override MediaTypeConstant GetMediaType(FaSubmission src)
+    {
+        var fileFormat = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(src.FileLocation.AbsoluteUri), FileFormatConstant.Binary);
+
+        return fileFormat switch
+        {
+            FileFormatConstant.Png => MediaTypeConstant.Image,
+            FileFormatConstant.Jpeg => MediaTypeConstant.Image,
+            FileFormatConstant.WebP => MediaTypeConstant.Image,
+            FileFormatConstant.Gif => MediaTypeConstant.AnimatedImage,
+            FileFormatConstant.WebM => MediaTypeConstant.Video,
+            _ => MediaTypeConstant.Other,
+        };
+    }
+
+    public override int GetPriority(FaSubmission src) => src.Stats.Views + src.Stats.Favorites * 4 + src.Stats.Comments * 8;
+
+    public override string GetTitle(FaSubmission src) => src.Title;
+
+    public override string GetDescription(FaSubmission src) => src.Description;
+
+    public override IEnumerable<string> GetOtherSources(FaSubmission src) => null;
+
+    public static readonly IReadOnlySet<FaSubmissionCategory> DisallowedCategories = new HashSet<FaSubmissionCategory>
+    {
+        FaSubmissionCategory.Crafting,
+        FaSubmissionCategory.Fursuiting,
+        FaSubmissionCategory.Photography,
+        FaSubmissionCategory.FoodRecipes,
+        FaSubmissionCategory.Sculpting,
+        FaSubmissionCategory.Skins,
+        FaSubmissionCategory.Handhelds,
+        FaSubmissionCategory.Resources,
+        FaSubmissionCategory.Adoptables,
+        FaSubmissionCategory.Auctions,
+        FaSubmissionCategory.Contests,
+        FaSubmissionCategory.CurrentEvents,
+        FaSubmissionCategory.Stockart,
+        FaSubmissionCategory.Screenshots,
+        FaSubmissionCategory.YchSale
+    };
+
+    public static readonly IReadOnlySet<FaSubmissionType> DisallowedTypes = new HashSet<FaSubmissionType>
+    {
+        FaSubmissionType.Tutorials
+    };
+
+    public override bool ShouldBeIndexed(FaSubmission src)
+    {
+        if (DisallowedCategories.Contains(src.Category))
+        {
+            Log.Information("Not indexing submission with ID {id} due to its category ({category})", src.Id, src.Category);
+            return false;
+        }
+
+        if (DisallowedTypes.Contains(src.Type))
+        {
+            Log.Information("Not indexing submission with ID {id} due to its type ({category})", src.Id, src.Type);
+            return false;
+        }
+
+        return true;
     }
 }

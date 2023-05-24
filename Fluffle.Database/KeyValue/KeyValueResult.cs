@@ -1,12 +1,11 @@
-﻿namespace Noppes.Fluffle.Database.KeyValue
-{
-    public class KeyValueResult<T>
-    {
-        public T Value { get; set; }
+﻿namespace Noppes.Fluffle.Database.KeyValue;
 
-        public KeyValueResult(T value)
-        {
-            Value = value;
-        }
+public class KeyValueResult<T>
+{
+    public T Value { get; set; }
+
+    public KeyValueResult(T value)
+    {
+        Value = value;
     }
 }

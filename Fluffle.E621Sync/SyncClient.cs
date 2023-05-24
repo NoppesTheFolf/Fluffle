@@ -5,21 +5,20 @@ using Noppes.Fluffle.Sync;
 using System;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.E621Sync
+namespace Noppes.Fluffle.E621Sync;
+
+internal class SyncClient : SyncClient<SyncClient, E621ContentProducer, Post>
 {
-    internal class SyncClient : SyncClient<SyncClient, E621ContentProducer, Post>
+    private const string ApplicationName = "e621-sync";
+
+    public SyncClient(IServiceProvider services) : base(services)
     {
-        private const string ApplicationName = "e621-sync";
-
-        public SyncClient(IServiceProvider services) : base(services)
-        {
-        }
-
-        private static async Task Main(string[] args) => await RunAsync(args, ApplicationName.Replace("-", "_").Pascalize(), "e621", (configuration, services) =>
-        {
-            var e621Client = new E621ClientFactory(configuration).CreateAsync(1000, ApplicationName).Result;
-
-            services.AddSingleton(e621Client);
-        });
     }
+
+    private static async Task Main(string[] args) => await RunAsync(args, ApplicationName.Replace("-", "_").Pascalize(), "e621", (configuration, services) =>
+    {
+        var e621Client = new E621ClientFactory(configuration).CreateAsync(1000, ApplicationName).Result;
+
+        services.AddSingleton(e621Client);
+    });
 }

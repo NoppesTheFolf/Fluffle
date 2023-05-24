@@ -10,89 +10,88 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Main.Api.Services
+namespace Noppes.Fluffle.Main.Api.Services;
+
+public class IndexService : Service, IIndexService
 {
-    public class IndexService : Service, IIndexService
+    private readonly FluffleContext _context;
+    private readonly ChangeIdIncrementer<Content> _contentCii;
+
+    public IndexService(FluffleContext context, ChangeIdIncrementer<Content> contentCii)
     {
-        private readonly FluffleContext _context;
-        private readonly ChangeIdIncrementer<Content> _contentCii;
+        _context = context;
+        _contentCii = contentCii;
+    }
 
-        public IndexService(FluffleContext context, ChangeIdIncrementer<Content> contentCii)
+    public Task<SE> Index(string platformName, string idOnPlatform, PutImageIndexModel model)
+    {
+        return PutGenericIndex(platformName, idOnPlatform, model, c => c.Images, query =>
         {
-            _context = context;
-            _contentCii = contentCii;
-        }
-
-        public Task<SE> Index(string platformName, string idOnPlatform, PutImageIndexModel model)
+            return query
+                .Include(i => i.ImageHash);
+        }, async image =>
         {
-            return PutGenericIndex(platformName, idOnPlatform, model, c => c.Images, query =>
+            if (image.ImageHash == null)
             {
-                return query
-                    .Include(i => i.ImageHash);
-            }, async image =>
+                var mapped = model.MapTo<ImageHash>();
+                mapped.Id = image.Id;
+                await _context.ImageHashes.AddAsync(mapped);
+            }
+            else
             {
-                if (image.ImageHash == null)
-                {
-                    var mapped = model.MapTo<ImageHash>();
-                    mapped.Id = image.Id;
-                    await _context.ImageHashes.AddAsync(mapped);
-                }
-                else
-                {
-                    model.MapTo(image.ImageHash);
-                }
-            });
-        }
+                model.MapTo(image.ImageHash);
+            }
+        });
+    }
 
-        private async Task<SE> PutGenericIndex<TContent, TModel>(string platformName, string idOnPlatform,
-            TModel model, Func<FluffleContext, DbSet<TContent>> selectSet,
-            Func<IQueryable<TContent>, IQueryable<TContent>> buildQuery, Func<TContent, Task> upsertHashAsync)
-            where TModel : PutContentIndexModel where TContent : Content
+    private async Task<SE> PutGenericIndex<TContent, TModel>(string platformName, string idOnPlatform,
+        TModel model, Func<FluffleContext, DbSet<TContent>> selectSet,
+        Func<IQueryable<TContent>, IQueryable<TContent>> buildQuery, Func<TContent, Task> upsertHashAsync)
+        where TModel : PutContentIndexModel where TContent : Content
+    {
+        var query = selectSet(_context)
+            .IncludeThumbnails()
+            .Include(i => i.Platform)
+            .AsQueryable();
+
+        query = buildQuery(query);
+
+        return await query.GetContentAsync(_context.Platforms, platformName, idOnPlatform, async content =>
         {
-            var query = selectSet(_context)
-                .IncludeThumbnails()
-                .Include(i => i.Platform)
-                .AsQueryable();
-
-            query = buildQuery(query);
-
-            return await query.GetContentAsync(_context.Platforms, platformName, idOnPlatform, async content =>
+            async Task<Thumbnail> ProcessThumbnail(Thumbnail existingThumbnail, PutContentIndexModel.ThumbnailModel thumbnailModel)
             {
-                async Task<Thumbnail> ProcessThumbnail(Thumbnail existingThumbnail, PutContentIndexModel.ThumbnailModel thumbnailModel)
+                if (existingThumbnail != null)
+                    _context.Thumbnails.Remove(existingThumbnail);
+
+                var thumbnail = new Thumbnail
                 {
-                    if (existingThumbnail != null)
-                        _context.Thumbnails.Remove(existingThumbnail);
+                    Width = thumbnailModel.Width,
+                    Height = thumbnailModel.Height,
+                    Location = thumbnailModel.Location,
+                    CenterX = thumbnailModel.CenterX,
+                    CenterY = thumbnailModel.CenterY,
+                    Filename = thumbnailModel.Filename,
+                    B2FileId = thumbnailModel.B2FileId
+                };
 
-                    var thumbnail = new Thumbnail
-                    {
-                        Width = thumbnailModel.Width,
-                        Height = thumbnailModel.Height,
-                        Location = thumbnailModel.Location,
-                        CenterX = thumbnailModel.CenterX,
-                        CenterY = thumbnailModel.CenterY,
-                        Filename = thumbnailModel.Filename,
-                        B2FileId = thumbnailModel.B2FileId
-                    };
+                await _context.Thumbnails.AddAsync(thumbnail);
+                return thumbnail;
+            }
 
-                    await _context.Thumbnails.AddAsync(thumbnail);
-                    return thumbnail;
-                }
+            content.Thumbnail = await ProcessThumbnail(content.Thumbnail, model.Thumbnail);
 
-                content.Thumbnail = await ProcessThumbnail(content.Thumbnail, model.Thumbnail);
+            await upsertHashAsync(content);
 
-                await upsertHashAsync(content);
+            if (!content.IsIndexed)
+                content.IsIndexed = true;
 
-                if (!content.IsIndexed)
-                    content.IsIndexed = true;
+            using var _ = _contentCii.Lock((PlatformConstant)content.PlatformId, out var contentCii);
+            contentCii.Next(content);
+            content.RequiresIndexing = false;
 
-                using var _ = _contentCii.Lock((PlatformConstant)content.PlatformId, out var contentCii);
-                contentCii.Next(content);
-                content.RequiresIndexing = false;
+            await _context.SaveChangesAsync();
 
-                await _context.SaveChangesAsync();
-
-                return null;
-            });
-        }
+            return null;
+        });
     }
 }

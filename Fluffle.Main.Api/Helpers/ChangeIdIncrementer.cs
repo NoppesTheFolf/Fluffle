@@ -5,73 +5,72 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Noppes.Fluffle.Main.Api.Helpers
+namespace Noppes.Fluffle.Main.Api.Helpers;
+
+public class ChangeIdIncrementer<T> where T : class, ITrackable
 {
-    public class ChangeIdIncrementer<T> where T : class, ITrackable
+    private readonly IDictionary<PlatformConstant, AsyncLock> _locks;
+    private readonly IDictionary<PlatformConstant, ChangeIdIncrementerLock<T>> _ciis;
+
+    public ChangeIdIncrementer()
     {
-        private readonly IDictionary<PlatformConstant, AsyncLock> _locks;
-        private readonly IDictionary<PlatformConstant, ChangeIdIncrementerLock<T>> _ciis;
+        _locks = Enum.GetValues<PlatformConstant>()
+            .ToDictionary(pc => pc, pc => new AsyncLock());
 
-        public ChangeIdIncrementer()
+        _ciis = Enum.GetValues<PlatformConstant>()
+            .ToDictionary(pc => pc, pc => new ChangeIdIncrementerLock<T>(pc));
+    }
+
+    public void Initialize(FluffleContext context)
+    {
+        foreach (var changeIdIncrementerLock in _ciis.Values)
         {
-            _locks = Enum.GetValues<PlatformConstant>()
-                .ToDictionary(pc => pc, pc => new AsyncLock());
-
-            _ciis = Enum.GetValues<PlatformConstant>()
-                .ToDictionary(pc => pc, pc => new ChangeIdIncrementerLock<T>(pc));
-        }
-
-        public void Initialize(FluffleContext context)
-        {
-            foreach (var changeIdIncrementerLock in _ciis.Values)
-            {
-                changeIdIncrementerLock.Initialize(context);
-            }
-        }
-
-        public IDisposable Lock(PlatformConstant platform, out ChangeIdIncrementerLock<T> cii)
-        {
-            cii = _ciis[platform];
-
-            return _locks[platform].Lock();
+            changeIdIncrementerLock.Initialize(context);
         }
     }
 
-    public class ChangeIdIncrementerLock<T> where T : class, ITrackable
+    public IDisposable Lock(PlatformConstant platform, out ChangeIdIncrementerLock<T> cii)
     {
-        private readonly PlatformConstant _platform;
-        private bool _initialized;
-        private long _changeId;
+        cii = _ciis[platform];
 
-        public ChangeIdIncrementerLock(PlatformConstant platform)
-        {
-            _platform = platform;
-        }
+        return _locks[platform].Lock();
+    }
+}
 
-        public void Next(T target)
-        {
-            target.ChangeId = Next();
-        }
+public class ChangeIdIncrementerLock<T> where T : class, ITrackable
+{
+    private readonly PlatformConstant _platform;
+    private bool _initialized;
+    private long _changeId;
 
-        public long Next()
-        {
-            if (!_initialized)
-                throw new InvalidOperationException();
+    public ChangeIdIncrementerLock(PlatformConstant platform)
+    {
+        _platform = platform;
+    }
 
-            return ++_changeId;
-        }
+    public void Next(T target)
+    {
+        target.ChangeId = Next();
+    }
 
-        public void Initialize(FluffleContext context)
-        {
-            if (_initialized)
-                throw new InvalidOperationException();
+    public long Next()
+    {
+        if (!_initialized)
+            throw new InvalidOperationException();
 
-            var set = context.Set<T>();
-            var platformId = (int)_platform;
-            var maxChangeId = set.Where(e => e.PlatformId == platformId).Max(i => i.ChangeId) ?? 0;
+        return ++_changeId;
+    }
 
-            _changeId = maxChangeId;
-            _initialized = true;
-        }
+    public void Initialize(FluffleContext context)
+    {
+        if (_initialized)
+            throw new InvalidOperationException();
+
+        var set = context.Set<T>();
+        var platformId = (int)_platform;
+        var maxChangeId = set.Where(e => e.PlatformId == platformId).Max(i => i.ChangeId) ?? 0;
+
+        _changeId = maxChangeId;
+        _initialized = true;
     }
 }

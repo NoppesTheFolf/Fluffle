@@ -9,104 +9,103 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Main.Api.Services
+namespace Noppes.Fluffle.Main.Api.Services;
+
+public class PlatformService : Service, IPlatformService
 {
-    public class PlatformService : Service, IPlatformService
+    private readonly FluffleContext _context;
+
+    public PlatformService(FluffleContext context)
     {
-        private readonly FluffleContext _context;
+        _context = context;
+    }
 
-        public PlatformService(FluffleContext context)
-        {
-            _context = context;
-        }
+    public IEnumerable<PlatformModel> GetPlatforms()
+    {
+        return _context.Platforms
+            .MapEnumerableTo<PlatformModel>();
+    }
 
-        public IEnumerable<PlatformModel> GetPlatforms()
+    public Task<SR<PlatformModel>> GetPlatform(string platformName)
+    {
+        return _context.Platforms.GetPlatformAsync(platformName, platform =>
         {
-            return _context.Platforms
-                .MapEnumerableTo<PlatformModel>();
-        }
+            var model = platform.MapTo<PlatformModel>();
 
-        public Task<SR<PlatformModel>> GetPlatform(string platformName)
+            return Task.FromResult(new SR<PlatformModel>(model));
+        });
+    }
+
+    public async Task<SR<PlatformSyncModel>> GetSync(string platformName, SyncTypeConstant constant)
+    {
+        return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
         {
-            return _context.Platforms.GetPlatformAsync(platformName, platform =>
+            var platformSync = await _context.PlatformSyncs
+                .FirstOrDefaultAsync(x => x.PlatformId == platform.Id && x.SyncTypeId == (int)constant);
+
+            if (platformSync == null)
+                return new SR<PlatformSyncModel>(PlatformSyncError.PlatformSyncNotFound(platform.Name, constant));
+
+            var now = DateTime.UtcNow;
+            var when = platformSync.When.ToUniversalTime();
+            var timePassedSinceLastSync = now - when;
+            var ttw = platformSync.Interval - timePassedSinceLastSync;
+            ttw = ttw < TimeSpan.Zero ? TimeSpan.Zero : ttw;
+
+            return new SR<PlatformSyncModel>(new PlatformSyncModel
             {
-                var model = platform.MapTo<PlatformModel>();
-
-                return Task.FromResult(new SR<PlatformModel>(model));
+                When = when,
+                TimeToWait = ttw
             });
-        }
+        });
+    }
 
-        public async Task<SR<PlatformSyncModel>> GetSync(string platformName, SyncTypeConstant constant)
+    public async Task<SE> SignalSync(string platformName, SyncTypeConstant syncType)
+    {
+        return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
         {
-            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
-            {
-                var platformSync = await _context.PlatformSyncs
-                    .FirstOrDefaultAsync(x => x.PlatformId == platform.Id && x.SyncTypeId == (int)constant);
+            var syncTypeId = (int)syncType;
+            var sync = await _context.PlatformSyncs
+                .FirstAsync(ps => ps.PlatformId == platform.Id && ps.SyncTypeId == syncTypeId);
 
-                if (platformSync == null)
-                    return new SR<PlatformSyncModel>(PlatformSyncError.PlatformSyncNotFound(platform.Name, constant));
+            // Any type of finished synchronization process indicates the database has at least
+            // been synchronized in its entirety once.
+            platform.IsComplete = true;
+            sync.When = DateTime.UtcNow;
 
-                var now = DateTime.UtcNow;
-                var when = platformSync.When.ToUniversalTime();
-                var timePassedSinceLastSync = now - when;
-                var ttw = platformSync.Interval - timePassedSinceLastSync;
-                ttw = ttw < TimeSpan.Zero ? TimeSpan.Zero : ttw;
+            await _context.SaveChangesAsync();
 
-                return new SR<PlatformSyncModel>(new PlatformSyncModel
-                {
-                    When = when,
-                    TimeToWait = ttw
-                });
-            });
-        }
+            return null;
+        });
+    }
 
-        public async Task<SE> SignalSync(string platformName, SyncTypeConstant syncType)
+    public async Task<SR<SyncStateModel>> GetSyncState(string platformName)
+    {
+        return await _context.Platforms.Include(p => p.SyncState).GetPlatformAsync(platformName, platform =>
         {
-            return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
+            var model = platform.SyncState == null ? null : new SyncStateModel
             {
-                var syncTypeId = (int)syncType;
-                var sync = await _context.PlatformSyncs
-                    .FirstAsync(ps => ps.PlatformId == platform.Id && ps.SyncTypeId == syncTypeId);
+                Version = platform.SyncState.Version,
+                Document = platform.SyncState.Document
+            };
 
-                // Any type of finished synchronization process indicates the database has at least
-                // been synchronized in its entirety once.
-                platform.IsComplete = true;
-                sync.When = DateTime.UtcNow;
+            return Task.FromResult(new SR<SyncStateModel>(model));
+        });
+    }
 
-                await _context.SaveChangesAsync();
-
-                return null;
-            });
-        }
-
-        public async Task<SR<SyncStateModel>> GetSyncState(string platformName)
+    public async Task<SE> PutSyncState(string platformName, SyncStateModel model)
+    {
+        return await _context.Platforms.Include(p => p.SyncState).GetPlatformAsync(platformName, async platform =>
         {
-            return await _context.Platforms.Include(p => p.SyncState).GetPlatformAsync(platformName, platform =>
+            platform.SyncState ??= new SyncState
             {
-                var model = platform.SyncState == null ? null : new SyncStateModel
-                {
-                    Version = platform.SyncState.Version,
-                    Document = platform.SyncState.Document
-                };
+                Id = platform.Id
+            };
+            platform.SyncState.Document = model.Document;
+            platform.SyncState.Version = model.Version;
 
-                return Task.FromResult(new SR<SyncStateModel>(model));
-            });
-        }
-
-        public async Task<SE> PutSyncState(string platformName, SyncStateModel model)
-        {
-            return await _context.Platforms.Include(p => p.SyncState).GetPlatformAsync(platformName, async platform =>
-            {
-                platform.SyncState ??= new SyncState
-                {
-                    Id = platform.Id
-                };
-                platform.SyncState.Document = model.Document;
-                platform.SyncState.Version = model.Version;
-
-                await _context.SaveChangesAsync();
-                return null;
-            });
-        }
+            await _context.SaveChangesAsync();
+            return null;
+        });
     }
 }

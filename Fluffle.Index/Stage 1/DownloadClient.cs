@@ -9,106 +9,105 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Index
+namespace Noppes.Fluffle.Index;
+
+public class TwitterDownloadClient : DownloadClient
 {
-    public class TwitterDownloadClient : DownloadClient
+    private readonly ITwitterDownloadClient _client;
+
+    public TwitterDownloadClient(ITwitterDownloadClient client)
     {
-        private readonly ITwitterDownloadClient _client;
-
-        public TwitterDownloadClient(ITwitterDownloadClient client)
-        {
-            _client = client;
-        }
-
-        public override Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default) =>
-            _client.GetStreamAsync(url);
+        _client = client;
     }
 
-    public class WeasylDownloadClient : DownloadClient
+    public override Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default) =>
+        _client.GetStreamAsync(url);
+}
+
+public class WeasylDownloadClient : DownloadClient
+{
+    private readonly WeasylClient _client;
+
+    public WeasylDownloadClient(WeasylClient client)
     {
-        private readonly WeasylClient _client;
-
-        public WeasylDownloadClient(WeasylClient client)
-        {
-            _client = client;
-        }
-
-        public override Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default) =>
-            _client.GetStreamAsync(url);
+        _client = client;
     }
 
-    public class FurryNetworkDownloadClient : DownloadClient
+    public override Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default) =>
+        _client.GetStreamAsync(url);
+}
+
+public class FurryNetworkDownloadClient : DownloadClient
+{
+    private readonly FurryNetworkClient _client;
+
+    public FurryNetworkDownloadClient(FurryNetworkClient client)
     {
-        private readonly FurryNetworkClient _client;
-
-        public FurryNetworkDownloadClient(FurryNetworkClient client)
-        {
-            _client = client;
-        }
-
-        public override Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default) =>
-            _client.GetStreamAsync(url);
+        _client = client;
     }
 
-    public class FurAffinityDownloadClient : DownloadClient
+    public override Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default) =>
+        _client.GetStreamAsync(url);
+}
+
+public class FurAffinityDownloadClient : DownloadClient
+{
+    private readonly FurAffinityClient _faClient;
+
+    public FurAffinityDownloadClient(FurAffinityClient faClient)
     {
-        private readonly FurAffinityClient _faClient;
-
-        public FurAffinityDownloadClient(FurAffinityClient faClient)
-        {
-            _faClient = faClient;
-        }
-
-        public override async Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default)
-        {
-            return await _faClient.GetStreamAsync(url);
-        }
+        _faClient = faClient;
     }
 
-    public class E621DownloadClient : DownloadClient
+    public override async Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default)
     {
-        private readonly IE621Client _client;
+        return await _faClient.GetStreamAsync(url);
+    }
+}
 
-        public E621DownloadClient(IE621Client client)
-        {
-            _client = client;
-        }
+public class E621DownloadClient : DownloadClient
+{
+    private readonly IE621Client _client;
 
-        public override Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default) =>
-            _client.GetStreamAsync(url);
+    public E621DownloadClient(IE621Client client)
+    {
+        _client = client;
     }
 
-    public abstract class DownloadClient
+    public override Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default) =>
+        _client.GetStreamAsync(url);
+}
+
+public abstract class DownloadClient
+{
+    public async Task<TemporaryFile> DownloadAsync(string url, CancellationToken cancellationToken = default)
     {
-        public async Task<TemporaryFile> DownloadAsync(string url, CancellationToken cancellationToken = default)
+        var temporaryFile = new TemporaryFile();
+        var temporaryFileStream = temporaryFile.OpenFileStream();
+
+        try
         {
-            var temporaryFile = new TemporaryFile();
-            var temporaryFileStream = temporaryFile.OpenFileStream();
+            await using var httpStream =
+                await HttpResiliency.RunAsync(() => GetStreamAsync(url, cancellationToken));
 
-            try
-            {
-                await using var httpStream =
-                    await HttpResiliency.RunAsync(() => GetStreamAsync(url, cancellationToken));
-
-                await httpStream.CopyToAsync(temporaryFileStream, cancellationToken);
-            }
-            catch
-            {
-                // We have to close the stream before the temporary object itself can be disposed.
-                // If we don't do this, then the temporary file instance can't delete the file
-                await temporaryFileStream.DisposeAsync();
-                temporaryFile.Dispose();
-                throw;
-            }
-            finally
-            {
-                // The file has been written to, we can get rid of the used stream
-                await temporaryFileStream.DisposeAsync();
-            }
-
-            return temporaryFile;
+            await httpStream.CopyToAsync(temporaryFileStream, cancellationToken);
+        }
+        catch
+        {
+            // We have to close the stream before the temporary object itself can be disposed.
+            // If we don't do this, then the temporary file instance can't delete the file
+            await temporaryFileStream.DisposeAsync();
+            temporaryFile.Dispose();
+            throw;
+        }
+        finally
+        {
+            // The file has been written to, we can get rid of the used stream
+            await temporaryFileStream.DisposeAsync();
         }
 
-        public abstract Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default);
+        return temporaryFile;
     }
+
+    public abstract Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default);
 }

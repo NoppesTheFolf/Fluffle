@@ -22,191 +22,190 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
-namespace Noppes.Fluffle.Bot
+namespace Noppes.Fluffle.Bot;
+
+public class BucketCollection
 {
-    public class BucketCollection
+    public B2Bucket Index { get; set; }
+
+    public B2Bucket Thumbnail { get; set; }
+
+    public BucketCollection(B2Bucket index, B2Bucket thumbnail)
     {
-        public B2Bucket Index { get; set; }
+        Index = index;
+        Thumbnail = thumbnail;
+    }
+}
 
-        public B2Bucket Thumbnail { get; set; }
+public class UploadManagerCollection
+{
+    public B2UploadManager Index { get; set; }
 
-        public BucketCollection(B2Bucket index, B2Bucket thumbnail)
-        {
-            Index = index;
-            Thumbnail = thumbnail;
-        }
+    public B2UploadManager Thumbnail { get; set; }
+
+    public UploadManagerCollection(B2UploadManager index, B2UploadManager thumbnail)
+    {
+        Index = index;
+        Thumbnail = thumbnail;
+    }
+}
+
+public class Startup : ApiStartup<Startup>
+{
+    private const string UserAgentApplicationName = "telegram-bot";
+
+    protected override string ApplicationName => "TelegramBot";
+
+    protected override bool EnableAccessControl => false;
+
+    public override void AdditionalConfigureServices(IServiceCollection services)
+    {
+        services.AddFluffleThumbnail();
+
+        var botConf = Configuration.Get<BotConfiguration>();
+        services.AddSingleton(botConf);
+
+        var indexB2Client = new B2Client(botConf.IndexBackblazeB2.ApplicationKeyId, botConf.IndexBackblazeB2.ApplicationKey);
+        var indexBucket = indexB2Client.GetBucketAsync().Result;
+
+        var thumbnailB2Client = new B2Client(botConf.ThumbnailBackblazeB2.ApplicationKeyId, botConf.ThumbnailBackblazeB2.ApplicationKey);
+        var thumbnailBucket = thumbnailB2Client.GetBucketAsync().Result;
+
+        services.AddSingleton(new BucketCollection(indexBucket, thumbnailBucket));
+
+        var b2IndexUploadManager = new B2UploadManager(botConf.IndexBackblazeB2.Workers, indexBucket);
+        var b2ThumbnailUploaderManager = new B2UploadManager(botConf.ThumbnailBackblazeB2.Workers, thumbnailBucket);
+        services.AddSingleton(new UploadManagerCollection(b2IndexUploadManager, b2ThumbnailUploaderManager));
+
+        services.AddSingleton<ITelegramRepository<CallbackContext, string>, CallbackContextRepository>();
+        services.AddSingleton<CallbackManager>();
+
+        services.AddSingleton<ITelegramRepository<InputContext, long>, InputContextRepository>();
+        services.AddSingleton<InputManager>();
+
+        var fluffleClient = new FluffleClient(UserAgentApplicationName);
+        services.AddSingleton(fluffleClient);
+        services.AddSingleton(new ReverseSearchScheduler(botConf.ReverseSearch.Workers, fluffleClient));
+        services.AddSingleton<ReverseSearchRequestLimiter>();
+
+        services.AddSingleton<MessageCleaner>();
+
+        services.AddSingleton<MediaGroupTracker>();
+        services.AddSingleton<MediaGroupHandler>();
+
+        var context = new BotContext(botConf.MongoConnectionString, botConf.MongoDatabase);
+        services.AddSingleton(context);
+        services.AddSingleton(context.CallbackContexts);
+        services.AddSingleton(context.InputContexts);
+
+        // Configure rate limiter to use values defined in the config
+        RateLimiter.Initialize(botConf.TelegramGlobalBurstLimit, botConf.TelegramGlobalBurstInterval, botConf.TelegramGroupBurstLimit, botConf.TelegramGroupBurstInterval);
+
+        var botClient = new TelegramBotClient(botConf.TelegramToken);
+        services.AddSingleton<ITelegramBotClient>(botClient);
+        services.AddHostedService<ConfigureWebhook>();
+        services.AddSingleton<TaskAwaiter<TelegramRouter>>();
+
+        services.AddSingleton<TelegramRouter>();
+        services.AddTransient<TelegramRouterWorker>();
+
+        services.AddSingleton<ChatRegisterInterceptor>();
+
+        services.AddTransient<ChatTrackingController>();
+        services.AddTransient<SettingsMenuController>();
+        services.AddTransient<ReverseSearchController>();
+        services.AddTransient<RateLimitController>();
     }
 
-    public class UploadManagerCollection
+    public override void AfterConfigure(IApplicationBuilder app, IWebHostEnvironment env, ServiceBuilder serviceBuilder)
     {
-        public B2UploadManager Index { get; set; }
+        Template.CompileAsync().Wait();
 
-        public B2UploadManager Thumbnail { get; set; }
+        var router = app.ApplicationServices.GetRequiredService<TelegramRouter>();
 
-        public UploadManagerCollection(B2UploadManager index, B2UploadManager thumbnail)
-        {
-            Index = index;
-            Thumbnail = thumbnail;
-        }
+        router.RegisterInterceptor<ChatRegisterInterceptor>();
+
+        router.CommandHandlers.Add("help", new FuncUpdateHandler(Template.Help));
+        router.CommandHandlers.Add("ihasfoundbug", new FuncUpdateHandler(Template.IHasFoundBug));
+
+        router.RegisterController<ChatTrackingController>();
+        router.RegisterController<SettingsMenuController>();
+        router.RegisterController<ReverseSearchController>();
+        router.RegisterController<RateLimitController>();
+
+        var conf = Configuration.Get<BotConfiguration>();
+        serviceBuilder.AddSingleton<MessageCleaner>(conf.MessageCleaner.Interval.Minutes());
+    }
+}
+
+public class ConfigureWebhook : IHostedService
+{
+    private readonly ITelegramBotClient _botClient;
+    private readonly TaskAwaiter<TelegramRouter> _taskAwaiter;
+    private readonly BotConfiguration _botConfiguration;
+    private readonly ILogger<ConfigureWebhook> _logger;
+
+    public ConfigureWebhook(ITelegramBotClient botClient, TaskAwaiter<TelegramRouter> taskAwaiter, BotConfiguration botConfiguration, ILogger<ConfigureWebhook> logger)
+    {
+        _botClient = botClient;
+        _taskAwaiter = taskAwaiter;
+        _botConfiguration = botConfiguration;
+        _logger = logger;
     }
 
-    public class Startup : ApiStartup<Startup>
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        private const string UserAgentApplicationName = "telegram-bot";
+        // Setup webhook on app startup
+        _logger.LogInformation("Setting webhook...");
 
-        protected override string ApplicationName => "TelegramBot";
-
-        protected override bool EnableAccessControl => false;
-
-        public override void AdditionalConfigureServices(IServiceCollection services)
-        {
-            services.AddFluffleThumbnail();
-
-            var botConf = Configuration.Get<BotConfiguration>();
-            services.AddSingleton(botConf);
-
-            var indexB2Client = new B2Client(botConf.IndexBackblazeB2.ApplicationKeyId, botConf.IndexBackblazeB2.ApplicationKey);
-            var indexBucket = indexB2Client.GetBucketAsync().Result;
-
-            var thumbnailB2Client = new B2Client(botConf.ThumbnailBackblazeB2.ApplicationKeyId, botConf.ThumbnailBackblazeB2.ApplicationKey);
-            var thumbnailBucket = thumbnailB2Client.GetBucketAsync().Result;
-
-            services.AddSingleton(new BucketCollection(indexBucket, thumbnailBucket));
-
-            var b2IndexUploadManager = new B2UploadManager(botConf.IndexBackblazeB2.Workers, indexBucket);
-            var b2ThumbnailUploaderManager = new B2UploadManager(botConf.ThumbnailBackblazeB2.Workers, thumbnailBucket);
-            services.AddSingleton(new UploadManagerCollection(b2IndexUploadManager, b2ThumbnailUploaderManager));
-
-            services.AddSingleton<ITelegramRepository<CallbackContext, string>, CallbackContextRepository>();
-            services.AddSingleton<CallbackManager>();
-
-            services.AddSingleton<ITelegramRepository<InputContext, long>, InputContextRepository>();
-            services.AddSingleton<InputManager>();
-
-            var fluffleClient = new FluffleClient(UserAgentApplicationName);
-            services.AddSingleton(fluffleClient);
-            services.AddSingleton(new ReverseSearchScheduler(botConf.ReverseSearch.Workers, fluffleClient));
-            services.AddSingleton<ReverseSearchRequestLimiter>();
-
-            services.AddSingleton<MessageCleaner>();
-
-            services.AddSingleton<MediaGroupTracker>();
-            services.AddSingleton<MediaGroupHandler>();
-
-            var context = new BotContext(botConf.MongoConnectionString, botConf.MongoDatabase);
-            services.AddSingleton(context);
-            services.AddSingleton(context.CallbackContexts);
-            services.AddSingleton(context.InputContexts);
-
-            // Configure rate limiter to use values defined in the config
-            RateLimiter.Initialize(botConf.TelegramGlobalBurstLimit, botConf.TelegramGlobalBurstInterval, botConf.TelegramGroupBurstLimit, botConf.TelegramGroupBurstInterval);
-
-            var botClient = new TelegramBotClient(botConf.TelegramToken);
-            services.AddSingleton<ITelegramBotClient>(botClient);
-            services.AddHostedService<ConfigureWebhook>();
-            services.AddSingleton<TaskAwaiter<TelegramRouter>>();
-
-            services.AddSingleton<TelegramRouter>();
-            services.AddTransient<TelegramRouterWorker>();
-
-            services.AddSingleton<ChatRegisterInterceptor>();
-
-            services.AddTransient<ChatTrackingController>();
-            services.AddTransient<SettingsMenuController>();
-            services.AddTransient<ReverseSearchController>();
-            services.AddTransient<RateLimitController>();
-        }
-
-        public override void AfterConfigure(IApplicationBuilder app, IWebHostEnvironment env, ServiceBuilder serviceBuilder)
-        {
-            Template.CompileAsync().Wait();
-
-            var router = app.ApplicationServices.GetRequiredService<TelegramRouter>();
-
-            router.RegisterInterceptor<ChatRegisterInterceptor>();
-
-            router.CommandHandlers.Add("help", new FuncUpdateHandler(Template.Help));
-            router.CommandHandlers.Add("ihasfoundbug", new FuncUpdateHandler(Template.IHasFoundBug));
-
-            router.RegisterController<ChatTrackingController>();
-            router.RegisterController<SettingsMenuController>();
-            router.RegisterController<ReverseSearchController>();
-            router.RegisterController<RateLimitController>();
-
-            var conf = Configuration.Get<BotConfiguration>();
-            serviceBuilder.AddSingleton<MessageCleaner>(conf.MessageCleaner.Interval.Minutes());
-        }
+        var url = $"https://{_botConfiguration.TelegramHost}/{_botConfiguration.TelegramToken}";
+        await _botClient.SetWebhookAsync(url, cancellationToken: cancellationToken);
     }
 
-    public class ConfigureWebhook : IHostedService
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        private readonly ITelegramBotClient _botClient;
-        private readonly TaskAwaiter<TelegramRouter> _taskAwaiter;
-        private readonly BotConfiguration _botConfiguration;
-        private readonly ILogger<ConfigureWebhook> _logger;
+        // Wait for all requests to the bot to be handled
+        _logger.LogInformation("Waiting for all requests to be handled...");
+        _taskAwaiter.CancellationTokenSource.Cancel();
+        await _taskAwaiter.WaitTillAllCompleted();
 
-        public ConfigureWebhook(ITelegramBotClient botClient, TaskAwaiter<TelegramRouter> taskAwaiter, BotConfiguration botConfiguration, ILogger<ConfigureWebhook> logger)
-        {
-            _botClient = botClient;
-            _taskAwaiter = taskAwaiter;
-            _botConfiguration = botConfiguration;
-            _logger = logger;
-        }
+        // Remove webhook upon app shutdown
+        _logger.LogInformation("Removing webhook...");
 
-        public async Task StartAsync(CancellationToken cancellationToken)
-        {
-            // Setup webhook on app startup
-            _logger.LogInformation("Setting webhook...");
+        // Do not use cancellation here. Waiting for all tasks to complete might take a while
+        // and therefore the provided cancellation token might get set to cancelled.
+        await _botClient.DeleteWebhookAsync();
+    }
+}
 
-            var url = $"https://{_botConfiguration.TelegramHost}/{_botConfiguration.TelegramToken}";
-            await _botClient.SetWebhookAsync(url, cancellationToken: cancellationToken);
-        }
+public class WebhookController : ControllerBase
+{
+    private readonly BotConfiguration _botConfiguration;
+    private readonly TelegramRouter _router;
+    private readonly TaskAwaiter<TelegramRouter> _taskAwaiter;
 
-        public async Task StopAsync(CancellationToken cancellationToken)
-        {
-            // Wait for all requests to the bot to be handled
-            _logger.LogInformation("Waiting for all requests to be handled...");
-            _taskAwaiter.CancellationTokenSource.Cancel();
-            await _taskAwaiter.WaitTillAllCompleted();
-
-            // Remove webhook upon app shutdown
-            _logger.LogInformation("Removing webhook...");
-
-            // Do not use cancellation here. Waiting for all tasks to complete might take a while
-            // and therefore the provided cancellation token might get set to cancelled.
-            await _botClient.DeleteWebhookAsync();
-        }
+    public WebhookController(BotConfiguration botConfiguration, TelegramRouter router, TaskAwaiter<TelegramRouter> taskAwaiter)
+    {
+        _botConfiguration = botConfiguration;
+        _router = router;
+        _taskAwaiter = taskAwaiter;
     }
 
-    public class WebhookController : ControllerBase
+    [HttpPost("/{token}")]
+    public async Task<IActionResult> ReceiveUpdate(string token)
     {
-        private readonly BotConfiguration _botConfiguration;
-        private readonly TelegramRouter _router;
-        private readonly TaskAwaiter<TelegramRouter> _taskAwaiter;
+        if (string.IsNullOrWhiteSpace(token))
+            return BadRequest();
 
-        public WebhookController(BotConfiguration botConfiguration, TelegramRouter router, TaskAwaiter<TelegramRouter> taskAwaiter)
-        {
-            _botConfiguration = botConfiguration;
-            _router = router;
-            _taskAwaiter = taskAwaiter;
-        }
+        if (token != _botConfiguration.TelegramToken)
+            return Unauthorized();
 
-        [HttpPost("/{token}")]
-        public async Task<IActionResult> ReceiveUpdate(string token)
-        {
-            if (string.IsNullOrWhiteSpace(token))
-                return BadRequest();
+        using var streamReader = new StreamReader(Request.Body);
+        var json = await streamReader.ReadToEndAsync();
+        var update = JsonConvert.DeserializeObject<Update>(json);
 
-            if (token != _botConfiguration.TelegramToken)
-                return Unauthorized();
+        _taskAwaiter.Add(Task.Run(() => _router.HandleUpdateAsync(update)));
 
-            using var streamReader = new StreamReader(Request.Body);
-            var json = await streamReader.ReadToEndAsync();
-            var update = JsonConvert.DeserializeObject<Update>(json);
-
-            _taskAwaiter.Add(Task.Run(() => _router.HandleUpdateAsync(update)));
-
-            return Ok();
-        }
+        return Ok();
     }
 }

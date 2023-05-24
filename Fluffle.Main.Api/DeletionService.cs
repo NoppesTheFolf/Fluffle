@@ -8,49 +8,48 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Main.Api
+namespace Noppes.Fluffle.Main.Api;
+
+public class DeletionService : IService
 {
-    public class DeletionService : IService
+    private readonly IServiceProvider _services;
+    private readonly ILogger<DeletionService> _logger;
+
+    public DeletionService(IServiceProvider services, ILogger<DeletionService> logger)
     {
-        private readonly IServiceProvider _services;
-        private readonly ILogger<DeletionService> _logger;
+        _services = services;
+        _logger = logger;
+    }
 
-        public DeletionService(IServiceProvider services, ILogger<DeletionService> logger)
+    public async Task RunAsync()
+    {
+        while (true)
         {
-            _services = services;
-            _logger = logger;
-        }
+            using var scope = _services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<FluffleContext>();
+            var contentService = scope.ServiceProvider.GetRequiredService<IContentService>();
 
-        public async Task RunAsync()
-        {
-            while (true)
+            var contentMarkedForDeletion = await context.Content
+                .Include(c => c.Platform)
+                .Where(c => c.IsMarkedForDeletion)
+                .Take(50)
+                .ToListAsync();
+
+            if (!contentMarkedForDeletion.Any())
+                break;
+
+            foreach (var content in contentMarkedForDeletion)
             {
-                using var scope = _services.CreateScope();
-                var context = scope.ServiceProvider.GetRequiredService<FluffleContext>();
-                var contentService = scope.ServiceProvider.GetRequiredService<IContentService>();
+                _logger.LogInformation("Deleting content on platform {platformName} with ID {id}.",
+                    content.Platform.Name, content.IdOnPlatform);
 
-                var contentMarkedForDeletion = await context.Content
-                    .Include(c => c.Platform)
-                    .Where(c => c.IsMarkedForDeletion)
-                    .Take(50)
-                    .ToListAsync();
+                var error = await contentService.DeleteAsync(content.Platform.NormalizedName, content.IdOnPlatform);
 
-                if (!contentMarkedForDeletion.Any())
-                    break;
+                if (error == null)
+                    continue;
 
-                foreach (var content in contentMarkedForDeletion)
-                {
-                    _logger.LogInformation("Deleting content on platform {platformName} with ID {id}.",
-                        content.Platform.Name, content.IdOnPlatform);
-
-                    var error = await contentService.DeleteAsync(content.Platform.NormalizedName, content.IdOnPlatform);
-
-                    if (error == null)
-                        continue;
-
-                    _logger.LogWarning("Deleting content on platform {platformName} with ID {id} failed with code {code}.",
-                        content.Platform.Name, content.IdOnPlatform, error.Code);
-                }
+                _logger.LogWarning("Deleting content on platform {platformName} with ID {id} failed with code {code}.",
+                    content.Platform.Name, content.IdOnPlatform, error.Code);
             }
         }
     }

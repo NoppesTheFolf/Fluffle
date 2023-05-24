@@ -1,10 +1,9 @@
-﻿namespace Noppes.Fluffle.B2
+﻿namespace Noppes.Fluffle.B2;
+
+public enum B2Action
 {
-    public enum B2Action
-    {
-        Start,
-        Upload,
-        Hide,
-        Folder
-    }
+    Start,
+    Upload,
+    Hide,
+    Folder
 }

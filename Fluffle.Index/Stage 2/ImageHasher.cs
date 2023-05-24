@@ -8,83 +8,82 @@ using SerilogTimings;
 using System;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Index
+namespace Noppes.Fluffle.Index;
+
+public class ImageHasher : ImageConsumer
 {
-    public class ImageHasher : ImageConsumer
+    private const int DifferenceThreshold = 12;
+
+    private readonly FluffleHash _fluffleHash;
+    private readonly FluffleThumbnail _thumbnailer;
+
+    public ImageHasher(FluffleClient fluffleClient, FluffleHash fluffleHash, FluffleThumbnail thumbnailer) : base(fluffleClient)
     {
-        private const int DifferenceThreshold = 12;
+        _fluffleHash = fluffleHash;
+        _thumbnailer = thumbnailer;
+    }
 
-        private readonly FluffleHash _fluffleHash;
-        private readonly FluffleThumbnail _thumbnailer;
-
-        public ImageHasher(FluffleClient fluffleClient, FluffleHash fluffleHash, FluffleThumbnail thumbnailer) : base(fluffleClient)
+    public override Task<ChannelImage> ConsumeAsync(ChannelImage image)
+    {
+        ImageDimensions dimensions;
+        try
         {
-            _fluffleHash = fluffleHash;
-            _thumbnailer = thumbnailer;
+            dimensions = _thumbnailer.GetDimensions(image.File.Location);
+        }
+        catch (InvalidOperationException e)
+        {
+            return Error(image, e.ToString());
         }
 
-        public override Task<ChannelImage> ConsumeAsync(ChannelImage image)
+        if (dimensions.Width <= 0 || dimensions.Height <= 0)
+            return Error(image, "Image has invalid (negative) dimensions.");
+
+        var max = Math.Max(dimensions.Width, dimensions.Height);
+        var min = Math.Min(dimensions.Width, dimensions.Height);
+        var difference = max / (double)min;
+
+        // TODO: This should not be considered an error, instead it should simply not be considered for indexation next time
+        if (difference > DifferenceThreshold)
+            return Error(image, "The image its aspect ratio is too extreme to process.");
+
+        try
         {
-            ImageDimensions dimensions;
-            try
+            using (Operation.Time("[{platformName}, {idOnPlatform}, 2/5] Computed perceptual hashes", image.Content.PlatformName, image.Content.IdOnPlatform))
             {
-                dimensions = _thumbnailer.GetDimensions(image.File.Location);
-            }
-            catch (InvalidOperationException e)
-            {
-                return Error(image, e.ToString());
-            }
+                // Unlike in the search API, here we circumvent the optimizations used in the libvips
+                // imaging provider by creating multiple separate hashers.
+                using var hasher64 = _fluffleHash.Create(8).For(image.File.Location);
+                using var hasher256 = _fluffleHash.Create(32).For(image.File.Location);
+                using var hasher1024 = _fluffleHash.Create(128).For(image.File.Location);
 
-            if (dimensions.Width <= 0 || dimensions.Height <= 0)
-                return Error(image, "Image has invalid (negative) dimensions.");
-
-            var max = Math.Max(dimensions.Width, dimensions.Height);
-            var min = Math.Min(dimensions.Width, dimensions.Height);
-            var difference = max / (double)min;
-
-            // TODO: This should not be considered an error, instead it should simply not be considered for indexation next time
-            if (difference > DifferenceThreshold)
-                return Error(image, "The image its aspect ratio is too extreme to process.");
-
-            try
-            {
-                using (Operation.Time("[{platformName}, {idOnPlatform}, 2/5] Computed perceptual hashes", image.Content.PlatformName, image.Content.IdOnPlatform))
+                image.Hashes = new PutImageIndexModel.ImageHashesModel
                 {
-                    // Unlike in the search API, here we circumvent the optimizations used in the libvips
-                    // imaging provider by creating multiple separate hashers.
-                    using var hasher64 = _fluffleHash.Create(8).For(image.File.Location);
-                    using var hasher256 = _fluffleHash.Create(32).For(image.File.Location);
-                    using var hasher1024 = _fluffleHash.Create(128).For(image.File.Location);
-
-                    image.Hashes = new PutImageIndexModel.ImageHashesModel
-                    {
-                        PhashRed64 = hasher64.ComputeHash(Channel.Red),
-                        PhashGreen64 = hasher64.ComputeHash(Channel.Green),
-                        PhashBlue64 = hasher64.ComputeHash(Channel.Blue),
-                        PhashAverage64 = hasher64.ComputeHash(Channel.Average),
-                        PhashRed256 = hasher256.ComputeHash(Channel.Red),
-                        PhashGreen256 = hasher256.ComputeHash(Channel.Green),
-                        PhashBlue256 = hasher256.ComputeHash(Channel.Blue),
-                        PhashAverage256 = hasher256.ComputeHash(Channel.Average),
-                        PhashRed1024 = hasher1024.ComputeHash(Channel.Red),
-                        PhashGreen1024 = hasher1024.ComputeHash(Channel.Green),
-                        PhashBlue1024 = hasher1024.ComputeHash(Channel.Blue),
-                        PhashAverage1024 = hasher1024.ComputeHash(Channel.Average)
-                    };
-                }
+                    PhashRed64 = hasher64.ComputeHash(Channel.Red),
+                    PhashGreen64 = hasher64.ComputeHash(Channel.Green),
+                    PhashBlue64 = hasher64.ComputeHash(Channel.Blue),
+                    PhashAverage64 = hasher64.ComputeHash(Channel.Average),
+                    PhashRed256 = hasher256.ComputeHash(Channel.Red),
+                    PhashGreen256 = hasher256.ComputeHash(Channel.Green),
+                    PhashBlue256 = hasher256.ComputeHash(Channel.Blue),
+                    PhashAverage256 = hasher256.ComputeHash(Channel.Average),
+                    PhashRed1024 = hasher1024.ComputeHash(Channel.Red),
+                    PhashGreen1024 = hasher1024.ComputeHash(Channel.Green),
+                    PhashBlue1024 = hasher1024.ComputeHash(Channel.Blue),
+                    PhashAverage1024 = hasher1024.ComputeHash(Channel.Average)
+                };
             }
-            catch (ConvertException e)
-            {
-                image.Error = e.ToString();
-            }
-
-            return Task.FromResult(image);
         }
-
-        private static Task<ChannelImage> Error(ChannelImage image, string message)
+        catch (ConvertException e)
         {
-            image.Error = message;
-            return Task.FromResult(image);
+            image.Error = e.ToString();
         }
+
+        return Task.FromResult(image);
+    }
+
+    private static Task<ChannelImage> Error(ChannelImage image, string message)
+    {
+        image.Error = message;
+        return Task.FromResult(image);
     }
 }

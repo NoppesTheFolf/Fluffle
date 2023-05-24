@@ -5,30 +5,29 @@ using Noppes.Fluffle.Utils;
 using System;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers
+namespace Noppes.Fluffle.TwitterSync.AnalyzeUsers;
+
+public class FillMissingFromTimelineIfArtist<T> : Consumer<T> where T : IUserTweetsSupplierData
 {
-    public class FillMissingFromTimelineIfArtist<T> : Consumer<T> where T : IUserTweetsSupplierData
+    private readonly IServiceProvider _services;
+
+    public FillMissingFromTimelineIfArtist(IServiceProvider services)
     {
-        private readonly IServiceProvider _services;
+        _services = services;
+    }
 
-        public FillMissingFromTimelineIfArtist(IServiceProvider services)
+    public override async Task<T> ConsumeAsync(T data)
+    {
+        using var scope = _services.CreateScope();
+        await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
+        var user = await context.Users.FirstAsync(u => u.Id == data.Id);
+
+        if (user.IsFurryArtist == true)
         {
-            _services = services;
+            data.TimelineRetrievedAt = DateTimeOffset.UtcNow;
+            await data.Timeline.FillMissingAsync(3);
         }
 
-        public override async Task<T> ConsumeAsync(T data)
-        {
-            using var scope = _services.CreateScope();
-            await using var context = scope.ServiceProvider.GetRequiredService<TwitterContext>();
-            var user = await context.Users.FirstAsync(u => u.Id == data.Id);
-
-            if (user.IsFurryArtist == true)
-            {
-                data.TimelineRetrievedAt = DateTimeOffset.UtcNow;
-                await data.Timeline.FillMissingAsync(3);
-            }
-
-            return data;
-        }
+        return data;
     }
 }

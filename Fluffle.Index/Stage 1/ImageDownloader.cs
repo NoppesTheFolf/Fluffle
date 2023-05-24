@@ -12,90 +12,89 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Index
+namespace Noppes.Fluffle.Index;
+
+public class ImageDownloader : ImageProducer
 {
-    public class ImageDownloader : ImageProducer
+    private const int TargetSize = 300;
+    private static readonly TimeSpan Delay = 5.Minutes();
+
+    private readonly PlatformModel _platform;
+    private readonly DownloadClient _downloadClient;
+
+    public ImageDownloader(FluffleClient fluffleClient, PlatformModel platform, DownloadClient downloadClient) : base(fluffleClient)
     {
-        private const int TargetSize = 300;
-        private static readonly TimeSpan Delay = 5.Minutes();
+        _platform = platform;
+        _downloadClient = downloadClient;
+    }
 
-        private readonly PlatformModel _platform;
-        private readonly DownloadClient _downloadClient;
+    public override async Task WorkAsync()
+    {
+        var images = await HttpResiliency.RunAsync(() =>
+            FluffleClient.GetUnprocessedImagesAsync(_platform.Name));
 
-        public ImageDownloader(FluffleClient fluffleClient, PlatformModel platform, DownloadClient downloadClient) : base(fluffleClient)
+        if (!images.Any())
         {
-            _platform = platform;
-            _downloadClient = downloadClient;
+            Log.Information(
+                "[{platformName}] There are no more images to index. Waiting {delay} before checking again.",
+                _platform.Name, Delay.Humanize());
+            await Task.Delay(Delay);
+            return;
         }
 
-        public override async Task WorkAsync()
+        foreach (var image in images)
         {
-            var images = await HttpResiliency.RunAsync(() =>
-                FluffleClient.GetUnprocessedImagesAsync(_platform.Name));
-
-            if (!images.Any())
+            var channelImage = new ChannelImage
             {
-                Log.Information(
-                    "[{platformName}] There are no more images to index. Waiting {delay} before checking again.",
-                    _platform.Name, Delay.Humanize());
-                await Task.Delay(Delay);
-                return;
-            }
+                Content = image
+            };
 
-            foreach (var image in images)
+            channelImage.File = await DownloadAsync(channelImage);
+
+            await ProduceAsync(channelImage);
+        }
+    }
+
+    private async Task<TemporaryFile> DownloadAsync(ChannelImage ci)
+    {
+        var temporaryFile = await LogEx.TimeAsync(async () =>
+        {
+            var orderedImages = ImageSizeHelper.OrderByDownloadPreference(ci.Content.Files, f => f.Width, f => f.Height, TargetSize);
+
+            foreach (var imageFile in orderedImages)
             {
-                var channelImage = new ChannelImage
+                var result = await TryDownloadAsync(imageFile.Location, () =>
                 {
-                    Content = image
-                };
+                    Log.Warning("[{platformName}, {idOnPlatform}] File not found.", ci.Content.PlatformName, ci.Content.IdOnPlatform);
+                    ci.Warnings.Add($"File located at `{imageFile.Location}` could not be downloaded");
+                    return Task.CompletedTask;
+                });
 
-                channelImage.File = await DownloadAsync(channelImage);
-
-                await ProduceAsync(channelImage);
+                if (result.success)
+                    return result.temporaryFile;
             }
-        }
 
-        private async Task<TemporaryFile> DownloadAsync(ChannelImage ci)
+            Log.Error("No files could be downloaded for image with ID {imageId}.", ci.Content.IdOnPlatform);
+            ci.Error = "No files could be downloaded.";
+
+            return null;
+        }, "[{platformName}, {idOnPlatform}, 1/5] Downloaded image", _platform.Name, ci.Content.IdOnPlatform);
+
+        return temporaryFile;
+    }
+
+    private async Task<(bool success, TemporaryFile temporaryFile)> TryDownloadAsync(string url, Func<Task> onNotFoundAsync)
+    {
+        try
         {
-            var temporaryFile = await LogEx.TimeAsync(async () =>
-            {
-                var orderedImages = ImageSizeHelper.OrderByDownloadPreference(ci.Content.Files, f => f.Width, f => f.Height, TargetSize);
-
-                foreach (var imageFile in orderedImages)
-                {
-                    var result = await TryDownloadAsync(imageFile.Location, () =>
-                    {
-                        Log.Warning("[{platformName}, {idOnPlatform}] File not found.", ci.Content.PlatformName, ci.Content.IdOnPlatform);
-                        ci.Warnings.Add($"File located at `{imageFile.Location}` could not be downloaded");
-                        return Task.CompletedTask;
-                    });
-
-                    if (result.success)
-                        return result.temporaryFile;
-                }
-
-                Log.Error("No files could be downloaded for image with ID {imageId}.", ci.Content.IdOnPlatform);
-                ci.Error = "No files could be downloaded.";
-
-                return null;
-            }, "[{platformName}, {idOnPlatform}, 1/5] Downloaded image", _platform.Name, ci.Content.IdOnPlatform);
-
-            return temporaryFile;
+            return (true, await _downloadClient.DownloadAsync(url));
         }
-
-        private async Task<(bool success, TemporaryFile temporaryFile)> TryDownloadAsync(string url, Func<Task> onNotFoundAsync)
+        catch (FlurlHttpException exception)
         {
-            try
-            {
-                return (true, await _downloadClient.DownloadAsync(url));
-            }
-            catch (FlurlHttpException exception)
-            {
-                if (exception.Call?.Response.StatusCode == (int)HttpStatusCode.NotFound)
-                    await onNotFoundAsync();
+            if (exception.Call?.Response.StatusCode == (int)HttpStatusCode.NotFound)
+                await onNotFoundAsync();
 
-                return (false, null);
-            }
+            return (false, null);
         }
     }
 }

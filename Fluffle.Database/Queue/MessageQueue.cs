@@ -5,85 +5,84 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Database.Queue
+namespace Noppes.Fluffle.Database.Queue;
+
+public class MessageQueue<TContext, TEntity, TData> where TContext : DbContext where TEntity : QueueEntity, new() where TData : new()
 {
-    public class MessageQueue<TContext, TEntity, TData> where TContext : DbContext where TEntity : QueueEntity, new() where TData : new()
+    private readonly IServiceProvider _services;
+
+    public MessageQueue(IServiceProvider services)
     {
-        private readonly IServiceProvider _services;
+        _services = services;
+    }
 
-        public MessageQueue(IServiceProvider services)
+    public async Task<QueueItem<TData>> EnqueueAsync(TData data, long priority)
+    {
+        var entity = await UseQueueAsync(async (context, set) =>
         {
-            _services = services;
-        }
-
-        public async Task<QueueItem<TData>> EnqueueAsync(TData data, long priority)
-        {
-            var entity = await UseQueueAsync(async (context, set) =>
+            var entity = new TEntity
             {
-                var entity = new TEntity
-                {
-                    Data = JsonSerializer.SerializeToUtf8Bytes(data),
-                    Priority = priority
-                };
-
-                await set.AddAsync(entity);
-                await context.SaveChangesAsync();
-
-                return entity;
-            });
-
-            return new QueueItem<TData>
-            {
-                Id = entity.Id,
-                Data = data
+                Data = JsonSerializer.SerializeToUtf8Bytes(data),
+                Priority = priority
             };
-        }
 
-        public async Task<QueueItem<TData>> DequeueAsync()
+            await set.AddAsync(entity);
+            await context.SaveChangesAsync();
+
+            return entity;
+        });
+
+        return new QueueItem<TData>
         {
-            var entity = await UseQueueAsync(async (_, set) =>
-            {
-                var entity = await set.OrderBy(x => x.Priority).FirstOrDefaultAsync();
+            Id = entity.Id,
+            Data = data
+        };
+    }
 
-                return entity;
-            });
+    public async Task<QueueItem<TData>> DequeueAsync()
+    {
+        var entity = await UseQueueAsync(async (_, set) =>
+        {
+            var entity = await set.OrderBy(x => x.Priority).FirstOrDefaultAsync();
 
+            return entity;
+        });
+
+        if (entity == null)
+            return null;
+
+        var data = JsonSerializer.Deserialize<TData>(entity.Data);
+        return new QueueItem<TData>
+        {
+            Id = entity.Id,
+            Data = data
+        };
+    }
+
+    public async Task<bool> AcknowledgeAsync(QueueItem<TData> item)
+    {
+        var removed = await UseQueueAsync(async (context, set) =>
+        {
+            var entity = await set.SingleOrDefaultAsync(x => x.Id == item.Id);
             if (entity == null)
-                return null;
+                return false;
 
-            var data = JsonSerializer.Deserialize<TData>(entity.Data);
-            return new QueueItem<TData>
-            {
-                Id = entity.Id,
-                Data = data
-            };
-        }
+            set.Remove(entity);
+            await context.SaveChangesAsync();
 
-        public async Task<bool> AcknowledgeAsync(QueueItem<TData> item)
-        {
-            var removed = await UseQueueAsync(async (context, set) =>
-            {
-                var entity = await set.SingleOrDefaultAsync(x => x.Id == item.Id);
-                if (entity == null)
-                    return false;
+            return true;
+        });
 
-                set.Remove(entity);
-                await context.SaveChangesAsync();
+        return removed;
+    }
 
-                return true;
-            });
+    private async Task<TResult> UseQueueAsync<TResult>(Func<TContext, DbSet<TEntity>, Task<TResult>> operationAsync)
+    {
+        using var scope = _services.CreateScope();
+        await using var context = scope.ServiceProvider.GetRequiredService<TContext>();
+        var set = context.Set<TEntity>();
+        var result = await operationAsync(context, set);
 
-            return removed;
-        }
-
-        private async Task<TResult> UseQueueAsync<TResult>(Func<TContext, DbSet<TEntity>, Task<TResult>> operationAsync)
-        {
-            using var scope = _services.CreateScope();
-            await using var context = scope.ServiceProvider.GetRequiredService<TContext>();
-            var set = context.Set<TEntity>();
-            var result = await operationAsync(context, set);
-
-            return result;
-        }
+        return result;
     }
 }

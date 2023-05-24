@@ -1,24 +1,23 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Noppes.Fluffle.Database.Queue
+namespace Noppes.Fluffle.Database.Queue;
+
+public abstract class QueueEntity : BaseEntity
 {
-    public abstract class QueueEntity : BaseEntity
+    public long Id { get; set; }
+
+    public byte[] Data { get; set; }
+
+    public long Priority { get; set; }
+
+    protected void Configure<T>(EntityTypeBuilder<T> entity) where T : QueueEntity
     {
-        public long Id { get; set; }
+        entity.Property(x => x.Id);
+        entity.HasKey(x => x.Id);
 
-        public byte[] Data { get; set; }
+        entity.Property(x => x.Data);
 
-        public long Priority { get; set; }
-
-        protected void Configure<T>(EntityTypeBuilder<T> entity) where T : QueueEntity
-        {
-            entity.Property(x => x.Id);
-            entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Data);
-
-            entity.Property(x => x.Priority);
-            entity.HasIndex(x => x.Priority);
-        }
+        entity.Property(x => x.Priority);
+        entity.HasIndex(x => x.Priority);
     }
 }

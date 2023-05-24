@@ -1,13 +1,12 @@
-﻿namespace Noppes.Fluffle.Api.AccessControl
+﻿namespace Noppes.Fluffle.Api.AccessControl;
+
+/// <summary>
+/// Marks a class as one which contains permissions.
+/// </summary>
+public abstract class Permissions
 {
     /// <summary>
-    /// Marks a class as one which contains permissions.
+    /// The prefix used for permission claims.
     /// </summary>
-    public abstract class Permissions
-    {
-        /// <summary>
-        /// The prefix used for permission claims.
-        /// </summary>
-        public const string ClaimPrefix = "PERMISSION_";
-    }
+    public const string ClaimPrefix = "PERMISSION_";
 }

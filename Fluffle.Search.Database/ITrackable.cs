@@ -1,8 +1,7 @@
-﻿namespace Noppes.Fluffle.Search.Database
+﻿namespace Noppes.Fluffle.Search.Database;
+
+public interface ITrackable
 {
-    public interface ITrackable
-    {
-        public long ChangeId { get; set; }
-        public int PlatformId { get; set; }
-    }
+    public long ChangeId { get; set; }
+    public int PlatformId { get; set; }
 }

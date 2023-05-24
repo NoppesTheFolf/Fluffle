@@ -2,13 +2,12 @@
 using Noppes.Fluffle.Utils;
 using System.Collections.Generic;
 
-namespace Noppes.Fluffle.Sync
-{
-    public abstract class SyncProducer : Producer<ICollection<PutContentModel>>
-    {
-    }
+namespace Noppes.Fluffle.Sync;
 
-    public abstract class SyncConsumer : Consumer<ICollection<PutContentModel>>
-    {
-    }
+public abstract class SyncProducer : Producer<ICollection<PutContentModel>>
+{
+}
+
+public abstract class SyncConsumer : Consumer<ICollection<PutContentModel>>
+{
 }

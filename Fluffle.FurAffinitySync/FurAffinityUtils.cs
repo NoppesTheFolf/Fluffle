@@ -7,29 +7,28 @@ using Serilog;
 using System;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.FurAffinitySync
+namespace Noppes.Fluffle.FurAffinitySync;
+
+public class FurAffinityUtils
 {
-    public class FurAffinityUtils
+    private static readonly TimeSpan CheckInterval = 5.Minutes();
+
+    public static async Task WaitTillAllowedAsync<T>(FaResult<T> result, IHostEnvironment environment, FluffleClient fluffleClient)
     {
-        private static readonly TimeSpan CheckInterval = 5.Minutes();
+        if (result == null || result.Stats.Registered < FurAffinityClient.BotThreshold)
+            return;
 
-        public static async Task WaitTillAllowedAsync<T>(FaResult<T> result, IHostEnvironment environment, FluffleClient fluffleClient)
+        if (environment.IsDevelopment())
+            return;
+
+        bool allowedToContinue;
+        do
         {
-            if (result == null || result.Stats.Registered < FurAffinityClient.BotThreshold)
-                return;
+            Log.Information("No bots allowed at this moment. Waiting for {time} before checking again.", CheckInterval.Humanize());
+            await Task.Delay(CheckInterval);
 
-            if (environment.IsDevelopment())
-                return;
-
-            bool allowedToContinue;
-            do
-            {
-                Log.Information("No bots allowed at this moment. Waiting for {time} before checking again.", CheckInterval.Humanize());
-                await Task.Delay(CheckInterval);
-
-                allowedToContinue = await HttpResiliency.RunAsync(fluffleClient.GetFaBotsAllowedAsync);
-            } while (!allowedToContinue);
-            Log.Information("Bots allowed again, continuing full sync...");
-        }
+            allowedToContinue = await HttpResiliency.RunAsync(fluffleClient.GetFaBotsAllowedAsync);
+        } while (!allowedToContinue);
+        Log.Information("Bots allowed again, continuing full sync...");
     }
 }

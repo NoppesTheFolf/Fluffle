@@ -3,30 +3,29 @@ using Nito.AsyncEx;
 using System;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.Http
+namespace Noppes.Fluffle.Http;
+
+public class SemaphoreInterceptor : ICallInterceptor
 {
-    public class SemaphoreInterceptor : ICallInterceptor
+    private readonly AsyncSemaphore _semaphore;
+
+    public SemaphoreInterceptor(int degreeOfParallelism)
     {
-        private readonly AsyncSemaphore _semaphore;
+        if (degreeOfParallelism < 1)
+            throw new ArgumentOutOfRangeException(nameof(degreeOfParallelism));
 
-        public SemaphoreInterceptor(int degreeOfParallelism)
-        {
-            if (degreeOfParallelism < 1)
-                throw new ArgumentOutOfRangeException(nameof(degreeOfParallelism));
+        _semaphore = new AsyncSemaphore(degreeOfParallelism);
+    }
 
-            _semaphore = new AsyncSemaphore(degreeOfParallelism);
-        }
+    public async Task InterceptBeforeAsync(FlurlCall call)
+    {
+        await _semaphore.WaitAsync();
+    }
 
-        public async Task InterceptBeforeAsync(FlurlCall call)
-        {
-            await _semaphore.WaitAsync();
-        }
+    public Task InterceptAfterAsync(FlurlCall call)
+    {
+        _semaphore.Release();
 
-        public Task InterceptAfterAsync(FlurlCall call)
-        {
-            _semaphore.Release();
-
-            return Task.CompletedTask;
-        }
+        return Task.CompletedTask;
     }
 }

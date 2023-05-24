@@ -7,37 +7,36 @@ using Noppes.Fluffle.Sync;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Noppes.Fluffle.TwitterSync
+namespace Noppes.Fluffle.TwitterSync;
+
+public interface ITwitterDownloadClient
 {
-    public interface ITwitterDownloadClient
+    Task<Stream> GetStreamAsync(string url);
+}
+
+public class TwitterDownloadClient : ApiClient, ITwitterDownloadClient
+{
+    public TwitterDownloadClient(string baseUrl, string userAgent) : base(baseUrl)
     {
-        Task<Stream> GetStreamAsync(string url);
+        FlurlClient.WithHeader("User-Agent", userAgent);
     }
 
-    public class TwitterDownloadClient : ApiClient, ITwitterDownloadClient
-    {
-        public TwitterDownloadClient(string baseUrl, string userAgent) : base(baseUrl)
-        {
-            FlurlClient.WithHeader("User-Agent", userAgent);
-        }
+    public Task<Stream> GetStreamAsync(string url) => Request(url).GetStreamAsync();
+}
 
-        public Task<Stream> GetStreamAsync(string url) => Request(url).GetStreamAsync();
+public class TwitterDownloadClientFactory : ClientFactory<ITwitterDownloadClient>
+{
+    public TwitterDownloadClientFactory(FluffleConfiguration configuration) : base(configuration)
+    {
     }
 
-    public class TwitterDownloadClientFactory : ClientFactory<ITwitterDownloadClient>
+    public override Task<ITwitterDownloadClient> CreateAsync(int interval, string applicationName)
     {
-        public TwitterDownloadClientFactory(FluffleConfiguration configuration) : base(configuration)
+        var client = new TwitterDownloadClient(string.Empty, Project.UserAgent(applicationName))
         {
-        }
+            RateLimiter = new RequestRateLimiter(interval.Milliseconds())
+        };
 
-        public override Task<ITwitterDownloadClient> CreateAsync(int interval, string applicationName)
-        {
-            var client = new TwitterDownloadClient(string.Empty, Project.UserAgent(applicationName))
-            {
-                RateLimiter = new RequestRateLimiter(interval.Milliseconds())
-            };
-
-            return Task.FromResult((ITwitterDownloadClient)client);
-        }
+        return Task.FromResult((ITwitterDownloadClient)client);
     }
 }
