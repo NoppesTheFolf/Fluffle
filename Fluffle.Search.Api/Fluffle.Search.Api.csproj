@@ -6,6 +6,7 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<AssemblyName>Noppes.Fluffle.Search.Api</AssemblyName>
 		<RootNamespace>Noppes.Fluffle.Search.Api</RootNamespace>
+		<ServerGarbageCollection>false</ServerGarbageCollection>
 		<UserSecretsId>c344b214-e437-47e5-a817-7bad0ef8c3cb</UserSecretsId>
 	</PropertyGroup>
 
