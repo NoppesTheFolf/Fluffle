@@ -26,7 +26,6 @@
 		<ProjectReference Include="..\Fluffle.Service\Fluffle.Service.csproj" />
 		<ProjectReference Include="..\Fluffle.Sync\Fluffle.Sync.csproj" />
 		<ProjectReference Include="..\Fluffle.Thumbnail\Fluffle.Thumbnail.csproj" />
-		<ProjectReference Include="..\Fluffle.TwitterSync\Fluffle.TwitterSync.csproj" />
 		<ProjectReference Include="..\Fluffle.Utils\Fluffle.Utils.csproj" />
 		<ProjectReference Include="..\Fluffle.WeasylSync\Fluffle.WeasylSync.csproj" />
 	</ItemGroup>

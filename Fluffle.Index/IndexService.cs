@@ -11,7 +11,6 @@ using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Service;
 using Noppes.Fluffle.Thumbnail;
-using Noppes.Fluffle.TwitterSync;
 using Noppes.Fluffle.Utils;
 using Noppes.Fluffle.WeasylSync;
 using Serilog;
@@ -66,7 +65,7 @@ public class IndexService : Service.Service
         var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(Configuration.FurryNetwork.Interval, UserAgentApplicationName);
         var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(Configuration.FurAffinity.Interval, UserAgentApplicationName);
         var weasylClient = await new WeasylClientFactory(configuration).CreateAsync(Configuration.Weasyl.Interval, UserAgentApplicationName);
-        var twitterClient = await new TwitterDownloadClientFactory(configuration).CreateAsync(Configuration.Twitter.Interval, UserAgentApplicationName);
+        var twitterClient = await new BasicClientFactory(configuration).CreateAsync(Configuration.Twitter.Interval, UserAgentApplicationName);
         var deviantArtClient = await new BasicClientFactory(configuration).CreateAsync(Configuration.DeviantArt.Interval, UserAgentApplicationName);
         var inkbunnyClient = await new BasicClientFactory(configuration).CreateAsync(Configuration.Inkbunny.Interval, UserAgentApplicationName);
         DownloadClients = new Dictionary<PlatformConstant, (DownloadClient, IndexConfiguration.ClientConfiguration)>
@@ -74,7 +73,7 @@ public class IndexService : Service.Service
             { PlatformConstant.E621, (new E621DownloadClient(e621Client), Configuration.E621) },
             { PlatformConstant.FurAffinity, (new FurAffinityDownloadClient(furAffinityClient), Configuration.FurAffinity) },
             { PlatformConstant.Weasyl, (new WeasylDownloadClient(weasylClient), Configuration.Weasyl) },
-            { PlatformConstant.Twitter , (new TwitterDownloadClient(twitterClient), Configuration.Twitter) },
+            { PlatformConstant.Twitter , (new BasicDownloadClient(twitterClient), Configuration.Twitter) },
             { PlatformConstant.DeviantArt, (new BasicDownloadClient(deviantArtClient), Configuration.DeviantArt) },
             { PlatformConstant.Inkbunny, (new BasicDownloadClient(inkbunnyClient), Configuration.Inkbunny) }
         };

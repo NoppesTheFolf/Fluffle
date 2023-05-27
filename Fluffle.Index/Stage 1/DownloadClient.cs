@@ -3,26 +3,12 @@ using Noppes.E621;
 using Noppes.Fluffle.FurAffinity;
 using Noppes.Fluffle.FurryNetworkSync;
 using Noppes.Fluffle.Http;
-using Noppes.Fluffle.TwitterSync;
 using Noppes.Fluffle.Weasyl;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Index;
-
-public class TwitterDownloadClient : DownloadClient
-{
-    private readonly ITwitterDownloadClient _client;
-
-    public TwitterDownloadClient(ITwitterDownloadClient client)
-    {
-        _client = client;
-    }
-
-    public override Task<Stream> GetStreamAsync(string url, CancellationToken cancellationToken = default) =>
-        _client.GetStreamAsync(url);
-}
 
 public class WeasylDownloadClient : DownloadClient
 {
