@@ -42,7 +42,7 @@ public enum FaSubmissionCategory
 
 public static class SubmissionCategoryHelper
 {
-    private static readonly IReadOnlyDictionary<string, FaSubmissionCategory> _mappings = new Dictionary<string, FaSubmissionCategory>
+    private static readonly IReadOnlyDictionary<string, FaSubmissionCategory> Mappings = new Dictionary<string, FaSubmissionCategory>
     {
         { "All", FaSubmissionCategory.All },
         { "Artwork (Digital)", FaSubmissionCategory.ArtworkDigital },
@@ -80,7 +80,7 @@ public static class SubmissionCategoryHelper
 
     public static FaSubmissionCategory CategoryFromString(string category)
     {
-        foreach (var mapping in _mappings)
+        foreach (var mapping in Mappings)
             if (category.StartsWith(mapping.Key))
                 return mapping.Value;
 
@@ -235,10 +235,10 @@ public class FaSubmission
     public ICollection<string> Tags { get; set; }
 
     [Key(7)]
-    public FaSubmissionCategory Category { get; set; }
+    public FaSubmissionCategory? Category { get; set; }
 
     [Key(8)]
-    public FaSubmissionType Type { get; set; }
+    public FaSubmissionType? Type { get; set; }
 
     [Key(9)]
     public string Species { get; set; }

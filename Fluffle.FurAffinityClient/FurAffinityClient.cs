@@ -102,8 +102,11 @@ public class FurAffinityClient : ApiClient
                 Value = n.ChildNodes.Skip(1).First(cn => cn.NodeType != HtmlNodeType.Text).InnerText.Trim()
             }).ToDictionary(n => n.Category, n => n.Value);
 
-        submission.Category = SubmissionCategoryHelper.CategoryFromString(info["Category"]);
-        submission.Type = SubmissionTypeHelper.TypeFromString(info["Category"]);
+        if (info.TryGetValue("Category", out var categoryString))
+        {
+            submission.Category = SubmissionCategoryHelper.CategoryFromString(categoryString);
+            submission.Type = SubmissionTypeHelper.TypeFromString(categoryString);
+        }
 
         submission.Species = info["Species"];
         submission.Gender = info["Gender"];

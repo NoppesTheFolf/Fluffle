@@ -271,13 +271,13 @@ public class FurAffinityContentProducer : ContentProducer<FaSubmission>
 
     public override bool ShouldBeIndexed(FaSubmission src)
     {
-        if (DisallowedCategories.Contains(src.Category))
+        if (src.Category != null && DisallowedCategories.Contains((FaSubmissionCategory)src.Category))
         {
             Log.Information("Not indexing submission with ID {id} due to its category ({category})", src.Id, src.Category);
             return false;
         }
 
-        if (DisallowedTypes.Contains(src.Type))
+        if (src.Type != null && DisallowedTypes.Contains((FaSubmissionType)src.Type))
         {
             Log.Information("Not indexing submission with ID {id} due to its type ({category})", src.Id, src.Type);
             return false;
