@@ -4,6 +4,7 @@ using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.Main.Communication;
+using Noppes.Fluffle.Queue;
 using Noppes.Fluffle.Service;
 using Noppes.Fluffle.Twitter.Client;
 using Noppes.Fluffle.Twitter.Core;
@@ -33,13 +34,16 @@ internal class Program : QueuePollingService<Program, MediaIngestQueueItem>
     private readonly ITwitterApiClient _twitterApiClient;
     private readonly IFluffleMachineLearningApiClient _mlApiClient;
     private readonly FluffleClient _fluffleClient;
+    private readonly IQueue<MediaIngestQueueItem> _queue;
 
-    public Program(IServiceProvider services, TwitterContext twitterContext, ITwitterApiClient twitterApiClient, IFluffleMachineLearningApiClient mlApiClient, FluffleClient fluffleClient) : base(services)
+    public Program(IServiceProvider services, TwitterContext twitterContext, ITwitterApiClient twitterApiClient,
+        IFluffleMachineLearningApiClient mlApiClient, FluffleClient fluffleClient, IQueue<MediaIngestQueueItem> queue) : base(services)
     {
         _twitterContext = twitterContext;
         _twitterApiClient = twitterApiClient;
         _mlApiClient = mlApiClient;
         _fluffleClient = fluffleClient;
+        _queue = queue;
     }
 
     public override async Task ProcessAsync(MediaIngestQueueItem value, CancellationToken cancellationToken)
@@ -116,6 +120,13 @@ internal class Program : QueuePollingService<Program, MediaIngestQueueItem>
             }
             catch (FlurlHttpException e)
             {
+                if (e.StatusCode == 403)
+                {
+                    Log.Warning("Media with ID {id} couldn't be retrieved because a 403 Forbidden was returned. Putting it on queue to be checked again in 7 days.", media.Id);
+                    await _queue.EnqueueAsync(value, user.FollowersCount, TimeSpan.FromDays(7), null);
+                    return;
+                }
+
                 if (e.StatusCode == 404)
                     continue;
 
