@@ -129,7 +129,7 @@ public class SyncService : IService
 
     public async Task RefreshImagesAsync(PlatformModel platform)
     {
-        await RefreshAsync<Image, ImagesSyncModel, ImagesSyncModel.ImageModel>(platform.Id, c => c.Images, afterChangeId =>
+        await RefreshAsync<DenormalizedImage, ImagesSyncModel, ImagesSyncModel.ImageModel>(platform.Id, c => c.DenormalizedImages, afterChangeId =>
             {
                 _logger.LogInformation("Retrieving images after change ID {changeId} for platform {platform}...", afterChangeId, platform.Name);
 
@@ -224,41 +224,6 @@ public class SyncService : IService
                 // We're missing credits! So we're going to sync those first
                 if (creditsInModels.Count != numberOfExistingCredits)
                     await RefreshCreditableEntitiesAsync(platform);
-
-                // Then we sync the base content entities
-                var imagesInModel = modelLookup.Values
-                    .Select(m => m.MapTo<Image>())
-                    .ToList();
-
-                var existingImages = await context.Images
-                    .Where(i => imagesInModel.Select(m => m.Id).Contains(i.Id))
-                    .ToListAsync();
-
-                // Skip the deleted content pieces which are also not in the database
-                var existingImageIds = existingImages.Select(i => i.Id).ToHashSet();
-                imagesInModel = imagesInModel
-                    .Except(imagesInModel.Where(m => m.IsDeleted && !existingImageIds.Contains(m.Id)))
-                    .ToList();
-
-                // Syncronize the images themselves (so not the hash etc)
-                var imageSyncResult = await context.SynchronizeAsync(c => c.Images, existingImages, imagesInModel, (i1, i2) =>
-                {
-                    return i1.Id == i2.Id;
-                }, onUpdateAsync: (src, dest) =>
-                {
-                    dest.IdOnPlatform = src.IdOnPlatform;
-                    dest.PlatformId = src.PlatformId;
-                    dest.IsDeleted = src.IsDeleted;
-                    dest.ViewLocation = src.ViewLocation;
-                    dest.IsSfw = src.IsSfw;
-
-                    return Task.CompletedTask;
-                }, updateAnywayAsync: (src, dest) =>
-                {
-                    dest.ChangeId = src.ChangeId;
-
-                    return Task.CompletedTask;
-                });
 
                 // Sync content files
                 var existingContentFiles = await context.ContentFiles

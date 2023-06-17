@@ -9,7 +9,6 @@ public partial class Platform : BaseEntity, IConfigurable<Platform>, IPlatform
 {
     public Platform()
     {
-        Content = new HashSet<Content>();
         CreditableEntities = new HashSet<CreditableEntity>();
     }
 
@@ -17,7 +16,6 @@ public partial class Platform : BaseEntity, IConfigurable<Platform>, IPlatform
     public string Name { get; set; }
     public string NormalizedName { get; set; }
 
-    public virtual ICollection<Content> Content { get; set; }
     public virtual ICollection<CreditableEntity> CreditableEntities { get; set; }
 
     public void Configure(EntityTypeBuilder<Platform> entity)
