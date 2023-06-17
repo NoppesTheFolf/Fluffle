@@ -231,7 +231,6 @@ public class SyncService : IService
                     .ToList();
 
                 var existingImages = await context.Images
-                    .IncludeThumbnails()
                     .Include(i => i.ContentCreditableEntities)
                     .Include(i => i.Files)
                     .Where(i => imagesInModel.Select(m => m.Id).Contains(i.Id))
@@ -268,17 +267,6 @@ public class SyncService : IService
                 foreach (var image in syncedImages.Where(i => !i.IsDeleted))
                 {
                     var model = modelLookup[image.Id];
-
-                    // Synchronize the image its thumbnail
-                    if (image.Thumbnail == null)
-                    {
-                        image.Thumbnail = model.Thumbnail.MapTo<Database.Models.Thumbnail>();
-                        await context.Thumbnails.AddAsync(image.Thumbnail);
-                    }
-                    else
-                    {
-                        model.Thumbnail.MapTo(image.Thumbnail);
-                    }
 
                     // Synchronize the image its credits
                     var modelCredits = model.Credits.Select(cei => new ContentCreditableEntity

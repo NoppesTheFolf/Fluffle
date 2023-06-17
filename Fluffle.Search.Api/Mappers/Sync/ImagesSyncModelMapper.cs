@@ -4,7 +4,7 @@ using Noppes.Fluffle.Search.Database.Models;
 
 namespace Noppes.Fluffle.Search.Api.Mappers;
 
-public class ImagesSyncModelMapper : IMapper<ImagesSyncModel.ImageModel, Image>, IMapper<ImagesSyncModel.ImageModel.ThumbnailModel, Database.Models.Thumbnail>
+public class ImagesSyncModelMapper : IMapper<ImagesSyncModel.ImageModel, Image>
 {
     public void MapFrom(ImagesSyncModel.ImageModel src, Image dest)
     {
@@ -17,14 +17,5 @@ public class ImagesSyncModelMapper : IMapper<ImagesSyncModel.ImageModel, Image>,
         dest.IsDeleted = src.IsDeleted;
         dest.ViewLocation = src.ViewLocation;
         dest.IsSfw = src.IsSfw;
-    }
-
-    public void MapFrom(ImagesSyncModel.ImageModel.ThumbnailModel src, Database.Models.Thumbnail dest)
-    {
-        dest.Width = src.Width;
-        dest.CenterX = src.CenterX;
-        dest.Height = src.Height;
-        dest.CenterY = src.CenterY;
-        dest.Location = src.Location;
     }
 }

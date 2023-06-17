@@ -25,7 +25,6 @@ public class Content : BaseEntity, IConfigurable<Content>, ITrackable
     public bool IsDeleted { get; set; }
 
     public virtual Platform Platform { get; set; }
-    public virtual Thumbnail Thumbnail { get; set; }
     public virtual ICollection<CreditableEntity> Credits { get; set; }
     public virtual ICollection<ContentCreditableEntity> ContentCreditableEntities { get; set; }
     public virtual ICollection<ContentFile> Files { get; set; }
@@ -59,10 +58,6 @@ public class Content : BaseEntity, IConfigurable<Content>, ITrackable
             .OnDelete(DeleteBehavior.Cascade);
 
         entity.Property(e => e.ThumbnailId);
-        entity.HasOne(d => d.Thumbnail)
-            .WithMany(p => p.Content)
-            .HasForeignKey(d => d.ThumbnailId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         entity.HasMany(e => e.Credits)
             .WithMany(e => e.Content)
