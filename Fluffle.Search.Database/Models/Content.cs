@@ -9,8 +9,6 @@ public class Content : BaseEntity, IConfigurable<Content>, ITrackable
 {
     public Content()
     {
-        Credits = new HashSet<CreditableEntity>();
-        ContentCreditableEntities = new HashSet<ContentCreditableEntity>();
         Files = new HashSet<ContentFile>();
     }
 
@@ -25,8 +23,6 @@ public class Content : BaseEntity, IConfigurable<Content>, ITrackable
     public bool IsDeleted { get; set; }
 
     public virtual Platform Platform { get; set; }
-    public virtual ICollection<CreditableEntity> Credits { get; set; }
-    public virtual ICollection<ContentCreditableEntity> ContentCreditableEntities { get; set; }
     public virtual ICollection<ContentFile> Files { get; set; }
 
     public void Configure(EntityTypeBuilder<Content> entity)
@@ -58,19 +54,5 @@ public class Content : BaseEntity, IConfigurable<Content>, ITrackable
             .OnDelete(DeleteBehavior.Cascade);
 
         entity.Property(e => e.ThumbnailId);
-
-        entity.HasMany(e => e.Credits)
-            .WithMany(e => e.Content)
-            .UsingEntity<ContentCreditableEntity>(r =>
-            {
-                return r.HasOne(e => e.CreditableEntity)
-                    .WithMany(e => e.ContentCreditableEntity)
-                    .HasForeignKey(e => e.CreditableEntityId);
-            }, l =>
-            {
-                return l.HasOne(e => e.Content)
-                    .WithMany(e => e.ContentCreditableEntities)
-                    .HasForeignKey(e => e.ContentId);
-            });
     }
 }

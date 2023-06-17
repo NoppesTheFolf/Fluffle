@@ -231,7 +231,6 @@ public class SyncService : IService
                     .ToList();
 
                 var existingImages = await context.Images
-                    .Include(i => i.ContentCreditableEntities)
                     .Include(i => i.Files)
                     .Where(i => imagesInModel.Select(m => m.Id).Contains(i.Id))
                     .ToListAsync();
@@ -267,19 +266,6 @@ public class SyncService : IService
                 foreach (var image in syncedImages.Where(i => !i.IsDeleted))
                 {
                     var model = modelLookup[image.Id];
-
-                    // Synchronize the image its credits
-                    var modelCredits = model.Credits.Select(cei => new ContentCreditableEntity
-                    {
-                        ContentId = image.Id,
-                        CreditableEntityId = cei
-                    }).ToList();
-
-                    await context.SynchronizeAsync(c => c.ContentCreditableEntities, image.ContentCreditableEntities, modelCredits,
-                        (ce1, ce2) =>
-                        {
-                            return (ce1.ContentId, ce1.CreditableEntityId) == (ce2.ContentId, ce2.CreditableEntityId);
-                        });
 
                     // Synchronize the image its files
                     var modelFiles = model.Files.Select(f => new ContentFile
