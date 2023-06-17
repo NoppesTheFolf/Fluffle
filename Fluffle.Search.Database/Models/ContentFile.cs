@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Database;
 
@@ -13,8 +12,6 @@ public partial class ContentFile : BaseEntity, IConfigurable<ContentFile>
     public int Height { get; set; }
     public string Location { get; set; }
 
-    public virtual Content Content { get; set; }
-
     public void Configure(EntityTypeBuilder<ContentFile> entity)
     {
         entity.HasKey(e => new { e.ContentId, e.Location });
@@ -27,9 +24,6 @@ public partial class ContentFile : BaseEntity, IConfigurable<ContentFile>
             .HasMaxLength(2048);
 
         entity.Property(e => e.ContentId);
-        entity.HasOne(d => d.Content)
-            .WithMany(p => p.Files)
-            .HasForeignKey(d => d.ContentId)
-            .OnDelete(DeleteBehavior.Cascade);
+        entity.HasIndex(e => e.ContentId);
     }
 }

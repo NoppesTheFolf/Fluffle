@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Noppes.Fluffle.Search.Database.Models;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Noppes.Fluffle.Search.Database.Migrations
 {
     [DbContext(typeof(FluffleSearchContext))]
-    partial class FluffleSearchContextModelSnapshot : ModelSnapshot
+    [Migration("20230617184205_RemoveLinkBetweenContentAndContentFiles")]
+    partial class RemoveLinkBetweenContentAndContentFiles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -171,9 +173,6 @@ namespace Noppes.Fluffle.Search.Database.Migrations
 
                     b.HasKey("ContentId", "Location")
                         .HasName("pk_content_file");
-
-                    b.HasIndex("ContentId")
-                        .HasDatabaseName("idx_content_file_content_id");
 
                     b.ToTable("content_file");
                 });

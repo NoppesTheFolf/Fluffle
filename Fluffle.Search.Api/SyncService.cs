@@ -231,7 +231,6 @@ public class SyncService : IService
                     .ToList();
 
                 var existingImages = await context.Images
-                    .Include(i => i.Files)
                     .Where(i => imagesInModel.Select(m => m.Id).Contains(i.Id))
                     .ToListAsync();
 
@@ -260,35 +259,34 @@ public class SyncService : IService
 
                     return Task.CompletedTask;
                 });
-                var syncedImages = imageSyncResult.Results().Select(r => r.Entity).ToList();
 
-                // Synchronize the images their attribute
-                foreach (var image in syncedImages.Where(i => !i.IsDeleted))
+                // Sync content files
+                var existingContentFiles = await context.ContentFiles
+                    .Where(x => modelLookup.Values.Select(y => y.Id).Contains(x.ContentId))
+                    .ToListAsync();
+
+                var newContentFiles = modelLookup.Values
+                    .Where(x => x.Files != null)
+                    .SelectMany(x => x.Files.Select(y => new ContentFile
+                    {
+                        ContentId = x.Id,
+                        Location = y.Location,
+                        Format = y.Format,
+                        Width = y.Width,
+                        Height = y.Height
+                    })).ToList();
+
+                await context.SynchronizeAsync(c => c.ContentFiles, existingContentFiles, newContentFiles, (c1, c2) =>
                 {
-                    var model = modelLookup[image.Id];
+                    return (c1.ContentId, c1.Location) == (c2.ContentId, c2.Location);
+                }, onUpdateAsync: (src, dest) =>
+                {
+                    dest.Format = src.Format;
+                    dest.Width = src.Width;
+                    dest.Height = src.Height;
 
-                    // Synchronize the image its files
-                    var modelFiles = model.Files.Select(f => new ContentFile
-                    {
-                        ContentId = model.Id,
-                        Location = f.Location,
-                        Format = f.Format,
-                        Width = f.Width,
-                        Height = f.Height
-                    }).ToList();
-
-                    await context.SynchronizeAsync(c => c.ContentFiles, image.Files, modelFiles, (c1, c2) =>
-                    {
-                        return (c1.ContentId, c1.Location) == (c2.ContentId, c2.Location);
-                    }, onUpdateAsync: (src, dest) =>
-                    {
-                        dest.Format = src.Format;
-                        dest.Width = src.Width;
-                        dest.Height = src.Height;
-
-                        return Task.CompletedTask;
-                    });
-                }
+                    return Task.CompletedTask;
+                });
             });
     }
 
