@@ -52,11 +52,30 @@ public readonly struct HashCollection
     }
 }
 
+public readonly struct ImageHashes
+{
+    public byte[] PhashRed64 { get; init; }
+    public byte[] PhashGreen64 { get; init; }
+    public byte[] PhashBlue64 { get; init; }
+    public byte[] PhashAverage64 { get; init; }
+
+    public byte[] PhashRed256 { get; init; }
+    public byte[] PhashGreen256 { get; init; }
+    public byte[] PhashBlue256 { get; init; }
+    public byte[] PhashAverage256 { get; init; }
+
+    public byte[] PhashRed1024 { get; init; }
+    public byte[] PhashGreen1024 { get; init; }
+    public byte[] PhashBlue1024 { get; init; }
+    public byte[] PhashAverage1024 { get; init; }
+
+}
+
 public interface ISearchService
 {
     public Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope);
 
-    public Task<SR<SearchResultModel>> SearchAsync(ImageHash hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope);
+    public Task<SR<SearchResultModel>> SearchAsync(ImageHashes hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope);
 
     public Task<SR<SearchResultModel>> SearchAsync(ulong hash64, HashCollection hashes256, HashCollection hashes1024, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope);
 }

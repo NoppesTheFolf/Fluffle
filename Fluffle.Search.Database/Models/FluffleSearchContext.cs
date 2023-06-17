@@ -25,7 +25,6 @@ public partial class FluffleSearchContext : ApiKeyContext<ApiKey, Permission, Ap
 
     public virtual DbSet<Content> Content { get; set; }
     public virtual DbSet<ContentFile> ContentFiles { get; set; }
-    public virtual DbSet<ImageHash> ImageHashes { get; set; }
     public virtual DbSet<Image> Images { get; set; }
     public virtual DbSet<DenormalizedImage> DenormalizedImages { get; set; }
     public virtual DbSet<Platform> Platform { get; set; }

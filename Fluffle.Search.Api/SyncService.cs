@@ -107,10 +107,10 @@ public class SyncService : IService
             },
             async (context, models) =>
             {
-                var creditableEntities = models.Select(m => m.MapTo<CreditableEntity>()).ToList();
+                var creditableEntities = models.Select(x => x.MapTo<CreditableEntity>()).ToList();
 
                 var existingCreditableEntities = await context.CreditableEntities
-                    .Where(ce => creditableEntities.Select(ce => ce.Id).Contains(ce.Id))
+                    .Where(x => creditableEntities.Select(y => y.Id).Contains(x.Id))
                     .ToListAsync();
 
                 await context.SynchronizeAsync(c => c.CreditableEntities, existingCreditableEntities, creditableEntities,
@@ -234,7 +234,6 @@ public class SyncService : IService
                     .IncludeThumbnails()
                     .Include(i => i.ContentCreditableEntities)
                     .Include(i => i.Files)
-                    .Include(i => i.ImageHash)
                     .Where(i => imagesInModel.Select(m => m.Id).Contains(i.Id))
                     .ToListAsync();
 
@@ -269,12 +268,6 @@ public class SyncService : IService
                 foreach (var image in syncedImages.Where(i => !i.IsDeleted))
                 {
                     var model = modelLookup[image.Id];
-
-                    // Synchronize the image its hash
-                    if (image.ImageHash == null)
-                        await context.ImageHashes.AddAsync(model.MapTo<ImageHash>());
-                    else
-                        model.MapTo(image.ImageHash);
 
                     // Synchronize the image its thumbnail
                     if (image.Thumbnail == null)

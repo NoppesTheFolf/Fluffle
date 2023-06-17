@@ -93,7 +93,7 @@ public class SearchService : Service, ISearchService
         return await SearchAsync(hash64, hashes256, hashes1024, includeNsfw, limit, platforms, includeDebug, scope);
     }
 
-    public Task<SR<SearchResultModel>> SearchAsync(ImageHash hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope)
+    public Task<SR<SearchResultModel>> SearchAsync(ImageHashes hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope)
     {
         var hash64 = FluffleHash.ToUInt64(hash.PhashAverage64);
         var hashes256 = new HashCollection(FluffleHash.ToInt64(hash.PhashRed256), FluffleHash.ToInt64(hash.PhashGreen256), FluffleHash.ToInt64(hash.PhashBlue256), FluffleHash.ToInt64(hash.PhashAverage256));
