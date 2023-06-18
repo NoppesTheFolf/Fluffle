@@ -139,12 +139,12 @@ public class SyncService : IService
             {
                 var modelLookup = models.ToDictionary(m => m.Id);
 
-                var existingDenormalizedImages = await context.DenormalizedImages
+                var existingImages = await context.DenormalizedImages
                     .Where(i => modelLookup.Values.Select(m => m.Id).Contains(i.Id))
                     .ToListAsync();
-                var existingDenormalizedImageIds = existingDenormalizedImages.Select(edi => edi.Id).ToHashSet();
+                var existingImageIds = existingImages.Select(edi => edi.Id).ToHashSet();
 
-                var newDenormalizedImages = modelLookup.Values.Select(m => new DenormalizedImage
+                var newImages = modelLookup.Values.Select(m => new DenormalizedImage
                 {
                     Id = m.Id,
                     PlatformId = m.PlatformId,
@@ -167,10 +167,15 @@ public class SyncService : IService
                     Credits = m.Credits?.ToArray(),
                     ChangeId = m.ChangeId,
                     IsDeleted = m.IsDeleted
-                }).Where(ndi => !ndi.IsDeleted || existingDenormalizedImageIds.Contains(ndi.Id)).ToList();
+                }).ToList();
 
-                var result = await context.SynchronizeAsync(c => c.DenormalizedImages, existingDenormalizedImages,
-                    newDenormalizedImages, (i1, i2) => i1.Id == i2.Id, onUpdateAsync: (src, dest) =>
+                // Skip the deleted images which are also not in the database
+                newImages = newImages
+                    .Where(x => !x.IsDeleted || (x.IsDeleted && existingImageIds.Contains(x.Id)))
+                    .ToList();
+
+                await context.SynchronizeAsync(x => x.DenormalizedImages, existingImages,
+                    newImages, (x1, x2) => x1.Id == x2.Id, onUpdateAsync: (src, dest) =>
                     {
                         dest.PlatformId = src.PlatformId;
                         dest.Location = src.Location;
