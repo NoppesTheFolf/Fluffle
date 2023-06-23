@@ -25,10 +25,10 @@ public class ContentService : Service, IContentService
 {
     private const string TransparentBackgroundTag = "transparent-background";
 
-    private static readonly AsyncLock TagsSyncMutex = new();
-    private static readonly IDictionary<PlatformConstant, AsyncLock> PlatformSyncMutexes =
-        Enum.GetValues<PlatformConstant>()
-        .ToDictionary(p => p, _ => new AsyncLock());
+    private static readonly AsyncLock TagsSyncLock = new();
+
+    private static readonly IDictionary<PlatformConstant, AsyncLock> PlatformSyncLocks = Enum.GetValues<PlatformConstant>()
+        .ToDictionary(x => x, _ => new AsyncLock());
 
     private readonly FluffleContext _context;
     private readonly TagBlacklistCollection _tagBlacklist;
@@ -250,7 +250,7 @@ public class ContentService : Service, IContentService
                 .ToList();
 
             SynchronizeResult<Tag> tagsSynchronizeResult;
-            using (var tagsLock = await TagsSyncMutex.LockAsync())
+            using (var tagsLock = await TagsSyncLock.LockAsync())
             {
                 var existingTags = await _context.Tags
                     .Where(t => tags.Select(t => t.Name).Contains(t.Name))
@@ -267,7 +267,7 @@ public class ContentService : Service, IContentService
             var tagEntitiesLookup = tagsSynchronizeResult.Entities()
                 .ToDictionary(t => t.Name);
 
-            using var platformLock = await PlatformSyncMutexes[(PlatformConstant)platform.Id].LockAsync();
+            using var platformLock = await PlatformSyncLocks[(PlatformConstant)platform.Id].LockAsync();
 
             // Mark existing blacklisted content for deletion. Content which hasn't been added
             // will simply by ignored
@@ -483,10 +483,15 @@ public class ContentService : Service, IContentService
     private const int RetryIncrementThreshold = 3;
     private static readonly TimeSpan RetryReservationTime = 3.Days();
 
+    private static readonly IDictionary<PlatformConstant, AsyncLock> ContentRetryLocks = Enum.GetValues<PlatformConstant>()
+        .ToDictionary(x => x, _ => new AsyncLock());
+
     public async Task<SR<string>> GetContentToRetry(string platformName)
     {
         return await _context.Platforms.GetPlatformAsync(platformName, async platform =>
         {
+            using var _ = await ContentRetryLocks[(PlatformConstant)platform.Id].LockAsync();
+
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var entity = await _context.Content
                 .Where(i => i.PlatformId == platform.Id)
