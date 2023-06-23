@@ -23,6 +23,7 @@ internal class Program : QueuePollingService<Program, MediaIngestQueueItem>
     private static readonly FlurlRetryPolicyBuilder DownloadRetryPolicy = new FlurlRetryPolicyBuilder()
         .WithStatusCode(HttpStatusCode.GatewayTimeout)
         .ShouldRetryClientTimeouts(true)
+        .ShouldRetryNetworkErrors(true)
         .WithRetry(3, retryCount => TimeSpan.FromSeconds(5 * retryCount));
 
     private static async Task Main(string[] args) => await RunAsync(args, "TwitterMediaIngester", (conf, services) =>

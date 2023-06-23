@@ -3,6 +3,7 @@ using Polly;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Http;
@@ -11,6 +12,7 @@ public class FlurlRetryPolicyBuilder
 {
     private readonly HashSet<int> _statusCodes = new();
     private bool _shouldRetryClientTimeouts;
+    private bool _shouldRetryNetworkErrors;
     private (int retryCount, Func<int, TimeSpan> sleepDurationProvider)? _retryConfiguration;
 
     public FlurlRetryPolicyBuilder WithStatusCode(HttpStatusCode statusCode) => WithStatusCode((int)statusCode);
@@ -26,6 +28,14 @@ public class FlurlRetryPolicyBuilder
     {
         if (_shouldRetryClientTimeouts)
             _shouldRetryClientTimeouts = value;
+
+        return this;
+    }
+
+    public FlurlRetryPolicyBuilder ShouldRetryNetworkErrors(bool value)
+    {
+        if (_shouldRetryNetworkErrors)
+            _shouldRetryNetworkErrors = value;
 
         return this;
     }
@@ -58,6 +68,11 @@ public class FlurlRetryPolicyBuilder
         if (_shouldRetryClientTimeouts)
         {
             policyBuilder = policyBuilder.Or<FlurlHttpTimeoutException>(_ => true);
+        }
+
+        if (_shouldRetryNetworkErrors)
+        {
+            policyBuilder = policyBuilder.Or<SocketException>(_ => true);
         }
 
         var retryPolicy = policyBuilder.WaitAndRetryAsync(_retryConfiguration.Value.retryCount, _retryConfiguration.Value.sleepDurationProvider);
