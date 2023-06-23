@@ -9,14 +9,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MessagePack" Version="2.4.35" />
-		<PackageReference Include="MessagePackAnalyzer" Version="2.4.35">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\Fluffle.Main.Client\Fluffle.Main.Client.csproj" />
 		<ProjectReference Include="..\Fluffle.Service\Fluffle.Service.csproj" />
 		<ProjectReference Include="..\Fluffle.Utils\Fluffle.Utils.csproj" />
