@@ -10,7 +10,6 @@ using Noppes.Fluffle.Twitter.Client;
 using Noppes.Fluffle.Twitter.Core;
 using Noppes.Fluffle.Twitter.Database;
 using Serilog;
-using System.Net;
 
 namespace Noppes.Fluffle.Twitter.MediaIngester;
 
@@ -19,12 +18,6 @@ internal class Program : QueuePollingService<Program, MediaIngestQueueItem>
     protected override TimeSpan Interval => TimeSpan.FromMinutes(5);
 
     protected override TimeSpan VisibleAfter => TimeSpan.FromHours(6);
-
-    private static readonly FlurlRetryPolicyBuilder DownloadRetryPolicy = new FlurlRetryPolicyBuilder()
-        .WithStatusCode(HttpStatusCode.GatewayTimeout)
-        .ShouldRetryClientTimeouts(true)
-        .ShouldRetryNetworkErrors(true)
-        .WithRetry(3, retryCount => TimeSpan.FromSeconds(5 * retryCount));
 
     private static async Task Main(string[] args) => await RunAsync(args, "TwitterMediaIngester", (conf, services) =>
     {
@@ -89,7 +82,7 @@ internal class Program : QueuePollingService<Program, MediaIngestQueueItem>
             Stream? stream = null;
             try
             {
-                stream = await DownloadRetryPolicy.Execute(() => _twitterApiClient.GetStreamAsync(photo.Url));
+                stream = await _twitterApiClient.GetStreamAsync(photo.Url, true);
                 var furryArtScores = await _mlApiClient.GetFurryArtPredictionsAsync(new[] { stream });
                 var furryArtScore = furryArtScores.First();
                 var isFurryArt = furryArtScore > 0.2;

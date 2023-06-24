@@ -1,5 +1,6 @@
 ﻿using Flurl.Http;
 using Noppes.Fluffle.Http;
+using System.Net;
 
 namespace Noppes.Fluffle.Twitter.Client;
 
@@ -11,7 +12,7 @@ public interface ITwitterApiClient
 
     Task<TwitterGetMediaResponseModel> GetUserMediaAsync(string userId, string? cursor = null);
 
-    Task<Stream> GetStreamAsync(string url);
+    Task<Stream> GetStreamAsync(string url, bool resilient);
 }
 
 public class TwitterApiClient : ApiClient, ITwitterApiClient
@@ -65,7 +66,19 @@ public class TwitterApiClient : ApiClient, ITwitterApiClient
         return response;
     }
 
-    public async Task<Stream> GetStreamAsync(string url) => await FlurlClient.Request(url).GetStreamAsync();
+    private static readonly FlurlRetryPolicyBuilder DownloadRetryPolicy = new FlurlRetryPolicyBuilder()
+        .WithStatusCode(HttpStatusCode.GatewayTimeout)
+        .ShouldRetryClientTimeouts(true)
+        .ShouldRetryNetworkErrors(true)
+        .WithRetry(3, retryCount => TimeSpan.FromSeconds(5 * retryCount));
+
+    public async Task<Stream> GetStreamAsync(string url, bool resilient)
+    {
+        Task<Stream> MakeRequest() => FlurlClient.Request(url).GetStreamAsync();
+        var stream = resilient ? await DownloadRetryPolicy.Execute(MakeRequest) : await MakeRequest();
+
+        return stream;
+    }
 
     public override IFlurlRequest Request(params object[] urlSegments)
     {
