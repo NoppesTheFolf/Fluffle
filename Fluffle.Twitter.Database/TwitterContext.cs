@@ -11,6 +11,8 @@ public class TwitterContext : BaseMongoContext
         Users = Database.GetRepository<UserEntity>("Users");
 
         Tweets = Database.GetRepository<TweetEntity>("Tweets");
+        // Make it easy to retrieve tweets from a specific user
+        Tweets.Collection.Indexes.CreateOne(new CreateIndexModel<TweetEntity>(Builders<TweetEntity>.IndexKeys.Ascending(x => x.UserId)));
         // Make it easy to retrieve tweets based on the media ID field
         Tweets.Collection.Indexes.CreateOne(new CreateIndexModel<TweetEntity>(Builders<TweetEntity>.IndexKeys.Ascending("Media._id")));
     }
