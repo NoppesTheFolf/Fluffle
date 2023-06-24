@@ -7,7 +7,7 @@ namespace Noppes.Fluffle.Api.Filters;
 
 public class DebugFilter : IActionFilter
 {
-    public static string DebugKey { get; } = Random.GenerateString(32);
+    public static string DebugKey { get; } = RandomString.Generate(32);
 
     private readonly ILogger<DebugFilter> _logger;
 

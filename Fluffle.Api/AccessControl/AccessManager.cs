@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Random = Noppes.Fluffle.Utils.Random;
+using Noppes.Fluffle.Utils;
 
 namespace Noppes.Fluffle.Api.AccessControl;
 
@@ -48,7 +48,7 @@ public class AccessManager<TApiKey, TPermission, TApiKeyPermission>
     /// <summary>
     /// Generates a API with 32 characters and a 128 bit entropy using a <see cref="RNGCryptoServiceProvider"/>.
     /// </summary>
-    private static string GenerateNewApiKey() => Random.GenerateString(32);
+    private static string GenerateNewApiKey() => RandomString.Generate(32);
 
     /// <summary>
     /// Gets the API key with the provided key. Optionally also include the permissions.

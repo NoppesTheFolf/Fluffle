@@ -19,6 +19,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Fluffle.Service\Fluffle.Service.csproj" />
 		<ProjectReference Include="..\Fluffle.Twitter.Core\Fluffle.Twitter.Core.csproj" />
+		<ProjectReference Include="..\Fluffle.Utils\Fluffle.Utils.csproj" />
 	</ItemGroup>
 
 </Project>

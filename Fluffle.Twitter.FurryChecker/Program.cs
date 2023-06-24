@@ -7,6 +7,7 @@ using Noppes.Fluffle.Twitter.Client;
 using Noppes.Fluffle.Twitter.Core;
 using Noppes.Fluffle.Twitter.Core.Services;
 using Noppes.Fluffle.Twitter.Database;
+using Noppes.Fluffle.Utils;
 using Serilog;
 
 namespace Noppes.Fluffle.Twitter.FurryChecker;
@@ -90,11 +91,11 @@ internal class Program : QueuePollingService<Program, UserCheckFurryQueueItem>
 
             if (temporaryFiles.Count < NMediaToAnalyze)
             {
-                Log.Information("Not enough media could be retrieved for user @{username}. Rescheduling to check again in a week", user.Username);
+                Log.Information("Not enough media could be retrieved for user @{username}. Rescheduling to check again in about a month", user.Username);
                 await _queue.EnqueueAsync(new UserCheckFurryQueueItem
                 {
                     Id = user.Id
-                }, user.FollowersCount, TimeSpan.FromDays(7), null);
+                }, user.FollowersCount, RandomTimeSpan.Between(TimeSpan.FromDays(26), TimeSpan.FromDays(30)), null);
 
                 return;
             }
@@ -189,11 +190,11 @@ internal class Program : QueuePollingService<Program, UserCheckFurryQueueItem>
         user = await _userService.UpdateDetailsAsync(user);
         if (!user.CanMediaBeRetrieved)
         {
-            Log.Information("After updating the details for user @{username}, it was determined the user's media could not be scraped. Rescheduling a week later to check again", user.Username);
+            Log.Information("After updating the details for user @{username}, it was determined the user's media could not be scraped. Rescheduling about a month later to check again", user.Username);
             await _queue.EnqueueAsync(new UserCheckFurryQueueItem
             {
                 Id = user.Id
-            }, user.FollowersCount, TimeSpan.FromDays(7), null);
+            }, user.FollowersCount, RandomTimeSpan.Between(TimeSpan.FromDays(26), TimeSpan.FromDays(30)), null);
 
             return null;
         }

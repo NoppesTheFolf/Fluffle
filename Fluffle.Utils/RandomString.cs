@@ -4,14 +4,14 @@ using System.Text.RegularExpressions;
 
 namespace Noppes.Fluffle.Utils;
 
-public static class Random
+public static class RandomString
 {
     private static readonly Regex AllowedCharacter = new("[a-zA-Z0-9]", RegexOptions.Compiled);
 
     /// <summary>
     /// Generates a random string of the specified length in a secure manner.
     /// </summary>
-    public static string GenerateString(int length)
+    public static string Generate(int length)
     {
         if (length < 1)
             throw new ArgumentOutOfRangeException(nameof(length), "Length must be equal to or greater than 1.");
