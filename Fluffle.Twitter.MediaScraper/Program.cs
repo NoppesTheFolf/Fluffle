@@ -20,7 +20,7 @@ internal class Program : ScheduledService<Program>
     });
 
     private DateTime? _refreshedAt;
-    private Stack<(double order, UserEntity user)> _users;
+    private Stack<(double order, UserEntity user)> _users = null!;
 
     private readonly TwitterContext _twitterContext;
     private readonly ITwitterApiClient _twitterApiClient;
@@ -39,7 +39,7 @@ internal class Program : ScheduledService<Program>
     {
         while (true)
         {
-            if (_refreshedAt == null || DateTime.UtcNow.Subtract((DateTime)_refreshedAt) > TimeSpan.FromMinutes(15))
+            if (_refreshedAt == null || DateTime.UtcNow.Subtract((DateTime)_refreshedAt) > TimeSpan.FromMinutes(30))
             {
                 Log.Information("Start refreshing user list...");
 
@@ -88,7 +88,7 @@ internal class Program : ScheduledService<Program>
 
         var timeSinceMediaLastScrapedWeight = timeSinceMediaLastScraped.TotalDays;
         if (timeSinceMediaLastScrapedWeight > 6)
-            timeSinceMediaLastScrapedWeight = 6; // Cap weight for followers at 6
+            timeSinceMediaLastScrapedWeight = 6; // Cap weight for last scraped at 6
 
         return followersWeight + timeSinceMediaLastScrapedWeight;
     }
@@ -101,7 +101,7 @@ internal class Program : ScheduledService<Program>
         user = await _userService.UpdateDetailsAsync(user);
         if (!user.CanMediaBeRetrieved)
         {
-            Log.Information("After updating the details for user @{username}, it was determined the user's media could not be scraped.", user.Username);
+            Log.Information("After updating the details for user @{username}, it was determined the user's media could not be scraped", user.Username);
             return;
         }
 
@@ -120,7 +120,10 @@ internal class Program : ScheduledService<Program>
             // If less new tweets were retrieved than the full page size, then we know we've started
             // retrieving tweets that are already in the database
             if (tweetsPage.Count != newTweets.Count)
+            {
+                Log.Information("Retrieved tweets that have already been scraped before, stopping");
                 break;
+            }
         }
 
         if (!tweets.Any())
