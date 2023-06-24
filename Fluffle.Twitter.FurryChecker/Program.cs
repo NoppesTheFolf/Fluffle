@@ -1,4 +1,5 @@
-﻿using MongoDB.Driver;
+﻿using Flurl.Http;
+using MongoDB.Driver;
 using Nitranium.PerceptualHashing.Utils;
 using Noppes.Fluffle.Queue;
 using Noppes.Fluffle.Service;
@@ -58,9 +59,7 @@ internal class Program : QueuePollingService<Program, UserCheckFurryQueueItem>
                     .OrderByDescending(x => x.Width * x.Height)
                     .First();
 
-                Log.Information("Downloading image at {url}...", photo.Url);
-                await using var stream = await _twitterApiClient.GetStreamAsync(photo.Url);
-
+                await using var stream = await TryDownloadImageAsync(photo.Url);
                 var temporaryFile = new TemporaryFile();
                 try
                 {
@@ -107,6 +106,31 @@ internal class Program : QueuePollingService<Program, UserCheckFurryQueueItem>
             foreach (var temporaryFile in temporaryFiles)
                 temporaryFile.Dispose();
         }
+    }
+
+    private async Task<Stream?> TryDownloadImageAsync(string url)
+    {
+        Log.Information("Downloading image at {url}...", url);
+        Stream? stream = null;
+        try
+        {
+            stream = await _twitterApiClient.GetStreamAsync(url);
+        }
+        catch (FlurlHttpException e)
+        {
+            if (stream != null)
+                await stream.DisposeAsync();
+
+            if (e.StatusCode == 404)
+            {
+                Log.Warning("Image at {url} could not be found", url);
+                return null;
+            }
+
+            throw;
+        }
+
+        return stream;
     }
 
     private async Task AnalyzeAndSaveAsync(UserEntity user, IList<(TwitterTweetMediaModel media, TwitterTweetMediaPhotoModel photo)> mediaUsed, IEnumerable<TemporaryFile> temporaryFiles)
