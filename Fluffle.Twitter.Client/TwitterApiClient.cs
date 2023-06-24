@@ -6,7 +6,9 @@ namespace Noppes.Fluffle.Twitter.Client;
 
 public interface ITwitterApiClient
 {
-    Task<TwitterUserModel> GetUserAsync(string username);
+    Task<TwitterUserModel> GetUserByIdAsync(string userId);
+
+    Task<TwitterUserModel> GetUserByUsernameAsync(string username);
 
     IAsyncEnumerable<ICollection<TwitterTweetModel>> EnumerateUserMediaAsync(string userId);
 
@@ -24,13 +26,17 @@ public class TwitterApiClient : ApiClient, ITwitterApiClient
         _apiKey = apiKey;
     }
 
-    public async Task<TwitterUserModel> GetUserAsync(string username)
+    public async Task<TwitterUserModel> GetUserByIdAsync(string userId) =>
+        await MakeUserRequest(Request("user/by-id", userId));
+
+    public async Task<TwitterUserModel> GetUserByUsernameAsync(string username) =>
+        await MakeUserRequest(Request("user/by-screen-name", username));
+
+    private static async Task<TwitterUserModel> MakeUserRequest(IFlurlRequest request)
     {
         try
         {
-            var user = await Request("user", username)
-                .GetJsonExplicitlyAsync<TwitterUserModel>();
-
+            var user = await request.GetJsonExplicitlyAsync<TwitterUserModel>();
             return user;
         }
         catch (FlurlHttpException e)

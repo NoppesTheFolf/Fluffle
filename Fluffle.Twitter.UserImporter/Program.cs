@@ -42,7 +42,7 @@ internal class Program : QueuePollingService<Program, ImportUserQueueItem>
 
         try
         {
-            var userModel = await _twitterApiClient.GetUserAsync(userToImport.Username);
+            var userModel = await _twitterApiClient.GetUserByUsernameAsync(userToImport.Username);
             if (await _twitterContext.Users.AnyAsync(x => x.Id == userModel.RestId))
             {
                 Log.Warning("User @{username} ({id}) has already been imported before", userModel.Username, userModel.RestId);

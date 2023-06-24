@@ -25,7 +25,7 @@ internal class UserService : IUserService
         UpdateDefinition<UserEntity> update;
         try
         {
-            var userModel = await _twitterApiClient.GetUserAsync(user.Username);
+            var userModel = await _twitterApiClient.GetUserByIdAsync(user.Id);
 
             update = Builders<UserEntity>.Update
                 .Set(x => x.IsProtected, userModel.IsProtected)
