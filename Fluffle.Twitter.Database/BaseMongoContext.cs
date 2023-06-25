@@ -6,6 +6,8 @@ namespace Noppes.Fluffle.Twitter.Database;
 
 public class BaseMongoContext
 {
+    protected Collation CaseInsensitiveCollation => new("en", strength: new Optional<CollationStrength?>(CollationStrength.Primary));
+
     protected readonly IMongoDatabase Database;
 
     private readonly IList<IMongoEventListener> _eventListeners;
@@ -24,6 +26,14 @@ public class BaseMongoContext
 
         var mongoClient = new MongoClient(settings);
         Database = mongoClient.GetDatabase(databaseName);
+    }
+
+    protected IMongoRepository<T> GetRepository<T>(string name) where T : class, new()
+    {
+        var collection = Database.GetCollection<T>(name);
+        var repository = new MongoRepository<T>(collection, CaseInsensitiveCollation);
+
+        return repository;
     }
 
     private void HandleEvent<T>(T e)

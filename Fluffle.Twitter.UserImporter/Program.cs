@@ -3,6 +3,7 @@ using Noppes.Fluffle.Queue;
 using Noppes.Fluffle.Service;
 using Noppes.Fluffle.Twitter.Client;
 using Noppes.Fluffle.Twitter.Core;
+using Noppes.Fluffle.Twitter.Core.Services;
 using Noppes.Fluffle.Twitter.Database;
 using Serilog;
 
@@ -19,12 +20,15 @@ internal class Program : QueuePollingService<Program, ImportUserQueueItem>
         services.AddCore(conf);
     });
 
+    private readonly IUserService _userService;
     private readonly ITwitterApiClient _twitterApiClient;
     private readonly TwitterContext _twitterContext;
     private readonly IQueue<UserCheckFurryQueueItem> _userFurryCheckQueue;
 
-    public Program(IServiceProvider services, ITwitterApiClient twitterApiClient, TwitterContext twitterContext, IQueue<UserCheckFurryQueueItem> userFurryCheckQueue) : base(services)
+    public Program(IServiceProvider services, IUserService userService, ITwitterApiClient twitterApiClient,
+        TwitterContext twitterContext, IQueue<UserCheckFurryQueueItem> userFurryCheckQueue) : base(services)
     {
+        _userService = userService;
         _twitterApiClient = twitterApiClient;
         _twitterContext = twitterContext;
         _userFurryCheckQueue = userFurryCheckQueue;
@@ -34,26 +38,41 @@ internal class Program : QueuePollingService<Program, ImportUserQueueItem>
     {
         Log.Information("Start processing user with username @{username}", userToImport.Username);
 
-        // First we check if the user has already been imported (successfully) before
-        var existsAsUser = await _twitterContext.Users.AnyAsync(x => x.Username == userToImport.Username);
-        var existsAsFailure = await _twitterContext.UserImportFailures.AnyAsync(x => x.Id == userToImport.Username);
-        if (existsAsUser || existsAsFailure)
+        // First we check if an active user already exists with the same username
+        var existingUsers = await _twitterContext.Users.ManyAsync(x => x.Username == userToImport.Username, true);
+        if (existingUsers.Any(x => !x.IsDeleted))
+        {
+            Log.Information("Skipping import for @{username} because there already exists an active user with that username", userToImport.Username);
             return;
+        }
+
+        // If not then we check if the import failed before
+        var existingImportFailure = await _twitterContext.UserImportFailures.FirstOrDefaultAsync(x => x.Username == userToImport.Username, true);
+        if (existingImportFailure != null && DateTime.UtcNow.Subtract(existingImportFailure.ImportedAt) < TimeSpan.FromDays(90)) // Retry after 90 days
+        {
+            Log.Information("Skipping import for @{username} because the import failed less than 90 days ago", userToImport.Username);
+            return;
+        }
 
         try
         {
             var userModel = await _twitterApiClient.GetUserByUsernameAsync(userToImport.Username);
-            if (await _twitterContext.Users.AnyAsync(x => x.Id == userModel.RestId))
+            var userEntity = await _twitterContext.Users.FirstOrDefaultAsync(x => x.Id == userModel.RestId);
+            if (userEntity != null)
             {
-                Log.Warning("User @{username} ({id}) has already been imported before", userModel.Username, userModel.RestId);
+                Log.Information("User @{username} ({id}) has already been imported before, updating information", userModel.Username, userModel.RestId);
+                await _userService.UpdateDetailsAsync(userEntity, userModel);
+
                 return;
             }
 
-            var user = new UserEntity
+            userEntity = new UserEntity
             {
                 Id = userModel.RestId,
                 AlternativeId = userModel.Id,
                 IsProtected = userModel.IsProtected,
+                IsSuspended = false,
+                IsDeleted = false,
                 CreatedAt = userModel.CreatedAtParsed.ToUniversalTime(),
                 Description = userModel.Description,
                 FollowersCount = userModel.FollowersCount,
@@ -68,23 +87,32 @@ internal class Program : QueuePollingService<Program, ImportUserQueueItem>
             // Schedule user to be checked whether they post furry art or not
             await _userFurryCheckQueue.EnqueueAsync(new UserCheckFurryQueueItem
             {
-                Id = user.Id
-            }, user.FollowersCount, 1.Minutes(), null);
+                Id = userEntity.Id
+            }, userEntity.FollowersCount, 1.Minutes(), null);
 
             // Add said user to the database
-            await _twitterContext.Users.InsertAsync(user);
+            await _twitterContext.Users.InsertAsync(userEntity);
 
             Log.Information("Successfully imported @{username}", userToImport.Username);
         }
         catch (TwitterUserException e)
         {
             Log.Information("User {username} could not be imported for the following reason: {reason}", userToImport.Username, e.Error.Reason);
-            await _twitterContext.UserImportFailures.InsertAsync(new UserImportFailureEntity
+            if (existingImportFailure == null)
             {
-                Id = userToImport.Username,
-                ImportedAt = DateTime.UtcNow,
-                Reason = e.Error.Reason.ToString()
-            });
+                await _twitterContext.UserImportFailures.InsertAsync(new UserImportFailureEntity
+                {
+                    Username = userToImport.Username,
+                    ImportedAt = DateTime.UtcNow,
+                    Reason = e.Error.Reason.ToString()
+                });
+            }
+            else
+            {
+                existingImportFailure.ImportedAt = DateTime.UtcNow;
+                existingImportFailure.Reason = e.Error.Reason.ToString();
+                await _twitterContext.UserImportFailures.UpsertAsync(x => x.Id == existingImportFailure.Id, existingImportFailure);
+            }
         }
     }
 }

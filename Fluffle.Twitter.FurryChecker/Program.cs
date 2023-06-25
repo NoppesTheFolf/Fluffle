@@ -61,6 +61,9 @@ internal class Program : QueuePollingService<Program, UserCheckFurryQueueItem>
                     .First();
 
                 await using var stream = await TryDownloadImageAsync(photo.Url);
+                if (stream == null)
+                    continue;
+
                 var temporaryFile = new TemporaryFile();
                 try
                 {
