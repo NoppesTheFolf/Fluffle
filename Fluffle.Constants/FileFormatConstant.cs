@@ -26,7 +26,8 @@ namespace Noppes.Fluffle.Constants
         Mid = 16,
         Binary = 17,
         Mp4 = 18,
-        Flv = 19
+        Flv = 19,
+        Json = 20
     }
 
     public static class FileFormatHelper
@@ -96,6 +97,7 @@ namespace Noppes.Fluffle.Constants
                 "" => FileFormatConstant.Binary,
                 "mp4" => FileFormatConstant.Mp4,
                 "flv" => FileFormatConstant.Flv,
+                "json" => FileFormatConstant.Json,
                 _ => fallback ?? throw new InvalidOperationException($"Extension `{extension}` could not be found")
             };
         }
@@ -119,6 +121,7 @@ namespace Noppes.Fluffle.Constants
                 "application/msword" => FileFormatConstant.Doc,
                 "video/mp4" => FileFormatConstant.Mp4,
                 "video/x-flv" => FileFormatConstant.Flv,
+                "application/json" => FileFormatConstant.Json,
                 _ => throw new InvalidOperationException($"MIME type `{mimeType}` could not be found")
             };
         }

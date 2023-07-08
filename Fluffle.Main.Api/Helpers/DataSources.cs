@@ -178,31 +178,37 @@ public class DataSources : IDataSource<PlatformConstant, Platform>, IDataSource<
             {
                 Name = "Waveform Audio File Format",
                 Abbreviation = "WAV",
-                Extension = ".wav"
+                Extension = "wav"
             },
             FileFormatConstant.Mid => new FileFormat
             {
                 Name = "Standard MIDI",
                 Abbreviation = "MID",
-                Extension = ".mid"
+                Extension = "mid"
             },
             FileFormatConstant.Binary => new FileFormat
             {
                 Name = "Binary",
                 Abbreviation = "Binary",
-                Extension = ".bin"
+                Extension = "bin"
             },
             FileFormatConstant.Mp4 => new FileFormat
             {
                 Name = "MPEG-4 Part 14",
                 Abbreviation = "MP4",
-                Extension = ".mp4"
+                Extension = "mp4"
             },
             FileFormatConstant.Flv => new FileFormat
             {
                 Name = "Flash Video",
                 Abbreviation = "FLV",
-                Extension = ".flv"
+                Extension = "flv"
+            },
+            FileFormatConstant.Json => new FileFormat
+            {
+                Name = "JavaScript Object Notation",
+                Abbreviation = "JSON",
+                Extension = "json"
             },
             _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
         };

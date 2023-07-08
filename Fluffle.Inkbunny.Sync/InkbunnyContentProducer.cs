@@ -3,7 +3,6 @@ using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Inkbunny.Client;
 using Noppes.Fluffle.Inkbunny.Client.Models;
-using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.Main.Communication;
 using Noppes.Fluffle.Sync;
 using Serilog;
@@ -208,6 +207,7 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
             FileFormatConstant.Doc => MediaTypeConstant.Other,
             FileFormatConstant.Mp4 => MediaTypeConstant.Video,
             FileFormatConstant.Flv => MediaTypeConstant.Video,
+            FileFormatConstant.Json => MediaTypeConstant.Other,
             _ => throw new ArgumentOutOfRangeException(nameof(fileFormat), fileFormat, "File format could not be mapped to media type.")
         };
     }
