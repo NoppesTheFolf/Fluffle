@@ -46,7 +46,7 @@ internal class Program : ScheduledService<Program>
                 var users = await _twitterContext.Users.Collection.Find(FilterDefinition<UserEntity>.Empty).ToListAsync();
                 users = users
                     .Where(x => x.FurryPrediction?.Value == true) // Users which post furry art
-                    .Where(x => !x.IsDeleted) // Of which the account is not deleted
+                    .Where(x => x.CanMediaBeRetrieved) // Of which the media can be retrieved
                     .Where(x => x.MediaScrapingLastStartedAt == null || DateTime.UtcNow.Subtract((DateTime)x.MediaScrapingLastStartedAt) > TimeSpan.FromHours(3))
                     .ToList();
 
@@ -80,7 +80,9 @@ internal class Program : ScheduledService<Program>
 
         var timeSinceMediaLastScraped = DateTime.UtcNow.Subtract((DateTime)user.MediaLastScrapedAt);
         if (timeSinceMediaLastScraped < TimeSpan.FromDays(1))
-            return null; // Do not scrape the media of users who have already been scraped yesterday
+            return null; // Do not scrape the media of users who have already been scraped in the last 24 hours
+
+
 
         var followersWeight = user.FollowersCount / (double)10_000;
         if (followersWeight > 3)
@@ -120,10 +122,7 @@ internal class Program : ScheduledService<Program>
             // If less new tweets were retrieved than the full page size, then we know we've started
             // retrieving tweets that are already in the database
             if (tweetsPage.Count != newTweets.Count)
-            {
-                Log.Information("Retrieved tweets that have already been scraped before, stopping");
                 break;
-            }
         }
 
         if (!tweets.Any())
@@ -131,6 +130,7 @@ internal class Program : ScheduledService<Program>
             Log.Information("No new tweets were retrieved for @{username}", user.Username);
             return;
         }
+        Log.Information("Retrieved a total of {count} (new) tweets for @{username}", tweets.Count, user.Username);
 
         var tweetEntities = tweets.Select(x => new TweetEntity
         {
