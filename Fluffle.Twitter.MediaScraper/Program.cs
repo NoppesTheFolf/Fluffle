@@ -128,6 +128,10 @@ internal class Program : ScheduledService<Program>
         if (!tweets.Any())
         {
             Log.Information("No new tweets were retrieved for @{username}", user.Username);
+
+            // Update when the user last got scraped
+            await UpdateMediaLastScrapedAtAsync(user);
+
             return;
         }
         Log.Information("Retrieved a total of {count} (new) tweets for @{username}", tweets.Count, user.Username);
