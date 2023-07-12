@@ -119,7 +119,7 @@ ThumbnailResult ThumbnailAvif(const char *srcLocation, const char *destLocation,
         image.heifsave(destLocation, VImage::option()
                                          ->set("Q", quality)
                                          ->set("compression", VipsForeignHeifCompression::VIPS_FOREIGN_HEIF_COMPRESSION_AV1)
-                                         ->set("effort", 0)
+                                         ->set("effort", 9)
                                          ->set("strip", true));
     };
 
