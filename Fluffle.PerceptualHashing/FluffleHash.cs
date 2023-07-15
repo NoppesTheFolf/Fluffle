@@ -39,7 +39,7 @@ public class FluffleHash
 
     /// <summary>
     /// Helper method to convert a hash consisting out of bytes into a <see cref="ulong"/>. The
-    /// length of the provided array needs to be dividable by 8 without producing any remainders.
+    /// length of the provided array needs to be dividable by 8.
     /// </summary>
     public static ulong[] ToInt64(byte[] hashAsBytes)
     {

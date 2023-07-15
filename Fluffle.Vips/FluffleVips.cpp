@@ -84,7 +84,7 @@ ThumbnailResult Thumbnail(const char *srcLocation, int width, int height, std::t
     return result;
 }
 
-ThumbnailResult ThumbnailWebp(const char *srcLocation, const char *destLocation, int width, int height, int quality)
+ThumbnailResult ThumbnailWebP(const char *srcLocation, const char *destLocation, int width, int height, int quality)
 {
     auto save = [quality, destLocation](VImage image) {
         image.webpsave(destLocation, VImage::option()

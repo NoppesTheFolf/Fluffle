@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Noppes.Fluffle.Imaging.Tests;
 
 namespace Noppes.Fluffle.Index;
 
@@ -38,17 +39,18 @@ public class IndexService : Service.Service
         var fluffleClient = new FluffleClient(mainConf.Url, mainConf.ApiKey);
         services.AddSingleton(fluffleClient);
 
+        services.AddFluffleThumbnail();
+        
         var fluffleHash = new FluffleHash();
         services.AddSingleton(fluffleHash);
-        services.AddSingleton(_ => new FluffleHashSelfTestRunner(fluffleHash, Log.Information));
+        
+        services.AddImagingTests(_ => Log.Information);
 
         var thumbConf = configuration.Get<ThumbnailConfiguration>();
         var b2Conf = configuration.Get<BackblazeB2Configuration>();
         var b2Client = new B2Client(b2Conf.ApplicationKeyId, b2Conf.ApplicationKey, thumbConf.BaseUrl);
         services.AddSingleton(b2Client);
         services.AddSingleton(new B2ThumbnailStorage(b2Client, thumbConf.Salt));
-
-        services.AddFluffleThumbnail();
 
         services.AddTransient<ImageHasher>();
         services.AddTransient<Thumbnailer>();
@@ -95,10 +97,10 @@ public class IndexService : Service.Service
     {
         if (Environment.IsProduction())
         {
-            var testRunner = Services.GetRequiredService<FluffleHashSelfTestRunner>();
-            testRunner.Run();
+            var testsExecutor = Services.GetRequiredService<IImagingTestsExecutor>();
+            testsExecutor.Execute();
         }
-
+        
         var fluffleClient = Services.GetRequiredService<FluffleClient>();
 
         var manager = new ProducerConsumerManager<ChannelImage>(Services, 20);

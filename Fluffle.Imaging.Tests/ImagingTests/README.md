@@ -1,4 +1,5 @@
-The images used in the self test suite are pulled from Pixabay (https://pixabay.com) under the Pixabay License (https://pixabay.com/service/license). The authors of said images can be found in the table below.
+The images used in the self test suite are pulled from Pixabay (https://pixabay.com) under the Pixabay
+License (https://pixabay.com/service/license). The authors of said images can be found in the table below.
 
 | Image          | Author    | Location                                                               |
 |----------------|-----------|------------------------------------------------------------------------|

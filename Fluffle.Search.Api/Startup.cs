@@ -1,3 +1,4 @@
+using Noppes.Fluffle.Imaging.Tests;
 using Humanizer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -56,12 +57,13 @@ public class Startup : ApiStartup<Startup, FluffleSearchContext>
 
         var fluffleHash = new FluffleHash();
         services.AddSingleton(fluffleHash);
-        services.AddSingleton(services =>
+        
+        services.AddImagingTests(provider =>
         {
-            var logger = services.GetRequiredService<ILogger<FluffleHashSelfTestRunner>>();
-            return new FluffleHashSelfTestRunner(fluffleHash, x => logger.LogInformation(x));
+            var logger = provider.GetRequiredService<ILogger<IImagingTestsExecutor>>();
+            return message => logger.LogInformation(message);
         });
-
+        
         var compareConf = Configuration.Get<CompareConfiguration>();
         var compareClient = new CompareClient(compareConf.Url);
         services.AddSingleton<ICompareClient>(compareClient);
@@ -77,7 +79,7 @@ public class Startup : ApiStartup<Startup, FluffleSearchContext>
     public override void AfterConfigure(IApplicationBuilder app, IWebHostEnvironment env, ServiceBuilder serviceBuilder)
     {
         if (env.IsProduction())
-            app.ApplicationServices.GetRequiredService<FluffleHashSelfTestRunner>().Run();
+            app.ApplicationServices.GetRequiredService<IImagingTestsExecutor>().Execute();
 
         serviceBuilder.AddSingleton<SyncService>(2.Minutes());
 

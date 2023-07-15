@@ -37,7 +37,7 @@ MODULE_API bool VipsInit();
 MODULE_API CenterResult Center(const char *location);
 MODULE_API ImageDimensions GetDimensions(const char *srcLocation);
 MODULE_API ThumbnailResult ThumbnailJpeg(const char *srcLocation, const char *destLocation, int width, int height, int quality);
-MODULE_API ThumbnailResult ThumbnailWebp(const char *srcLocation, const char *destLocation, int width, int height, int quality);
+MODULE_API ThumbnailResult ThumbnailWebP(const char *srcLocation, const char *destLocation, int width, int height, int quality);
 MODULE_API ThumbnailResult ThumbnailAvif(const char *srcLocation, const char *destLocation, int width, int height, int quality);
 MODULE_API ThumbnailResult ThumbnailPpm(const char *srcLocation, const char *destLocation, int width, int height);
 

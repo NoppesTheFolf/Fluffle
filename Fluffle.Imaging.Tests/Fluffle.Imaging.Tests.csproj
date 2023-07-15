@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Noppes.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+        <AssemblyName>Noppes.$(MSBuildProjectName)</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Fluffle.PerceptualHashing\Fluffle.PerceptualHashing.csproj" />
+        <ProjectReference Include="..\Fluffle.Thumbnail\Fluffle.Thumbnail.csproj" />
+        <ProjectReference Include="..\Fluffle.Vips\Fluffle.Vips.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="ImagingTests\**" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+</Project>
