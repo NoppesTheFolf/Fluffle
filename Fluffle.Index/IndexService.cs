@@ -7,10 +7,12 @@ using Noppes.Fluffle.E621Sync;
 using Noppes.Fluffle.FurAffinitySync;
 using Noppes.Fluffle.FurryNetworkSync;
 using Noppes.Fluffle.Http;
+using Noppes.Fluffle.Imaging.Tests;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Service;
 using Noppes.Fluffle.Thumbnail;
+using Noppes.Fluffle.Twitter.Client;
 using Noppes.Fluffle.Utils;
 using Noppes.Fluffle.WeasylSync;
 using Serilog;
@@ -18,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Noppes.Fluffle.Imaging.Tests;
 
 namespace Noppes.Fluffle.Index;
 
@@ -33,21 +34,23 @@ public class IndexService : Service.Service
     {
     }
 
-    private static async Task Main(string[] args) => await Service<IndexService>.RunAsync(args, "Index", (configuration, services) =>
+    private static async Task Main(string[] args) => await Service<IndexService>.RunAsync(args, "Index", (conf, services) =>
     {
-        var mainConf = configuration.Get<MainConfiguration>();
+        var mainConf = conf.Get<MainConfiguration>();
         var fluffleClient = new FluffleClient(mainConf.Url, mainConf.ApiKey);
         services.AddSingleton(fluffleClient);
 
+        services.AddTwitterApiClient(conf);
+
         services.AddFluffleThumbnail();
-        
+
         var fluffleHash = new FluffleHash();
         services.AddSingleton(fluffleHash);
-        
+
         services.AddImagingTests(_ => Log.Information);
 
-        var thumbConf = configuration.Get<ThumbnailConfiguration>();
-        var b2Conf = configuration.Get<BackblazeB2Configuration>();
+        var thumbConf = conf.Get<ThumbnailConfiguration>();
+        var b2Conf = conf.Get<BackblazeB2Configuration>();
         var b2Client = new B2Client(b2Conf.ApplicationKeyId, b2Conf.ApplicationKey, thumbConf.BaseUrl);
         services.AddSingleton(b2Client);
         services.AddSingleton(new B2ThumbnailStorage(b2Client, thumbConf.Salt));
@@ -63,11 +66,11 @@ public class IndexService : Service.Service
         var configuration = Services.GetRequiredService<FluffleConfiguration>();
         Configuration = configuration.Get<IndexConfiguration>();
 
+        var twitterApiClient = Services.GetRequiredService<ITwitterApiClient>();
         var e621Client = await new E621ClientFactory(configuration).CreateAsync(Configuration.E621.Interval, UserAgentApplicationName);
         var furryNetworkClient = await new FurryNetworkClientFactory(configuration).CreateAsync(Configuration.FurryNetwork.Interval, UserAgentApplicationName);
         var furAffinityClient = await new FurAffinityClientFactory(configuration).CreateAsync(Configuration.FurAffinity.Interval, UserAgentApplicationName);
         var weasylClient = await new WeasylClientFactory(configuration).CreateAsync(Configuration.Weasyl.Interval, UserAgentApplicationName);
-        var twitterClient = await new BasicClientFactory(configuration).CreateAsync(Configuration.Twitter.Interval, UserAgentApplicationName);
         var deviantArtClient = await new BasicClientFactory(configuration).CreateAsync(Configuration.DeviantArt.Interval, UserAgentApplicationName);
         var inkbunnyClient = await new BasicClientFactory(configuration).CreateAsync(Configuration.Inkbunny.Interval, UserAgentApplicationName);
         DownloadClients = new Dictionary<PlatformConstant, (DownloadClient, IndexConfiguration.ClientConfiguration)>
@@ -75,7 +78,7 @@ public class IndexService : Service.Service
             { PlatformConstant.E621, (new E621DownloadClient(e621Client), Configuration.E621) },
             { PlatformConstant.FurAffinity, (new FurAffinityDownloadClient(furAffinityClient), Configuration.FurAffinity) },
             { PlatformConstant.Weasyl, (new WeasylDownloadClient(weasylClient), Configuration.Weasyl) },
-            { PlatformConstant.Twitter , (new BasicDownloadClient(twitterClient), Configuration.Twitter) },
+            { PlatformConstant.Twitter , (new FuncDownloadClient(url => twitterApiClient.GetStreamAsync(url, false)), Configuration.Twitter) },
             { PlatformConstant.DeviantArt, (new BasicDownloadClient(deviantArtClient), Configuration.DeviantArt) },
             { PlatformConstant.Inkbunny, (new BasicDownloadClient(inkbunnyClient), Configuration.Inkbunny) }
         };
@@ -100,7 +103,7 @@ public class IndexService : Service.Service
             var testsExecutor = Services.GetRequiredService<IImagingTestsExecutor>();
             testsExecutor.Execute();
         }
-        
+
         var fluffleClient = Services.GetRequiredService<FluffleClient>();
 
         var manager = new ProducerConsumerManager<ChannelImage>(Services, 20);

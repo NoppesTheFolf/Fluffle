@@ -80,9 +80,11 @@ public class TwitterApiClient : ApiClient, ITwitterApiClient
 
     public async Task<Stream> GetStreamAsync(string url, bool resilient)
     {
-        Task<Stream> MakeRequest() => FlurlClient.Request(url).GetStreamAsync();
-        var stream = resilient ? await DownloadRetryPolicy.Execute(MakeRequest) : await MakeRequest();
+        Task<Stream> MakeRequest() => Request("download")
+            .SetQueryParam("url", url)
+            .GetStreamAsync();
 
+        var stream = resilient ? await DownloadRetryPolicy.Execute(MakeRequest) : await MakeRequest();
         return stream;
     }
 

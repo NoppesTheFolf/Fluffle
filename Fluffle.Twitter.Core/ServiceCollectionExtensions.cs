@@ -24,8 +24,7 @@ public static class ServiceCollectionExtensions
         services.AddTwitterDatabase(syncConf.MongoDb.ConnectionString, syncConf.MongoDb.Database);
 
         // Twitter API client
-        var twitterApiConf = conf.Get<TwitterApiConfiguration>();
-        services.AddSingleton<ITwitterApiClient>(new TwitterApiClient(twitterApiConf.Url, twitterApiConf.ApiKey));
+        services.AddTwitterApiClient(conf);
 
         // Main API client
         var mainConf = conf.Get<MainConfiguration>();
