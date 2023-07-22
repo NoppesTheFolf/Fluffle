@@ -42,14 +42,14 @@ RUN wget -qq https://github.com/glennrp/libpng/archive/v1.6.40.tar.gz && \
     cd .. && \
     rm -rf v1.6.40.tar.gz libpng-1.6.40
 
-# RUN wget -qq https://github.com/randy408/libspng/archive/refs/tags/v0.7.4.tar.gz && \
-#     tar xf v0.7.4.tar.gz && \
-#     cd libspng-0.7.4 && \
-#     cmake -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release && \
-#     make -j$(nproc) && \
-#     make install && \
-#     cd .. && \
-#     rm -rf v0.7.4.tar.gz libspng-0.7.4
+RUN wget -qq https://github.com/randy408/libspng/archive/refs/tags/v0.7.4.tar.gz && \
+    tar xf v0.7.4.tar.gz && \
+    cd libspng-0.7.4 && \
+    cmake -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && \
+    rm -rf v0.7.4.tar.gz libspng-0.7.4
 
 RUN wget -qq https://github.com/mozilla/mozjpeg/archive/v4.1.3.tar.gz && \
     tar xf v4.1.3.tar.gz && \
