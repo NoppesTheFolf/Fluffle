@@ -38,6 +38,9 @@ public class ImageHasher : ImageConsumer
         if (dimensions.Width <= 0 || dimensions.Height <= 0)
             return Error(image, "Image has invalid (negative) dimensions.");
 
+        if (dimensions.Width > 16384 || dimensions.Height > 16384)
+            return Error(image, "Image in either the width or height dimension is considered too large to process.");
+
         var max = Math.Max(dimensions.Width, dimensions.Height);
         var min = Math.Min(dimensions.Width, dimensions.Height);
         var difference = max / (double)min;

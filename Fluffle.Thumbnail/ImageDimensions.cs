@@ -15,7 +15,16 @@ public class ImageDimensions
     /// <summary>
     /// The image its area (width * height).
     /// </summary>
-    public int Area => Width * Height;
+    public int Area
+    {
+        get
+        {
+            checked
+            {
+                return Width * Height;
+            }
+        }
+    }
 
     public ImageDimensions(int width, int height)
     {
