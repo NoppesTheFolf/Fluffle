@@ -45,6 +45,10 @@ public class UserEntity
     // Metadata about media scraping
     public DateTime? MediaScrapingLastStartedAt { get; set; }
     public DateTime? MediaLastScrapedAt { get; set; }
+
+    // Misc metadata
+    public double? TweetsPerDay { get; set; }
+    public DateTime? TweetsPerDayBasedOnWhen { get; set; }
 }
 
 public class UserFurryPredictionEntity

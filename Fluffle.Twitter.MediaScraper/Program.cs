@@ -35,6 +35,38 @@ internal class Program : ScheduledService<Program>
         _mediaIngestionQueue = mediaIngestionQueue;
     }
 
+    private async Task CalculateTweetsPerDayAsync(UserEntity user)
+    {
+        const double nDaysToConsider = 180;
+
+        if (user.MediaLastScrapedAt == null)
+            throw new InvalidOperationException("Tweets per day statistics cannot be calculated for users of which their media hasn't been scraped before.");
+
+        var mediaLastScrapedAt = (DateTime)user.MediaLastScrapedAt;
+        var maximumTweetAge = mediaLastScrapedAt.Subtract(TimeSpan.FromDays(nDaysToConsider));
+
+        var userIdFilter = Builders<TweetEntity>.Filter.Eq(x => x.UserId, user.Id);
+        var ageFilter = Builders<TweetEntity>.Filter.Gt(x => x.CreatedAt, maximumTweetAge);
+        var filter = userIdFilter & ageFilter;
+
+        var nTweets = await _twitterContext.Tweets.Collection.Find(filter).CountDocumentsAsync();
+        var tweetsPerDay = nTweets / nDaysToConsider;
+
+        user.TweetsPerDay = tweetsPerDay;
+        user.TweetsPerDayBasedOnWhen = user.MediaLastScrapedAt;
+        await UpdateTweetsPerDayAsync(user.Id, tweetsPerDay, mediaLastScrapedAt);
+    }
+
+    private async Task UpdateTweetsPerDayAsync(string userId, double tweetsPerDay, DateTime basedOnWhen)
+    {
+        var filter = Builders<UserEntity>.Filter.Eq(x => x.Id, userId);
+        var update = Builders<UserEntity>.Update
+            .Set(x => x.TweetsPerDay, tweetsPerDay)
+            .Set(x => x.TweetsPerDayBasedOnWhen, basedOnWhen);
+
+        await _twitterContext.Users.Collection.UpdateOneAsync(filter, update);
+    }
+
     protected override async Task RunAsync(CancellationToken stoppingToken)
     {
         while (true)
@@ -47,13 +79,24 @@ internal class Program : ScheduledService<Program>
                 users = users
                     .Where(x => x.FurryPrediction?.Value == true) // Users which post furry art
                     .Where(x => x.CanMediaBeRetrieved) // Of which the media can be retrieved
-                    .Where(x => x.MediaScrapingLastStartedAt == null || DateTime.UtcNow.Subtract((DateTime)x.MediaScrapingLastStartedAt) > TimeSpan.FromHours(3))
+                    .Where(x => x.MediaScrapingLastStartedAt == null || DateTime.UtcNow.Subtract((DateTime)x.MediaScrapingLastStartedAt) > TimeSpan.FromHours(3)) // Do not include users that might have caused the scraper to crash before
                     .ToList();
+
+                var usersWithMissingStatistics = users
+                    .Where(x => x.MediaLastScrapedAt != null) // Only include users which has their media scraped before
+                    .Where(x => x.TweetsPerDay == null || x.MediaLastScrapedAt != x.TweetsPerDayBasedOnWhen)
+                    .ToList();
+
+                foreach (var user in usersWithMissingStatistics)
+                {
+                    Log.Information("Updating tweets per day statistic for @{username}", user.Username);
+                    await CalculateTweetsPerDayAsync(user);
+                }
 
                 var orderedUsers = users
                     .Select(x => (order: CalculateScrapeOrder(x), user: x))
                     .Where(x => x.order != null)
-                    .OrderBy(x => x.order)
+                    .OrderByDescending(x => x.order)
                     .Select(x => ((double)x.order!, x.user))
                     .ToList();
 
@@ -73,26 +116,32 @@ internal class Program : ScheduledService<Program>
         }
     }
 
+    private static double CalculateTweetWeight(UserEntity user)
+    {
+        var kFollowers = user.FollowersCount / 1000d;
+        var weight = Math.Max(1, kFollowers);
+
+        var cappedWeight = Math.Min(10, weight);
+        var logWeight = Math.Log(weight);
+        var finalWeight = cappedWeight + logWeight;
+
+        return finalWeight;
+    }
+
     private static double? CalculateScrapeOrder(UserEntity user)
     {
         if (user.MediaLastScrapedAt == null)
-            return 10 + user.FollowersCount; // Prioritize newly imported users to the top, prioritize by popularity
+            return int.MaxValue; // Prioritize newly imported users to the top, prioritize by popularity
 
         var timeSinceMediaLastScraped = DateTime.UtcNow.Subtract((DateTime)user.MediaLastScrapedAt);
         if (timeSinceMediaLastScraped < TimeSpan.FromDays(1))
             return null; // Do not scrape the media of users who have already been scraped in the last 24 hours
 
+        var tweetWeight = CalculateTweetWeight(user);
+        var expectedNumberOfMissingTweets = timeSinceMediaLastScraped.TotalDays * user.TweetsPerDay;
+        var order = expectedNumberOfMissingTweets * tweetWeight;
 
-
-        var followersWeight = user.FollowersCount / (double)10_000;
-        if (followersWeight > 3)
-            followersWeight = 3; // Cap weight for followers at 3 (or 30_000 followers)
-
-        var timeSinceMediaLastScrapedWeight = timeSinceMediaLastScraped.TotalDays;
-        if (timeSinceMediaLastScrapedWeight > 6)
-            timeSinceMediaLastScrapedWeight = 6; // Cap weight for last scraped at 6
-
-        return followersWeight + timeSinceMediaLastScrapedWeight;
+        return order;
     }
 
     private async Task ProcessUserAsync(UserEntity user)
