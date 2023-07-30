@@ -96,7 +96,7 @@ internal class Program : ScheduledService<Program>
                 var orderedUsers = users
                     .Select(x => (order: CalculateScrapeOrder(x), user: x))
                     .Where(x => x.order != null)
-                    .OrderByDescending(x => x.order)
+                    .OrderBy(x => x.order) // Because we're using a stack, ascending order ends up descending order!
                     .Select(x => ((double)x.order!, x.user))
                     .ToList();
 
