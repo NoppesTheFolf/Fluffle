@@ -14,7 +14,7 @@ public interface ITwitterApiClient
 
     Task<TwitterGetMediaResponseModel> GetUserMediaAsync(string userId, string? cursor = null);
 
-    Task<Stream> GetStreamAsync(string url, bool resilient);
+    Task<Stream> GetStreamAsync(string url, bool useProxy, bool resilient);
 }
 
 public class TwitterApiClient : ApiClient, ITwitterApiClient
@@ -78,11 +78,12 @@ public class TwitterApiClient : ApiClient, ITwitterApiClient
         .ShouldRetryNetworkErrors(true)
         .WithRetry(3, retryCount => TimeSpan.FromSeconds(5 * retryCount));
 
-    public async Task<Stream> GetStreamAsync(string url, bool resilient)
+    public async Task<Stream> GetStreamAsync(string url, bool useProxy, bool resilient)
     {
-        Task<Stream> MakeRequest() => Request("download")
-            .SetQueryParam("url", url)
-            .GetStreamAsync();
+        var request = useProxy
+            ? Request("download").SetQueryParam("url", url)
+            : FlurlClient.Request(url);
+        Task<Stream> MakeRequest() => request.GetStreamAsync();
 
         var stream = resilient ? await DownloadRetryPolicy.Execute(MakeRequest) : await MakeRequest();
         return stream;

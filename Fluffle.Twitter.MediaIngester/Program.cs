@@ -82,7 +82,7 @@ internal class Program : QueuePollingService<Program, MediaIngestQueueItem>
             Stream? stream = null;
             try
             {
-                stream = await _twitterApiClient.GetStreamAsync(photo.Url, true);
+                stream = await _twitterApiClient.GetStreamAsync(photo.Url, false, true);
                 var furryArtScores = await _mlApiClient.GetFurryArtPredictionsAsync(new[] { stream });
                 var furryArtScore = furryArtScores.First();
                 var isFurryArt = furryArtScore > 0.2;
