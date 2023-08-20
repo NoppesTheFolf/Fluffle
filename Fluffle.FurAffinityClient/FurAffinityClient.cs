@@ -108,8 +108,8 @@ public class FurAffinityClient : ApiClient
             submission.Type = SubmissionTypeHelper.TypeFromString(categoryString);
         }
 
-        submission.Species = info["Species"];
-        submission.Gender = info["Gender"];
+        submission.Species = info.TryGetValue("Species", out var species) ? species : null;
+        submission.Gender = info.TryGetValue("Gender", out var gender) ? gender : null;
 
         // Not all submission have a size (Flash files for example)
         if (info.TryGetValue("Size", out var infoSize))
