@@ -1,4 +1,3 @@
-using Noppes.Fluffle.Imaging.Tests;
 using Humanizer;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -11,10 +10,13 @@ using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.B2;
 using Noppes.Fluffle.Configuration;
-using Noppes.Fluffle.Database;
+using Noppes.Fluffle.Imaging.Tests;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Search.Api.LinkCreation;
+using Noppes.Fluffle.Search.Api.Services;
+using Noppes.Fluffle.Search.Business;
+using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Thumbnail;
 
@@ -33,7 +35,8 @@ public class Startup : ApiStartup<Startup, FluffleSearchContext>
 
     public override void AdditionalConfigureServices(IServiceCollection services)
     {
-        services.AddDatabase<FluffleSearchContext, SearchDatabaseConfiguration>(Configuration);
+        services.AddBusiness();
+        services.AddEntityFramework(Configuration);
 
         var conf = Configuration.Get<SearchServerConfiguration>();
         services.AddSingleton(conf);
@@ -57,18 +60,19 @@ public class Startup : ApiStartup<Startup, FluffleSearchContext>
 
         var fluffleHash = new FluffleHash();
         services.AddSingleton(fluffleHash);
-        
+
         services.AddImagingTests(provider =>
         {
             var logger = provider.GetRequiredService<ILogger<IImagingTestsExecutor>>();
             return message => logger.LogInformation(message);
         });
-        
+
         var compareConf = Configuration.Get<CompareConfiguration>();
         var compareClient = new CompareClient(compareConf.Url);
         services.AddSingleton<ICompareClient>(compareClient);
 
         services.AddSingleton<SyncService>();
+        services.AddSingleton<HashRefreshService>();
     }
 
     public override void ConfigureAuthentication(IServiceCollection services, AuthenticationBuilder authenticationBuilder)
@@ -82,6 +86,7 @@ public class Startup : ApiStartup<Startup, FluffleSearchContext>
             app.ApplicationServices.GetRequiredService<IImagingTestsExecutor>().Execute();
 
         serviceBuilder.AddSingleton<SyncService>(2.Minutes());
+        serviceBuilder.AddSingleton<HashRefreshService>(15.Minutes());
 
         base.AfterConfigure(app, env, serviceBuilder);
     }

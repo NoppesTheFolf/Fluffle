@@ -1,6 +1,6 @@
-using System.Runtime.Intrinsics.X86;
 using Noppes.Fluffle.Imaging.Tests.Models;
-using Noppes.Fluffle.PerceptualHashing;
+using Noppes.Fluffle.Utils;
+using System.Runtime.Intrinsics.X86;
 
 namespace Noppes.Fluffle.Imaging.Tests;
 
@@ -23,10 +23,10 @@ internal class ImagingTestsExecutor : IImagingTestsExecutor
     public void Execute()
     {
         _logger.Write("Starting imaging tests...");
-        
+
         foreach (var testCase in _testCaseProvider.Provide())
             CompareTestCase(testCase);
-        
+
         _logger.Write("Imaging tests finished without errors!");
     }
 
@@ -67,9 +67,9 @@ internal class ImagingTestsExecutor : IImagingTestsExecutor
     private void CompareBytes(TestCase testCase, byte[] expected, byte[] actual, int allowedDeviationInBits)
     {
         ulong mismatchCount = 0;
-        foreach (var (actualHashPart, expectedHashPart) in FluffleHash.ToInt64(actual).Zip(FluffleHash.ToInt64(expected.ToArray())))
+        foreach (var (actualHashPart, expectedHashPart) in ByteConvert.ToInt64(actual).Zip(ByteConvert.ToInt64(expected.ToArray())))
             mismatchCount += Popcnt.X64.PopCount(actualHashPart ^ expectedHashPart);
-        
+
         var lengthInBits = 8 * sizeof(byte) * actual.Length;
         var percentageWrong = (int)mismatchCount / (double)lengthInBits;
         var percentageWrongAllowed = allowedDeviationInBits / (double)lengthInBits;

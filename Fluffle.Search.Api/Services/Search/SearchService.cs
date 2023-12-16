@@ -5,6 +5,7 @@ using Noppes.Fluffle.Api.Services;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Search.Api.Models;
+using Noppes.Fluffle.Search.Business.Similarity;
 using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Utils;
 using System;
@@ -30,12 +31,14 @@ public class SearchService : Service, ISearchService
     private const int DistanceFromBestAlternativeThreshold = 35;
 
     private readonly ICompareClient _compareClient;
+    private readonly ISimilarityService _similarityService;
     private readonly FluffleHash _hash;
     private readonly FluffleSearchContext _context;
 
-    public SearchService(ICompareClient compareClient, FluffleHash hash, FluffleSearchContext context)
+    public SearchService(ICompareClient compareClient, ISimilarityService similarityService, FluffleHash hash, FluffleSearchContext context)
     {
         _compareClient = compareClient;
+        _similarityService = similarityService;
         _hash = hash;
         _context = context;
     }
@@ -68,7 +71,7 @@ public class SearchService : Service, ISearchService
                 scope.Next(timeAverage);
             var averageHash = average ? perceptualHashImage.ComputeHash(Channel.Average) : Array.Empty<byte>();
 
-            return new HashCollection(FluffleHash.ToInt64(redHash), FluffleHash.ToInt64(greenHash), FluffleHash.ToInt64(blueHash), FluffleHash.ToInt64(averageHash));
+            return new HashCollection(ByteConvert.ToInt64(redHash), ByteConvert.ToInt64(greenHash), ByteConvert.ToInt64(blueHash), ByteConvert.ToInt64(averageHash));
         }
 
         var hash = _hash.Create(128);
@@ -88,16 +91,16 @@ public class SearchService : Service, ISearchService
 
         scope.Next(t => t.Compute64Average);
         hash.Size = 8;
-        var hash64 = FluffleHash.ToUInt64(hasher.ComputeHash(Channel.Average));
+        var hash64 = ByteConvert.ToUInt64(hasher.ComputeHash(Channel.Average));
 
         return await SearchAsync(hash64, hashes256, hashes1024, includeNsfw, limit, platforms, includeDebug, scope);
     }
 
     public Task<SR<SearchResultModel>> SearchAsync(ImageHashes hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope)
     {
-        var hash64 = FluffleHash.ToUInt64(hash.PhashAverage64);
-        var hashes256 = new HashCollection(FluffleHash.ToInt64(hash.PhashRed256), FluffleHash.ToInt64(hash.PhashGreen256), FluffleHash.ToInt64(hash.PhashBlue256), FluffleHash.ToInt64(hash.PhashAverage256));
-        var hashes1024 = new HashCollection(FluffleHash.ToInt64(hash.PhashRed1024), FluffleHash.ToInt64(hash.PhashGreen1024), FluffleHash.ToInt64(hash.PhashBlue1024), FluffleHash.ToInt64(hash.PhashAverage1024));
+        var hash64 = ByteConvert.ToUInt64(hash.PhashAverage64);
+        var hashes256 = new HashCollection(ByteConvert.ToInt64(hash.PhashRed256), ByteConvert.ToInt64(hash.PhashGreen256), ByteConvert.ToInt64(hash.PhashBlue256), ByteConvert.ToInt64(hash.PhashAverage256));
+        var hashes1024 = new HashCollection(ByteConvert.ToInt64(hash.PhashRed1024), ByteConvert.ToInt64(hash.PhashGreen1024), ByteConvert.ToInt64(hash.PhashBlue1024), ByteConvert.ToInt64(hash.PhashAverage1024));
 
         return SearchAsync(hash64, hashes256, hashes1024, includeNsfw, limit, platforms, includeDebug, scope);
     }
@@ -114,7 +117,8 @@ public class SearchService : Service, ISearchService
     public async Task<SR<SearchResultModel>> SearchAsync(ulong hash64, HashCollection hashes256, HashCollection hashes1024, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope)
     {
         scope.Next(t => t.CompareCoarse);
-        var searchResult = await _compareClient.CompareAsync(hash64, hashes256.Average, includeNsfw, limit);
+        // var searchResult = await _compareClient.CompareAsync(hash64, hashes256.Average, includeNsfw, limit);
+        var searchResult = _similarityService.NearestNeighbors(hash64, hashes256.Average, includeNsfw, limit);
 
         // Bug: The search service returns duplicate images. Update: might not anymore, who knows
         scope.Next(t => t.ReduceCoarseResults);
@@ -341,10 +345,10 @@ public class SearchService : Service, ISearchService
         // Compare all channels
         var result = new CompareResult
         {
-            Red = Compare(hashesTwo.Red, FluffleHash.ToInt64(hashesOne.red)),
-            Green = Compare(hashesTwo.Green, FluffleHash.ToInt64(hashesOne.green)),
-            Blue = Compare(hashesTwo.Blue, FluffleHash.ToInt64(hashesOne.blue)),
-            Average = includeDebug ? Compare(hashesTwo.Average, FluffleHash.ToInt64(hashesOne.average)) : -1,
+            Red = Compare(hashesTwo.Red, ByteConvert.ToInt64(hashesOne.red)),
+            Green = Compare(hashesTwo.Green, ByteConvert.ToInt64(hashesOne.green)),
+            Blue = Compare(hashesTwo.Blue, ByteConvert.ToInt64(hashesOne.blue)),
+            Average = includeDebug ? Compare(hashesTwo.Average, ByteConvert.ToInt64(hashesOne.average)) : -1,
         };
 
         // Calculate the ones with the worst and best match and base the score on the worst one

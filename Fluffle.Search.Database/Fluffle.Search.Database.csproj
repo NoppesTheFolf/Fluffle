@@ -20,6 +20,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Fluffle.Api\Fluffle.Api.csproj" />
 		<ProjectReference Include="..\Fluffle.Database\Fluffle.Database.csproj" />
+		<ProjectReference Include="..\Fluffle.Search.Business\Fluffle.Search.Business.csproj" />
 	</ItemGroup>
 
 </Project>
