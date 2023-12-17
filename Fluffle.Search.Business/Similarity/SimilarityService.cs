@@ -15,20 +15,21 @@ public interface ISimilarityService
 
 public class SimilarityService : ISimilarityService
 {
+    private const int ShardsCount = 64;
     private const int NnThreshold = 18;
     private const int BatchSize = 25_000;
     private const int NextPlatformDelay = 2500;
 
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SimilarityService> _logger;
-    private readonly IDictionary<int, (HashCollection sfw, HashCollection nsfw)> _hashCollections;
+    private readonly IDictionary<int, (IHashCollection sfw, IHashCollection nsfw)> _hashCollections;
     private readonly IDictionary<int, long> _changeIds;
 
     public SimilarityService(IServiceProvider serviceProvider, ILogger<SimilarityService> logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
-        _hashCollections = new Dictionary<int, (HashCollection, HashCollection)>();
+        _hashCollections = new Dictionary<int, (IHashCollection, IHashCollection)>();
         _changeIds = new Dictionary<int, long>();
     }
 
@@ -39,7 +40,7 @@ public class SimilarityService : ISimilarityService
         var result = new Dictionary<int, SimilarityResult>();
         foreach (var (platformId, platformHashCollections) in _hashCollections)
         {
-            IEnumerable<HashCollection> hashCollections = new[] { platformHashCollections.sfw };
+            IEnumerable<IHashCollection> hashCollections = new[] { platformHashCollections.sfw };
             if (includeNsfw)
                 hashCollections = hashCollections.Concat(new[] { platformHashCollections.nsfw });
 
@@ -75,7 +76,7 @@ public class SimilarityService : ISimilarityService
             if (_hashCollections.ContainsKey(platform.Id))
                 continue;
 
-            _hashCollections[platform.Id] = (new HashCollection(), new HashCollection());
+            _hashCollections[platform.Id] = (new ShardedHashCollection(ShardsCount), new ShardedHashCollection(ShardsCount));
             _changeIds[platform.Id] = 0;
         }
 
