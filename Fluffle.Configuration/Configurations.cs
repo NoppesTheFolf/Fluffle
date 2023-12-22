@@ -24,29 +24,34 @@ public class MongoDbConfiguration : FluffleConfigurationPart<MongoDbConfiguratio
 public abstract class DatabaseConfiguration : FluffleConfigurationPart<DatabaseConfiguration>
 {
     /// <summary>
-    /// Where may thou access thy database?
+    /// Where the database server is hosted.
     /// </summary>
     public string Host { get; set; }
 
     /// <summary>
-    /// What is thy database bid?
+    /// Port at which the database server is hosted.
+    /// </summary>
+    public int? Port { get; set; }
+
+    /// <summary>
+    /// Name of the database itself.
     /// </summary>
     public string Database { get; set; }
 
     /// <summary>
-    /// What is thy name?
+    /// Username of the user with which to connect to the database server.
     /// </summary>
     public string Username { get; set; }
 
     /// <summary>
-    /// What's the special code word?
+    /// Password of the user with which to connect to the database server.
     /// </summary>
     public string Password { get; set; }
 
     /// <summary>
     /// A connection string for easy use with EF Core.
     /// </summary>
-    public string ConnectionString => $"Host={Host};Database={Database};Username={Username};Password={Password}";
+    public string ConnectionString => $"Host={Host};Port={Port ?? 5432};Database={Database};Username={Username};Password={Password}";
 
     /// <summary>
     /// Number of seconds before a query times out.
@@ -54,13 +59,14 @@ public abstract class DatabaseConfiguration : FluffleConfigurationPart<DatabaseC
     public int CommandTimeout { get; set; } = 30;
 
     /// <summary>
-    /// Whether or not to log queries to the console.
+    /// Whether to log queries to the console.
     /// </summary>
     public bool EnableLogging { get; set; }
 
     protected DatabaseConfiguration()
     {
         RuleFor(o => o.Host).Hostname();
+        RuleFor(o => o.Port).GreaterThan(0);
         RuleFor(o => o.Database).NotEmpty();
         RuleFor(o => o.Username).NotEmpty();
         RuleFor(o => o.Password).NotEmpty();
@@ -115,10 +121,13 @@ public class SearchServerConfiguration : FluffleConfigurationPart<SearchServerCo
 
     public BackblazeB2Configuration SearchResultsBackblazeB2 { get; set; }
 
+    public string SimilarityDataDumpLocation { get; set; }
+
     public SearchServerConfiguration()
     {
         RuleFor(o => o.SearchResultsTemporaryLocation).NotEmpty();
         RuleFor(o => o.SearchResultsBackblazeB2).NotEmpty().SetValidator(o => o.SearchResultsBackblazeB2);
+        RuleFor(o => o.SimilarityDataDumpLocation).NotEmpty();
     }
 }
 

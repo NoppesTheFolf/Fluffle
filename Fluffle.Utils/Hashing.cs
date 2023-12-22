@@ -40,6 +40,11 @@ public static class Hashing
         return BytesToString(sha1.ComputeHash(stream));
     }
 
+    /// <summary>
+    /// Gets <see cref="HashAlgorithm.Hash"/> as a string.
+    /// </summary>
+    public static string GetHashString(this HashAlgorithm value) => BytesToString(value.Hash);
+
     private static string BytesToString(ReadOnlySpan<byte> bytes)
     {
         var hashBuilder = new StringBuilder();

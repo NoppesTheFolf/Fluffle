@@ -1,36 +1,73 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Nito.AsyncEx;
 using Noppes.Fluffle.Search.Business.Repositories;
 using Noppes.Fluffle.Search.Domain;
 using System.Diagnostics;
 
 namespace Noppes.Fluffle.Search.Business.Similarity;
 
-public interface ISimilarityService
+internal class SimilarityService : ISimilarityService
 {
-    IDictionary<int, SimilarityResult> NearestNeighbors(ulong hash64, ReadOnlySpan<ulong> hash256, bool includeNsfw, int limit);
-
-    Task RefreshAsync();
-}
-
-public class SimilarityService : ISimilarityService
-{
-    private const int ShardsCount = 64;
     private const int NnThreshold = 18;
     private const int BatchSize = 25_000;
     private const int NextPlatformDelay = 2500;
 
+    private readonly ISimilarityDataSerializer _serializer;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SimilarityService> _logger;
-    private readonly IDictionary<int, (IHashCollection sfw, IHashCollection nsfw)> _hashCollections;
-    private readonly IDictionary<int, long> _changeIds;
 
-    public SimilarityService(IServiceProvider serviceProvider, ILogger<SimilarityService> logger)
+    private Dictionary<int, PlatformSimilarityData> _data;
+    private readonly AsyncLock _lock;
+
+    public SimilarityService(ISimilarityDataSerializer serializer, IServiceProvider serviceProvider, ILogger<SimilarityService> logger)
     {
+        _serializer = serializer;
         _serviceProvider = serviceProvider;
         _logger = logger;
-        _hashCollections = new Dictionary<int, (IHashCollection, IHashCollection)>();
-        _changeIds = new Dictionary<int, long>();
+
+        _data = new Dictionary<int, PlatformSimilarityData>();
+        _lock = new AsyncLock();
+    }
+
+    public async Task<bool> TryRestoreDumpAsync()
+    {
+        var dumps = await _serializer.GetDumpsAsync();
+        foreach (var dump in dumps.OrderByDescending(x => x.When))
+        {
+            _logger.LogInformation("Attempting to restore dump with ID {id} made at {when}", dump.Id, dump.When);
+
+            try
+            {
+                var stopwatch = Stopwatch.StartNew();
+
+                var data = await _serializer.RestoreDumpAsync(dump);
+                _data = data.ToDictionary(x => x.PlatformId);
+                _logger.LogInformation("Dump with ID {id} restored in {time}ms", dump.Id, stopwatch.ElapsedMilliseconds);
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Something went wrong trying to restore dump with ID {id}", dump.Id);
+            }
+        }
+
+        return false;
+    }
+
+    public async Task CreateDumpAsync()
+    {
+        using var _ = await _lock.LockAsync();
+
+        await _serializer.CreateDumpAsync(_data.Values);
+
+        var dumps = await _serializer.GetDumpsAsync();
+        var redundantDumps = dumps.OrderByDescending(x => x.When).Skip(2).ToList();
+        foreach (var redundantDump in redundantDumps)
+        {
+            await _serializer.TryPurgeDumpAsync(redundantDump);
+        }
     }
 
     public IDictionary<int, SimilarityResult> NearestNeighbors(ulong hash64, ReadOnlySpan<ulong> hash256, bool includeNsfw, int limit)
@@ -38,24 +75,24 @@ public class SimilarityService : ISimilarityService
         var stopwatch = Stopwatch.StartNew();
 
         var result = new Dictionary<int, SimilarityResult>();
-        foreach (var (platformId, platformHashCollections) in _hashCollections)
+        foreach (var item in _data.Values)
         {
-            IEnumerable<IHashCollection> hashCollections = new[] { platformHashCollections.sfw };
+            IEnumerable<IHashCollection> hashCollections = new[] { item.SfwCollection };
             if (includeNsfw)
-                hashCollections = hashCollections.Concat(new[] { platformHashCollections.nsfw });
+                hashCollections = hashCollections.Concat(new[] { item.NsfwCollection });
 
             var count = 0;
             var nnResults = new List<NearestNeighborsResult>();
             foreach (var hashCollection in hashCollections)
             {
                 var nnResult = hashCollection.NearestNeighbors(hash64, NnThreshold, hash256, limit);
-                _logger.LogTrace("Searched through {count64}/{count256} hashes on platform with ID {platformId}", nnResult.Count64, nnResult.Count256, platformId);
+                _logger.LogTrace("Searched through {count64}/{count256} hashes on platform with ID {platformId}", nnResult.Count64, nnResult.Count256, item.PlatformId);
 
                 count += nnResult.Count64;
                 nnResults.AddRange(nnResult.Results);
             }
 
-            result[platformId] = new SimilarityResult(count, nnResults);
+            result[item.PlatformId] = new SimilarityResult(count, nnResults);
         }
 
         var totalCount = result.Values.Sum(x => x.Count);
@@ -66,6 +103,8 @@ public class SimilarityService : ISimilarityService
 
     public async Task RefreshAsync()
     {
+        using var _ = await _lock.LockAsync();
+
         await using var scope = _serviceProvider.CreateAsyncScope();
         var platformRepository = scope.ServiceProvider.GetRequiredService<IPlatformRepository>();
 
@@ -73,11 +112,16 @@ public class SimilarityService : ISimilarityService
         var platforms = await platformRepository.GetAsync();
         foreach (var platform in platforms)
         {
-            if (_hashCollections.ContainsKey(platform.Id))
+            if (_data.ContainsKey(platform.Id))
                 continue;
 
-            _hashCollections[platform.Id] = (new ShardedHashCollection(ShardsCount), new ShardedHashCollection(ShardsCount));
-            _changeIds[platform.Id] = 0;
+            _data[platform.Id] = new PlatformSimilarityData
+            {
+                PlatformId = platform.Id,
+                ChangeId = 0,
+                SfwCollection = HashCollectionFactory.Create(),
+                NsfwCollection = HashCollectionFactory.Create()
+            };
         }
 
         // Start the refresh process for all platforms
@@ -109,8 +153,8 @@ public class SimilarityService : ISimilarityService
         var imageRepository = scope.ServiceProvider.GetRequiredService<IImageRepository>();
 
         _logger.LogInformation("{platform} | Starting to refresh hashes", platform.Name);
-        var (sfwCollection, nsfwCollection) = _hashCollections[platform.Id];
-        var changeId = _changeIds[platform.Id];
+        var item = _data[platform.Id];
+        var changeId = item.ChangeId;
 
         while (true)
         {
@@ -122,7 +166,12 @@ public class SimilarityService : ISimilarityService
 
                 foreach (var image in images)
                 {
-                    var hashCollection = image.IsSfw ? sfwCollection : nsfwCollection;
+                    item.SfwCollection.TryRemove(image.Id);
+                    item.NsfwCollection.TryRemove(image.Id);
+                    if (image.IsDeleted)
+                        continue;
+
+                    var hashCollection = image.IsSfw ? item.SfwCollection : item.NsfwCollection;
                     hashCollection.Add(image.Id, image.PhashAverage64, image.PhashAverage256);
                 }
 
@@ -132,7 +181,7 @@ public class SimilarityService : ISimilarityService
             if (images.Count < BatchSize)
             {
                 _logger.LogInformation("{platformName} | No more images can be retrieved after change ID {changeId}", platform.Name, changeId);
-                _changeIds[platform.Id] = changeId;
+                _data[platform.Id].ChangeId = changeId;
 
                 return;
             }

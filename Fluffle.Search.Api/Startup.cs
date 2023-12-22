@@ -35,10 +35,11 @@ public class Startup : ApiStartup<Startup, FluffleSearchContext>
 
     public override void AdditionalConfigureServices(IServiceCollection services)
     {
-        services.AddBusiness();
+        var conf = Configuration.Get<SearchServerConfiguration>();
+
+        services.AddBusiness(conf.SimilarityDataDumpLocation);
         services.AddEntityFramework(Configuration);
 
-        var conf = Configuration.Get<SearchServerConfiguration>();
         services.AddSingleton(conf);
 
         var searchResultsClient = new B2Client(conf.SearchResultsBackblazeB2.ApplicationKeyId, conf.SearchResultsBackblazeB2.ApplicationKey);

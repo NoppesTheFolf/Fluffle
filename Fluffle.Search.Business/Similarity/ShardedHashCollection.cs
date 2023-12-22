@@ -2,8 +2,8 @@
 
 internal class ShardedHashCollection : IHashCollection
 {
-    private const int ShardInitialSize = 0;
-    private const int ShardResizeStepSize = 5_000;
+    private const int InitialSize = 5_000;
+    private const int ResizeStepSize = 5_000;
 
     private readonly int _shardsCount;
     private readonly HashCollection[] _hashCollections;
@@ -13,16 +13,20 @@ internal class ShardedHashCollection : IHashCollection
         _shardsCount = shardsCount;
 
         _hashCollections = new HashCollection[shardsCount];
-        for (var i = 0; i < _hashCollections.Length; i++)
-            _hashCollections[i] = new HashCollection(ShardInitialSize, ShardResizeStepSize);
+        for (var i = 0; i < _shardsCount; i++)
+            _hashCollections[i] = new HashCollection(InitialSize, ResizeStepSize);
     }
 
-    public void Add(int id, ulong hash64, ReadOnlySpan<ulong> hash256)
+    public void Add(int id, ulong hash64, ReadOnlySpan<ulong> hash256) => GetHashCollection(id).Add(id, hash64, hash256);
+
+    public bool TryRemove(int id) => GetHashCollection(id).TryRemove(id);
+
+    public HashCollection GetHashCollection(int id)
     {
         var index = id.GetHashCode() % _shardsCount;
-
         var hashCollection = _hashCollections[index];
-        hashCollection.Add(id, hash64, hash256);
+
+        return hashCollection;
     }
 
     public NearestNeighborsResults NearestNeighbors(ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256, int k)
@@ -40,5 +44,17 @@ internal class ShardedHashCollection : IHashCollection
         }
 
         return new NearestNeighborsResults(count64, count256, results);
+    }
+
+    public async Task DeserializeAsync(Stream stream)
+    {
+        foreach (var hashCollection in _hashCollections)
+            await hashCollection.DeserializeAsync(stream);
+    }
+
+    public async Task SerializeAsync(Stream stream)
+    {
+        foreach (var hashCollection in _hashCollections)
+            await hashCollection.SerializeAsync(stream);
     }
 }
