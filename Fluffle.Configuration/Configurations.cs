@@ -260,23 +260,6 @@ public class TwitterDatabaseConfiguration : DatabaseConfiguration
 }
 
 /// <summary>
-/// Configuration regarding the compare API.
-/// </summary>
-[ConfigurationSection("Compare")]
-public class CompareConfiguration : FluffleConfigurationPart<CompareConfiguration>
-{
-    /// <summary>
-    /// Where the compare API is being hosted.
-    /// </summary>
-    public string Url { get; set; }
-
-    public CompareConfiguration()
-    {
-        RuleFor(o => o.Url).NotEmpty();
-    }
-}
-
-/// <summary>
 /// Configuration used regarding thumbnails, in specific when uploading them somewhere for
 /// permanent storage.
 /// </summary>

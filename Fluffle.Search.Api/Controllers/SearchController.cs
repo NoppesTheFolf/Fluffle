@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 namespace Noppes.Fluffle.Search.Api.Controllers;
 
 [TypeFilter(typeof(RequireUserAgentFilter))]
-[TypeFilter(typeof(StartupFilter))]
+[TypeFilter(typeof(SimilarityServiceReadyFilter))]
 public class SearchApiController : SearchApiControllerV1
 {
     private static readonly IReadOnlyDictionary<FileSignature, FileFormatConstant> FileSignatureLookup;
@@ -113,7 +113,6 @@ public class SearchApiController : SearchApiControllerV1
             }
 
             var result = await _searchService.SearchAsync(temporaryFile.Location, model.IncludeNsfw, model.Limit, model.Platforms, IsDebug, stopwatchScope);
-            StartupFilter.HasStarted = true;
 
             stopwatchScope.Next(t => t.LinkCreationPreparation);
             await result.HandleAsync(_ => Task.FromResult(string.Empty), async response =>

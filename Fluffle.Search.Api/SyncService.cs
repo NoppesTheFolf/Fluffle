@@ -1,5 +1,4 @@
-﻿using Humanizer;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Api.Mapping;
@@ -20,6 +19,8 @@ namespace Noppes.Fluffle.Search.Api;
 
 public class SyncService : IService
 {
+    private static readonly TimeSpan NextSyncDelay = TimeSpan.FromSeconds(3);
+
     private readonly ILogger<SyncService> _logger;
     private readonly FluffleClient _client;
     private readonly IServiceProvider _serviceProvider;
@@ -48,7 +49,7 @@ public class SyncService : IService
             });
 
             tasks.Add(task);
-            await Task.Delay(3.Seconds());
+            await Task.WhenAny(task, Task.Delay(NextSyncDelay));
         }
 
         do

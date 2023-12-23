@@ -68,10 +68,6 @@ public class Startup : ApiStartup<Startup, FluffleSearchContext>
             return message => logger.LogInformation(message);
         });
 
-        var compareConf = Configuration.Get<CompareConfiguration>();
-        var compareClient = new CompareClient(compareConf.Url);
-        services.AddSingleton<ICompareClient>(compareClient);
-
         services.AddSingleton<SyncService>();
         services.AddSingleton<HashRefreshService>();
     }

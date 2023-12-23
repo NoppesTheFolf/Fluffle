@@ -30,14 +30,12 @@ public class SearchService : Service, ISearchService
     private const int DistanceFromBestTossUpThreshold = 20;
     private const int DistanceFromBestAlternativeThreshold = 35;
 
-    private readonly ICompareClient _compareClient;
     private readonly ISimilarityService _similarityService;
     private readonly FluffleHash _hash;
     private readonly FluffleSearchContext _context;
 
-    public SearchService(ICompareClient compareClient, ISimilarityService similarityService, FluffleHash hash, FluffleSearchContext context)
+    public SearchService(ISimilarityService similarityService, FluffleHash hash, FluffleSearchContext context)
     {
-        _compareClient = compareClient;
         _similarityService = similarityService;
         _hash = hash;
         _context = context;
@@ -117,8 +115,18 @@ public class SearchService : Service, ISearchService
     public async Task<SR<SearchResultModel>> SearchAsync(ulong hash64, HashCollection hashes256, HashCollection hashes1024, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope)
     {
         scope.Next(t => t.CompareCoarse);
-        // var searchResult = await _compareClient.CompareAsync(hash64, hashes256.Average, includeNsfw, limit);
         var searchResult = _similarityService.NearestNeighbors(hash64, hashes256.Average, includeNsfw, limit);
+        if (searchResult.Count == 0)
+        {
+            return new SR<SearchResultModel>(new SearchResultModel
+            {
+                Results = Array.Empty<SearchResultModel.ImageModel>(),
+                Stats = new SearchResultModel.StatsModel
+                {
+                    Count = 0
+                }
+            });
+        }
 
         // Bug: The search service returns duplicate images. Update: might not anymore, who knows
         scope.Next(t => t.ReduceCoarseResults);

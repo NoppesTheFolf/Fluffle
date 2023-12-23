@@ -13,6 +13,22 @@ internal class SimilarityService : ISimilarityService
     private const int BatchSize = 25_000;
     private const int NextPlatformDelay = 2500;
 
+    private readonly object _isReadyLock = new();
+    private bool _isReady;
+    public bool IsReady
+    {
+        get
+        {
+            lock (_isReadyLock)
+                return _isReady;
+        }
+        private set
+        {
+            lock (_isReadyLock)
+                _isReady = value;
+        }
+    }
+
     private readonly ISimilarityDataSerializer _serializer;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SimilarityService> _logger;
@@ -45,6 +61,7 @@ internal class SimilarityService : ISimilarityService
                 _data = data.ToDictionary(x => x.PlatformId);
                 _logger.LogInformation("Dump with ID {id} restored in {time}ms", dump.Id, stopwatch.ElapsedMilliseconds);
 
+                IsReady = true;
                 return true;
             }
             catch (Exception e)
@@ -131,7 +148,7 @@ internal class SimilarityService : ISimilarityService
             var task = Task.Run(async () => await RefreshAsync(platform));
             tasks.Add(task);
 
-            await Task.Delay(NextPlatformDelay);
+            await Task.WhenAny(task, Task.Delay(NextPlatformDelay));
         }
 
         // Wait for all refreshes to complete
@@ -145,6 +162,8 @@ internal class SimilarityService : ISimilarityService
 
         if (exceptions.Count > 0)
             throw new AggregateException("Something went wrong while refreshes hashes", exceptions);
+
+        IsReady = true;
     }
 
     private async Task RefreshAsync(Platform platform)
