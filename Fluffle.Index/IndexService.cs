@@ -127,6 +127,6 @@ public class IndexService : Service.Service
         manager.AddConsumer<ThumbnailPublisher>(Configuration.ThumbnailPublisher.Threads, Configuration.ThumbnailPublisher.Buffer);
         manager.AddFinalConsumer<IndexPublisher>(Configuration.IndexPublisher.Threads);
 
-        await manager.RunAsync();
+        await manager.RunAsync(stoppingToken);
     }
 }

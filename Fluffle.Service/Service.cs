@@ -35,7 +35,17 @@ public abstract class Service : BackgroundService
     {
         try
         {
-            await ExecuteServiceAsync(stoppingToken);
+            try
+            {
+                await ExecuteServiceAsync(stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                if (stoppingToken.IsCancellationRequested)
+                    return;
+
+                throw;
+            }
         }
         catch (Exception exception)
         {

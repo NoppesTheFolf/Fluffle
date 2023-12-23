@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
@@ -90,9 +91,9 @@ public class ProducerConsumerManager<T>
     /// to complete. By design, producers/consumers should never complete, so if they do, that
     /// means something went bad, likely due to the consumer/producer in question throwing an exception.
     /// </summary>
-    public async Task RunAsync()
+    public async Task RunAsync(CancellationToken cancellationToken)
     {
-        var task = await Task.WhenAny(_tasks);
+        var task = await Task.WhenAny(_tasks).WaitAsync(cancellationToken); // Should really rethink the architecture of how the consumer/producer pattern is implemented here
 
         if (task.Exception == null)
             throw new InvalidOperationException();

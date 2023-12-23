@@ -68,13 +68,9 @@ public abstract class SyncClient<TService, TContentProducer, TContent> : Service
 
         var exitedTask = await Task.WhenAny(new[]
         {
-            retryManager.RunAsync(),
-            producerManager.RunAsync()
+            retryManager.RunAsync(stoppingToken),
+            producerManager.RunAsync(stoppingToken)
         });
-
-        if (exitedTask.Exception != null)
-            throw exitedTask.Exception;
-
-        throw new InvalidOperationException("A task exited unexpectedly.");
+        await exitedTask;
     }
 }
