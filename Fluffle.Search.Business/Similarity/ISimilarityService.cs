@@ -10,5 +10,5 @@ public interface ISimilarityService
 
     Task CreateDumpAsync();
 
-    Task<bool> TryRestoreDumpAsync();
+    Task<SimilarityDataDump?> TryRestoreDumpAsync();
 }

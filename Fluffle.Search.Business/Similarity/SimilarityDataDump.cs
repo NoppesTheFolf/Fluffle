@@ -1,6 +1,6 @@
 ﻿namespace Noppes.Fluffle.Search.Business.Similarity;
 
-internal class SimilarityDataDump
+public class SimilarityDataDump
 {
     public string Id { get; set; } = null!;
 

@@ -46,7 +46,7 @@ internal class SimilarityService : ISimilarityService
         _lock = new AsyncLock();
     }
 
-    public async Task<bool> TryRestoreDumpAsync()
+    public async Task<SimilarityDataDump?> TryRestoreDumpAsync()
     {
         var dumps = await _serializer.GetDumpsAsync();
         foreach (var dump in dumps.OrderByDescending(x => x.When))
@@ -62,7 +62,7 @@ internal class SimilarityService : ISimilarityService
                 _logger.LogInformation("Dump with ID {id} restored in {time}ms", dump.Id, stopwatch.ElapsedMilliseconds);
 
                 IsReady = true;
-                return true;
+                return dump;
             }
             catch (Exception e)
             {
@@ -70,7 +70,7 @@ internal class SimilarityService : ISimilarityService
             }
         }
 
-        return false;
+        return null;
     }
 
     public async Task CreateDumpAsync()

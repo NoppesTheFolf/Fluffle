@@ -16,6 +16,7 @@ using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Search.Api.LinkCreation;
 using Noppes.Fluffle.Search.Api.Services;
 using Noppes.Fluffle.Search.Business;
+using Noppes.Fluffle.Search.Business.Similarity;
 using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Thumbnail;
@@ -69,7 +70,7 @@ public class Startup : ApiStartup<Startup, FluffleSearchContext>
         });
 
         services.AddSingleton<SyncService>();
-        services.AddSingleton<HashRefreshService>();
+        services.AddSingleton(x => new HashRefreshService(x.GetRequiredService<ISimilarityService>(), conf.SimilarityDataDumpInterval));
     }
 
     public override void ConfigureAuthentication(IServiceCollection services, AuthenticationBuilder authenticationBuilder)
@@ -82,8 +83,8 @@ public class Startup : ApiStartup<Startup, FluffleSearchContext>
         if (env.IsProduction())
             app.ApplicationServices.GetRequiredService<IImagingTestsExecutor>().Execute();
 
-        serviceBuilder.AddSingleton<SyncService>(2.Minutes());
-        serviceBuilder.AddSingleton<HashRefreshService>(15.Minutes());
+        serviceBuilder.AddSingleton<SyncService>(5.Minutes());
+        serviceBuilder.AddSingleton<HashRefreshService>(5.Minutes());
 
         base.AfterConfigure(app, env, serviceBuilder);
     }

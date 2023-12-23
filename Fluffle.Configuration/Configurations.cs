@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using Noppes.Fluffle.Validation;
+using System;
 using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Configuration;
@@ -123,11 +124,15 @@ public class SearchServerConfiguration : FluffleConfigurationPart<SearchServerCo
 
     public string SimilarityDataDumpLocation { get; set; }
 
+    public TimeSpan SimilarityDataDumpInterval { get; set; }
+
     public SearchServerConfiguration()
     {
         RuleFor(o => o.SearchResultsTemporaryLocation).NotEmpty();
         RuleFor(o => o.SearchResultsBackblazeB2).NotEmpty().SetValidator(o => o.SearchResultsBackblazeB2);
+
         RuleFor(o => o.SimilarityDataDumpLocation).NotEmpty();
+        RuleFor(o => o.SimilarityDataDumpInterval).GreaterThan(TimeSpan.Zero);
     }
 }
 
