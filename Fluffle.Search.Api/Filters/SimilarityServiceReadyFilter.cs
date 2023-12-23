@@ -19,10 +19,6 @@ public class SimilarityServiceReadyFilter : IActionFilter
 
     public void OnActionExecuting(ActionExecutingContext context)
     {
-    }
-
-    public void OnActionExecuted(ActionExecutedContext context)
-    {
         if (_similarityService.IsReady)
             return;
 
@@ -30,5 +26,9 @@ public class SimilarityServiceReadyFilter : IActionFilter
         {
             StatusCode = (int)HttpStatusCode.ServiceUnavailable
         };
+    }
+
+    public void OnActionExecuted(ActionExecutedContext context)
+    {
     }
 }
