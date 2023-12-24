@@ -9,7 +9,7 @@ RUN dotnet restore
 
 # Copy everything else and build
 COPY . ./
-RUN dotnet publish -c Release -o publish
+RUN dotnet publish -c Release -o publish ./Fluffle.Main.Api
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
