@@ -27,8 +27,8 @@ public class ApiKeyAuthenticationHandler<TApiKey, TPermission, TApiKeyPermission
     private readonly AccessManager<TApiKey, TPermission, TApiKeyPermission> _accessManager;
 
     public ApiKeyAuthenticationHandler(IOptionsMonitor<ApiKeyAuthenticationOptions> options, ILoggerFactory logger,
-        UrlEncoder encoder, ISystemClock clock, AccessManager<TApiKey, TPermission, TApiKeyPermission> accessManager)
-        : base(options, logger, encoder, clock)
+        UrlEncoder encoder, AccessManager<TApiKey, TPermission, TApiKeyPermission> accessManager)
+        : base(options, logger, encoder)
     {
         _accessManager = accessManager;
     }

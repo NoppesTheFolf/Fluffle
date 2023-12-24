@@ -4,7 +4,7 @@
 		<AssemblyName>Noppes.Fluffle.DeviantArt.QueryDeviationsWatcher</AssemblyName>
 		<RootNamespace>Noppes.Fluffle.DeviantArt.QueryDeviationsWatcher</RootNamespace>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<UserSecretsId>c344b214-e437-47e5-a817-7bad0ef8c3cb</UserSecretsId>

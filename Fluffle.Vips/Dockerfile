@@ -122,7 +122,7 @@ RUN curl -sL https://packages.microsoft.com/config/debian/11/packages-microsoft-
     dpkg -i packages-microsoft-prod.deb && \
     rm packages-microsoft-prod.deb && \
     apt-get update && \
-    apt-get install -y dotnet-sdk-8.0 dotnet-runtime-6.0 && \
+    apt-get install -y dotnet-sdk-8.0 && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /fluffle/build

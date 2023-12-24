@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.1</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<RootNamespace>Noppes.Fluffle.Main.Communication</RootNamespace>
 		<AssemblyName>Noppes.Fluffle.Main.Communication</AssemblyName>
 	</PropertyGroup>
