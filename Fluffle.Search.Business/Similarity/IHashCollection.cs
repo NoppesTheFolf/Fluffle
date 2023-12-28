@@ -6,7 +6,7 @@ internal interface IHashCollection
 
     bool TryRemove(int id);
 
-    NearestNeighborsResults NearestNeighbors(ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256, int k);
+    NearestNeighborsStats NearestNeighbors(ICollection<NearestNeighborsResult> results, ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256);
 
     Task SerializeAsync(Stream stream);
 

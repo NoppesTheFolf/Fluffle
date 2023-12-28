@@ -1,6 +1,6 @@
 ﻿namespace Noppes.Fluffle.Search.Business.Similarity;
 
-public class NearestNeighborsResult
+public readonly struct NearestNeighborsResult
 {
     public int Id { get; }
 

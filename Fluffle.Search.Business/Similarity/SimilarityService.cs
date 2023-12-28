@@ -102,12 +102,17 @@ internal class SimilarityService : ISimilarityService
             var nnResults = new List<NearestNeighborsResult>();
             foreach (var hashCollection in hashCollections)
             {
-                var nnResult = hashCollection.NearestNeighbors(hash64, NnThreshold, hash256, limit);
+                var nnResult = hashCollection.NearestNeighbors(nnResults, hash64, NnThreshold, hash256);
                 _logger.LogTrace("Searched through {count64}/{count256} hashes on platform with ID {platformId}", nnResult.Count64, nnResult.Count256, item.PlatformId);
 
                 count += nnResult.Count64;
-                nnResults.AddRange(nnResult.Results);
             }
+
+            nnResults = nnResults
+                .OrderBy(x => x.MismatchCount)
+                .ThenBy(x => x.Id)
+                .Take(limit)
+                .ToList();
 
             result[item.PlatformId] = new SimilarityResult(count, nnResults);
         }

@@ -71,12 +71,11 @@ public class HashCollection : IHashCollection
 
     private Span<ulong> Get256Span(int idx) => _hash256s.AsSpan(idx * 4, 4);
 
-    public NearestNeighborsResults NearestNeighbors(ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256, int k)
+    public NearestNeighborsStats NearestNeighbors(ICollection<NearestNeighborsResult> results, ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256)
     {
         using var _ = _lock.ReaderLock();
 
-        var results = new List<NearestNeighborsResult>();
-
+        var count256 = 0;
         for (var i = 0; i < _size; i++)
         {
             var mismatchCount64 = Popcnt.X64.PopCount(_hash64s[i] ^ hash64);
@@ -91,16 +90,10 @@ public class HashCollection : IHashCollection
             mismatchCount256 += Popcnt.X64.PopCount(_hash256s[offset256 + 3] ^ hash256[3]);
 
             results.Add(new NearestNeighborsResult(_ids[i], (int)mismatchCount256));
+            count256++;
         }
 
-        var count256 = results.Count;
-        results = results
-            .OrderBy(x => x.MismatchCount)
-            .ThenBy(x => x.Id)
-            .Take(k)
-            .ToList();
-
-        return new NearestNeighborsResults(_size, count256, results);
+        return new NearestNeighborsStats(_size, count256);
     }
 
     public async Task SerializeAsync(Stream stream)

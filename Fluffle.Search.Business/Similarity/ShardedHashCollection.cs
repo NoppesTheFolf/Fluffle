@@ -29,21 +29,19 @@ internal class ShardedHashCollection : IHashCollection
         return hashCollection;
     }
 
-    public NearestNeighborsResults NearestNeighbors(ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256, int k)
+    public NearestNeighborsStats NearestNeighbors(ICollection<NearestNeighborsResult> results, ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256)
     {
         var count64 = 0;
         var count256 = 0;
-        var results = new List<NearestNeighborsResult>();
         foreach (var hashCollection in _hashCollections)
         {
-            var sharedResults = hashCollection.NearestNeighbors(hash64, threshold64, hash256, k);
+            var sharedStats = hashCollection.NearestNeighbors(results, hash64, threshold64, hash256);
 
-            count64 += sharedResults.Count64;
-            count256 += sharedResults.Count256;
-            results.AddRange(sharedResults.Results);
+            count64 += sharedStats.Count64;
+            count256 += sharedStats.Count256;
         }
 
-        return new NearestNeighborsResults(count64, count256, results);
+        return new NearestNeighborsStats(count64, count256);
     }
 
     public async Task DeserializeAsync(Stream stream)
