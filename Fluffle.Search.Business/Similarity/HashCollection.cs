@@ -1,4 +1,5 @@
 ﻿using Nito.AsyncEx;
+using Noppes.Fluffle.Utils;
 using System.Runtime.Intrinsics.X86;
 
 namespace Noppes.Fluffle.Search.Business.Similarity;
@@ -71,7 +72,7 @@ public class HashCollection : IHashCollection
 
     private Span<ulong> Get256Span(int idx) => _hash256s.AsSpan(idx * 4, 4);
 
-    public NearestNeighborsStats NearestNeighbors(ICollection<NearestNeighborsResult> results, ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256)
+    public NearestNeighborsStats NearestNeighbors(TopNList<NearestNeighborsResult> results, ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256)
     {
         using var _ = _lock.ReaderLock();
 

@@ -1,4 +1,6 @@
-﻿namespace Noppes.Fluffle.Search.Business.Similarity;
+﻿using Noppes.Fluffle.Utils;
+
+namespace Noppes.Fluffle.Search.Business.Similarity;
 
 internal interface IHashCollection
 {
@@ -6,7 +8,7 @@ internal interface IHashCollection
 
     bool TryRemove(int id);
 
-    NearestNeighborsStats NearestNeighbors(ICollection<NearestNeighborsResult> results, ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256);
+    NearestNeighborsStats NearestNeighbors(TopNList<NearestNeighborsResult> results, ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256);
 
     Task SerializeAsync(Stream stream);
 

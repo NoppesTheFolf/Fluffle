@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Nito.AsyncEx;
 using Noppes.Fluffle.Search.Business.Repositories;
 using Noppes.Fluffle.Search.Domain;
+using Noppes.Fluffle.Utils;
 using System.Diagnostics;
 
 namespace Noppes.Fluffle.Search.Business.Similarity;
@@ -99,7 +100,7 @@ internal class SimilarityService : ISimilarityService
                 hashCollections = hashCollections.Concat(new[] { item.NsfwCollection });
 
             var count = 0;
-            var nnResults = new List<NearestNeighborsResult>();
+            var nnResults = new TopNList<NearestNeighborsResult>(limit, new NearestNeighborsResultComparer());
             foreach (var hashCollection in hashCollections)
             {
                 var nnResult = hashCollection.NearestNeighbors(nnResults, hash64, NnThreshold, hash256);
@@ -108,13 +109,7 @@ internal class SimilarityService : ISimilarityService
                 count += nnResult.Count64;
             }
 
-            nnResults = nnResults
-                .OrderBy(x => x.MismatchCount)
-                .ThenBy(x => x.Id)
-                .Take(limit)
-                .ToList();
-
-            result[item.PlatformId] = new SimilarityResult(count, nnResults);
+            result[item.PlatformId] = new SimilarityResult(count, nnResults.ToList());
         }
 
         var totalCount = result.Values.Sum(x => x.Count);

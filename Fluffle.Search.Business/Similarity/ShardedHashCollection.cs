@@ -1,4 +1,6 @@
-﻿namespace Noppes.Fluffle.Search.Business.Similarity;
+﻿using Noppes.Fluffle.Utils;
+
+namespace Noppes.Fluffle.Search.Business.Similarity;
 
 internal class ShardedHashCollection : IHashCollection
 {
@@ -29,7 +31,7 @@ internal class ShardedHashCollection : IHashCollection
         return hashCollection;
     }
 
-    public NearestNeighborsStats NearestNeighbors(ICollection<NearestNeighborsResult> results, ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256)
+    public NearestNeighborsStats NearestNeighbors(TopNList<NearestNeighborsResult> results, ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256)
     {
         var count64 = 0;
         var count256 = 0;
