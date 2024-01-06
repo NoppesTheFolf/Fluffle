@@ -6,6 +6,6 @@ internal static class HashCollectionFactory
 
     public static IHashCollection Create()
     {
-        return new ShardedHashCollection(ShardsCount);
+        return new ConcurrentHashCollection(new ShardedHashCollection(ShardsCount));
     }
 }

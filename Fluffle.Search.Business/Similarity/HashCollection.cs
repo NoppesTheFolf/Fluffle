@@ -1,13 +1,11 @@
-﻿using Nito.AsyncEx;
-using Noppes.Fluffle.Utils;
+﻿using Noppes.Fluffle.Utils;
 using System.Runtime.Intrinsics.X86;
 
 namespace Noppes.Fluffle.Search.Business.Similarity;
 
-public class HashCollection : IHashCollection
+internal class HashCollection : IHashCollection
 {
     private readonly int _resizeStepSize;
-    private readonly AsyncReaderWriterLock _lock;
 
     private int[] _ids;
     // ReSharper disable once InconsistentNaming
@@ -19,7 +17,6 @@ public class HashCollection : IHashCollection
     public HashCollection(int initialSize, int resizeStepSize)
     {
         _resizeStepSize = resizeStepSize;
-        _lock = new AsyncReaderWriterLock();
 
         _ids = new int[initialSize];
         _hash64s = new ulong[initialSize];
@@ -28,8 +25,6 @@ public class HashCollection : IHashCollection
 
     public void Add(int id, ulong hash64, ReadOnlySpan<ulong> hash256)
     {
-        using var _ = _lock.WriterLock();
-
         if (_ids.Length == _size)
         {
             Array.Resize(ref _ids, _ids.Length + _resizeStepSize);
@@ -48,8 +43,6 @@ public class HashCollection : IHashCollection
 
     public bool TryRemove(int id)
     {
-        using var _ = _lock.WriterLock();
-
         var idx = _ids.AsSpan(0, _size).IndexOf(id);
         if (idx == -1)
             return false;
@@ -74,8 +67,6 @@ public class HashCollection : IHashCollection
 
     public NearestNeighborsStats NearestNeighbors(TopNList<NearestNeighborsResult> results, ulong hash64, ulong threshold64, ReadOnlySpan<ulong> hash256)
     {
-        using var _ = _lock.ReaderLock();
-
         var count256 = 0;
         for (var i = 0; i < _size; i++)
         {
@@ -99,8 +90,6 @@ public class HashCollection : IHashCollection
 
     public async Task SerializeAsync(Stream stream)
     {
-        using var _ = _lock.ReaderLock();
-
         await stream.WriteInt32LittleEndianAsync(_size);
         await stream.WriteInt32LittleEndianAsync(_ids.AsMemory(0, _size));
         await stream.WriteUInt64LittleEndianAsync(_hash64s.AsMemory(0, _size));
@@ -109,8 +98,6 @@ public class HashCollection : IHashCollection
 
     public async Task DeserializeAsync(Stream stream)
     {
-        using var _ = _lock.WriterLock();
-
         _size = await stream.ReadInt32LittleEndianAsync();
 
         _ids = new int[_size];
