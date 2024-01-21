@@ -167,6 +167,7 @@ internal class Program : ScheduledService<Program>
                 .ToList();
 
             tweets.AddRange(newTweets);
+            Log.Information("So far {tweetCount} have been retrieved for user @{username}", tweets.Count, user.Username);
 
             // If less new tweets were retrieved than the full page size, then we know we've started
             // retrieving tweets that are already in the database
@@ -174,7 +175,7 @@ internal class Program : ScheduledService<Program>
                 break;
         }
 
-        if (!tweets.Any())
+        if (tweets.Count == 0)
         {
             Log.Information("No new tweets were retrieved for @{username}", user.Username);
 
@@ -195,7 +196,7 @@ internal class Program : ScheduledService<Program>
             ReplyCount = x.ReplyCount,
             RetweetCount = x.RetweetCount,
             BookmarkCount = x.BookmarkCount,
-            CreatedAt = x.CreatedAtParsed.ToUniversalTime(),
+            CreatedAt = x.CreatedAt.ToUniversalTime(),
             Media = x.Media.Select(y => new TweetMediaEntity
             {
                 Id = y.Id,
@@ -232,7 +233,7 @@ internal class Program : ScheduledService<Program>
             })
             .ToList();
 
-        if (queueItems.Any())
+        if (queueItems.Count != 0)
             await _mediaIngestionQueue.EnqueueManyAsync(queueItems, user.FollowersCount, TimeSpan.FromMinutes(1), null);
 
         // Finally store the tweets in the database

@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-
-namespace Noppes.Fluffle.Twitter.Client;
+﻿namespace Noppes.Fluffle.Twitter.Client;
 
 public class TwitterUserModel
 {
@@ -10,9 +8,7 @@ public class TwitterUserModel
 
     public bool IsProtected { get; set; }
 
-    public string CreatedAt { get; set; } = null!;
-
-    public DateTime CreatedAtParsed => DateTime.ParseExact(CreatedAt, "ddd MMM dd HH:mm:ss zzz yyyy", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+    public DateTime CreatedAt { get; set; }
 
     public bool DefaultProfile { get; set; }
 

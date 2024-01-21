@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-
-namespace Noppes.Fluffle.Twitter.Client;
+﻿namespace Noppes.Fluffle.Twitter.Client;
 
 public class TwitterTweetMediaVideoVariantModel
 {
@@ -17,7 +15,7 @@ public class TwitterTweetMediaVideoModel
 
     public string ThumbnailUrl { get; set; } = null!;
 
-    public IList<TwitterTweetMediaVideoVariantModel> Variants { get; set; } = null!;
+    public ICollection<TwitterTweetMediaVideoVariantModel> Variants { get; set; } = null!;
 }
 
 public class TwitterTweetMediaPhotoModel
@@ -37,7 +35,7 @@ public class TwitterTweetMediaModel
 
     public string Type { get; set; } = null!;
 
-    public IList<TwitterTweetMediaPhotoModel>? Photos { get; set; }
+    public ICollection<TwitterTweetMediaPhotoModel>? Photos { get; set; }
 
     public TwitterTweetMediaVideoModel? Video { get; set; }
 }
@@ -60,9 +58,7 @@ public class TwitterTweetModel
 
     public IList<TwitterTweetMediaModel> Media { get; set; } = null!;
 
-    public string CreatedAt { get; set; } = null!;
-
-    public DateTime CreatedAtParsed => DateTime.ParseExact(CreatedAt, "ddd MMM dd HH:mm:ss zzz yyyy", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+    public DateTime CreatedAt { get; set; }
 }
 
 public class TwitterGetMediaResponseModel

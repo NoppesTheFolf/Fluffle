@@ -118,7 +118,7 @@ internal class Program : QueuePollingService<Program, UserCheckFurryQueueItem>
         Stream? stream = null;
         try
         {
-            stream = await _twitterApiClient.GetStreamAsync(url, true, true);
+            stream = await _twitterApiClient.GetStreamAsync(url, true);
         }
         catch (FlurlHttpException e)
         {

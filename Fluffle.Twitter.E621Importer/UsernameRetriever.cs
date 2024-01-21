@@ -7,7 +7,7 @@ internal class UsernameRetriever
     /// <summary>
     /// Matches URLs that contain a semantically valid Twitter handle.
     /// </summary>
-    private static readonly Regex UsernameRegex = new("twitter\\.com\\/([A-Za-z0-9_]{1,15})(?=\\/|$|\\?)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex UsernameRegex = new("(?<=^|\\/\\/)(?:twitter|x)\\.com\\/([A-Za-z0-9_]{1,15})(?=\\/|$|\\?)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private readonly PostSourceRetriever _postSourceRetriever;
     private readonly ArtistsSourceRetriever _artistsSourceRetriever;
@@ -38,10 +38,10 @@ internal class UsernameRetriever
                 continue;
 
             var username = usernameMatch.Groups[1].Value.ToLowerInvariant();
-            if (usernames.Contains(username))
+            var usernameAdded = usernames.Add(username);
+            if (!usernameAdded)
                 continue;
 
-            usernames.Add(username);
             yield return username;
         }
     }

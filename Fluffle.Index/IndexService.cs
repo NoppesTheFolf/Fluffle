@@ -78,7 +78,7 @@ public class IndexService : Service.Service
             { PlatformConstant.E621, (new E621DownloadClient(e621Client), Configuration.E621) },
             { PlatformConstant.FurAffinity, (new FurAffinityDownloadClient(furAffinityClient), Configuration.FurAffinity) },
             { PlatformConstant.Weasyl, (new WeasylDownloadClient(weasylClient), Configuration.Weasyl) },
-            { PlatformConstant.Twitter , (new FuncDownloadClient(url => twitterApiClient.GetStreamAsync(url, true, false)), Configuration.Twitter) },
+            { PlatformConstant.Twitter , (new FuncDownloadClient(url => twitterApiClient.GetStreamAsync(url, false)), Configuration.Twitter) },
             { PlatformConstant.DeviantArt, (new BasicDownloadClient(deviantArtClient), Configuration.DeviantArt) },
             { PlatformConstant.Inkbunny, (new BasicDownloadClient(inkbunnyClient), Configuration.Inkbunny) }
         };
