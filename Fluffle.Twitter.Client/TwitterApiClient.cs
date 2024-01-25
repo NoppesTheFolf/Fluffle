@@ -1,5 +1,6 @@
 ﻿using Flurl.Http;
 using Noppes.Fluffle.Http;
+using Serilog;
 using System.Net;
 
 namespace Noppes.Fluffle.Twitter.Client;
@@ -27,16 +28,16 @@ public class TwitterApiClient : ApiClient, ITwitterApiClient
     }
 
     public async Task<TwitterUserModel> GetUserByIdAsync(string userId) =>
-        await MakeUserRequest(Request("user/by-id", userId));
+        await GetUserAsync(Request("user/by-id", userId));
 
     public async Task<TwitterUserModel> GetUserByUsernameAsync(string username) =>
-        await MakeUserRequest(Request("user/by-screen-name", username));
+        await GetUserAsync(Request("user/by-screen-name", username));
 
-    private static async Task<TwitterUserModel> MakeUserRequest(IFlurlRequest request)
+    private async Task<TwitterUserModel> GetUserAsync(IFlurlRequest request)
     {
         try
         {
-            var user = await request.GetJsonExplicitlyAsync<TwitterUserModel>();
+            var user = await ExecuteRequest<TwitterUserModel>(request);
             return user;
         }
         catch (FlurlHttpException e)
@@ -65,11 +66,44 @@ public class TwitterApiClient : ApiClient, ITwitterApiClient
 
     public async Task<TwitterGetMediaResponseModel> GetUserMediaAsync(string userId, string? cursor = null)
     {
-        var response = await Request("user", userId, "media")
-            .SetQueryParam("cursor", cursor)
-            .GetJsonExplicitlyAsync<TwitterGetMediaResponseModel>();
+        var request = Request("user", userId, "media")
+            .SetQueryParam("cursor", cursor);
 
-        return response;
+        var media = await ExecuteRequest<TwitterGetMediaResponseModel>(request);
+        return media;
+    }
+
+    private static async Task<T> ExecuteRequest<T>(IFlurlRequest request)
+    {
+        while (true)
+        {
+            try
+            {
+                var result = await request.GetJsonExplicitlyAsync<T>();
+
+                return result;
+            }
+            catch (FlurlHttpException e)
+            {
+                if (e.StatusCode != (int)HttpStatusCode.TooManyRequests)
+                    throw;
+
+                if (e.Call.Response?.Headers == null || !e.Call.Response.Headers.TryGetFirst("rate-limit-reset", out var resetAtUnix))
+                    throw;
+
+                var resetAt = DateTimeOffset.FromUnixTimeSeconds(long.Parse(resetAtUnix));
+                var resetsIn = resetAt.Subtract(DateTimeOffset.UtcNow);
+                if (resetsIn > TimeSpan.Zero)
+                {
+                    Log.Information("Rate limit encountered. Retrying {url} in {time}", request.Url, resetsIn);
+                    await Task.Delay(resetsIn);
+                }
+                else
+                {
+                    Log.Information("Retrying {url}", request.Url);
+                }
+            }
+        }
     }
 
     private static readonly FlurlRetryPolicyBuilder DownloadRetryPolicy = new FlurlRetryPolicyBuilder()
@@ -89,7 +123,9 @@ public class TwitterApiClient : ApiClient, ITwitterApiClient
 
     public override IFlurlRequest Request(params object[] urlSegments)
     {
-        return base.Request(urlSegments)
+        var request = base.Request(urlSegments)
             .WithHeader("Api-Key", _apiKey);
+
+        return request;
     }
 }

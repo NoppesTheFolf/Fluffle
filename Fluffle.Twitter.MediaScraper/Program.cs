@@ -162,12 +162,13 @@ internal class Program : ScheduledService<Program>
         await foreach (var tweetsPage in _twitterApiClient.EnumerateUserMediaAsync(user.Id))
         {
             Log.Information("Retrieved {tweetCount} tweets for user @{username}", tweetsPage.Count, user.Username);
+            Log.Information("So far {tweetCount} tweets have been retrieved for user @{username}", tweets.Count + tweetsPage.Count, user.Username);
+
             var newTweets = tweetsPage
                 .Where(x => !existingTweetsIds.Contains(x.Id))
                 .ToList();
 
             tweets.AddRange(newTweets);
-            Log.Information("So far {tweetCount} have been retrieved for user @{username}", tweets.Count, user.Username);
 
             // If less new tweets were retrieved than the full page size, then we know we've started
             // retrieving tweets that are already in the database
@@ -184,7 +185,7 @@ internal class Program : ScheduledService<Program>
 
             return;
         }
-        Log.Information("Retrieved a total of {count} (new) tweets for @{username}", tweets.Count, user.Username);
+        Log.Information("Retrieved a total of {count} new tweets for @{username}", tweets.Count, user.Username);
 
         var tweetEntities = tweets.Select(x => new TweetEntity
         {
