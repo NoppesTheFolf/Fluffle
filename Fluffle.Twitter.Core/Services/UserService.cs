@@ -61,6 +61,7 @@ internal class UserService : IUserService
             .Set(x => x.IsProtected, userModel.IsProtected)
             .Set(x => x.IsSuspended, false)
             .Set(x => x.IsDeleted, false)
+            .Set(x => x.HasViolatedMediaPolicy, false)
             .Set(x => x.Description, userModel.Description)
             .Set(x => x.FollowersCount, userModel.FollowersCount)
             .Set(x => x.FollowingCount, userModel.FollowingCount)
@@ -76,7 +77,8 @@ internal class UserService : IUserService
     {
         var update = Builders<UserEntity>.Update
             .Set(x => x.IsSuspended, exception.Error.Reason == TwitterUserError.Suspended)
-            .Set(x => x.IsDeleted, exception.Error.Reason == TwitterUserError.NotFound);
+            .Set(x => x.IsDeleted, exception.Error.Reason == TwitterUserError.NotFound)
+            .Set(x => x.HasViolatedMediaPolicy, exception.Error.Reason == TwitterUserError.MediaPolicyViolated);
 
         return update;
     }

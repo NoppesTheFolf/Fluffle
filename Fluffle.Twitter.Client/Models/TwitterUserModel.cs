@@ -32,7 +32,8 @@ public class TwitterUserModel
 public enum TwitterUserError
 {
     NotFound = 1,
-    Suspended = 2
+    Suspended = 2,
+    MediaPolicyViolated = 3
 }
 
 public class TwitterUserErrorModel

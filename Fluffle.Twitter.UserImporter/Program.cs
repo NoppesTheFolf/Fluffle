@@ -73,6 +73,7 @@ internal class Program : QueuePollingService<Program, ImportUserQueueItem>
                 IsProtected = userModel.IsProtected,
                 IsSuspended = false,
                 IsDeleted = false,
+                HasViolatedMediaPolicy = false,
                 CreatedAt = userModel.CreatedAt.ToUniversalTime(),
                 Description = userModel.Description,
                 FollowersCount = userModel.FollowersCount,
