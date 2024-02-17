@@ -49,6 +49,12 @@ internal class Program : QueuePollingService<Program, UserCheckFurryQueueItem>
 
         var photoMedias = await GetPhotoMediaAsync(user);
 
+        if (photoMedias.Count < NMediaToAnalyze)
+        {
+            await WhenNotEnoughMedia(user);
+            return;
+        }
+
         var temporaryFiles = new List<TemporaryFile>();
         try
         {
@@ -94,12 +100,7 @@ internal class Program : QueuePollingService<Program, UserCheckFurryQueueItem>
 
             if (temporaryFiles.Count < NMediaToAnalyze)
             {
-                Log.Information("Not enough media could be retrieved for user @{username}. Rescheduling to check again in about a month", user.Username);
-                await _queue.EnqueueAsync(new UserCheckFurryQueueItem
-                {
-                    Id = user.Id
-                }, user.FollowersCount, RandomTimeSpan.Between(TimeSpan.FromDays(26), TimeSpan.FromDays(30)), null);
-
+                await WhenNotEnoughMedia(user);
                 return;
             }
 
@@ -110,6 +111,15 @@ internal class Program : QueuePollingService<Program, UserCheckFurryQueueItem>
             foreach (var temporaryFile in temporaryFiles)
                 temporaryFile.Dispose();
         }
+    }
+
+    private async Task WhenNotEnoughMedia(UserEntity user)
+    {
+        Log.Information("Not enough media could be retrieved for user @{username}. Rescheduling to check again in about a month", user.Username);
+        await _queue.EnqueueAsync(new UserCheckFurryQueueItem
+        {
+            Id = user.Id
+        }, user.FollowersCount, RandomTimeSpan.Between(TimeSpan.FromDays(26), TimeSpan.FromDays(30)), null);
     }
 
     private async Task<Stream?> TryDownloadImageAsync(string url)
