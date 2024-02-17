@@ -20,7 +20,7 @@ internal class Program : ScheduledService<Program>
     });
 
     private DateTime? _refreshedAt;
-    private Stack<(double order, UserEntity user)> _users = null!;
+    private Stack<UserEntity> _users = null!;
 
     private readonly TwitterContext _twitterContext;
     private readonly ITwitterApiClient _twitterApiClient;
@@ -79,10 +79,10 @@ internal class Program : ScheduledService<Program>
                 users = users
                     .Where(x => x.FurryPrediction?.Value == true) // Users which post furry art
                     .Where(x => x.IsActive) // Of which the media can be retrieved
-                    .Where(x => x.MediaScrapingLastStartedAt == null || DateTime.UtcNow.Subtract((DateTime)x.MediaScrapingLastStartedAt) > TimeSpan.FromHours(3)) // Do not include users that might have caused the scraper to crash before
+                    .Where(x => x.MediaScrapingLastStartedAt == null || DateTime.UtcNow.Subtract((DateTime)x.MediaScrapingLastStartedAt) > TimeSpan.FromHours(6)) // Do not include users that might have recently caused the scraper to crash before
                     .ToList();
 
-                var usersWithMissingStatistics = users
+                /*var usersWithMissingStatistics = users
                     .Where(x => x.MediaLastScrapedAt != null) // Only include users which has their media scraped before
                     .Where(x => x.TweetsPerDay == null || x.MediaLastScrapedAt != x.TweetsPerDayBasedOnWhen)
                     .ToList();
@@ -91,32 +91,37 @@ internal class Program : ScheduledService<Program>
                 {
                     Log.Information("Updating tweets per day statistic for @{username}", user.Username);
                     await CalculateTweetsPerDayAsync(user);
-                }
+                }*/
 
                 var orderedUsers = users
+                    .OrderByDescending(x => x.MediaLastScrapedAt)
+                    .ThenByDescending(x => x.Id)
+                    .ToList();
+
+                /*var orderedUsers = users
                     .Select(x => (order: CalculateScrapeOrder(x), user: x))
                     .Where(x => x.order != null)
                     .OrderBy(x => x.order) // Because we're using a stack, ascending order ends up descending order!
-                    .Select(x => ((double)x.order!, x.user))
-                    .ToList();
+                    .Select(x => x.user)
+                    .ToList();*/
 
-                _users = new Stack<(double order, UserEntity user)>(orderedUsers);
+                _users = new Stack<UserEntity>(orderedUsers);
                 _refreshedAt = DateTime.UtcNow;
 
                 Log.Information("Done refreshing user list! A total of {count} users are scheduled for scraping", _users.Count);
             }
 
-            if (!_users.TryPop(out var tuple))
+            if (!_users.TryPop(out var nextUser))
             {
                 Log.Information("Ran out of users to process!");
                 break;
             }
 
-            await ProcessUserAsync(tuple.user);
+            await ProcessUserAsync(nextUser);
         }
     }
 
-    private static double CalculateTweetWeight(UserEntity user)
+    /*private static double CalculateTweetWeight(UserEntity user)
     {
         var kFollowers = user.FollowersCount / 1000d;
         var weight = Math.Max(1, kFollowers);
@@ -142,7 +147,7 @@ internal class Program : ScheduledService<Program>
         var order = expectedNumberOfMissingTweets * tweetWeight;
 
         return order;
-    }
+    }*/
 
     private async Task ProcessUserAsync(UserEntity user)
     {
