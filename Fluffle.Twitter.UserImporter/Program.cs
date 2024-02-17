@@ -40,7 +40,7 @@ internal class Program : QueuePollingService<Program, ImportUserQueueItem>
 
         // First we check if an active user already exists with the same username
         var existingUsers = await _twitterContext.Users.ManyAsync(x => x.Username == userToImport.Username, true);
-        if (existingUsers.Any(x => !x.IsDeleted))
+        if (existingUsers.Any(x => x.IsActive))
         {
             Log.Information("Skipping import for @{username} because there already exists an active user with that username", userToImport.Username);
             return;

@@ -78,7 +78,7 @@ internal class Program : ScheduledService<Program>
                 var users = await _twitterContext.Users.Collection.Find(FilterDefinition<UserEntity>.Empty).ToListAsync();
                 users = users
                     .Where(x => x.FurryPrediction?.Value == true) // Users which post furry art
-                    .Where(x => x.CanMediaBeRetrieved) // Of which the media can be retrieved
+                    .Where(x => x.IsActive) // Of which the media can be retrieved
                     .Where(x => x.MediaScrapingLastStartedAt == null || DateTime.UtcNow.Subtract((DateTime)x.MediaScrapingLastStartedAt) > TimeSpan.FromHours(3)) // Do not include users that might have caused the scraper to crash before
                     .ToList();
 
@@ -150,7 +150,7 @@ internal class Program : ScheduledService<Program>
         await UpdateMediaScrapingLastStartedAtAsync(user);
 
         user = await _userService.UpdateDetailsAsync(user);
-        if (!user.CanMediaBeRetrieved)
+        if (!user.IsActive)
         {
             Log.Information("After updating the details for user @{username}, it was determined the user's media could not be scraped", user.Username);
             return;

@@ -14,7 +14,7 @@ public class UserEntity
 
     public bool HasViolatedMediaPolicy { get; set; }
 
-    public bool CanMediaBeRetrieved => !IsProtected && !IsSuspended && !IsDeleted & !HasViolatedMediaPolicy;
+    public bool IsActive => !IsProtected && !IsSuspended && !IsDeleted & !HasViolatedMediaPolicy;
 
     public DateTime CreatedAt { set; get; }
 

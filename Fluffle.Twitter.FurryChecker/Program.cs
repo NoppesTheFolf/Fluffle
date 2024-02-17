@@ -191,7 +191,7 @@ internal class Program : QueuePollingService<Program, UserCheckFurryQueueItem>
 
         Log.Information("Updating details for user @{username}...", user.Username);
         user = await _userService.UpdateDetailsAsync(user);
-        if (!user.CanMediaBeRetrieved)
+        if (!user.IsActive)
         {
             Log.Information("After updating the details for user @{username}, it was determined the user's media could not be scraped. Rescheduling about a month later to check again", user.Username);
             await _queue.EnqueueAsync(new UserCheckFurryQueueItem
