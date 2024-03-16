@@ -82,7 +82,11 @@ public class FurAffinityClient : ApiClient
             Comments = int.Parse(stats[1]),
             Favorites = int.Parse(stats[2])
         };
-        submission.Rating = Enum.Parse<FaSubmissionRating>(stats[3], true);
+
+        var ratingUnparsed = stats[3];
+        submission.Rating = string.IsNullOrWhiteSpace(ratingUnparsed)
+            ? FaSubmissionRating.General // Apparently some submissions have an empty rating and are publicly accessible, hence we're defaulting to general here
+            : Enum.Parse<FaSubmissionRating>(ratingUnparsed, true);
 
         // Extract the submission its tags
         submission.Tags = sidebar.SelectSingleNode("./section[contains(@class, 'tags-row')]")?.ChildNodes
