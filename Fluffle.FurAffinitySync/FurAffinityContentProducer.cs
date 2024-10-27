@@ -25,7 +25,7 @@ public class FurAffinityContentProducer : ContentProducer<FaSubmission>
     private readonly FurAffinitySyncConfiguration _configuration;
     private readonly GetSubmissionScheduler _getSubmissionScheduler;
 
-    public override int SourceVersion => 3;
+    public override int SourceVersion => 4;
 
     public FurAffinityContentProducer(IServiceProvider services,
         SyncStateService<FurAffinitySyncClientState> syncStateService, FurAffinityClient client,
@@ -219,8 +219,6 @@ public class FurAffinityContentProducer : ContentProducer<FaSubmission>
             Thumbnail(800)
         };
     }
-
-    public override IEnumerable<string> GetTags(FaSubmission src) => src.Tags;
 
     public override MediaTypeConstant GetMediaType(FaSubmission src)
     {

@@ -83,9 +83,9 @@ public abstract class ContentProducer<TContent> : SyncProducer, IContentMapper<T
 
     public abstract IEnumerable<PutContentModel.FileModel> GetFiles(TContent src);
 
-    public abstract IEnumerable<string> GetTags(TContent src);
-
     public abstract MediaTypeConstant GetMediaType(TContent src);
+
+    public virtual bool GetHasTransparency(TContent src) => false;
 
     public abstract int GetPriority(TContent src);
 

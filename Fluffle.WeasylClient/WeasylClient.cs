@@ -30,10 +30,10 @@ public class WeasylClient : ApiClient
         });
     }
 
-    public async Task<IList<FontPageSubmission>> GetFrontPageAsync()
+    public async Task<IList<FrontPageSubmission>> GetFrontPageAsync()
     {
         return await Request(true, "api", "submissions", "frontpage")
-            .GetJsonExplicitlyAsync<IList<FontPageSubmission>>();
+            .GetJsonExplicitlyAsync<IList<FrontPageSubmission>>();
     }
 
     public async Task<Submission> GetSubmissionAsync(int id)

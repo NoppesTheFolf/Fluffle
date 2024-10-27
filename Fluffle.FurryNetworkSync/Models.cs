@@ -36,8 +36,6 @@ public class FnSubmission
 
     public FnSubmissionImagesModel Images { get; set; }
 
-    public ICollection<string> Tags { get; set; }
-
     public FnSubmissionRating Rating { get; set; }
 
     public string Title { get; set; }
@@ -49,16 +47,6 @@ public class FnSubmission
     public string ContentType { get; set; }
 
     public FnCharacter Character { get; set; }
-}
-
-public class FnSpecificSubmission : FnSubmission
-{
-    public new ICollection<FnTag> Tags { get; set; }
-}
-
-public class FnTag
-{
-    public string Value { get; set; }
 }
 
 public class FnCharacter

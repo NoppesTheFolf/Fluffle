@@ -160,7 +160,6 @@ internal class Program : QueuePollingService<Program, MediaIngestQueueItem>
             Description = tweet.Text,
             Rating = ContentRatingConstant.Explicit,
             MediaType = MediaTypeConstant.Image,
-            Tags = null,
             Priority = user.FollowersCount,
             Files = media.Photos!.Select(x => new PutContentModel.FileModel
             {

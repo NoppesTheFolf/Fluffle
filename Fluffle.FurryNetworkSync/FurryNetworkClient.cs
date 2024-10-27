@@ -47,11 +47,11 @@ public class FurryNetworkClient : ApiClient
         });
     }
 
-    public async Task<FnSpecificSubmission> GetSubmissionAsync(int id)
+    public async Task<FnSubmission> GetSubmissionAsync(int id)
     {
         try
         {
-            return await AuthorizedRequest(null, r => r.GetJsonExplicitlyAsync<FnSpecificSubmission>(), "api/artwork", id);
+            return await AuthorizedRequest(null, r => r.GetJsonExplicitlyAsync<FnSubmission>(), "api/artwork", id);
         }
         catch (FlurlHttpException e)
         {

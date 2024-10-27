@@ -7,8 +7,6 @@ public class Submission
     [JsonProperty("submission_id")]
     public string Id { get; set; } = null!;
 
-    public ICollection<Keyword> Keywords { get; set; } = null!;
-
     public ICollection<SubmissionFile> Files { get; set; } = null!;
 
     public string Username { get; set; } = null!;

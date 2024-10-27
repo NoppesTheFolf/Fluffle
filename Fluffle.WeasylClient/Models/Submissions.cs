@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Weasyl.Models;
 
-public abstract class MinimalSubmission<T>
+public abstract class MinimalSubmission
 {
     [JsonProperty("submitid")]
     public int SubmitId { get; set; }
@@ -12,8 +12,6 @@ public abstract class MinimalSubmission<T>
     public string Title { get; set; }
 
     public SubmissionRating Rating { get; set; }
-
-    public ICollection<T> Tags { get; set; }
 
     public SubmissionType Type { get; set; }
 
@@ -28,11 +26,11 @@ public abstract class MinimalSubmission<T>
     public Uri Link { get; set; }
 }
 
-public class FontPageSubmission : MinimalSubmission<int>
+public class FrontPageSubmission : MinimalSubmission
 {
 }
 
-public class Submission : MinimalSubmission<string>
+public class Submission : MinimalSubmission
 {
     public SubmissionMediaKeys OwnerMedia { get; set; }
 

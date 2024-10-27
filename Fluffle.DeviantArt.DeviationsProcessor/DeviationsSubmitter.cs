@@ -126,7 +126,6 @@ public class DeviationsSubmitter
             Description = metadata.Description,
             Rating = metadata.IsMature ? ContentRatingConstant.Explicit : ContentRatingConstant.Safe,
             MediaType = GetMediaType(deviation),
-            Tags = metadata.Tags.Select(x => x.Name).ToList(),
             Priority = (int)metadata.Stats!.Views!,
             Files = files.Select(x =>
             {

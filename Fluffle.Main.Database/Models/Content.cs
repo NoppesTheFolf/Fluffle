@@ -23,8 +23,6 @@ public partial class Content : TrackedBaseEntity, ITrackable, IConfigurable<Cont
         ContentCreditableEntity = new HashSet<ContentCreditableEntity>();
         Warnings = new HashSet<ContentWarning>();
         Errors = new HashSet<ContentError>();
-        Tags = new HashSet<Tag>();
-        ContentTags = new HashSet<ContentTag>();
         OtherSources = new HashSet<ContentOtherSource>();
     }
 
@@ -68,8 +66,6 @@ public partial class Content : TrackedBaseEntity, ITrackable, IConfigurable<Cont
     public virtual ICollection<ContentCreditableEntity> ContentCreditableEntity { get; set; }
     public virtual ICollection<ContentWarning> Warnings { get; set; }
     public virtual ICollection<ContentError> Errors { get; set; }
-    public virtual ICollection<Tag> Tags { get; set; }
-    public virtual ICollection<ContentTag> ContentTags { get; set; }
     public virtual ICollection<ContentOtherSource> OtherSources { get; set; }
 
     public IEnumerable<Thumbnail> EnumerateThumbnails()
@@ -188,20 +184,6 @@ public partial class Content : TrackedBaseEntity, ITrackable, IConfigurable<Cont
             {
                 return l.HasOne(e => e.Content)
                     .WithMany(e => e.ContentCreditableEntity)
-                    .HasForeignKey(e => e.ContentId);
-            });
-
-        entity.HasMany(e => e.Tags)
-            .WithMany(e => e.Content)
-            .UsingEntity<ContentTag>(r =>
-            {
-                return r.HasOne(e => e.Tag)
-                    .WithMany(e => e.ContentTags)
-                    .HasForeignKey(e => e.TagId);
-            }, l =>
-            {
-                return l.HasOne(e => e.Content)
-                    .WithMany(e => e.ContentTags)
                     .HasForeignKey(e => e.ContentId);
             });
     }

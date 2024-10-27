@@ -232,33 +232,30 @@ public class FaSubmission
     public FaSubmissionRating Rating { get; set; }
 
     [Key(6)]
-    public ICollection<string> Tags { get; set; }
-
-    [Key(7)]
     public FaSubmissionCategory? Category { get; set; }
 
-    [Key(8)]
+    [Key(7)]
     public FaSubmissionType? Type { get; set; }
 
-    [Key(9)]
+    [Key(8)]
     public string Species { get; set; }
 
-    [Key(10)]
+    [Key(9)]
     public string Gender { get; set; }
 
-    [Key(11)]
+    [Key(10)]
     public Uri ViewLocation { get; set; }
 
-    [Key(12)]
+    [Key(11)]
     public Uri FileLocation { get; set; }
 
-    [Key(13)]
+    [Key(12)]
     public FaSize Size { get; set; }
 
-    [Key(14)]
+    [Key(13)]
     public DateTimeOffset ThumbnailWhen { get; set; }
 
-    [Key(15)]
+    [Key(14)]
     public DateTimeOffset When { get; set; }
 
     public FaThumbnail GetThumbnail(int targetMax)

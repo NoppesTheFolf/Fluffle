@@ -36,8 +36,6 @@ public class Startup : ApiStartup<Startup, FluffleContext>
 
         services.AddDatabase<FluffleContext, MainDatabaseConfiguration>(Configuration);
 
-        services.AddSingleton<TagBlacklistCollection>();
-
         services.AddSingleton<IndexStatisticsService>();
         services.AddSingleton<CreditableEntityPriorityService>();
         services.AddSingleton<DeletionService>();
@@ -64,10 +62,6 @@ public class Startup : ApiStartup<Startup, FluffleContext>
 
     public override void AfterConfigure(IApplicationBuilder app, IWebHostEnvironment env, ServiceBuilder serviceBuilder)
     {
-        var blacklistConf = Configuration.Get<BlacklistConfiguration>();
-        var tagBlacklist = app.ApplicationServices.GetRequiredService<TagBlacklistCollection>();
-        tagBlacklist.Initialize(blacklistConf.Universal, blacklistConf.Nsfw);
-
         using (var scope = app.ApplicationServices.CreateScope())
         {
             var initializer = scope.ServiceProvider.GetRequiredService<ApiInitializer>();

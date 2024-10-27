@@ -24,10 +24,6 @@ public class FurryNetworkContentProducer : ContentProducer<FnSubmission>
     {
         var submission = await _client.GetSubmissionAsync(int.Parse(id));
 
-        if (submission == null)
-            return null;
-
-        ((FnSubmission)submission).Tags = submission.Tags.Select(t => t.Value).ToList();
         return submission;
     }
 
@@ -144,8 +140,6 @@ public class FurryNetworkContentProducer : ContentProducer<FnSubmission>
             _ => throw new ArgumentOutOfRangeException(nameof(src))
         };
     }
-
-    public override IEnumerable<string> GetTags(FnSubmission src) => src.Tags;
 
     public override string GetViewLocation(FnSubmission src) => $"https://furrynetwork.com/{src.RecordType}/{src.Id}";
 

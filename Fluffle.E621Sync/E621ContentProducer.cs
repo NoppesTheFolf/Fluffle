@@ -113,8 +113,6 @@ internal class E621ContentProducer : ContentProducer<Post>
             yield return PostFileToModel(src.Preview);
     }
 
-    public override IEnumerable<string> GetTags(Post src) => src.Tags.Valid;
-
     public override MediaTypeConstant GetMediaType(Post src)
     {
         var fileFormat = FileFormatHelper.GetFileFormatFromExtension(src.File.FileExtension);
@@ -131,6 +129,8 @@ internal class E621ContentProducer : ContentProducer<Post>
             _ => throw new ArgumentOutOfRangeException(nameof(src))
         };
     }
+
+    public override bool GetHasTransparency(Post src) => src.Tags.Valid.Any(x => StringComparer.OrdinalIgnoreCase.Equals(x, "transparent_background"));
 
     public override int GetPriority(Post src) => src.Score.Total;
 

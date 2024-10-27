@@ -88,14 +88,6 @@ public class FurAffinityClient : ApiClient
             ? FaSubmissionRating.General // Apparently some submissions have an empty rating and are publicly accessible, hence we're defaulting to general here
             : Enum.Parse<FaSubmissionRating>(ratingUnparsed, true);
 
-        // Extract the submission its tags
-        submission.Tags = sidebar.SelectSingleNode("./section[contains(@class, 'tags-row')]")?.ChildNodes
-            .Where(n => n.NodeType != HtmlNodeType.Text)
-            .Select(n => HttpUtility.HtmlDecode(n.InnerText)?.Trim())
-            .Where(n => n != null)
-            .ToList();
-        submission.Tags ??= Array.Empty<string>();
-
         // Extract the submission its (sub)category, species, gender and size
         var infoNode = sidebar.SelectSingleNode("./section[contains(@class, 'info')]");
         var info = infoNode.ChildNodes

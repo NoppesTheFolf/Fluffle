@@ -19,7 +19,7 @@ namespace Noppes.Fluffle.Main.Communication
 
         public MediaTypeConstant MediaType { get; set; }
 
-        public ICollection<string> Tags { get; set; }
+        public bool HasTransparency { get; set; }
 
         public int Priority { get; set; }
 

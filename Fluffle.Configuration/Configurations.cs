@@ -318,29 +318,6 @@ public class BackblazeB2Configuration : BackblazeB2Configuration<BackblazeB2Conf
 }
 
 /// <summary>
-/// Configuration regarding blacklisted tags.
-/// </summary>
-[ConfigurationSection("Blacklist")]
-public class BlacklistConfiguration : FluffleConfigurationPart<BlacklistConfiguration>
-{
-    /// <summary>
-    /// A universally applied blacklist of tags.
-    /// </summary>
-    public ICollection<string> Universal { get; set; }
-
-    /// <summary>
-    /// Blacklisted tags which are only applied to NSFW content.
-    /// </summary>
-    public ICollection<string> Nsfw { get; set; }
-
-    public BlacklistConfiguration()
-    {
-        RuleFor(o => o.Universal).NotNull();
-        RuleFor(o => o.Nsfw).NotNull();
-    }
-}
-
-/// <summary>
 /// Configuration regarding e621.net.
 /// </summary>
 [ConfigurationSection("E621")]

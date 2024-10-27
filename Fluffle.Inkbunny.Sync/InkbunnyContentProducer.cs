@@ -189,8 +189,6 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
         return files;
     }
 
-    public override IEnumerable<string> GetTags(FileForSubmission src) => src.Submission.Keywords.Select(x => x.Name);
-
     public override MediaTypeConstant GetMediaType(FileForSubmission src)
     {
         var fileFormat = FileFormatHelper.GetFileFormatFromMimeType(src.File.MimeType);

@@ -88,8 +88,6 @@ internal class WeasylContentProducer : ContentProducer<Submission>
         };
     }
 
-    public override IEnumerable<string> GetTags(Submission src) => src.Tags;
-
     public override MediaTypeConstant GetMediaType(Submission src)
     {
         var fileFormat = FileFormatHelper.GetFileFormatFromExtension(Path.GetExtension(src.Media.Submission[0].Url.AbsoluteUri));

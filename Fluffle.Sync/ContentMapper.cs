@@ -24,9 +24,9 @@ public interface IContentMapper<in T>
             CreditableEntities = GetCredits(src)?.ToList(),
             ViewLocation = GetViewLocation(src),
             Files = GetFiles(src)?.ToList(),
-            Tags = GetTags(src)?.ToList(),
             OtherSources = GetOtherSources(src)?.ToList(),
             MediaType = GetMediaType(src),
+            HasTransparency = GetHasTransparency(src),
             Priority = GetPriority(src),
             ShouldBeIndexed = ShouldBeIndexed(src)
         };
@@ -58,9 +58,9 @@ public interface IContentMapper<in T>
 
     public IEnumerable<PutContentModel.FileModel> GetFiles(T src);
 
-    public IEnumerable<string> GetTags(T src);
-
     public MediaTypeConstant GetMediaType(T src);
+
+    public bool GetHasTransparency(T src);
 
     public int GetPriority(T src);
 

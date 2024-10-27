@@ -23,27 +23,25 @@ namespace Noppes.Fluffle.Main.Api.Services;
 
 public class ContentService : Service, IContentService
 {
-    private const string TransparentBackgroundTag = "transparent-background";
-
-    private static readonly AsyncLock TagsSyncLock = new();
-
     private static readonly IDictionary<PlatformConstant, AsyncLock> PlatformSyncLocks = Enum.GetValues<PlatformConstant>()
         .ToDictionary(x => x, _ => new AsyncLock());
 
     private readonly FluffleContext _context;
-    private readonly TagBlacklistCollection _tagBlacklist;
     private readonly IThumbnailService _thumbnailService;
     private readonly ChangeIdIncrementer<Content> _contentCii;
     private readonly ChangeIdIncrementer<CreditableEntity> _creditableEntityCii;
     private readonly ClaimsPrincipal _user;
     private readonly ILogger<ContentService> _logger;
 
-    public ContentService(FluffleContext context, TagBlacklistCollection tagBlacklist, IThumbnailService thumbnailService,
-        ChangeIdIncrementer<Content> contentCii, ChangeIdIncrementer<CreditableEntity> creditableEntityCii,
-        ClaimsPrincipal user, ILogger<ContentService> logger)
+    public ContentService(
+        FluffleContext context,
+        IThumbnailService thumbnailService,
+        ChangeIdIncrementer<Content> contentCii,
+        ChangeIdIncrementer<CreditableEntity> creditableEntityCii,
+        ClaimsPrincipal user,
+        ILogger<ContentService> logger)
     {
         _context = context;
-        _tagBlacklist = tagBlacklist;
         _thumbnailService = thumbnailService;
         _contentCii = contentCii;
         _creditableEntityCii = creditableEntityCii;
@@ -202,14 +200,12 @@ public class ContentService : Service, IContentService
                 // Substitute null values for empty collections as those are easier to work with
                 contentModel.CreditableEntities ??= new List<PutContentModel.CreditableEntityModel>();
                 contentModel.Files ??= new List<PutContentModel.FileModel>();
-                contentModel.Tags ??= new List<string>();
                 contentModel.OtherSources ??= new List<string>();
 
                 // Remove NULL characters from user provided data as PostgreSQL does not support it
                 contentModel.Reference = contentModel.Reference?.RemoveNullChar();
                 contentModel.Title = contentModel.Title?.RemoveNullChar();
                 contentModel.Description = contentModel.Description?.RemoveNullChar();
-                contentModel.Tags = contentModel.Tags.Select(t => t.RemoveNullChar()).ToList();
                 contentModel.OtherSources = contentModel.OtherSources.Select(os => os.RemoveNullChar()).ToList();
                 foreach (var creditableEntity in contentModel.CreditableEntities)
                 {
@@ -223,61 +219,10 @@ public class ContentService : Service, IContentService
                     .ToList();
             }
 
-            // We'll mark it as deleted at a later time to prevent saving these changes before
-            // the tag synchronization lock has been released.
-            var blacklistedContent = contentModels
-                .Where(cm => _tagBlacklist.Any(cm.Tags, cm.Rating))
-                .ToList();
-
-            // Get all of the models which don't contained blacklisted tags
-            contentModels = contentModels.Except(blacklistedContent).ToList();
-
             var modelLookup = contentModels
                 .ToDictionary(c => c.IdOnPlatform, c => c);
 
-            // First we synchronize the tags. Some different tags might be normalized to the same
-            // string. To prevent constraint violations, we remove duplicates
-            foreach (var model in contentModels)
-                model.Tags = model.Tags.Select(TagHelper.Normalize).Distinct().ToList();
-
-            var tags = contentModels
-                .SelectMany(c => c.Tags)
-                .Distinct()
-                .Select(t => new Tag
-                {
-                    Name = t
-                })
-                .ToList();
-
-            SynchronizeResult<Tag> tagsSynchronizeResult;
-            using (var tagsLock = await TagsSyncLock.LockAsync())
-            {
-                var existingTags = await _context.Tags
-                    .Where(t => tags.Select(t => t.Name).Contains(t.Name))
-                    .ToDictionaryAsync(t => t.Name);
-
-                foreach (var tag in tags)
-                    if (existingTags.TryGetValue(tag.Name, out var dbTag))
-                        tag.Id = dbTag.Id;
-
-                tagsSynchronizeResult = await _context.SynchronizeTagsAsync(existingTags.Values, tags);
-                await _context.SaveChangesAsync();
-            }
-
-            var tagEntitiesLookup = tagsSynchronizeResult.Entities()
-                .ToDictionary(t => t.Name);
-
             using var platformLock = await PlatformSyncLocks[(PlatformConstant)platform.Id].LockAsync();
-
-            // Mark existing blacklisted content for deletion. Content which hasn't been added
-            // will simply by ignored
-            var existingBlacklistedContent = _context.Content
-                .Where(c => c.PlatformId == platform.Id)
-                .Where(c => blacklistedContent.Select(bc => bc.IdOnPlatform).Contains(c.IdOnPlatform));
-
-            foreach (var existingBlacklistedContentPiece in existingBlacklistedContent)
-                if (!existingBlacklistedContentPiece.IsDeleted)
-                    existingBlacklistedContentPiece.IsMarkedForDeletion = true;
 
             // Then we synchronize creditable entities
             var creditableEntities = contentModels
@@ -325,7 +270,6 @@ public class ContentService : Service, IContentService
             var existingContent = await _context.Content.AsSingleQuery()
                 .Include(ec => ec.Files)
                 .Include(ec => ec.Credits)
-                .Include(ec => ec.Tags)
                 .Include(ec => ec.OtherSources)
                 .Where(c => c.PlatformId == platform.Id && contentModels.Select(c => c.IdOnPlatform).Contains(c.IdOnPlatform))
                 .ToDictionaryAsync(c => c.IdOnPlatform, c => c);
@@ -394,13 +338,6 @@ public class ContentService : Service, IContentService
                 }).ToList();
                 var synchronizeCredits = await _context.SynchronizeContentCreditsAsync(contentPiece.ContentCreditableEntity, contentCreditableEntities);
 
-                var contentTags = contentModel.Tags.Select(t => new ContentTag
-                {
-                    Content = contentPiece,
-                    Tag = tagEntitiesLookup[t]
-                }).ToList();
-                var synchronizeTagsResult = await _context.SynchronizeContentTagsAsync(contentPiece.ContentTags, contentTags);
-
                 var contentOtherSources = contentModel.OtherSources.Select(os => new ContentOtherSource
                 {
                     Content = contentPiece,
@@ -419,11 +356,9 @@ public class ContentService : Service, IContentService
                 // when, for example, the background of a sketch is transparent.
                 if (contentPiece.PlatformId == (int)PlatformConstant.E621 && contentPiece is Image image)
                 {
-                    var hasTransparency = contentTags.Any(ct => ct.Tag.Name == TransparentBackgroundTag);
-
                     // The image has transparency and has already been indexed, yet was not
                     // marked as having transparency when it got indexed.
-                    if (hasTransparency && image.IsIndexed && !image.HasTransparency)
+                    if (contentModel.HasTransparency && image.IsIndexed && !image.HasTransparency)
                     {
                         image.RequiresIndexing = true;
 
@@ -431,7 +366,7 @@ public class ContentService : Service, IContentService
                             image.IdOnPlatform, platform.Name);
                     }
 
-                    image.HasTransparency = hasTransparency;
+                    image.HasTransparency = contentModel.HasTransparency;
                 }
             }
 
