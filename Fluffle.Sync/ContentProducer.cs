@@ -97,10 +97,6 @@ public abstract class ContentProducer<TContent> : SyncProducer, IContentMapper<T
 
     public abstract bool ShouldBeIndexed(TContent src);
 
-    public int GetSourceVersion() => SourceVersion;
-
-    public virtual int SourceVersion => 0;
-
     public async Task FlagForDeletionAsync(string contentId) => await FlagForDeletionAsync(new[] { contentId });
 
     public async Task FlagForDeletionAsync(ICollection<string> contentIds, bool onlyPrintActuallyDeleted = false)

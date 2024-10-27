@@ -1,12 +1,7 @@
-﻿using MessagePack;
-using Noppes.Fluffle.Constants;
+﻿using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Main.Communication;
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Reflection;
 
 namespace Noppes.Fluffle.Sync;
 
@@ -31,18 +26,6 @@ public interface IContentMapper<in T>
             ShouldBeIndexed = ShouldBeIndexed(src)
         };
 
-        if (typeof(T).GetCustomAttribute<MessagePackObjectAttribute>() == null)
-            return dest;
-
-        if (GetSourceVersion() < 1)
-            throw new InvalidOperationException("Specify a source version greater than 0.");
-
-        using var sourceStream = new MemoryStream();
-        using (var compressionStream = new BrotliStream(sourceStream, CompressionLevel.Optimal))
-            compressionStream.Write(MessagePackSerializer.Serialize(src));
-
-        dest.Source = sourceStream.ToArray();
-        dest.SourceVersion = GetSourceVersion();
         return dest;
     }
 
@@ -71,6 +54,4 @@ public interface IContentMapper<in T>
     public IEnumerable<string> GetOtherSources(T src);
 
     public bool ShouldBeIndexed(T src);
-
-    public int GetSourceVersion();
 }

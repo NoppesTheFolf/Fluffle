@@ -178,8 +178,6 @@ internal class Program : QueuePollingService<Program, MediaIngestQueueItem>
                 }
             },
             OtherSources = null,
-            Source = null,
-            SourceVersion = null,
             ShouldBeIndexed = true
         };
     }

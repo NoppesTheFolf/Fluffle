@@ -309,8 +309,6 @@ public class ContentService : Service, IContentService
                     dest.Description = src.Description;
                     dest.Priority = src.Priority;
                     dest.LastEditedById = _user.GetApiKeyId();
-                    dest.Source = src.Source;
-                    dest.SourceVersion = src.SourceVersion;
 
                     return Task.CompletedTask;
                 });

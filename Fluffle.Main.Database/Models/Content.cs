@@ -53,8 +53,6 @@ public partial class Content : TrackedBaseEntity, ITrackable, IConfigurable<Cont
     public bool HasFatalErrors { get; set; }
     public int RetryIncrement { get; set; }
     public long RetryReservedUntil { get; set; }
-    public byte[] Source { get; set; }
-    public int SourceVersion { get; set; }
 
     public virtual ApiKey LastEditedBy { get; set; }
     public virtual ContentRating Rating { get; set; }
@@ -127,9 +125,6 @@ public partial class Content : TrackedBaseEntity, ITrackable, IConfigurable<Cont
         entity.Property(e => e.HasFatalErrors);
         entity.Property(e => e.RetryIncrement);
         entity.Property(e => e.RetryReservedUntil);
-
-        entity.Property(e => e.Source);
-        entity.Property(e => e.SourceVersion);
 
         entity.Property(e => e.IsDeleted);
         entity.HasIndex(e => e.IsDeleted);

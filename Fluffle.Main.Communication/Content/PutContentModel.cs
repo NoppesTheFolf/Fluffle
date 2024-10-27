@@ -49,10 +49,6 @@ namespace Noppes.Fluffle.Main.Communication
 
         public ICollection<string> OtherSources { get; set; }
 
-        public byte[] Source { get; set; }
-
-        public int? SourceVersion { get; set; }
-
         public bool ShouldBeIndexed { get; set; }
     }
 }

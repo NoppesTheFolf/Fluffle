@@ -151,8 +151,6 @@ public class DeviationsSubmitter
                 }
             },
             OtherSources = null,
-            Source = null,
-            SourceVersion = null,
             ShouldBeIndexed = true
         };
 
