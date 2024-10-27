@@ -11,10 +11,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="morelinq" Version="3.3.2" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\Fluffle.Api\Fluffle.Api.csproj" />
 		<ProjectReference Include="..\Fluffle.B2\Fluffle.B2.csproj" />
 		<ProjectReference Include="..\Fluffle.FurAffinityClient\Fluffle.FurAffinityClient.csproj" />

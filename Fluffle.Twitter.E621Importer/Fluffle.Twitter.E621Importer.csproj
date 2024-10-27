@@ -11,7 +11,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="morelinq" Version="3.4.2" />
 		<PackageReference Include="Noppes.E621Client" Version="0.8.0" />
 		<PackageReference Include="Noppes.E621Client.DbExport" Version="0.8.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
