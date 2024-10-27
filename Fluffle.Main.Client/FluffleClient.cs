@@ -30,18 +30,6 @@ public class FluffleClient : ApiClient
             .GetJsonExplicitlyAsync<SyncStateModel>();
     }
 
-    public Task<bool> GetFaBotsAllowedAsync()
-    {
-        return Request(Endpoints.GetFaBotsAllowed())
-            .GetJsonExplicitlyAsync<bool>();
-    }
-
-    public Task<IList<FaPopularArtistModel>> GetFaPopularArtistsAsync()
-    {
-        return Request(Endpoints.GetFaPopularArtists())
-            .GetMessagePackExplicitlyAsync<IList<FaPopularArtistModel>>();
-    }
-
     public Task<ICollection<string>> SearchContentAsync(string platformName, SearchContentModel model)
     {
         return Request(Endpoints.SearchContent(platformName))

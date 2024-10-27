@@ -25,13 +25,6 @@ public class FurAffinityClient : ApiClient
         _b = b;
     }
 
-    public async Task<FaOnlineStats> GetRegisteredUsersOnlineAsync()
-    {
-        var response = await Request().GetHtmlExplicitlyAsync();
-
-        return ExtractOnlineStats(response);
-    }
-
     public Task<Stream> GetStreamAsync(string url) => Request(url).GetStreamAsync();
 
     public async Task<FaResult<FaSubmission>> GetSubmissionAsync(int submissionId)

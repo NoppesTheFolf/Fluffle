@@ -1,12 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Noppes.Fluffle.Main.Database.Migrations;
+#nullable disable
 
-public partial class AddFurAffinityPopularArtistsView : Migration
+namespace Noppes.Fluffle.Main.Database.Migrations
 {
-    protected override void Up(MigrationBuilder migrationBuilder)
+    public partial class RemoveFurAffinityPopularArtistsView : Migration
     {
-        migrationBuilder.Sql(@"
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.Sql("DROP VIEW fa_popular_artists;");
+        }
+
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.Sql(@"
 CREATE VIEW fa_popular_artists AS
 SELECT CE.id_on_platform as artist_id, SUM(priority) / COUNT(*) as average_score
 FROM content C
@@ -20,10 +27,6 @@ HAVING (COUNT(*) >= 20 AND SUM(priority) / COUNT(*) > 1000)
 	OR (COUNT(*) >= 1 AND SUM(priority) / COUNT(*) > 8000)
 ORDER BY average_score DESC;
 ");
-    }
-
-    protected override void Down(MigrationBuilder migrationBuilder)
-    {
-        migrationBuilder.Sql("DROP VIEW fa_popular_artists;");
+        }
     }
 }
