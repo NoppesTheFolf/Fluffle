@@ -39,5 +39,4 @@ public partial class FluffleContext : ApiKeyContext<ApiKey, Permission, ApiKeyPe
     public virtual DbSet<SyncType> SyncTypes { get; set; }
     public virtual DbSet<Thumbnail> Thumbnails { get; set; }
     public virtual DbSet<ContentError> ContentErrors { get; set; }
-    public virtual DbSet<ContentOtherSource> ContentOtherSources { get; set; }
 }

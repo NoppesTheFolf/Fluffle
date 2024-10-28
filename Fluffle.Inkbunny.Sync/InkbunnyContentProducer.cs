@@ -214,7 +214,5 @@ public class InkbunnyContentProducer : ContentProducer<FileForSubmission>
 
     public override string GetTitle(FileForSubmission src) => src.Submission.Title;
 
-    public override IEnumerable<string> GetOtherSources(FileForSubmission src) => Array.Empty<string>();
-
     public override bool ShouldBeIndexed(FileForSubmission src) => true;
 }

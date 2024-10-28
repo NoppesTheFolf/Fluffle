@@ -107,7 +107,5 @@ internal class WeasylContentProducer : ContentProducer<Submission>
 
     public override string GetTitle(Submission src) => src.Title;
 
-    public override IEnumerable<string> GetOtherSources(Submission src) => null;
-
     public override bool ShouldBeIndexed(Submission src) => true;
 }

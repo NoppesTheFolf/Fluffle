@@ -23,7 +23,6 @@ public partial class Content : TrackedBaseEntity, ITrackable, IConfigurable<Cont
         ContentCreditableEntity = new HashSet<ContentCreditableEntity>();
         Warnings = new HashSet<ContentWarning>();
         Errors = new HashSet<ContentError>();
-        OtherSources = new HashSet<ContentOtherSource>();
     }
 
     public int Id { get; set; }
@@ -63,7 +62,6 @@ public partial class Content : TrackedBaseEntity, ITrackable, IConfigurable<Cont
     public virtual ICollection<ContentCreditableEntity> ContentCreditableEntity { get; set; }
     public virtual ICollection<ContentWarning> Warnings { get; set; }
     public virtual ICollection<ContentError> Errors { get; set; }
-    public virtual ICollection<ContentOtherSource> OtherSources { get; set; }
 
     public IEnumerable<Thumbnail> EnumerateThumbnails()
     {

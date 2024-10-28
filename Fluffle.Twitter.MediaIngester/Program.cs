@@ -176,7 +176,6 @@ internal class Program : QueuePollingService<Program, MediaIngestQueueItem>
                     Type = CreditableEntityType.Owner
                 }
             },
-            OtherSources = null,
             ShouldBeIndexed = true
         };
     }

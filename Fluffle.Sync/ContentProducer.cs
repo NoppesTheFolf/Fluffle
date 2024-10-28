@@ -91,8 +91,6 @@ public abstract class ContentProducer<TContent> : SyncProducer, IContentMapper<T
 
     public abstract string GetTitle(TContent src);
 
-    public abstract IEnumerable<string> GetOtherSources(TContent src);
-
     public abstract bool ShouldBeIndexed(TContent src);
 
     public async Task FlagForDeletionAsync(string contentId) => await FlagForDeletionAsync(new[] { contentId });

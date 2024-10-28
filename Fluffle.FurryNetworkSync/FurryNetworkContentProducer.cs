@@ -145,7 +145,5 @@ public class FurryNetworkContentProducer : ContentProducer<FnSubmission>
 
     public override string GetTitle(FnSubmission src) => src.Title;
 
-    public override IEnumerable<string> GetOtherSources(FnSubmission src) => null;
-
     public override bool ShouldBeIndexed(FnSubmission src) => true;
 }

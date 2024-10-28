@@ -137,12 +137,6 @@ public class FluffleClient : ApiClient
             .GetMessagePackExplicitlyAsync<CreditableEntitiesSyncModel>();
     }
 
-    public Task<ICollection<OtherSourceModel>> GetOtherSourcesAsync(int afterId)
-    {
-        return Request(Endpoints.GetOtherSources(afterId))
-            .GetMessagePackExplicitlyAsync<ICollection<OtherSourceModel>>();
-    }
-
     public Task<int?> GetCreditableEntitiesMaxPriority(string platformName, string creditableEntityName)
     {
         return Request(Endpoints.GetCreditablyEntityMaxPriority(platformName, creditableEntityName))

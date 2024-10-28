@@ -45,8 +45,6 @@ namespace Noppes.Fluffle.Main.Communication
 
         public ICollection<CreditableEntityModel> CreditableEntities { get; set; }
 
-        public ICollection<string> OtherSources { get; set; }
-
         public bool ShouldBeIndexed { get; set; }
     }
 }

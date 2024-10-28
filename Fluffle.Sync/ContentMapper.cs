@@ -18,7 +18,6 @@ public interface IContentMapper<in T>
             CreditableEntities = GetCredits(src)?.ToList(),
             ViewLocation = GetViewLocation(src),
             Files = GetFiles(src)?.ToList(),
-            OtherSources = GetOtherSources(src)?.ToList(),
             MediaType = GetMediaType(src),
             HasTransparency = GetHasTransparency(src),
             Priority = GetPriority(src),
@@ -47,8 +46,6 @@ public interface IContentMapper<in T>
     public int GetPriority(T src);
 
     public string GetTitle(T src);
-
-    public IEnumerable<string> GetOtherSources(T src);
 
     public bool ShouldBeIndexed(T src);
 }

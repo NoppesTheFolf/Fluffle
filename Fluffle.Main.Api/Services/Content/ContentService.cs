@@ -200,22 +200,15 @@ public class ContentService : Service, IContentService
                 // Substitute null values for empty collections as those are easier to work with
                 contentModel.CreditableEntities ??= new List<PutContentModel.CreditableEntityModel>();
                 contentModel.Files ??= new List<PutContentModel.FileModel>();
-                contentModel.OtherSources ??= new List<string>();
 
                 // Remove NULL characters from user provided data as PostgreSQL does not support it
                 contentModel.Reference = contentModel.Reference?.RemoveNullChar();
                 contentModel.Title = contentModel.Title?.RemoveNullChar();
-                contentModel.OtherSources = contentModel.OtherSources.Select(os => os.RemoveNullChar()).ToList();
                 foreach (var creditableEntity in contentModel.CreditableEntities)
                 {
                     creditableEntity.Id = creditableEntity.Id.RemoveNullChar();
                     creditableEntity.Name = creditableEntity.Name.RemoveNullChar();
                 }
-
-                // Only allow valid URIs
-                contentModel.OtherSources = contentModel.OtherSources
-                    .Where(os => Uri.TryCreate(os, UriKind.RelativeOrAbsolute, out _))
-                    .ToList();
             }
 
             var modelLookup = contentModels
@@ -269,7 +262,6 @@ public class ContentService : Service, IContentService
             var existingContent = await _context.Content.AsSingleQuery()
                 .Include(ec => ec.Files)
                 .Include(ec => ec.Credits)
-                .Include(ec => ec.OtherSources)
                 .Where(c => c.PlatformId == platform.Id && contentModels.Select(c => c.IdOnPlatform).Contains(c.IdOnPlatform))
                 .ToDictionaryAsync(c => c.IdOnPlatform, c => c);
 
@@ -333,15 +325,6 @@ public class ContentService : Service, IContentService
                     CreditableEntity = creditableEntitiesLookup[c.Id]
                 }).ToList();
                 var synchronizeCredits = await _context.SynchronizeContentCreditsAsync(contentPiece.ContentCreditableEntity, contentCreditableEntities);
-
-                var contentOtherSources = contentModel.OtherSources.Select(os => new ContentOtherSource
-                {
-                    Content = contentPiece,
-                    Location = os
-                }).ToList();
-                var synchronizeOtherSourcesResult = await _context.SynchronizeAsync(c => c.ContentOtherSources,
-                    contentPiece.OtherSources, contentOtherSources,
-                    (os1, os2) => (os1.Content, os1.Location) == (os2.Content, os2.Location));
 
                 var isContentChanged = synchronizeResult.HasChanges || synchronizeFilesResult.HasChanges || synchronizeCredits.HasChanges;
                 if (contentPiece.ChangeId != null && isContentChanged)

@@ -149,7 +149,6 @@ public class DeviationsSubmitter
                     Type = CreditableEntityType.Owner
                 }
             },
-            OtherSources = null,
             ShouldBeIndexed = true
         };
 
