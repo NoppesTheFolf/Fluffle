@@ -15,7 +15,6 @@ public interface IContentMapper<in T>
             IdOnPlatform = GetId(src),
             Rating = GetRating(src),
             Title = GetTitle(src),
-            Description = GetDescription(src),
             CreditableEntities = GetCredits(src)?.ToList(),
             ViewLocation = GetViewLocation(src),
             Files = GetFiles(src)?.ToList(),
@@ -48,8 +47,6 @@ public interface IContentMapper<in T>
     public int GetPriority(T src);
 
     public string GetTitle(T src);
-
-    public string GetDescription(T src);
 
     public IEnumerable<string> GetOtherSources(T src);
 

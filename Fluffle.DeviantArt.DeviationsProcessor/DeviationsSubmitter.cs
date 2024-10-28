@@ -123,7 +123,6 @@ public class DeviationsSubmitter
             IdOnPlatform = deviation.Id,
             ViewLocation = deviation.Url,
             Title = metadata.Title,
-            Description = metadata.Description,
             Rating = metadata.IsMature ? ContentRatingConstant.Explicit : ContentRatingConstant.Safe,
             MediaType = GetMediaType(deviation),
             Priority = (int)metadata.Stats!.Views!,

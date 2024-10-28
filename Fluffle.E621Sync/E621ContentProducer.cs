@@ -171,8 +171,6 @@ internal class E621ContentProducer : ContentProducer<Post>
 
     public override string GetTitle(Post src) => null;
 
-    public override string GetDescription(Post src) => src.Description;
-
     public override IEnumerable<string> GetOtherSources(Post src) => src.Sources;
 
     public override bool ShouldBeIndexed(Post src) => true;

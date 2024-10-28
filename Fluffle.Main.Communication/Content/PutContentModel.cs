@@ -13,8 +13,6 @@ namespace Noppes.Fluffle.Main.Communication
 
         public string Title { get; set; }
 
-        public string Description { get; set; }
-
         public ContentRatingConstant Rating { get; set; }
 
         public MediaTypeConstant MediaType { get; set; }

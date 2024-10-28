@@ -15,7 +15,6 @@ public class PutContentModelMapper : IMapper<PutContentModel, Content>
             dest.IdOnPlatformAsInteger = idOnPlatformAsInteger;
 
         dest.Title = src.Title;
-        dest.Description = src.Description;
         dest.ViewLocation = src.ViewLocation;
         dest.RatingId = (int)src.Rating;
         dest.MediaTypeId = (int)src.MediaType;

@@ -217,8 +217,6 @@ public class FaSubmission
 
     public string Title { get; set; }
 
-    public string Description { get; set; }
-
     public FaSubmissionStats Stats { get; set; }
 
     public FaSubmissionRating Rating { get; set; }

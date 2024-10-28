@@ -38,7 +38,6 @@ public partial class Content : TrackedBaseEntity, ITrackable, IConfigurable<Cont
     public string ViewLocation { get; set; }
     public int RatingId { get; set; }
     public string Title { get; set; }
-    public string Description { get; set; }
     public int Priority { get; set; }
     public long? ChangeId { get; set; }
     public int MediaTypeId { get; set; }
@@ -117,7 +116,6 @@ public partial class Content : TrackedBaseEntity, ITrackable, IConfigurable<Cont
         entity.HasIndex(e => e.Priority);
 
         entity.Property(e => e.Title);
-        entity.Property(e => e.Description);
 
         entity.Property(e => e.IsMarkedForDeletion);
         entity.HasIndex(e => e.IsMarkedForDeletion);

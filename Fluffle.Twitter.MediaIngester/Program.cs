@@ -157,7 +157,6 @@ internal class Program : QueuePollingService<Program, MediaIngestQueueItem>
             Reference = null,
             ViewLocation = $"https://twitter.com/{user.Username}/status/{tweet.Id}",
             Title = null,
-            Description = tweet.Text,
             Rating = ContentRatingConstant.Explicit,
             MediaType = MediaTypeConstant.Image,
             Priority = user.FollowersCount,

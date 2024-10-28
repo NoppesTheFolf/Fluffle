@@ -11,8 +11,6 @@ public class DeviationMetadata
 
     public string Title { get; set; } = null!;
 
-    public string Description { get; set; } = null!;
-
     public bool IsMature { get; set; }
 
     public ICollection<Tag> Tags { get; set; } = null!;

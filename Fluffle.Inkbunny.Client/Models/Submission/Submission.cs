@@ -15,8 +15,6 @@ public class Submission
 
     public string Title { get; set; } = null!;
 
-    public string Description { get; set; } = null!;
-
     [JsonProperty("rating_id")]
     public SubmissionRating Rating { get; set; }
 

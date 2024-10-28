@@ -205,7 +205,6 @@ public class ContentService : Service, IContentService
                 // Remove NULL characters from user provided data as PostgreSQL does not support it
                 contentModel.Reference = contentModel.Reference?.RemoveNullChar();
                 contentModel.Title = contentModel.Title?.RemoveNullChar();
-                contentModel.Description = contentModel.Description?.RemoveNullChar();
                 contentModel.OtherSources = contentModel.OtherSources.Select(os => os.RemoveNullChar()).ToList();
                 foreach (var creditableEntity in contentModel.CreditableEntities)
                 {
@@ -306,7 +305,6 @@ public class ContentService : Service, IContentService
                 {
                     dest.Reference = src.Reference;
                     dest.Title = src.Title;
-                    dest.Description = src.Description;
                     dest.Priority = src.Priority;
                     dest.LastEditedById = _user.GetApiKeyId();
 

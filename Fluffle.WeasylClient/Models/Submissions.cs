@@ -37,8 +37,6 @@ public class Submission : MinimalSubmission
     [JsonProperty("embedlink")]
     public Uri EmbedLink { get; set; }
 
-    public string Description { get; set; }
-
     [JsonProperty("folderid")]
     public int? FolderId { get; set; }
 

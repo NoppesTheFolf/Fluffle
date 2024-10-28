@@ -237,8 +237,6 @@ public class FurAffinityContentProducer : ContentProducer<FaSubmission>
 
     public override string GetTitle(FaSubmission src) => src.Title;
 
-    public override string GetDescription(FaSubmission src) => src.Description;
-
     public override IEnumerable<string> GetOtherSources(FaSubmission src) => null;
 
     public static readonly IReadOnlySet<FaSubmissionCategory> DisallowedCategories = new HashSet<FaSubmissionCategory>

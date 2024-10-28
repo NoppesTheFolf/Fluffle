@@ -127,10 +127,6 @@ public class FurAffinityClient : ApiClient
         var titleNode = submissionContent.SelectSingleNode(".//div[contains(@class, 'submission-title')]");
         submission.Title = titleNode.InnerText.Trim();
 
-        // Extract description
-        var descriptionNode = submissionContent.SelectSingleNode(".//div[contains(@class, 'submission-description')]");
-        submission.Description = descriptionNode.InnerText.Replace("\r\n", "\n").Trim();
-
         // Extract the owner
         var headerInfoNode = submissionContent.SelectSingleNode(".//div[contains(@class, 'submission-id-sub-container')]");
         var ownerNode = headerInfoNode.SelectSingleNode(".//a[contains(@href, '/user/')]");
