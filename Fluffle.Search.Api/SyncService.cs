@@ -230,34 +230,6 @@ public class SyncService : IService
                 // We're missing credits! So we're going to sync those first
                 if (creditsInModels.Count != numberOfExistingCredits)
                     await RefreshCreditableEntitiesAsync(platform);
-
-                // Sync content files
-                var existingContentFiles = await context.ContentFiles
-                    .Where(x => modelLookup.Values.Select(y => y.Id).Contains(x.ContentId))
-                    .ToListAsync();
-
-                var newContentFiles = modelLookup.Values
-                    .Where(x => x.Files != null)
-                    .SelectMany(x => x.Files.Select(y => new ContentFile
-                    {
-                        ContentId = x.Id,
-                        Location = y.Location,
-                        Format = y.Format,
-                        Width = y.Width,
-                        Height = y.Height
-                    })).ToList();
-
-                await context.SynchronizeAsync(c => c.ContentFiles, existingContentFiles, newContentFiles, (c1, c2) =>
-                {
-                    return (c1.ContentId, c1.Location) == (c2.ContentId, c2.Location);
-                }, onUpdateAsync: (src, dest) =>
-                {
-                    dest.Format = src.Format;
-                    dest.Width = src.Width;
-                    dest.Height = src.Height;
-
-                    return Task.CompletedTask;
-                });
             });
     }
 
