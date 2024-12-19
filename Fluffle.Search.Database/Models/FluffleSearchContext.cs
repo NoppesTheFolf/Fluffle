@@ -26,6 +26,5 @@ public partial class FluffleSearchContext : BaseContext
     public virtual DbSet<DenormalizedImage> DenormalizedImages { get; set; }
     public virtual DbSet<Platform> Platform { get; set; }
     public virtual DbSet<CreditableEntity> CreditableEntities { get; set; }
-    public virtual DbSet<SearchRequest> SearchRequests { get; set; }
     public virtual DbSet<SearchRequestV2> SearchRequestsV2 { get; set; }
 }
