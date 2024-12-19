@@ -1,12 +1,10 @@
 using Humanizer;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Api;
-using Noppes.Fluffle.Api.AccessControl;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.B2;
 using Noppes.Fluffle.Configuration;
@@ -32,7 +30,7 @@ public class Startup : ApiStartup<Startup, FluffleSearchContext>
 {
     protected override string ApplicationName => "SearchApi";
 
-    protected override bool EnableAccessControl => true;
+    protected override bool EnableAccessControl => false;
 
     public override void AdditionalConfigureServices(IServiceCollection services)
     {
@@ -71,11 +69,6 @@ public class Startup : ApiStartup<Startup, FluffleSearchContext>
 
         services.AddSingleton<SyncService>();
         services.AddSingleton(x => new HashRefreshService(x.GetRequiredService<ISimilarityService>(), conf.SimilarityDataDumpInterval));
-    }
-
-    public override void ConfigureAuthentication(IServiceCollection services, AuthenticationBuilder authenticationBuilder)
-    {
-        authenticationBuilder.AddApiKeySupport<FluffleSearchContext, ApiKey, Permission, ApiKeyPermission>(_ => { }, services);
     }
 
     public override void AfterConfigure(IApplicationBuilder app, IWebHostEnvironment env, ServiceBuilder serviceBuilder)
