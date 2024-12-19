@@ -2,7 +2,6 @@
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Database;
 using Noppes.Fluffle.Search.Business.Repositories;
-using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Search.Database.Repositories;
 
 namespace Noppes.Fluffle.Search.Database;

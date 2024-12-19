@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Utils;
 using System;

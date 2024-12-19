@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Database;
+using Noppes.Fluffle.Search.Database.Models;
 using System;
 
-namespace Noppes.Fluffle.Search.Database.Models;
+namespace Noppes.Fluffle.Search.Database;
 
 public class DesignTimeContext : DesignTimeContext<FluffleSearchContext>
 {

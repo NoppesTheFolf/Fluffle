@@ -16,7 +16,6 @@ using Noppes.Fluffle.Search.Api.Services;
 using Noppes.Fluffle.Search.Business;
 using Noppes.Fluffle.Search.Business.Similarity;
 using Noppes.Fluffle.Search.Database;
-using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Thumbnail;
 
 namespace Noppes.Fluffle.Search.Api;

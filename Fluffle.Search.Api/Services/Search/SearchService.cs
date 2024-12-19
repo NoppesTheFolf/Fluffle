@@ -6,6 +6,7 @@ using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.PerceptualHashing;
 using Noppes.Fluffle.Search.Api.Models;
 using Noppes.Fluffle.Search.Business.Similarity;
+using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Utils;
 using System;

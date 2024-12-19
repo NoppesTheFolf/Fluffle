@@ -1,6 +1,5 @@
 ﻿using Noppes.Fluffle.Search.Business.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Search.Domain;
 using Noppes.Fluffle.Utils;
 using System.Collections.Generic;

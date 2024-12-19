@@ -7,6 +7,7 @@ using Noppes.Fluffle.Search.Api.Filters;
 using Noppes.Fluffle.Search.Api.LinkCreation;
 using Noppes.Fluffle.Search.Api.Models;
 using Noppes.Fluffle.Search.Api.Services;
+using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
 using Noppes.Fluffle.Thumbnail;
 using Noppes.Fluffle.Utils;
