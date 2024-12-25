@@ -1,5 +1,5 @@
-﻿using Noppes.Fluffle.Search.Business.Repositories;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Noppes.Fluffle.Search.Business.Repositories;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,7 +18,7 @@ internal class PlatformRepository : IPlatformRepository
 
     public async Task<ICollection<Platform>> GetAsync()
     {
-        var platforms = await _context.Platform
+        var platforms = await _context.Platforms
             .Select(x => new Platform
             {
                 Id = x.Id,

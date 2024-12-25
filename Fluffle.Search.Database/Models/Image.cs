@@ -1,9 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Noppes.Fluffle.Database;
 
 namespace Noppes.Fluffle.Search.Database.Models;
 
-public class DenormalizedImage : BaseEntity, IConfigurable<DenormalizedImage>, ITrackable
+public class Image : ITrackable
 {
     public int Id { get; set; }
 
@@ -41,7 +40,7 @@ public class DenormalizedImage : BaseEntity, IConfigurable<DenormalizedImage>, I
 
     public bool IsDeleted { get; set; }
 
-    public void Configure(EntityTypeBuilder<DenormalizedImage> entity)
+    public static void Configure(EntityTypeBuilder<Image> entity)
     {
         entity.Property(e => e.Id).ValueGeneratedNever();
         entity.HasKey(e => e.Id);

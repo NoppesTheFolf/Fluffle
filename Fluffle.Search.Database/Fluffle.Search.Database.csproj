@@ -18,7 +18,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Fluffle.Database\Fluffle.Database.csproj" />
+		<ProjectReference Include="..\Fluffle.Configuration\Fluffle.Configuration.csproj" />
+		<ProjectReference Include="..\Fluffle.Constants\Fluffle.Constants.csproj" />
 		<ProjectReference Include="..\Fluffle.Search.Business\Fluffle.Search.Business.csproj" />
 	</ItemGroup>
 

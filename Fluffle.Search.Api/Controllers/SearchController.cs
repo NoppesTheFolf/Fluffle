@@ -63,7 +63,7 @@ public class SearchApiController : SearchApiControllerV1
         if (model.File.Length > SearchModelValidator.SizeMax)
             return HandleV1(SearchError.FileTooLarge(model.File.Length));
 
-        var request = new SearchRequestV2
+        var request = new SearchRequest
         {
             Id = $"{ShortUuidDateTime.ToString(DateTime.UtcNow)}{ShortUuid.Random(12)}",
             Version = Project.Version,
@@ -171,7 +171,7 @@ public class SearchApiController : SearchApiControllerV1
         }
         finally
         {
-            _context.SearchRequestsV2.Add(request);
+            _context.SearchRequests.Add(request);
             await _context.SaveChangesAsync();
         }
     }

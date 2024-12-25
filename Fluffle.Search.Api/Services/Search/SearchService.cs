@@ -42,17 +42,17 @@ public class SearchService : Service, ISearchService
         _context = context;
     }
 
-    public async Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope)
+    public async Task<SR<SearchResultModel>> SearchAsync(string imageLocation, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
     {
         // We need to compute a more granular hash too as the 64-bit averaged hash is unable to
         // differentiate between alternate version. We first calculate the complex hashes because
         // the libvips imaging provider can optimize itself when doing this.
         HashCollection CalculateHashes(
             PerceptualHashImage perceptualHashImage,
-            bool red, Expression<Func<SearchRequestV2, int?>> timeRed,
-            bool green, Expression<Func<SearchRequestV2, int?>> timeGreen,
-            bool blue, Expression<Func<SearchRequestV2, int?>> timeBlue,
-            bool average, Expression<Func<SearchRequestV2, int?>> timeAverage)
+            bool red, Expression<Func<SearchRequest, int?>> timeRed,
+            bool green, Expression<Func<SearchRequest, int?>> timeGreen,
+            bool blue, Expression<Func<SearchRequest, int?>> timeBlue,
+            bool average, Expression<Func<SearchRequest, int?>> timeAverage)
         {
             if (red)
                 scope.Next(timeRed);
@@ -95,7 +95,7 @@ public class SearchService : Service, ISearchService
         return await SearchAsync(hash64, hashes256, hashes1024, includeNsfw, limit, platforms, includeDebug, scope);
     }
 
-    public Task<SR<SearchResultModel>> SearchAsync(ImageHashes hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope)
+    public Task<SR<SearchResultModel>> SearchAsync(ImageHashes hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
     {
         var hash64 = ByteConvert.ToUInt64(hash.PhashAverage64);
         var hashes256 = new HashCollection(ByteConvert.ToInt64(hash.PhashRed256), ByteConvert.ToInt64(hash.PhashGreen256), ByteConvert.ToInt64(hash.PhashBlue256), ByteConvert.ToInt64(hash.PhashAverage256));
@@ -113,7 +113,7 @@ public class SearchService : Service, ISearchService
         public ICollection<CreditableEntity> CreditableEntities { get; set; }
     }
 
-    public async Task<SR<SearchResultModel>> SearchAsync(ulong hash64, HashCollection hashes256, HashCollection hashes1024, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequestV2> scope)
+    public async Task<SR<SearchResultModel>> SearchAsync(ulong hash64, HashCollection hashes256, HashCollection hashes1024, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
     {
         scope.Next(t => t.CompareCoarse);
         var searchResult = _similarityService.NearestNeighbors(hash64, hashes256.Average, includeNsfw, limit);
@@ -154,7 +154,7 @@ public class SearchService : Service, ISearchService
         var searchResultLookup = searchResultImages.ToDictionary(i => i.Id);
 
         scope.Next(t => t.RetrieveImageInfo);
-        var images = await _context.DenormalizedImages.AsNoTracking()
+        var images = await _context.Images.AsNoTracking()
             .Where(i => searchResultImages.Select(r => r.Id).Contains(i.Id) && !i.IsDeleted)
             .ToListAsync();
         var imagesLookup = images.ToDictionary(i => i.Id);

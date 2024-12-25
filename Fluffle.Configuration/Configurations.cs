@@ -59,11 +59,6 @@ public abstract class DatabaseConfiguration : FluffleConfigurationPart<DatabaseC
     /// </summary>
     public int CommandTimeout { get; set; } = 30;
 
-    /// <summary>
-    /// Whether to log queries to the console.
-    /// </summary>
-    public bool EnableLogging { get; set; }
-
     protected DatabaseConfiguration()
     {
         RuleFor(o => o.Host).Hostname();

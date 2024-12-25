@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Search.Api.LinkCreation;
 
-public class LinkCreatorUpdater : Consumer<SearchRequestV2>
+public class LinkCreatorUpdater : Consumer<SearchRequest>
 {
     private readonly IServiceProvider _services;
 
@@ -17,14 +17,14 @@ public class LinkCreatorUpdater : Consumer<SearchRequestV2>
         _services = services;
     }
 
-    public override async Task<SearchRequestV2> ConsumeAsync(SearchRequestV2 data)
+    public override async Task<SearchRequest> ConsumeAsync(SearchRequest data)
     {
         using var _ = await LinkCreator.BeingProcessedLock.LockAsync();
 
         using var scope = _services.CreateScope();
         await using var context = scope.ServiceProvider.GetRequiredService<FluffleSearchContext>();
 
-        var searchRequest = await context.SearchRequestsV2.SingleAsync(sr => sr.Id == data.Id);
+        var searchRequest = await context.SearchRequests.SingleAsync(sr => sr.Id == data.Id);
         searchRequest.LinkCreated = true;
 
         await context.SaveChangesAsync();

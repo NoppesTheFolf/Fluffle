@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.Configuration;
-using System;
 
 namespace Noppes.Fluffle.Database;
 
@@ -17,12 +16,6 @@ public static class ServiceCollectionExtensions
             {
                 builder.CommandTimeout(dbConf.CommandTimeout);
             });
-
-            if (!dbConf.EnableLogging)
-                return;
-
-            options.LogTo(Console.WriteLine);
-            options.EnableSensitiveDataLogging();
         });
 
         return services;

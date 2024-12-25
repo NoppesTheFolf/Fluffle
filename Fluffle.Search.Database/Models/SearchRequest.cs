@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Noppes.Fluffle.Constants;
-using Noppes.Fluffle.Database;
 using Noppes.Fluffle.Utils;
 using System;
 
@@ -8,7 +7,7 @@ using System;
 
 namespace Noppes.Fluffle.Search.Database.Models;
 
-public partial class SearchRequestV2 : BaseEntity, ITiming, IConfigurable<SearchRequestV2>
+public partial class SearchRequest : ITiming
 {
     public string Id { get; set; }
 
@@ -68,7 +67,7 @@ public partial class SearchRequestV2 : BaseEntity, ITiming, IConfigurable<Search
     public int? TossUpCount { get; set; }
     public int? ExactCount { get; set; }
 
-    public void Configure(EntityTypeBuilder<SearchRequestV2> entity)
+    public static void Configure(EntityTypeBuilder<SearchRequest> entity)
     {
         entity.Property(e => e.Id).ValueGeneratedNever();
         entity.HasKey(e => e.Id);

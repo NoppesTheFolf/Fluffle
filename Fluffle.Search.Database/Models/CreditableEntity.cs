@@ -1,11 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Noppes.Fluffle.Constants;
-using Noppes.Fluffle.Database;
 
 namespace Noppes.Fluffle.Search.Database.Models;
 
-public partial class CreditableEntity : BaseEntity, IConfigurable<CreditableEntity>, ITrackable
+public partial class CreditableEntity : ITrackable
 {
     public int Id { get; set; }
 
@@ -21,7 +20,7 @@ public partial class CreditableEntity : BaseEntity, IConfigurable<CreditableEnti
 
     public virtual Platform Platform { get; set; }
 
-    public void Configure(EntityTypeBuilder<CreditableEntity> entity)
+    public static void Configure(EntityTypeBuilder<CreditableEntity> entity)
     {
         entity.Property(e => e.Id);
         entity.HasKey(e => e.Id);

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Search.Api.LinkCreation;
 
-public class LinkCreatorUploader : Consumer<SearchRequestV2>
+public class LinkCreatorUploader : Consumer<SearchRequest>
 {
     private readonly LinkCreatorStorage _storage;
     private readonly B2Bucket _bucket;
@@ -17,7 +17,7 @@ public class LinkCreatorUploader : Consumer<SearchRequestV2>
         _bucket = b2ClientCollection.SearchResultsClient;
     }
 
-    public override async Task<SearchRequestV2> ConsumeAsync(SearchRequestV2 data)
+    public override async Task<SearchRequest> ConsumeAsync(SearchRequest data)
     {
         var thumbnailLocation = _storage.GetThumbnailLocation(data.Id);
         await UploadAsync(data.Id, thumbnailLocation, "image/jpeg");

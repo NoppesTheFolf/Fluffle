@@ -75,7 +75,7 @@ public class SyncService : IService
         {
             foreach (var platform in platforms)
             {
-                var dbPlatform = await context.Platform.FindAsync(platform.Id);
+                var dbPlatform = await context.Platforms.FindAsync(platform.Id);
 
                 if (dbPlatform != null)
                 {
@@ -84,7 +84,7 @@ public class SyncService : IService
                     continue;
                 }
 
-                await context.Platform.AddAsync(new Platform
+                await context.Platforms.AddAsync(new Platform
                 {
                     Id = platform.Id,
                     Name = platform.Name,
@@ -130,7 +130,7 @@ public class SyncService : IService
 
     public async Task RefreshImagesAsync(PlatformModel platform)
     {
-        await RefreshAsync<DenormalizedImage, ImagesSyncModel, ImagesSyncModel.ImageModel>(platform.Id, c => c.DenormalizedImages, afterChangeId =>
+        await RefreshAsync<Image, ImagesSyncModel, ImagesSyncModel.ImageModel>(platform.Id, c => c.Images, afterChangeId =>
             {
                 _logger.LogInformation("Retrieving images after change ID {changeId} for platform {platform}...", afterChangeId, platform.Name);
 
@@ -140,12 +140,12 @@ public class SyncService : IService
             {
                 var modelLookup = models.ToDictionary(m => m.Id);
 
-                var existingImages = await context.DenormalizedImages
+                var existingImages = await context.Images
                     .Where(i => modelLookup.Values.Select(m => m.Id).Contains(i.Id))
                     .ToListAsync();
                 var existingImageIds = existingImages.Select(edi => edi.Id).ToHashSet();
 
-                var newImages = modelLookup.Values.Select(m => new DenormalizedImage
+                var newImages = modelLookup.Values.Select(m => new Image
                 {
                     Id = m.Id,
                     PlatformId = m.PlatformId,
@@ -175,7 +175,7 @@ public class SyncService : IService
                     .Where(x => !x.IsDeleted || (x.IsDeleted && existingImageIds.Contains(x.Id)))
                     .ToList();
 
-                await context.SynchronizeAsync(x => x.DenormalizedImages, existingImages,
+                await context.SynchronizeAsync(x => x.Images, existingImages,
                     newImages, (x1, x2) => x1.Id == x2.Id, onUpdateAsync: (src, dest) =>
                     {
                         dest.PlatformId = src.PlatformId;

@@ -1,30 +1,32 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Noppes.Fluffle.Configuration;
-using Noppes.Fluffle.Database;
 using Noppes.Fluffle.Search.Database.Models;
-using System;
 
 namespace Noppes.Fluffle.Search.Database;
 
-public class DesignTimeContext : DesignTimeContext<FluffleSearchContext>
+public class FluffleSearchContext : DbContext
 {
-}
-
-public partial class FluffleSearchContext : BaseContext
-{
-    public override Type ConfigurationType => typeof(SearchDatabaseConfiguration);
-
     public FluffleSearchContext()
     {
     }
 
-    public FluffleSearchContext(DbContextOptions<FluffleSearchContext> options)
-        : base(options)
+    public FluffleSearchContext(DbContextOptions<FluffleSearchContext> options) : base(options)
     {
     }
 
-    public virtual DbSet<DenormalizedImage> DenormalizedImages { get; set; }
-    public virtual DbSet<Platform> Platform { get; set; }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.HasAnnotation("Relational:Collation", "en_US.utf8");
+
+        base.OnModelCreating(modelBuilder);
+
+        Platform.Configure(modelBuilder.Entity<Platform>());
+        Image.Configure(modelBuilder.Entity<Image>());
+        CreditableEntity.Configure(modelBuilder.Entity<CreditableEntity>());
+        SearchRequest.Configure(modelBuilder.Entity<SearchRequest>());
+    }
+
+    public virtual DbSet<Image> Images { get; set; }
+    public virtual DbSet<Platform> Platforms { get; set; }
     public virtual DbSet<CreditableEntity> CreditableEntities { get; set; }
-    public virtual DbSet<SearchRequestV2> SearchRequestsV2 { get; set; }
+    public virtual DbSet<SearchRequest> SearchRequests { get; set; }
 }

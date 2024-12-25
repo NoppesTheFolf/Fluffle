@@ -1,11 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Noppes.Fluffle.Database;
-using Noppes.Fluffle.Database.Models;
 using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Search.Database.Models;
 
-public partial class Platform : BaseEntity, IConfigurable<Platform>, IPlatform
+public partial class Platform
 {
     public Platform()
     {
@@ -18,7 +16,7 @@ public partial class Platform : BaseEntity, IConfigurable<Platform>, IPlatform
 
     public virtual ICollection<CreditableEntity> CreditableEntities { get; set; }
 
-    public void Configure(EntityTypeBuilder<Platform> entity)
+    public static void Configure(EntityTypeBuilder<Platform> entity)
     {
         entity.Property(e => e.Id).ValueGeneratedNever();
         entity.HasKey(e => e.Id);

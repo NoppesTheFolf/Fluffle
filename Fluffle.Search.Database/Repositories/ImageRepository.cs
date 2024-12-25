@@ -19,7 +19,7 @@ internal class ImageRepository : IImageRepository
 
     public async Task<IList<Image>> GetAsync(int platformId, long afterChangeId, int limit)
     {
-        var imageEntities = _context.DenormalizedImages
+        var imageEntities = _context.Images
             .Where(x => x.PlatformId == platformId && x.ChangeId > afterChangeId)
             .OrderBy(x => x.ChangeId)
             .Take(limit)

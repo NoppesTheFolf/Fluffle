@@ -37,7 +37,7 @@ public class LinkCreator : BackgroundService
                 {
                     BeingProcessed.Clear();
 
-                    var manager = new ProducerConsumerManager<SearchRequestV2>(_services, 500);
+                    var manager = new ProducerConsumerManager<SearchRequest>(_services, 500);
                     manager.AddProducer<LinkCreatorRetriever>(1);
                     manager.AddConsumer<LinkCreatorUploader>(8, 50);
                     manager.AddFinalConsumer<LinkCreatorUpdater>(1);
