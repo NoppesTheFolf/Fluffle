@@ -2,6 +2,7 @@
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.Search.Api.Models;
 using Noppes.Fluffle.Search.Database.Models;
+using Noppes.Fluffle.Search.Domain;
 using Noppes.Fluffle.Utils;
 using System.Collections.Immutable;
 using System.Net;
@@ -50,25 +51,6 @@ public readonly struct HashCollection
         Blue = blue;
         Average = average;
     }
-}
-
-public readonly struct ImageHashes
-{
-    public byte[] PhashRed64 { get; init; }
-    public byte[] PhashGreen64 { get; init; }
-    public byte[] PhashBlue64 { get; init; }
-    public byte[] PhashAverage64 { get; init; }
-
-    public byte[] PhashRed256 { get; init; }
-    public byte[] PhashGreen256 { get; init; }
-    public byte[] PhashBlue256 { get; init; }
-    public byte[] PhashAverage256 { get; init; }
-
-    public byte[] PhashRed1024 { get; init; }
-    public byte[] PhashGreen1024 { get; init; }
-    public byte[] PhashBlue1024 { get; init; }
-    public byte[] PhashAverage1024 { get; init; }
-
 }
 
 public interface ISearchService

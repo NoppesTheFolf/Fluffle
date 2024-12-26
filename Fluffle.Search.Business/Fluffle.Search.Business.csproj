@@ -20,7 +20,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<InternalsVisibleTo Include="Fluffle.Search.Business.Benchmarks" />
+		<InternalsVisibleTo Include="Fluffle.Search.Benchmarks" />
 	</ItemGroup>
 
 </Project>

@@ -12,17 +12,7 @@ public class Image : ITrackable
 
     public bool IsSfw { get; set; }
 
-    public byte[] PhashAverage64 { get; set; }
-
-    public byte[] PhashRed256 { get; set; }
-    public byte[] PhashGreen256 { get; set; }
-    public byte[] PhashBlue256 { get; set; }
-    public byte[] PhashAverage256 { get; set; }
-
-    public byte[] PhashRed1024 { get; set; }
-    public byte[] PhashGreen1024 { get; set; }
-    public byte[] PhashBlue1024 { get; set; }
-    public byte[] PhashAverage1024 { get; set; }
+    public byte[] CompressedImageHashes { get; set; }
 
     public string ThumbnailLocation { get; set; }
 
@@ -49,17 +39,7 @@ public class Image : ITrackable
         entity.Property(e => e.Location).IsRequired();
         entity.Property(e => e.IsSfw);
 
-        entity.Property(e => e.PhashAverage64).IsRequired();
-
-        entity.Property(e => e.PhashRed256).IsRequired();
-        entity.Property(e => e.PhashGreen256).IsRequired();
-        entity.Property(e => e.PhashBlue256).IsRequired();
-        entity.Property(e => e.PhashAverage256).IsRequired();
-
-        entity.Property(e => e.PhashRed1024).IsRequired();
-        entity.Property(e => e.PhashGreen1024).IsRequired();
-        entity.Property(e => e.PhashBlue1024).IsRequired();
-        entity.Property(e => e.PhashAverage1024).IsRequired();
+        entity.Property(e => e.CompressedImageHashes).IsRequired();
 
         entity.Property(e => e.ThumbnailLocation).IsRequired();
         entity.Property(e => e.ThumbnailWidth);

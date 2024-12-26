@@ -8,6 +8,7 @@ using Noppes.Fluffle.Search.Api.Models;
 using Noppes.Fluffle.Search.Business.Similarity;
 using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
+using Noppes.Fluffle.Search.Domain;
 using Noppes.Fluffle.Utils;
 using System;
 using System.Collections.Generic;
@@ -97,9 +98,9 @@ public class SearchService : Service, ISearchService
 
     public Task<SR<SearchResultModel>> SearchAsync(ImageHashes hash, bool includeNsfw, int limit, ImmutableHashSet<PlatformConstant> platforms, bool includeDebug, CheckpointStopwatchScope<SearchRequest> scope)
     {
-        var hash64 = ByteConvert.ToUInt64(hash.PhashAverage64);
-        var hashes256 = new HashCollection(ByteConvert.ToInt64(hash.PhashRed256), ByteConvert.ToInt64(hash.PhashGreen256), ByteConvert.ToInt64(hash.PhashBlue256), ByteConvert.ToInt64(hash.PhashAverage256));
-        var hashes1024 = new HashCollection(ByteConvert.ToInt64(hash.PhashRed1024), ByteConvert.ToInt64(hash.PhashGreen1024), ByteConvert.ToInt64(hash.PhashBlue1024), ByteConvert.ToInt64(hash.PhashAverage1024));
+        var hash64 = hash.PhashAverage64;
+        var hashes256 = new HashCollection(hash.PhashRed256, hash.PhashGreen256, hash.PhashBlue256, hash.PhashAverage256);
+        var hashes1024 = new HashCollection(hash.PhashRed1024, hash.PhashGreen1024, hash.PhashBlue1024, hash.PhashAverage1024);
 
         return SearchAsync(hash64, hashes256, hashes1024, includeNsfw, limit, platforms, includeDebug, scope);
     }
@@ -163,10 +164,11 @@ public class SearchService : Service, ISearchService
         var searchResults = images
             .Select(r =>
             {
-                var compareResult1024 = CompareRgb((r.PhashRed1024, r.PhashGreen1024, r.PhashBlue1024, r.PhashAverage1024), hashes1024, includeDebug);
+                var imageHashes = ImageHashesDeserializer.Deserialize(r.CompressedImageHashes);
+                var compareResult1024 = CompareRgb((imageHashes.PhashRed1024, imageHashes.PhashGreen1024, imageHashes.PhashBlue1024, imageHashes.PhashAverage1024), hashes1024, includeDebug);
 
                 CompareResult compareResult256 = null;
-                if (includeDebug) compareResult256 = CompareRgb((r.PhashRed256, r.PhashGreen256, r.PhashBlue256, r.PhashAverage256), hashes256, true);
+                if (includeDebug) compareResult256 = CompareRgb((imageHashes.PhashRed256, imageHashes.PhashGreen256, imageHashes.PhashBlue256, imageHashes.PhashAverage256), hashes256, true);
 
                 var model = new SearchResultModel.ImageModel
                 {
@@ -337,7 +339,7 @@ public class SearchService : Service, ISearchService
         public int Average { get; set; }
     }
 
-    private static CompareResult CompareRgb((byte[] red, byte[] green, byte[] blue, byte[] average) hashesOne, HashCollection hashesTwo, bool includeDebug)
+    private static CompareResult CompareRgb((ulong[] red, ulong[] green, ulong[] blue, ulong[] average) hashesOne, HashCollection hashesTwo, bool includeDebug)
     {
         var bits = sizeof(ulong) * hashesTwo.Red.Length * 8;
 
@@ -354,10 +356,10 @@ public class SearchService : Service, ISearchService
         // Compare all channels
         var result = new CompareResult
         {
-            Red = Compare(hashesTwo.Red, ByteConvert.ToInt64(hashesOne.red)),
-            Green = Compare(hashesTwo.Green, ByteConvert.ToInt64(hashesOne.green)),
-            Blue = Compare(hashesTwo.Blue, ByteConvert.ToInt64(hashesOne.blue)),
-            Average = includeDebug ? Compare(hashesTwo.Average, ByteConvert.ToInt64(hashesOne.average)) : -1,
+            Red = Compare(hashesTwo.Red, hashesOne.red),
+            Green = Compare(hashesTwo.Green, hashesOne.green),
+            Blue = Compare(hashesTwo.Blue, hashesOne.blue),
+            Average = includeDebug ? Compare(hashesTwo.Average, hashesOne.average) : -1,
         };
 
         // Calculate the ones with the worst and best match and base the score on the worst one

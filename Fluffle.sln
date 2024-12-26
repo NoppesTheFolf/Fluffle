@@ -119,7 +119,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fluffle.Search.Business", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fluffle.Search.Domain", "Fluffle.Search.Domain\Fluffle.Search.Domain.csproj", "{30327231-BDE8-4DE3-8A3E-2CDFBE5C5CD1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fluffle.Search.Business.Benchmarks", "Fluffle.Search.Business.Benchmarks\Fluffle.Search.Business.Benchmarks.csproj", "{8AFC22DD-BDC3-4895-BEA5-E83863AFE8B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fluffle.Search.Benchmarks", "Fluffle.Search.Benchmarks\Fluffle.Search.Benchmarks.csproj", "{8AFC22DD-BDC3-4895-BEA5-E83863AFE8B6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

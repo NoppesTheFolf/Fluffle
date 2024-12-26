@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Noppes.Fluffle.Search.Business.Similarity;
 
-namespace Noppes.Fluffle.Search.Business.Benchmarks;
+namespace Noppes.Fluffle.Search.Benchmarks;
 
 [MemoryDiagnoser]
 public class SimilarityServiceNearestNeighborsBenchmark

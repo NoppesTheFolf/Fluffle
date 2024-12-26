@@ -12,8 +12,12 @@ using Noppes.Fluffle.Search.Database;
 using Noppes.Fluffle.Search.Database.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
+using Image = Noppes.Fluffle.Search.Database.Models.Image;
+using Platform = Noppes.Fluffle.Search.Database.Models.Platform;
 
 namespace Noppes.Fluffle.Search.Api;
 
@@ -145,29 +149,41 @@ public class SyncService : IService
                     .ToListAsync();
                 var existingImageIds = existingImages.Select(edi => edi.Id).ToHashSet();
 
-                var newImages = modelLookup.Values.Select(m => new Image
+                var newImages = modelLookup.Values.Select(m =>
                 {
-                    Id = m.Id,
-                    PlatformId = m.PlatformId,
-                    Location = m.ViewLocation,
-                    IsSfw = m.IsSfw,
-                    PhashAverage64 = m.Hash?.PhashAverage64,
-                    PhashRed256 = m.Hash?.PhashRed256,
-                    PhashGreen256 = m.Hash?.PhashGreen256,
-                    PhashBlue256 = m.Hash?.PhashBlue256,
-                    PhashAverage256 = m.Hash?.PhashAverage256,
-                    PhashRed1024 = m.Hash?.PhashRed1024,
-                    PhashGreen1024 = m.Hash?.PhashGreen1024,
-                    PhashBlue1024 = m.Hash?.PhashBlue1024,
-                    PhashAverage1024 = m.Hash?.PhashAverage1024,
-                    ThumbnailLocation = m.Thumbnail?.Location,
-                    ThumbnailWidth = m.Thumbnail?.Width ?? -1,
-                    ThumbnailCenterX = m.Thumbnail?.CenterX ?? -1,
-                    ThumbnailHeight = m.Thumbnail?.Height ?? -1,
-                    ThumbnailCenterY = m.Thumbnail?.CenterY ?? -1,
-                    Credits = m.Credits?.ToArray(),
-                    ChangeId = m.ChangeId,
-                    IsDeleted = m.IsDeleted
+                    byte[] compressedImageHashes = null;
+                    if (m.Hash != null)
+                    {
+                        var imageHashes = m.Hash.PhashAverage64
+                            .Concat(m.Hash.PhashRed256).Concat(m.Hash.PhashGreen256).Concat(m.Hash.PhashBlue256).Concat(m.Hash.PhashAverage256)
+                            .Concat(m.Hash.PhashRed1024).Concat(m.Hash.PhashGreen1024).Concat(m.Hash.PhashBlue1024).Concat(m.Hash.PhashAverage1024)
+                            .ToArray();
+
+                        using var compressedStream = new MemoryStream();
+                        using (var brotliStream = new BrotliStream(compressedStream, CompressionLevel.SmallestSize))
+                        {
+                            brotliStream.Write(imageHashes);
+                        }
+
+                        compressedImageHashes = compressedStream.ToArray();
+                    }
+
+                    return new Image
+                    {
+                        Id = m.Id,
+                        PlatformId = m.PlatformId,
+                        Location = m.ViewLocation,
+                        IsSfw = m.IsSfw,
+                        CompressedImageHashes = compressedImageHashes,
+                        ThumbnailLocation = m.Thumbnail?.Location,
+                        ThumbnailWidth = m.Thumbnail?.Width ?? -1,
+                        ThumbnailCenterX = m.Thumbnail?.CenterX ?? -1,
+                        ThumbnailHeight = m.Thumbnail?.Height ?? -1,
+                        ThumbnailCenterY = m.Thumbnail?.CenterY ?? -1,
+                        Credits = m.Credits?.ToArray(),
+                        ChangeId = m.ChangeId,
+                        IsDeleted = m.IsDeleted
+                    };
                 }).ToList();
 
                 // Skip the deleted images which are also not in the database
@@ -182,19 +198,9 @@ public class SyncService : IService
                         dest.Location = src.Location;
                         dest.IsSfw = src.IsSfw;
 
-                        if (src.PhashAverage64 != null)
+                        if (src.CompressedImageHashes != null)
                         {
-                            dest.PhashAverage64 = src.PhashAverage64;
-
-                            dest.PhashRed256 = src.PhashRed256;
-                            dest.PhashGreen256 = src.PhashGreen256;
-                            dest.PhashBlue256 = src.PhashBlue256;
-                            dest.PhashAverage256 = src.PhashAverage256;
-
-                            dest.PhashRed1024 = src.PhashRed1024;
-                            dest.PhashGreen1024 = src.PhashGreen1024;
-                            dest.PhashBlue1024 = src.PhashBlue1024;
-                            dest.PhashAverage1024 = src.PhashAverage1024;
+                            dest.CompressedImageHashes = src.CompressedImageHashes;
                         }
 
                         if (src.ThumbnailLocation != null)

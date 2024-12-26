@@ -1,7 +1,6 @@
-﻿using Noppes.Fluffle.Search.Business.Repositories;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Noppes.Fluffle.Search.Business.Repositories;
 using Noppes.Fluffle.Search.Domain;
-using Noppes.Fluffle.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,27 +22,20 @@ internal class ImageRepository : IImageRepository
             .Where(x => x.PlatformId == platformId && x.ChangeId > afterChangeId)
             .OrderBy(x => x.ChangeId)
             .Take(limit)
-            .Select(x => new
-            {
-                x.Id,
-                x.IsSfw,
-                x.ChangeId,
-                x.IsDeleted,
-                x.PhashAverage64,
-                x.PhashAverage256
-            }).AsAsyncEnumerable();
+            .AsAsyncEnumerable();
 
         var images = new List<Image>(limit);
         await foreach (var imageEntity in imageEntities)
         {
+            var imageHashes = ImageHashesDeserializer.Deserialize(imageEntity.CompressedImageHashes);
             images.Add(new Image
             {
                 Id = imageEntity.Id,
                 IsSfw = imageEntity.IsSfw,
                 ChangeId = imageEntity.ChangeId,
                 IsDeleted = imageEntity.IsDeleted,
-                PhashAverage64 = ByteConvert.ToUInt64(imageEntity.PhashAverage64),
-                PhashAverage256 = ByteConvert.ToInt64(imageEntity.PhashAverage256)
+                PhashAverage64 = imageHashes.PhashAverage64,
+                PhashAverage256 = imageHashes.PhashAverage256
             });
         }
 
