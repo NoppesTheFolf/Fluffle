@@ -43,6 +43,7 @@ public static class SubmissionCategoryHelper
 {
     private static readonly IReadOnlyDictionary<string, FaSubmissionCategory> Mappings = new Dictionary<string, FaSubmissionCategory>
     {
+        // Visual art
         { "All", FaSubmissionCategory.All },
         { "Artwork (Digital)", FaSubmissionCategory.ArtworkDigital },
         { "Artwork (Traditional)", FaSubmissionCategory.ArtworkTraditional },
@@ -56,16 +57,19 @@ public static class SubmissionCategoryHelper
         { "Photography", FaSubmissionCategory.Photography },
         { "Food / Recipes", FaSubmissionCategory.FoodRecipes },
         { "Sculpting", FaSubmissionCategory.Sculpting },
+        // Readable art
         { "Story", FaSubmissionCategory.Story },
         { "Poetry", FaSubmissionCategory.Poetry },
         { "Prose", FaSubmissionCategory.Prose },
+        // Audio art
         { "Music", FaSubmissionCategory.Music },
         { "Podcasts", FaSubmissionCategory.Podcasts },
+        // Downloadable
         { "Skins", FaSubmissionCategory.Skins },
         { "Handhelds", FaSubmissionCategory.Handhelds },
         { "Resources", FaSubmissionCategory.Resources },
+        // Other stuff
         { "Adoptables", FaSubmissionCategory.Adoptables },
-        { "Other", FaSubmissionCategory.Other },
         { "Auctions", FaSubmissionCategory.Auctions },
         { "Contests", FaSubmissionCategory.Contests },
         { "Current Events", FaSubmissionCategory.CurrentEvents },
@@ -74,7 +78,8 @@ public static class SubmissionCategoryHelper
         { "Screenshots", FaSubmissionCategory.Screenshots },
         { "Scraps", FaSubmissionCategory.Scraps },
         { "Wallpaper", FaSubmissionCategory.Wallpaper },
-        { "YCH / Sale", FaSubmissionCategory.YchSale }
+        { "YCH / Sale", FaSubmissionCategory.YchSale },
+        { "Other", FaSubmissionCategory.Other }
     };
 
     public static FaSubmissionCategory CategoryFromString(string category)
@@ -83,12 +88,13 @@ public static class SubmissionCategoryHelper
             if (category.StartsWith(mapping.Key))
                 return mapping.Value;
 
-        throw new ArgumentException(null, nameof(category));
+        throw new ArgumentException($"Could not map category '{category}' to a {nameof(FaSubmissionCategory)}.", nameof(category));
     }
 }
 
 public enum FaSubmissionType
 {
+    // General things
     All,
     Abstract,
     AnimalRelatedNonAnthro,
@@ -103,6 +109,8 @@ public enum FaSubmissionType
     StillLife,
     Tutorials,
     Miscellaneous,
+    // Specialty
+    Abdl,
     Babyfur,
     Bondage,
     Digimon,
@@ -121,10 +129,11 @@ public enum FaSubmissionType
     Pregnancy,
     Sonic,
     Transformation,
-    TFTG,
+    TfTg,
     Vore,
     WaterSports,
     GeneralFurryArt,
+    // Music
     Techno,
     Trance,
     House,
@@ -160,6 +169,7 @@ public static class SubmissionTypeHelper
         {"Still Life", FaSubmissionType.StillLife},
         {"Tutorials", FaSubmissionType.Tutorials},
         {"Miscellaneous", FaSubmissionType.Miscellaneous},
+        {"ABDL", FaSubmissionType.Abdl},
         {"Baby fur", FaSubmissionType.Babyfur},
         {"Bondage", FaSubmissionType.Bondage},
         {"Digimon", FaSubmissionType.Digimon},
@@ -178,7 +188,7 @@ public static class SubmissionTypeHelper
         {"Pregnancy", FaSubmissionType.Pregnancy},
         {"Sonic", FaSubmissionType.Sonic},
         {"Transformation", FaSubmissionType.Transformation},
-        {"TF / TG", FaSubmissionType.TFTG},
+        {"TF / TG", FaSubmissionType.TfTg},
         {"Vore", FaSubmissionType.Vore},
         {"Water Sports", FaSubmissionType.WaterSports},
         {"General Furry Art", FaSubmissionType.GeneralFurryArt},
@@ -205,7 +215,7 @@ public static class SubmissionTypeHelper
             if (category.EndsWith(mapping.Key))
                 return mapping.Value;
 
-        throw new ArgumentException(null, nameof(category));
+        throw new ArgumentException($"Could not map category '{category}' to a {nameof(FaSubmissionType)}.", nameof(category));
     }
 }
 
