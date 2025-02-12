@@ -325,6 +325,4 @@ public class FaThumbnail
 public class FaGallerySubmission
 {
     public int Id { get; set; }
-
-    public string ArtistId { get; set; }
 }

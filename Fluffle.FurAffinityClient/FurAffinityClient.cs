@@ -257,14 +257,9 @@ public class FurAffinityClient : ApiClient
             .Select(cn =>
             {
                 var id = int.Parse(cn.Id["sid-".Length..]);
-                var artistNode = cn.SelectSingleNode("./figcaption").ChildNodes[^1].SelectSingleNode("./a");
-                var artistUrl = artistNode.Attributes["href"].Value;
-                var artistMatch = Regex.Match(artistUrl, "(?<=\\/user\\/)(.*)(?=\\/)");
-
                 return new FaGallerySubmission
                 {
-                    Id = id,
-                    ArtistId = artistMatch.Value
+                    Id = id
                 };
             }).ToList();
 
