@@ -6,6 +6,7 @@ namespace Noppes.Fluffle.FurAffinity;
 public enum FaSubmissionCategory
 {
     All,
+    ThreeDModel,
     ArtworkDigital,
     ArtworkTraditional,
     CelShading,
@@ -45,6 +46,7 @@ public static class SubmissionCategoryHelper
     {
         // Visual art
         { "All", FaSubmissionCategory.All },
+        { "3D Models", FaSubmissionCategory.ThreeDModel },
         { "Artwork (Digital)", FaSubmissionCategory.ArtworkDigital },
         { "Artwork (Traditional)", FaSubmissionCategory.ArtworkTraditional },
         { "Cel Shading", FaSubmissionCategory.CelShading },
