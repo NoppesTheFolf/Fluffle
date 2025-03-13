@@ -1,11 +1,4 @@
-﻿namespace Noppes.Fluffle.FurAffinity;
-
-public class FaResult<T>
-{
-    public FaOnlineStats Stats { get; set; }
-
-    public T Result { get; set; }
-}
+﻿namespace Noppes.Fluffle.FurAffinity.Models;
 
 public class FaOnlineStats
 {

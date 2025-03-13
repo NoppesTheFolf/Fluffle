@@ -1,7 +1,7 @@
 ﻿using Humanizer;
 using Microsoft.Extensions.DependencyInjection;
 using Noppes.Fluffle.Configuration;
-using Noppes.Fluffle.FurAffinity;
+using Noppes.Fluffle.FurAffinity.Models;
 using Noppes.Fluffle.Sync;
 using System;
 using System.Threading.Tasks;

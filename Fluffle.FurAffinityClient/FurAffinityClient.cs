@@ -1,5 +1,6 @@
 ﻿using Flurl.Http;
 using HtmlAgilityPack;
+using Noppes.Fluffle.FurAffinity.Models;
 using Noppes.Fluffle.Http;
 using System;
 using System.Collections.Generic;
@@ -91,12 +92,6 @@ public class FurAffinityClient : ApiClient
                 Value = n.ChildNodes.Skip(1).First(cn => cn.NodeType != HtmlNodeType.Text).InnerText.Trim()
             }).ToDictionary(n => n.Category, n => n.Value);
 
-        if (info.TryGetValue("Category", out var categoryString))
-        {
-            submission.Category = SubmissionCategoryHelper.CategoryFromString(categoryString);
-            submission.Type = SubmissionTypeHelper.TypeFromString(categoryString);
-        }
-
         submission.Species = info.TryGetValue("Species", out var species) ? species : null;
         submission.Gender = info.TryGetValue("Gender", out var gender) ? gender : null;
 
@@ -113,7 +108,7 @@ public class FurAffinityClient : ApiClient
         var downloadUrl = "https:" + downloadButton.FirstChild.Attributes["href"].Value;
         submission.FileLocation = new Uri(downloadUrl);
 
-        var thumbnailWhen = long.Parse(string.Concat(Path.GetFileName(Path.GetDirectoryName(downloadUrl)).TakeWhile(char.IsDigit)));
+        var thumbnailWhen = long.Parse(string.Concat(Path.GetFileName(Path.GetDirectoryName(downloadUrl))!.TakeWhile(char.IsDigit)));
         submission.ThumbnailWhen = DateTimeOffset.FromUnixTimeSeconds(thumbnailWhen);
 
         var match = Regex.Match(downloadUrl, "(?<=\\/)[0-9]+?(?=\\.)");
@@ -140,109 +135,6 @@ public class FurAffinityClient : ApiClient
         {
             Result = submission,
             Stats = ExtractOnlineStats(response)
-        };
-    }
-
-    public Task<FaResult<FaGallery>> GetScrapsAsync(string artistId, int page = 1)
-    {
-        var url = $"scraps/{artistId}";
-
-        return GetGalleryAsync(artistId, url, page);
-    }
-
-    public Task<FaResult<FaGallery>> GetGalleryAsync(string artistId, int page = 1, FaFolder folder = null)
-    {
-        var url = $"gallery/{artistId}";
-
-        if (folder != null)
-            url += $"/folder/{folder.Id}/{folder.NormalizedTitle}";
-
-        return GetGalleryAsync(artistId, url, page, folder);
-    }
-
-    private static bool CheckIfDisabled(HtmlNode node)
-    {
-        var noticeMessage = node.SelectSingleNode("//section[contains(@class, 'notice-message')]");
-
-        return noticeMessage != null && noticeMessage.InnerText.Contains("has voluntarily disabled access to their account");
-    }
-
-    private async Task<FaResult<FaGallery>> GetGalleryAsync(string artistId, string url, int page, FaFolder folder = null)
-    {
-        url += $"/{page}";
-        var response = await Request(url).GetHtmlExplicitlyAsync();
-        ValidateLogin(response);
-
-        if (CheckIfDisabled(response.DocumentNode))
-            return null;
-
-        var gallery = new FaGallery
-        {
-            ArtistId = artistId,
-            Page = page
-        };
-        var root = response.GetElementbyId("columnpage");
-
-        // Extract folders
-        var foldersNode = root.SelectSingleNode(".//div[contains(@class, 'user-folders')]");
-        if (foldersNode == null)
-        {
-            gallery.Folders = new List<FaFolder>();
-        }
-        else
-        {
-            var folderNodes = foldersNode.SelectNodes(".//a[contains(@href, '/folder/')]");
-
-            if (folderNodes == null && folder == null)
-                throw new InvalidOperationException("There were folders, but we couldn't scrape them for whatever reason. This likely means Fur Affinity has changed their HTML-markup.");
-
-            var folders = folder == null
-                ? new List<FaFolder>()
-                : new List<FaFolder> { folder };
-
-            if (folderNodes != null)
-            {
-                var scrapedFolders = folderNodes.Select(n =>
-                {
-                    var match = Regex.Match(n.Attributes["href"].Value, ".*\\/([0-9]*)\\/(.*)");
-
-                    return new FaFolder
-                    {
-                        Id = int.Parse(match.Groups[1].Value),
-                        NormalizedTitle = match.Groups[2].Value,
-                        Title = n.InnerText
-                    };
-                });
-                folders.AddRange(scrapedFolders);
-            }
-
-            gallery.Folders = folders;
-        }
-
-        // Extract navigation 
-        var submissionsListNode = root.SelectSingleNode(".//div[contains(@class, 'submission-list')]");
-        var bottomNavigationNode = submissionsListNode.ChildNodes.Last(n => n.Name == "div");
-        var nextPageContainerNode = bottomNavigationNode.ChildNodes.Last(n => n.NodeType != HtmlNodeType.Text);
-        gallery.HasNextPage = nextPageContainerNode.ChildNodes.All(n => n.NodeType != HtmlNodeType.Comment);
-
-        // Extract submissions
-        var galleryNode = response.GetElementbyId("gallery-gallery");
-        if (galleryNode.InnerText.Contains("There are no submissions"))
-        {
-            gallery.SubmissionIds = new List<int>();
-        }
-        else
-        {
-            gallery.SubmissionIds = galleryNode.ChildNodes
-                .Where(n => n.Name == "figure")
-                .Select(n => int.Parse(n.Id.Replace("sid-", string.Empty)))
-                .ToList();
-        }
-
-        return new FaResult<FaGallery>
-        {
-            Stats = ExtractOnlineStats(response),
-            Result = gallery
         };
     }
 

@@ -2,6 +2,7 @@
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
 using Noppes.Fluffle.FurAffinity;
+using Noppes.Fluffle.FurAffinity.Models;
 using Noppes.Fluffle.Http;
 using Noppes.Fluffle.Main.Client;
 using Noppes.Fluffle.Main.Communication;
@@ -237,44 +238,5 @@ public class FurAffinityContentProducer : ContentProducer<FaSubmission>
 
     public override string GetTitle(FaSubmission src) => src.Title;
 
-    public static readonly IReadOnlySet<FaSubmissionCategory> DisallowedCategories = new HashSet<FaSubmissionCategory>
-    {
-        FaSubmissionCategory.Crafting,
-        FaSubmissionCategory.Fursuiting,
-        FaSubmissionCategory.Photography,
-        FaSubmissionCategory.FoodRecipes,
-        FaSubmissionCategory.Sculpting,
-        FaSubmissionCategory.Skins,
-        FaSubmissionCategory.Handhelds,
-        FaSubmissionCategory.Resources,
-        FaSubmissionCategory.Adoptables,
-        FaSubmissionCategory.Auctions,
-        FaSubmissionCategory.Contests,
-        FaSubmissionCategory.CurrentEvents,
-        FaSubmissionCategory.Stockart,
-        FaSubmissionCategory.Screenshots,
-        FaSubmissionCategory.YchSale
-    };
-
-    public static readonly IReadOnlySet<FaSubmissionType> DisallowedTypes = new HashSet<FaSubmissionType>
-    {
-        FaSubmissionType.Tutorials
-    };
-
-    public override bool ShouldBeIndexed(FaSubmission src)
-    {
-        if (src.Category != null && DisallowedCategories.Contains((FaSubmissionCategory)src.Category))
-        {
-            Log.Information("Not indexing submission with ID {id} due to its category ({category})", src.Id, src.Category);
-            return false;
-        }
-
-        if (src.Type != null && DisallowedTypes.Contains((FaSubmissionType)src.Type))
-        {
-            Log.Information("Not indexing submission with ID {id} due to its type ({category})", src.Id, src.Type);
-            return false;
-        }
-
-        return true;
-    }
+    public override bool ShouldBeIndexed(FaSubmission src) => true;
 }

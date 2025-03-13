@@ -1,4 +1,4 @@
-﻿using Noppes.Fluffle.FurAffinity;
+﻿using Noppes.Fluffle.FurAffinity.Models;
 using System;
 using System.Threading.Tasks;
 

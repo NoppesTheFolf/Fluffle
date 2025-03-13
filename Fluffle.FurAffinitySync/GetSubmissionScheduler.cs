@@ -1,5 +1,6 @@
 ﻿using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.FurAffinity;
+using Noppes.Fluffle.FurAffinity.Models;
 using Noppes.Fluffle.Utils;
 using Serilog;
 using SerilogTimings;
