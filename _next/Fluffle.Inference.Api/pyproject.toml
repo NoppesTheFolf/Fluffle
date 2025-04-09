@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "fluffle-inference-api"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.13"
+torch = {version = "^2.6.0+cpu", source = "pytorch.org"}
+torchvision = {version = "^0.21.0+cpu", source = "pytorch.org"}
+fastapi = {extras = ["standard"], version = "^0.115.12"}
+
+
+[[tool.poetry.source]]
+name = "pytorch.org"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
