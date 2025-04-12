@@ -5,16 +5,16 @@ using Microsoft.AspNetCore.Mvc;
 namespace Fluffle.Ingestion.Api.Controllers;
 
 [ApiController]
-public class ItemActionController : ControllerBase
+public class ItemActionsController : ControllerBase
 {
     private readonly ItemActionService _itemActionService;
 
-    public ItemActionController(ItemActionService itemActionService)
+    public ItemActionsController(ItemActionService itemActionService)
     {
         _itemActionService = itemActionService;
     }
 
-    [HttpGet("/api/item-action/dequeue", Name = "DequeueItemAction")]
+    [HttpGet("/api/item-actions/dequeue", Name = "DequeueItemAction")]
     public async Task<IActionResult> DequeueItemActionAsync()
     {
         var itemAction = await _itemActionService.DequeueAsync();
@@ -26,7 +26,7 @@ public class ItemActionController : ControllerBase
         return Ok(model);
     }
 
-    [HttpPut("/api/item-action/complete", Name = "CompleteItemAction")]
+    [HttpPut("/api/item-actions/{itemActionId}/complete", Name = "CompleteItemAction")]
     public async Task<IActionResult> CompleteItemActionAsync(string itemActionId)
     {
         await _itemActionService.CompleteAsync(itemActionId);

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>2fd0eca6-08ca-423b-9477-e199bc07e50b</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fluffle.Vector.Api.Models\Fluffle.Vector.Api.Models.csproj" />
+    <ProjectReference Include="..\Fluffle.Vector.Core\Fluffle.Vector.Core.csproj" />
+    <ProjectReference Include="..\Fluffle.Vector.Database\Fluffle.Vector.Database.csproj" />
+  </ItemGroup>
+
+</Project>

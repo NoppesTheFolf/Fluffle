@@ -7,21 +7,21 @@ using Microsoft.AspNetCore.Mvc;
 namespace Fluffle.Ingestion.Api.Controllers;
 
 [ApiController]
-public class ItemController : ControllerBase
+public class ItemsController : ControllerBase
 {
     private readonly ItemActionService _itemActionService;
 
-    public ItemController(ItemActionService itemActionService)
+    public ItemsController(ItemActionService itemActionService)
     {
         _itemActionService = itemActionService;
     }
 
-    [HttpPut("/api/item", Name = "PutItem")]
-    public async Task<IActionResult> PutItemAsync([FromBody] PutItemModel model)
+    [HttpPut("/api/items/{itemId}", Name = "PutItem")]
+    public async Task<IActionResult> PutItemAsync([FromBody] PutItemModel model, string itemId)
     {
         var item = new Item
         {
-            ItemId = model.ItemId,
+            ItemId = itemId,
             Images = model.Images.Select(x => new Image
             {
                 Width = x.Width,
@@ -35,7 +35,7 @@ public class ItemController : ControllerBase
         return Accepted();
     }
 
-    [HttpDelete("/api/item", Name = "DeleteItem")]
+    [HttpDelete("/api/items/{itemId}", Name = "DeleteItem")]
     public async Task<IActionResult> DeleteItemAsync(string itemId)
     {
         await _itemActionService.EnqueueDeleteAsync(itemId);
