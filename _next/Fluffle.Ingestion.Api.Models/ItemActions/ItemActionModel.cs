@@ -8,5 +8,7 @@ public abstract class ItemActionModel
 {
     public required string ItemActionId { get; set; }
 
+    public required string ItemId { get; set; }
+
     public abstract T Visit<T>(IItemActionModelVisitor<T> visitor);
 }

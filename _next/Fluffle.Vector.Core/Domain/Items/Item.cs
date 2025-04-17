@@ -6,5 +6,5 @@ public class Item
 
     public required ICollection<Image> Images { get; set; }
 
-    public required IDictionary<string, object?>? Properties { get; set; }
+    public required object Properties { get; set; }
 }

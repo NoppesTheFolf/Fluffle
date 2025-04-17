@@ -1,6 +1,6 @@
 ﻿namespace Fluffle.Vector.Api.Models.Vectors;
 
-public class VectorSearchModel
+public class VectorSearchParametersModel
 {
     public required float[] Query { get; set; }
 

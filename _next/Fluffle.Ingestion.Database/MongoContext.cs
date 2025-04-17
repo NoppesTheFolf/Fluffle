@@ -26,6 +26,7 @@ internal sealed class MongoContext : IDisposable
         _client = new MongoClient(options.Value.ConnectionString);
         var database = _client.GetDatabase(options.Value.DatabaseName);
 
+        // Item actions
         ItemActions = database.GetCollection<ItemAction>("itemActions");
 
         var itemIdIndexKeys = Builders<ItemAction>.IndexKeys.Ascending(x => x.ItemId);
@@ -33,9 +34,16 @@ internal sealed class MongoContext : IDisposable
 
         var priorityIndexKeys = Builders<ItemAction>.IndexKeys.Ascending(x => x.VisibleWhen).Descending(x => x.Priority);
         ItemActions.Indexes.CreateOne(new CreateIndexModel<ItemAction>(priorityIndexKeys));
+
+        // Item action failures
+        ItemActionFailures = database.GetCollection<ItemAction>("itemActionFailures");
+
+        ItemActionFailures.Indexes.CreateOne(new CreateIndexModel<ItemAction>(itemIdIndexKeys));
     }
 
     public IMongoCollection<ItemAction> ItemActions { get; }
+
+    public IMongoCollection<ItemAction> ItemActionFailures { get; }
 
     public void Dispose()
     {

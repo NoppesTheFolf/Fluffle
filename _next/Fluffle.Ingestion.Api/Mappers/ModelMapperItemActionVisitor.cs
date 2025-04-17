@@ -1,6 +1,7 @@
 using Fluffle.Ingestion.Api.Models.ItemActions;
 using Fluffle.Ingestion.Api.Models.Items;
 using Fluffle.Ingestion.Core.Domain.ItemActions;
+using System.Text.Json;
 
 namespace Fluffle.Ingestion.Api.Mappers;
 
@@ -11,6 +12,7 @@ public class ModelMapperItemActionVisitor : IItemActionVisitor<ItemActionModel>
         return new IndexItemActionModel
         {
             ItemActionId = itemAction.ItemActionId!,
+            ItemId = itemAction.ItemId,
             Item = new ItemModel
             {
                 ItemId = itemAction.Item.ItemId,
@@ -20,7 +22,8 @@ public class ModelMapperItemActionVisitor : IItemActionVisitor<ItemActionModel>
                     Height = x.Height,
                     Url = x.Url
                 }).ToList(),
-                Properties = itemAction.Item.Properties
+                Properties = JsonSerializer.SerializeToNode(itemAction.Item.Properties) ??
+                             throw new InvalidOperationException("Item properties should never serialize to null.")
             }
         };
     }
@@ -29,7 +32,8 @@ public class ModelMapperItemActionVisitor : IItemActionVisitor<ItemActionModel>
     {
         return new DeleteItemActionModel
         {
-            ItemActionId = itemAction.ItemActionId!
+            ItemActionId = itemAction.ItemActionId!,
+            ItemId = itemAction.ItemId
         };
     }
 }

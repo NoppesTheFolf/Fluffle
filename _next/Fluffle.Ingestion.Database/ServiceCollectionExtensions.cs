@@ -14,6 +14,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<MongoContext>();
         services.AddSingleton<IItemActionRepository, MongoItemActionRepository>();
+        services.AddSingleton<IItemActionFailureRepository, MongoItemActionFailureRepository>();
 
         return services;
     }
