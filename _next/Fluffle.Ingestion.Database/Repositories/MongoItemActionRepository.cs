@@ -45,6 +45,13 @@ internal class MongoItemActionRepository : IItemActionRepository
         await _context.ItemActions.FindOneAndUpdateAsync(filter, update);
     }
 
+    public async Task IncrementAttemptCountAsync(string itemActionId)
+    {
+        var filter = Builders<ItemAction>.Filter.Eq(x => x.ItemActionId, itemActionId);
+        var update = Builders<ItemAction>.Update.Inc(x => x.AttemptCount, 1);
+        await _context.ItemActions.FindOneAndUpdateAsync(filter, update);
+    }
+
     public async Task DeleteAsync(string itemActionId)
     {
         var filter = Builders<ItemAction>.Filter.Eq(x => x.ItemActionId, itemActionId);

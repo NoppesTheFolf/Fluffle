@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-Fluffle.Ingestion.Worker-3676b2ae-d4bb-4769-b053-eaa02e7ab1b8</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentFTP" Version="52.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4" />
+    <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fluffle.Imaging.Api.Client\Fluffle.Imaging.Api.Client.csproj" />
+    <ProjectReference Include="..\Fluffle.Inference.Api.Client\Fluffle.Inference.Api.Client.csproj" />
+    <ProjectReference Include="..\Fluffle.Ingestion.Api.Client\Fluffle.Ingestion.Api.Client.csproj" />
+    <ProjectReference Include="..\Fluffle.Vector.Api.Client\Fluffle.Vector.Api.Client.csproj" />
+  </ItemGroup>
+</Project>

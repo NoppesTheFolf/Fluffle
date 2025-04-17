@@ -1,8 +1,10 @@
+using Fluffle.Vector.Api.Extensions;
 using Fluffle.Vector.Api.Models.Items;
 using Fluffle.Vector.Core.Domain.Items;
 using Fluffle.Vector.Core.Repositories;
 using Fluffle.Vector.Core.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace Fluffle.Vector.Api.Controllers;
 
@@ -30,7 +32,7 @@ public class ItemsController : ControllerBase
                 Height = x.Height,
                 Url = x.Url
             }).ToList(),
-            Properties = model.Properties
+            Properties = model.Properties.ToExpando()
         });
 
         return Ok();
@@ -52,17 +54,14 @@ public class ItemsController : ControllerBase
                 Height = x.Height,
                 Url = x.Url
             }).ToList(),
-            Properties = item.Properties
+            Properties = JsonSerializer.SerializeToNode(item.Properties) ??
+                         throw new InvalidOperationException("Item properties should never serialize to null.")
         });
     }
 
     [HttpDelete("/api/items/{itemId}", Name = "DeleteItem")]
     public async Task<IActionResult> DeleteItemAsync(string itemId)
     {
-        var item = await _itemRepository.GetAsync(itemId);
-        if (item == null)
-            return NotFound($"No item with ID '{itemId}' could be found.");
-
         await _itemService.DeleteAsync(itemId);
 
         return Ok();

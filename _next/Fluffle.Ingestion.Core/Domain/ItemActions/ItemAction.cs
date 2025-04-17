@@ -8,6 +8,8 @@ public abstract class ItemAction
 
     public required int Priority { get; set; }
 
+    public required int AttemptCount { get; set; }
+
     public required DateTime VisibleWhen { get; set; }
 
     public abstract T Visit<T>(IItemActionVisitor<T> visitor);

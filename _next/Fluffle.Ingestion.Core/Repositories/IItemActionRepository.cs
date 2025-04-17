@@ -12,5 +12,7 @@ public interface IItemActionRepository
 
     Task SetVisibleWhenAsync(string itemActionId, DateTime visibleWhen);
 
+    Task IncrementAttemptCountAsync(string itemActionId);
+
     Task DeleteAsync(string itemActionId);
 }

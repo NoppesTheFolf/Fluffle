@@ -1,4 +1,6 @@
-﻿namespace Fluffle.Vector.Api.Models.Items;
+﻿using System.Text.Json.Nodes;
+
+namespace Fluffle.Vector.Api.Models.Items;
 
 public class ItemModel
 {
@@ -6,5 +8,5 @@ public class ItemModel
 
     public required ICollection<ImageModel> Images { get; set; }
 
-    public required IDictionary<string, object?>? Properties { get; set; }
+    public required JsonNode Properties { get; set; }
 }

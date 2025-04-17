@@ -19,6 +19,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Vector.Api.Models",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Vector.Api", "Fluffle.Vector.Api\Fluffle.Vector.Api.csproj", "{01ED5E9F-F88D-A9F4-9172-ED845C6910A4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Ingestion.Worker", "Fluffle.Ingestion.Worker\Fluffle.Ingestion.Worker.csproj", "{1EA84497-CC41-8886-363F-392B9E971361}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Ingestion.Api.Client", "Fluffle.Ingestion.Api.Client\Fluffle.Ingestion.Api.Client.csproj", "{0DAF2E84-C098-C325-1461-E89E0183B773}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Vector.Api.Client", "Fluffle.Vector.Api.Client\Fluffle.Vector.Api.Client.csproj", "{70F433A4-2822-BFBA-CC49-795C81423B5A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Imaging.Api.Client", "Fluffle.Imaging.Api.Client\Fluffle.Imaging.Api.Client.csproj", "{4F8BDF36-F3CE-4E63-9BD7-EB7E2DD92609}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Inference.Api.Client", "Fluffle.Inference.Api.Client\Fluffle.Inference.Api.Client.csproj", "{446EE004-EBCB-48D8-B922-28D9DE233173}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +67,26 @@ Global
 		{01ED5E9F-F88D-A9F4-9172-ED845C6910A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{01ED5E9F-F88D-A9F4-9172-ED845C6910A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01ED5E9F-F88D-A9F4-9172-ED845C6910A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EA84497-CC41-8886-363F-392B9E971361}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EA84497-CC41-8886-363F-392B9E971361}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EA84497-CC41-8886-363F-392B9E971361}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EA84497-CC41-8886-363F-392B9E971361}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DAF2E84-C098-C325-1461-E89E0183B773}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DAF2E84-C098-C325-1461-E89E0183B773}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DAF2E84-C098-C325-1461-E89E0183B773}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DAF2E84-C098-C325-1461-E89E0183B773}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70F433A4-2822-BFBA-CC49-795C81423B5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70F433A4-2822-BFBA-CC49-795C81423B5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70F433A4-2822-BFBA-CC49-795C81423B5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70F433A4-2822-BFBA-CC49-795C81423B5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F8BDF36-F3CE-4E63-9BD7-EB7E2DD92609}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F8BDF36-F3CE-4E63-9BD7-EB7E2DD92609}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F8BDF36-F3CE-4E63-9BD7-EB7E2DD92609}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F8BDF36-F3CE-4E63-9BD7-EB7E2DD92609}.Release|Any CPU.Build.0 = Release|Any CPU
+		{446EE004-EBCB-48D8-B922-28D9DE233173}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{446EE004-EBCB-48D8-B922-28D9DE233173}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{446EE004-EBCB-48D8-B922-28D9DE233173}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{446EE004-EBCB-48D8-B922-28D9DE233173}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

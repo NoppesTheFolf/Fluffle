@@ -7,14 +7,15 @@ namespace Fluffle.Ingestion.Core.Services;
 
 public class ItemActionService
 {
-    private static readonly TimeSpan ProcessingTimeout = TimeSpan.FromMinutes(15);
     private static readonly AsyncLock Locker = new();
 
     private readonly IItemActionRepository _repository;
+    private readonly IItemActionFailureRepository _failureRepository;
 
-    public ItemActionService(IItemActionRepository repository)
+    public ItemActionService(IItemActionRepository repository, IItemActionFailureRepository failureRepository)
     {
         _repository = repository;
+        _failureRepository = failureRepository;
     }
 
     public async Task EnqueueIndexAsync(Item item, int priority)
@@ -25,6 +26,7 @@ public class ItemActionService
         {
             ItemId = item.ItemId,
             Priority = priority,
+            AttemptCount = 0,
             VisibleWhen = visibleWhen,
             Item = item
         });
@@ -38,6 +40,7 @@ public class ItemActionService
         {
             ItemId = itemId,
             Priority = int.MaxValue,
+            AttemptCount = 0,
             VisibleWhen = visibleWhen
         });
     }
@@ -55,7 +58,11 @@ public class ItemActionService
 
         var visibleWhen = DateTime.UtcNow;
         if (needsDelay)
-            visibleWhen = visibleWhen.Add(ProcessingTimeout);
+        {
+            // If a worker has already picked up the existing item action, give it some time to finish before
+            // the newly added action becomes available for processing
+            visibleWhen = visibleWhen.Add(TimeSpan.FromMinutes(15));
+        }
 
         var itemAction = createItemAction(visibleWhen);
         await _repository.CreateAsync(itemAction);
@@ -65,19 +72,43 @@ public class ItemActionService
     {
         using var _ = await Locker.LockAsync();
 
-        var itemAction = await _repository.GetHighestPriorityAsync();
-        if (itemAction == null)
-            return null;
+        ItemAction? itemAction;
+        do
+        {
+            itemAction = await _repository.GetHighestPriorityAsync();
+            if (itemAction == null)
+                return null;
 
-        await _repository.SetVisibleWhenAsync(itemAction.ItemActionId!, DateTime.UtcNow.Add(ProcessingTimeout));
+            // Give up after 10 attempts
+            if (itemAction.AttemptCount < 10)
+                break;
+
+            await _failureRepository.CreateAsync(itemAction);
+            await _repository.DeleteAsync(itemAction.ItemActionId!);
+            itemAction = null;
+        } while (itemAction == null);
+
+        var processingTimeout = GetProcessingTimeout(itemAction.AttemptCount);
+        var visibleWhen = DateTime.UtcNow.Add(processingTimeout);
+        await _repository.SetVisibleWhenAsync(itemAction.ItemActionId!, visibleWhen);
+        await _repository.IncrementAttemptCountAsync(itemAction.ItemActionId!);
 
         return itemAction;
     }
 
-    public async Task CompleteAsync(string itemActionId)
+    public async Task AcknowledgeAsync(string itemActionId)
     {
         using var _ = await Locker.LockAsync();
 
         await _repository.DeleteAsync(itemActionId);
+    }
+
+    private static TimeSpan GetProcessingTimeout(int attemptCount)
+    {
+        // Limit the timeout to a day after having already tried 5 times
+        if (attemptCount >= 5)
+            return TimeSpan.FromDays(1);
+
+        return TimeSpan.FromMinutes(15 * Math.Pow(2, attemptCount));
     }
 }

@@ -17,7 +17,7 @@ public class ItemsController : ControllerBase
     }
 
     [HttpPut("/api/items/{itemId}", Name = "PutItem")]
-    public async Task<IActionResult> PutItemAsync([FromBody] PutItemModel model, string itemId)
+    public async Task<IActionResult> PutItemAsync(string itemId, [FromBody] PutItemModel model)
     {
         var item = new Item
         {
@@ -28,7 +28,7 @@ public class ItemsController : ControllerBase
                 Height = x.Height,
                 Url = x.Url
             }).ToList(),
-            Properties = model.Properties?.ToExpando()
+            Properties = model.Properties.ToExpando()
         };
         await _itemActionService.EnqueueIndexAsync(item, model.Priority);
 

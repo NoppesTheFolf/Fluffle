@@ -26,10 +26,10 @@ public class ItemActionsController : ControllerBase
         return Ok(model);
     }
 
-    [HttpPut("/api/item-actions/{itemActionId}/complete", Name = "CompleteItemAction")]
-    public async Task<IActionResult> CompleteItemActionAsync(string itemActionId)
+    [HttpPost("/api/item-actions/{itemActionId}/acknowledge", Name = "AcknowledgeItemAction")]
+    public async Task<IActionResult> AcknowledgeItemActionAsync(string itemActionId)
     {
-        await _itemActionService.CompleteAsync(itemActionId);
+        await _itemActionService.AcknowledgeAsync(itemActionId);
 
         return Ok();
     }
