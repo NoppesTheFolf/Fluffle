@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>d74196ec-c91a-4893-b529-d42341da302d</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FluentFTP" Version="52.1.0" />
+		<PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
+	</ItemGroup>
+
+</Project>
