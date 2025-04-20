@@ -18,7 +18,7 @@ public class ItemActionService
         _failureRepository = failureRepository;
     }
 
-    public async Task EnqueueIndexAsync(Item item, int priority)
+    public async Task EnqueueIndexAsync(Item item, long priority)
     {
         using var _ = await Locker.LockAsync();
 

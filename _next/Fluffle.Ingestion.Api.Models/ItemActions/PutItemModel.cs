@@ -5,7 +5,7 @@ namespace Fluffle.Ingestion.Api.Models.ItemActions;
 
 public class PutItemModel
 {
-    public required int Priority { get; set; }
+    public required long Priority { get; set; }
 
     public required ICollection<ImageModel> Images { get; set; }
 
