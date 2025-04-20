@@ -78,10 +78,33 @@ public class IndexItemActionHandler : IItemActionHandler
         _logger.LogInformation("Indexing new item...");
 
         _logger.LogInformation("Downloading image...");
-        await using var imageStream = await _itemContentClient.DownloadAsync(item.Images);
+        var (downloadedImage, imageStream) = await _itemContentClient.DownloadAsync(item.Images);
+        await using var _ = imageStream;
 
-        _logger.LogInformation("Creating thumbnail...");
-        var thumbnail = await _imagingApiClient.CreateThumbnailAsync(imageStream, 300, 75);
+        ThumbnailModel thumbnail;
+        if (new Uri(downloadedImage.Url).Host == "static.fluffle.xyz")
+        {
+            _logger.LogInformation("Detected content from legacy Fluffle. Skipping thumbnail creation.");
+
+            using var thumbnailStream = new MemoryStream();
+            await imageStream.CopyToAsync(thumbnailStream);
+            await imageStream.FlushAsync();
+
+            thumbnailStream.Position = 0;
+            var thumbnailMetadata = await _imagingApiClient.GetMetadataAsync(thumbnailStream);
+
+            thumbnailStream.Position = 0;
+            thumbnail = new ThumbnailModel
+            {
+                Thumbnail = thumbnailStream.ToArray(),
+                Metadata = thumbnailMetadata
+            };
+        }
+        else
+        {
+            _logger.LogInformation("Creating thumbnail...");
+            thumbnail = await _imagingApiClient.CreateThumbnailAsync(imageStream, 300, 75);
+        }
 
         _logger.LogInformation("Running inference on thumbnail...");
         float[][] vectors;
@@ -101,10 +124,10 @@ public class IndexItemActionHandler : IItemActionHandler
         var properties = item.Properties.DeepClone();
         properties["thumbnail"] = JsonSerializer.SerializeToNode(new
         {
-            width = thumbnail.Width,
-            height = thumbnail.Height,
-            centerX = thumbnail.CenterX,
-            centerY = thumbnail.CenterY,
+            width = thumbnail.Metadata.Width,
+            height = thumbnail.Metadata.Height,
+            centerX = thumbnail.Metadata.CenterX,
+            centerY = thumbnail.Metadata.CenterY,
             url = thumbnailUrl
         });
 

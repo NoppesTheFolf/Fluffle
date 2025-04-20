@@ -13,7 +13,7 @@ public class ItemContentClient : IItemContentClient
         _logger = logger;
     }
 
-    public async Task<Stream> DownloadAsync(ICollection<ImageModel> images)
+    public async Task<(ImageModel, Stream)> DownloadAsync(ICollection<ImageModel> images)
     {
         var rankedImages = RankImages(images);
 
@@ -25,7 +25,7 @@ public class ItemContentClient : IItemContentClient
             {
                 _logger.LogInformation("Downloading image from URL {Url}...", image.Url);
                 stream = await httpClient.GetStreamAsync(image.Url);
-                return stream;
+                return (image, stream);
             }
             catch (Exception exception)
             {
