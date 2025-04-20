@@ -1,4 +1,5 @@
-using Fluffle.Ingestion.Api.Mappers;
+using Fluffle.Ingestion.Api.Models.ItemActions;
+using Fluffle.Ingestion.Api.Visitors;
 using Fluffle.Ingestion.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +13,18 @@ public class ItemActionsController : ControllerBase
     public ItemActionsController(ItemActionService itemActionService)
     {
         _itemActionService = itemActionService;
+    }
+
+    [HttpPut("/api/item-actions", Name = "PutItemActions")]
+    public async Task<IActionResult> PutItemActionsAsync(ICollection<PutItemActionModel> models)
+    {
+        var visitor = new ItemActionServiceVisitor(_itemActionService);
+        foreach (var model in models)
+        {
+            await model.Visit(visitor);
+        }
+
+        return Accepted();
     }
 
     [HttpGet("/api/item-actions/dequeue", Name = "DequeueItemAction")]

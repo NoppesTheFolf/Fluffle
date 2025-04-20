@@ -3,7 +3,7 @@ using Fluffle.Ingestion.Api.Models.Items;
 using Fluffle.Ingestion.Core.Domain.ItemActions;
 using System.Text.Json;
 
-namespace Fluffle.Ingestion.Api.Mappers;
+namespace Fluffle.Ingestion.Api.Visitors;
 
 public class ModelMapperItemActionVisitor : IItemActionVisitor<ItemActionModel>
 {
