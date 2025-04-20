@@ -73,8 +73,8 @@ public sealed class FtpThumbnailStorage : IThumbnailStorage, IDisposable, IAsync
     private string GetFtpPath(string itemId)
     {
         var saltedItemId = $"{_options.Value.Salt}:{itemId}";
-        var saltedItemIdMd5Bytes = MD5.HashData(Encoding.UTF8.GetBytes(saltedItemId));
-        var itemIdHash = Convert.ToHexStringLower(saltedItemIdMd5Bytes);
+        var saltedItemIdSha1Bytes = SHA1.HashData(Encoding.UTF8.GetBytes(saltedItemId));
+        var itemIdHash = Convert.ToHexStringLower(saltedItemIdSha1Bytes);
         var path = Path.Join(_options.Value.Directory, $"{itemIdHash[..2]}/{itemIdHash[2..4]}/{itemIdHash}.jpg");
 
         return path;
