@@ -17,7 +17,7 @@ internal class IngestionApiClient : IIngestionApiClient
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(IngestionApiClient));
 
-        using var response = await httpClient.GetAsync("/api/item-actions/dequeue");
+        using var response = await httpClient.GetAsync("/item-actions/dequeue");
         response.EnsureSuccessStatusCode();
 
         if (response.StatusCode == HttpStatusCode.NoContent)
@@ -31,7 +31,7 @@ internal class IngestionApiClient : IIngestionApiClient
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(IngestionApiClient));
 
-        using var response = await httpClient.PostAsync($"/api/item-actions/{Uri.EscapeDataString(itemActionId)}/acknowledge", null);
+        using var response = await httpClient.PostAsync($"/item-actions/{Uri.EscapeDataString(itemActionId)}/acknowledge", null);
         response.EnsureSuccessStatusCode();
     }
 }

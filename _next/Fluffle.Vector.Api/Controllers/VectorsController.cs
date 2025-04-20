@@ -14,7 +14,7 @@ public class VectorsController : ControllerBase
         _collection = collection;
     }
 
-    [HttpPost("/api/vectors/search", Name = "SearchVectors")]
+    [HttpPost("/vectors/search", Name = "SearchVectors")]
     public IActionResult SearchVectorsAsync([FromBody] VectorSearchParametersModel model)
     {
         var searchResult = _collection.Search(model.Query, model.Limit);
