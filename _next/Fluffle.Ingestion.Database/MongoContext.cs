@@ -32,7 +32,7 @@ internal sealed class MongoContext : IDisposable
         var itemIdIndexKeys = Builders<ItemAction>.IndexKeys.Ascending(x => x.ItemId);
         ItemActions.Indexes.CreateOne(new CreateIndexModel<ItemAction>(itemIdIndexKeys, new CreateIndexOptions { Unique = true }));
 
-        var priorityIndexKeys = Builders<ItemAction>.IndexKeys.Ascending(x => x.VisibleWhen).Descending(x => x.Priority);
+        var priorityIndexKeys = Builders<ItemAction>.IndexKeys.Descending(x => x.Priority);
         ItemActions.Indexes.CreateOne(new CreateIndexModel<ItemAction>(priorityIndexKeys));
 
         // Item action failures
