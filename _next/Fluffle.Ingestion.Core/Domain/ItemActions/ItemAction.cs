@@ -6,7 +6,7 @@ public abstract class ItemAction
 
     public required string ItemId { get; set; }
 
-    public required int Priority { get; set; }
+    public required long Priority { get; set; }
 
     public required int AttemptCount { get; set; }
 
