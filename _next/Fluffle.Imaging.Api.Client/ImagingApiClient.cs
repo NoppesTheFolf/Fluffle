@@ -24,4 +24,18 @@ internal class ImagingApiClient : IImagingApiClient
         var model = await response.Content.ReadFromJsonAsync<ThumbnailModel>();
         return model!;
     }
+
+    public async Task<ImageMetadataModel> GetMetadataAsync(Stream imageStream)
+    {
+        using var httpClient = _httpClientFactory.CreateClient(nameof(ImagingApiClient));
+
+        using var content = new MultipartFormDataContent();
+        content.Add(new StreamContent(imageStream), "image", "image");
+
+        using var response = await httpClient.PostAsync("/metadata", content);
+        response.EnsureSuccessStatusCode();
+
+        var model = await response.Content.ReadFromJsonAsync<ImageMetadataModel>();
+        return model!;
+    }
 }

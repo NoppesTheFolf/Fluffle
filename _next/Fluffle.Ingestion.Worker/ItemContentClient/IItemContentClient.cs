@@ -4,5 +4,5 @@ namespace Fluffle.Ingestion.Worker.ItemContentClient;
 
 public interface IItemContentClient
 {
-    Task<Stream> DownloadAsync(ICollection<ImageModel> images);
+    Task<(ImageModel, Stream)> DownloadAsync(ICollection<ImageModel> images);
 }
