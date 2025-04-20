@@ -91,12 +91,14 @@ public class IndexItemActionHandler : IItemActionHandler
             await imageStream.FlushAsync();
 
             thumbnailStream.Position = 0;
-            var thumbnailMetadata = await _imagingApiClient.GetMetadataAsync(thumbnailStream);
+            var thumbnailData = thumbnailStream.ToArray();
 
             thumbnailStream.Position = 0;
+            var thumbnailMetadata = await _imagingApiClient.GetMetadataAsync(thumbnailStream);
+
             thumbnail = new ThumbnailModel
             {
-                Thumbnail = thumbnailStream.ToArray(),
+                Thumbnail = thumbnailData,
                 Metadata = thumbnailMetadata
             };
         }
