@@ -26,11 +26,28 @@ async def post_thumbnail(image: UploadFile, size: int, quality: int):
     center_x, center_y = calculate_center(open_image(image_content))
 
     result = {
-        "width": thumbnail_width,
-        "height": thumbnail_height,
+        "thumbnail": base64.b64encode(thumbnail).decode("utf-8"),
+        "metadata": {
+            "width": thumbnail_width,
+            "height": thumbnail_height,
+            "centerX": center_x,
+            "centerY": center_y
+        }
+    }
+
+    return JSONResponse(result)
+
+@app.post("/metadata")
+async def post_metadata(image: UploadFile):
+    image_content = await image.read()
+    img = open_image(image_content)
+    center_x, center_y = calculate_center(img)
+
+    result = {
+        "width": img.width,
+        "height": img.height,
         "centerX": center_x,
-        "centerY": center_y,
-        "thumbnail": base64.b64encode(thumbnail).decode("utf-8")
+        "centerY": center_y
     }
 
     return JSONResponse(result)
