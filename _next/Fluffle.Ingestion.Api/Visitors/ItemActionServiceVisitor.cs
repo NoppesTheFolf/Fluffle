@@ -1,0 +1,37 @@
+using Fluffle.Ingestion.Api.Extensions;
+using Fluffle.Ingestion.Api.Models.ItemActions;
+using Fluffle.Ingestion.Core.Domain.Items;
+using Fluffle.Ingestion.Core.Services;
+
+namespace Fluffle.Ingestion.Api.Visitors;
+
+public class ItemActionServiceVisitor : IPutItemActionModelVisitor<Task>
+{
+    private readonly ItemActionService _itemActionService;
+
+    public ItemActionServiceVisitor(ItemActionService itemActionService)
+    {
+        _itemActionService = itemActionService;
+    }
+
+    public Task Visit(PutIndexItemActionModel model)
+    {
+        var item = new Item
+        {
+            ItemId = model.ItemId,
+            Images = model.Images.Select(x => new Image
+            {
+                Width = x.Width,
+                Height = x.Height,
+                Url = x.Url
+            }).ToList(),
+            Properties = model.Properties.ToExpando()
+        };
+        return _itemActionService.EnqueueIndexAsync(item, model.Priority);
+    }
+
+    public Task Visit(PutDeleteItemActionModel model)
+    {
+        return _itemActionService.EnqueueDeleteAsync(model.ItemId);
+    }
+}

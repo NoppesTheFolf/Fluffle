@@ -13,22 +13,6 @@ internal class IngestionApiClient : IIngestionApiClient
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task PutItemAsync(string itemId, PutItemModel item)
-    {
-        using var httpClient = _httpClientFactory.CreateClient(nameof(IngestionApiClient));
-
-        using var response = await httpClient.PutAsJsonAsync($"/api/items/{Uri.EscapeDataString(itemId)}", item);
-        response.EnsureSuccessStatusCode();
-    }
-
-    public async Task DeleteItemAsync(string itemId)
-    {
-        using var httpClient = _httpClientFactory.CreateClient(nameof(IngestionApiClient));
-
-        using var response = await httpClient.DeleteAsync($"/api/items/{Uri.EscapeDataString(itemId)}");
-        response.EnsureSuccessStatusCode();
-    }
-
     public async Task<ItemActionModel?> DequeueItemActionAsync()
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(IngestionApiClient));
