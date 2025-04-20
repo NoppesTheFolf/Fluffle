@@ -15,7 +15,7 @@ public class ItemActionsController : ControllerBase
         _itemActionService = itemActionService;
     }
 
-    [HttpPut("/api/item-actions", Name = "PutItemActions")]
+    [HttpPut("/item-actions", Name = "PutItemActions")]
     public async Task<IActionResult> PutItemActionsAsync(ICollection<PutItemActionModel> models)
     {
         var visitor = new ItemActionServiceVisitor(_itemActionService);
@@ -27,7 +27,7 @@ public class ItemActionsController : ControllerBase
         return Accepted();
     }
 
-    [HttpGet("/api/item-actions/dequeue", Name = "DequeueItemAction")]
+    [HttpGet("/item-actions/dequeue", Name = "DequeueItemAction")]
     public async Task<IActionResult> DequeueItemActionAsync()
     {
         var itemAction = await _itemActionService.DequeueAsync();
@@ -39,7 +39,7 @@ public class ItemActionsController : ControllerBase
         return Ok(model);
     }
 
-    [HttpPost("/api/item-actions/{itemActionId}/acknowledge", Name = "AcknowledgeItemAction")]
+    [HttpPost("/item-actions/{itemActionId}/acknowledge", Name = "AcknowledgeItemAction")]
     public async Task<IActionResult> AcknowledgeItemActionAsync(string itemActionId)
     {
         await _itemActionService.AcknowledgeAsync(itemActionId);

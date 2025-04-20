@@ -20,7 +20,7 @@ public class ItemsController : ControllerBase
         _itemRepository = itemRepository;
     }
 
-    [HttpPut("/api/items/{itemId}", Name = "PutItem")]
+    [HttpPut("/items/{itemId}", Name = "PutItem")]
     public async Task<IActionResult> PutItemAsync(string itemId, [FromBody] PutItemModel model)
     {
         await _itemRepository.UpsertAsync(new Item
@@ -38,7 +38,7 @@ public class ItemsController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("/api/items/{itemId}", Name = "GetItem")]
+    [HttpGet("/items/{itemId}", Name = "GetItem")]
     public async Task<IActionResult> GetItemAsync(string itemId)
     {
         var item = await _itemRepository.GetAsync(itemId);
@@ -59,7 +59,7 @@ public class ItemsController : ControllerBase
         });
     }
 
-    [HttpDelete("/api/items/{itemId}", Name = "DeleteItem")]
+    [HttpDelete("/items/{itemId}", Name = "DeleteItem")]
     public async Task<IActionResult> DeleteItemAsync(string itemId)
     {
         await _itemService.DeleteAsync(itemId);
@@ -67,7 +67,7 @@ public class ItemsController : ControllerBase
         return Ok();
     }
 
-    [HttpPut("/api/items/{itemId}/vectors/{modelId}", Name = "PutItemVectors")]
+    [HttpPut("/items/{itemId}/vectors/{modelId}", Name = "PutItemVectors")]
     public async Task<IActionResult> PutItemVectorsAsync(string itemId, string modelId, [FromBody] ICollection<PutItemVectorModel> models)
     {
         var item = await _itemRepository.GetAsync(itemId);

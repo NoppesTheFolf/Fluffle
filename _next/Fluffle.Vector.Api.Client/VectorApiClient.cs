@@ -18,7 +18,7 @@ internal class VectorApiClient : IVectorApiClient
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
 
-        using var response = await httpClient.PutAsJsonAsync($"/api/items/{Uri.EscapeDataString(itemId)}", item);
+        using var response = await httpClient.PutAsJsonAsync($"/items/{Uri.EscapeDataString(itemId)}", item);
         response.EnsureSuccessStatusCode();
     }
 
@@ -26,7 +26,7 @@ internal class VectorApiClient : IVectorApiClient
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
 
-        using var response = await httpClient.GetAsync($"/api/items/{Uri.EscapeDataString(itemId)}");
+        using var response = await httpClient.GetAsync($"/items/{Uri.EscapeDataString(itemId)}");
 
         if (response.StatusCode == HttpStatusCode.NotFound)
             return null;
@@ -41,7 +41,7 @@ internal class VectorApiClient : IVectorApiClient
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
 
-        using var response = await httpClient.DeleteAsync($"/api/items/{Uri.EscapeDataString(itemId)}");
+        using var response = await httpClient.DeleteAsync($"/items/{Uri.EscapeDataString(itemId)}");
         response.EnsureSuccessStatusCode();
     }
 
@@ -49,7 +49,7 @@ internal class VectorApiClient : IVectorApiClient
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
 
-        var url = $"/api/items/{Uri.EscapeDataString(itemId)}/vectors/{Uri.EscapeDataString(modelId)}";
+        var url = $"/items/{Uri.EscapeDataString(itemId)}/vectors/{Uri.EscapeDataString(modelId)}";
         using var response = await httpClient.PutAsJsonAsync(url, vectors);
         response.EnsureSuccessStatusCode();
     }
@@ -58,7 +58,7 @@ internal class VectorApiClient : IVectorApiClient
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
 
-        using var response = await httpClient.PostAsJsonAsync("/api/vectors/search", parameters);
+        using var response = await httpClient.PostAsJsonAsync("/vectors/search", parameters);
         response.EnsureSuccessStatusCode();
 
         var results = await response.Content.ReadFromJsonAsync<IList<VectorSearchResultModel>>();
