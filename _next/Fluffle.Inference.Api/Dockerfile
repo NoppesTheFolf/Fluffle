@@ -22,4 +22,7 @@ COPY Fluffle.Inference.Api/*.py ./
 ENV VIRTUAL_ENV="/app/.venv"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-CMD [ "python", "-m", "fastapi", "run" ]
+ENV TORCH_NUM_THREADS="-1"
+ENV FASTAPI_WORKERS="1"
+
+CMD [ "bash", "-c", "python -m fastapi run --workers $FASTAPI_WORKERS" ]

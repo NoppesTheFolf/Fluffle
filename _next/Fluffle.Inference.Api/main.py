@@ -7,6 +7,10 @@ from PIL import Image
 import os
 import hmac
 
+TORCH_NUM_THREADS = int(os.environ["TORCH_NUM_THREADS"])
+if TORCH_NUM_THREADS != -1:
+    torch.set_num_threads(TORCH_NUM_THREADS)
+
 API_KEY = os.environ["API_KEY"]
 
 DEVICE = torch.device("cpu")
