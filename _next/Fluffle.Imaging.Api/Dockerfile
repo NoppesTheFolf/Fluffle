@@ -132,4 +132,6 @@ RUN poetry install
 
 COPY Fluffle.Imaging.Api/*.py ./
 
-CMD [ "poetry", "run", "fastapi", "run" ]
+ENV FASTAPI_WORKERS="1"
+
+CMD [ "bash", "-c", "poetry run fastapi run --workers $FASTAPI_WORKERS" ]
