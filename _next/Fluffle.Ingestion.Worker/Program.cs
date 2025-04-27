@@ -27,7 +27,13 @@ services.AddSingleton<IThumbnailStorage, FtpThumbnailStorage>();
 
 services.AddSingleton<ItemActionHandlerFactory>();
 
-services.AddHostedService<Worker>();
+services.AddOptions<WorkerOptions>()
+    .BindConfiguration(WorkerOptions.Worker)
+    .ValidateDataAnnotations().ValidateOnStart();
+
+var workerCount = builder.Configuration.GetValue<int>("Worker:Count");
+for (var i = 0; i < workerCount; i++)
+    services.AddSingleton<IHostedService, Worker>();
 
 var host = builder.Build();
 host.Run();

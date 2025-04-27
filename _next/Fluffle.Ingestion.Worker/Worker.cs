@@ -1,5 +1,7 @@
 using Fluffle.Ingestion.Api.Client;
 using Fluffle.Ingestion.Worker.ItemActionHandlers;
+using Microsoft.Extensions.Options;
+using System.Runtime.CompilerServices;
 
 namespace Fluffle.Ingestion.Worker;
 
@@ -7,16 +9,38 @@ public class Worker : BackgroundService
 {
     private readonly IIngestionApiClient _ingestionApiClient;
     private readonly ItemActionHandlerFactory _itemActionHandlerFactory;
+    private readonly IOptions<WorkerOptions> _options;
     private readonly ILogger<Worker> _logger;
 
-    public Worker(IIngestionApiClient ingestionApiClient, ItemActionHandlerFactory itemActionHandlerFactory, ILogger<Worker> logger)
+    public Worker(
+        IIngestionApiClient ingestionApiClient,
+        ItemActionHandlerFactory itemActionHandlerFactory,
+        IOptions<WorkerOptions> options,
+        ILogger<Worker> logger)
     {
         _ingestionApiClient = ingestionApiClient;
         _itemActionHandlerFactory = itemActionHandlerFactory;
+        _options = options;
         _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        var workerId = RuntimeHelpers.GetHashCode(this);
+        using var _ = _logger.BeginScope("WorkerId:{WorkerId}", workerId);
+        _logger.LogInformation("Started handler worker.");
+
+        try
+        {
+            await ExecuteAsyncInternal(stoppingToken);
+        }
+        finally
+        {
+            _logger.LogInformation("Stopped handler worker.");
+        }
+    }
+
+    private async Task ExecuteAsyncInternal(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -41,9 +65,8 @@ public class Worker : BackgroundService
             }
             else
             {
-                var interval = TimeSpan.FromSeconds(15);
-                _logger.LogInformation("No item to process, trying again in {Interval}.", interval);
-                await Task.Delay(interval, stoppingToken);
+                _logger.LogInformation("No item to process, trying again in {Interval}.", _options.Value.DequeueInterval);
+                await Task.Delay(_options.Value.DequeueInterval, stoppingToken);
             }
         }
     }
