@@ -11,4 +11,7 @@ public class WorkerOptions
 
     [Required]
     public required TimeSpan DequeueInterval { get; set; }
+
+    [Required]
+    public required TimeSpan ErrorDelay { get; set; }
 }
