@@ -2,13 +2,29 @@ using Fluffle.Imaging.Api.Client;
 using Fluffle.Inference.Api.Client;
 using Fluffle.Ingestion.Api.Client;
 using Fluffle.Ingestion.Worker;
+using Fluffle.Ingestion.Worker.ApplicationInsights;
 using Fluffle.Ingestion.Worker.ItemActionHandlers;
 using Fluffle.Ingestion.Worker.ItemContentClient;
 using Fluffle.Ingestion.Worker.ThumbnailStorage;
 using Fluffle.Vector.Api.Client;
+using Microsoft.ApplicationInsights.Extensibility;
 
 var builder = Host.CreateApplicationBuilder(args);
 var services = builder.Services;
+
+services.AddSingleton<ITelemetryInitializer, CloudRoleNameInitializer>();
+services.AddHostedService<ApplicationInsightsFlushService>();
+services.AddApplicationInsightsTelemetryWorkerService(options =>
+{
+    options.EnableQuickPulseMetricStream = true; // No telemetry when this is disabled... ???
+    options.EnableAdaptiveSampling = true;
+
+    options.EnablePerformanceCounterCollectionModule = false;
+    options.EnableDependencyTrackingTelemetryModule = false;
+    options.EnableEventCounterCollectionModule = false;
+    options.AddAutoCollectedMetricExtractor = false;
+    options.EnableDiagnosticsTelemetryModule = false;
+});
 
 services.AddIngestionApiClient();
 

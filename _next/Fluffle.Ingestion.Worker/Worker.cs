@@ -60,6 +60,7 @@ public class Worker : BackgroundService
                     catch (Exception e)
                     {
                         _logger.LogError(e, "An exception occurred while processing an item action.");
+                        await Task.Delay(_options.Value.ErrorDelay, stoppingToken);
                     }
                 }
             }
