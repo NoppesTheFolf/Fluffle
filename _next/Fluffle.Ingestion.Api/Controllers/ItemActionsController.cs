@@ -1,4 +1,5 @@
 using Fluffle.Ingestion.Api.Models.ItemActions;
+using Fluffle.Ingestion.Api.Validation;
 using Fluffle.Ingestion.Api.Visitors;
 using Fluffle.Ingestion.Core.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -18,11 +19,17 @@ public class ItemActionsController : ControllerBase
     [HttpPut("/item-actions", Name = "PutItemActions")]
     public async Task<IActionResult> PutItemActionsAsync(ICollection<PutItemActionModel> models)
     {
+        var validator = new PutItemActionModelCollectionValidator();
+        var validationResult = await validator.ValidateAsync(models);
+        foreach (var validationFailure in validationResult.Errors)
+            ModelState.AddModelError(validationFailure.PropertyName, validationFailure.ErrorMessage);
+
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var visitor = new ItemActionServiceVisitor(_itemActionService);
         foreach (var model in models)
-        {
             await model.Visit(visitor);
-        }
 
         return Accepted();
     }
