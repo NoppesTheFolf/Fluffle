@@ -1,10 +1,13 @@
 ﻿using Fluffle.Vector.Core.Domain.Items;
+using Fluffle.Vector.Core.Domain.Vectors;
 
 namespace Fluffle.Vector.Core.Repositories;
 
 public interface IItemVectorsRepository
 {
-    Task UpsertAsync(ItemVectors itemVectors);
+    Task UpsertAsync(Model model, Item item, ICollection<ItemVector> vectors);
 
-    Task ForEachAsync(string modelId, Action<ItemVectors> action, CancellationToken cancellationToken = default);
+    Task<IList<VectorSearchResult>> GetAsync(string modelId, float[] query, int limit);
+
+    Task DeleteAsync(string itemId);
 }

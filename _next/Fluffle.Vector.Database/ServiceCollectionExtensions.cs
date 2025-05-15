@@ -14,7 +14,6 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<MongoContext>();
         services.AddSingleton<IItemRepository, MongoItemRepository>();
-        services.AddSingleton<IItemVectorsRepository, MongoItemVectorsRepository>();
 
         return services;
     }
