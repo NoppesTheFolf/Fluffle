@@ -2,7 +2,6 @@ using Fluffle.Vector.Api.Extensions;
 using Fluffle.Vector.Api.Models.Items;
 using Fluffle.Vector.Core.Domain.Items;
 using Fluffle.Vector.Core.Repositories;
-using Fluffle.Vector.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -11,13 +10,18 @@ namespace Fluffle.Vector.Api.Controllers;
 [ApiController]
 public class ItemsController : ControllerBase
 {
-    private readonly ItemService _itemService;
     private readonly IItemRepository _itemRepository;
+    private readonly IItemVectorsRepository _itemVectorsRepository;
+    private readonly IModelRepository _modelRepository;
 
-    public ItemsController(ItemService itemService, IItemRepository itemRepository)
+    public ItemsController(
+        IItemRepository itemRepository,
+        IItemVectorsRepository itemVectorsRepository,
+        IModelRepository modelRepository)
     {
-        _itemService = itemService;
         _itemRepository = itemRepository;
+        _itemVectorsRepository = itemVectorsRepository;
+        _modelRepository = modelRepository;
     }
 
     [HttpPut("/items/{itemId}", Name = "PutItem")]
@@ -62,7 +66,12 @@ public class ItemsController : ControllerBase
     [HttpDelete("/items/{itemId}", Name = "DeleteItem")]
     public async Task<IActionResult> DeleteItemAsync(string itemId)
     {
-        await _itemService.DeleteAsync(itemId);
+        var item = await _itemRepository.GetAsync(itemId);
+        if (item == null)
+            return NotFound();
+
+        await _itemVectorsRepository.DeleteAsync(itemId);
+        await _itemRepository.DeleteAsync(itemId);
 
         return Ok();
     }
@@ -70,18 +79,19 @@ public class ItemsController : ControllerBase
     [HttpPut("/items/{itemId}/vectors/{modelId}", Name = "PutItemVectors")]
     public async Task<IActionResult> PutItemVectorsAsync(string itemId, string modelId, [FromBody] ICollection<PutItemVectorModel> models)
     {
+        var model = await _modelRepository.GetAsync(modelId);
+        if (model == null)
+            return NotFound($"No model with ID '{modelId}' could be found.");
+
         var item = await _itemRepository.GetAsync(itemId);
         if (item == null)
             return NotFound($"No item with ID '{itemId}' could be found.");
 
-        await _itemService.UpsertVectorsAsync(new ItemVectors
+        await _itemVectorsRepository.UpsertAsync(model, item, models.Select(x => new ItemVector
         {
-            ItemVectorsId = new ItemVectorsId(itemId, modelId),
-            Vectors = models.Select(x => new ItemVector
-            {
-                Value = x.Value
-            }).ToList()
-        });
+            Value = x.Value,
+            Properties = x.Properties?.ToExpando()
+        }).ToList());
 
         return Ok();
     }

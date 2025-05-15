@@ -147,7 +147,8 @@ public class IndexItemActionHandler : IItemActionHandler
         await _vectorApiClient.PutItemVectorsAsync(item.ItemId, "exactMatchV1", vectors.Select(x =>
             new PutItemVectorModel
             {
-                Value = x
+                Value = x,
+                Properties = null
             }).ToList());
 
         _logger.LogInformation("Item has been indexed!");

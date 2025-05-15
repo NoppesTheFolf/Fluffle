@@ -20,22 +20,14 @@ internal sealed class MongoContext : IDisposable
             classMap.AutoMap();
             classMap.MapIdProperty(x => x.ItemId);
         });
-        BsonClassMap.RegisterClassMap<ItemVectors>(classMap =>
-        {
-            classMap.AutoMap();
-            classMap.MapIdProperty(x => x.ItemVectorsId);
-        });
 
         _client = new MongoClient(options.Value.ConnectionString);
         var database = _client.GetDatabase(options.Value.DatabaseName);
 
         Items = database.GetCollection<Item>("items");
-        ItemVectors = database.GetCollection<ItemVectors>("itemVectors");
     }
 
     public IMongoCollection<Item> Items { get; }
-
-    public IMongoCollection<ItemVectors> ItemVectors { get; set; }
 
     public void Dispose()
     {
