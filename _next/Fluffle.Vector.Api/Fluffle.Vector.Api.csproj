@@ -14,7 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Fluffle.Vector.Api.Models\Fluffle.Vector.Api.Models.csproj" />
     <ProjectReference Include="..\Fluffle.Vector.Core\Fluffle.Vector.Core.csproj" />
-    <ProjectReference Include="..\Fluffle.Vector.Database\Fluffle.Vector.Database.csproj" />
+    <ProjectReference Include="..\Fluffle.Vector.Mongo\Fluffle.Vector.Mongo.csproj" />
     <ProjectReference Include="..\Fluffle.Vector.Qdrant\Fluffle.Vector.Qdrant.csproj" />
   </ItemGroup>
 

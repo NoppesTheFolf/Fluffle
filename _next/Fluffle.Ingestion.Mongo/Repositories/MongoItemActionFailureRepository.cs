@@ -1,7 +1,7 @@
 ﻿using Fluffle.Ingestion.Core.Domain.ItemActions;
 using Fluffle.Ingestion.Core.Repositories;
 
-namespace Fluffle.Ingestion.Database.Repositories;
+namespace Fluffle.Ingestion.Mongo.Repositories;
 
 internal class MongoItemActionFailureRepository : IItemActionFailureRepository
 {

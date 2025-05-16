@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Fluffle.Ingestion.Database;
+namespace Fluffle.Ingestion.Mongo;
 
 internal class MongoOptions
 {

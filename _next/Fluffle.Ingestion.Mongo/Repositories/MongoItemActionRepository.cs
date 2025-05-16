@@ -3,7 +3,7 @@ using Fluffle.Ingestion.Core.Repositories;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace Fluffle.Ingestion.Database.Repositories;
+namespace Fluffle.Ingestion.Mongo.Repositories;
 
 internal class MongoItemActionRepository : IItemActionRepository
 {

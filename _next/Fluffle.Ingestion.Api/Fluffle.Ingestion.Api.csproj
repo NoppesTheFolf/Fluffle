@@ -15,7 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Fluffle.Ingestion.Api.Models\Fluffle.Ingestion.Api.Models.csproj" />
     <ProjectReference Include="..\Fluffle.Ingestion.Core\Fluffle.Ingestion.Core.csproj" />
-    <ProjectReference Include="..\Fluffle.Ingestion.Database\Fluffle.Ingestion.Database.csproj" />
+    <ProjectReference Include="..\Fluffle.Ingestion.Mongo\Fluffle.Ingestion.Mongo.csproj" />
   </ItemGroup>
 
 </Project>
