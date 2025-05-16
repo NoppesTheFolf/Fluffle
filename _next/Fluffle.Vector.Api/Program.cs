@@ -1,6 +1,6 @@
 using Fluffle.Vector.Api.Authentication;
 using Fluffle.Vector.Core;
-using Fluffle.Vector.Database;
+using Fluffle.Vector.Mongo;
 using Fluffle.Vector.Qdrant;
 
 var builder = WebApplication.CreateBuilder(args);

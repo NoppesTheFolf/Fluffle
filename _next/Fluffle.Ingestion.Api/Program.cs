@@ -1,6 +1,6 @@
 using Fluffle.Ingestion.Api.Authentication;
 using Fluffle.Ingestion.Core;
-using Fluffle.Ingestion.Database;
+using Fluffle.Ingestion.Mongo;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;

@@ -9,9 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Ingestion.Api.Model
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Ingestion.Core", "Fluffle.Ingestion.Core\Fluffle.Ingestion.Core.csproj", "{02D67631-C705-0915-DEED-57320791427C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Ingestion.Database", "Fluffle.Ingestion.Database\Fluffle.Ingestion.Database.csproj", "{E0290244-DCDF-9670-C74D-A2B1074F9EDD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Ingestion.Mongo", "Fluffle.Ingestion.Mongo\Fluffle.Ingestion.Mongo.csproj", "{E0290244-DCDF-9670-C74D-A2B1074F9EDD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Vector.Database", "Fluffle.Vector.Database\Fluffle.Vector.Database.csproj", "{C0F34FF3-E79A-1810-E8E2-B1E70902C61B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Vector.Mongo", "Fluffle.Vector.Mongo\Fluffle.Vector.Mongo.csproj", "{C0F34FF3-E79A-1810-E8E2-B1E70902C61B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Vector.Core", "Fluffle.Vector.Core\Fluffle.Vector.Core.csproj", "{E3106688-C447-4826-DF69-10E75490DD4C}"
 EndProject

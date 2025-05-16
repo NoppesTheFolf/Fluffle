@@ -1,8 +1,8 @@
 ﻿using Fluffle.Vector.Core.Repositories;
-using Fluffle.Vector.Database.Repositories;
+using Fluffle.Vector.Mongo.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Fluffle.Vector.Database;
+namespace Fluffle.Vector.Mongo;
 
 public static class ServiceCollectionExtensions
 {

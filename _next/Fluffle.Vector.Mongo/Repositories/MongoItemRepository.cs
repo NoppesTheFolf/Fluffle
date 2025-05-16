@@ -2,7 +2,7 @@
 using Fluffle.Vector.Core.Repositories;
 using MongoDB.Driver;
 
-namespace Fluffle.Vector.Database.Repositories;
+namespace Fluffle.Vector.Mongo.Repositories;
 
 internal class MongoItemRepository : IItemRepository
 {

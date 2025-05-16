@@ -4,7 +4,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
 
-namespace Fluffle.Ingestion.Database;
+namespace Fluffle.Ingestion.Mongo;
 
 internal sealed class MongoContext : IDisposable
 {
