@@ -1,4 +1,5 @@
-﻿using Fluffle.Vector.Api.Models.Items;
+﻿
+using Fluffle.Vector.Api.Models.Items;
 using Fluffle.Vector.Api.Models.Vectors;
 using System.Net;
 using System.Net.Http.Json;
@@ -19,7 +20,7 @@ internal class VectorApiClient : IVectorApiClient
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
 
         using var response = await httpClient.PutAsJsonAsync($"/items/{Uri.EscapeDataString(itemId)}", item);
-        response.EnsureSuccessStatusCode();
+        await response.EnsureSuccessAsync();
     }
 
     public async Task<ItemModel?> GetItemAsync(string itemId)
@@ -31,7 +32,7 @@ internal class VectorApiClient : IVectorApiClient
         if (response.StatusCode == HttpStatusCode.NotFound)
             return null;
 
-        response.EnsureSuccessStatusCode();
+        await response.EnsureSuccessAsync();
         var model = await response.Content.ReadFromJsonAsync<ItemModel>();
 
         return model!;
@@ -42,7 +43,7 @@ internal class VectorApiClient : IVectorApiClient
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
 
         using var response = await httpClient.DeleteAsync($"/items/{Uri.EscapeDataString(itemId)}");
-        response.EnsureSuccessStatusCode();
+        await response.EnsureSuccessAsync();
     }
 
     public async Task PutItemVectorsAsync(string itemId, string modelId, ICollection<PutItemVectorModel> vectors)
@@ -51,7 +52,7 @@ internal class VectorApiClient : IVectorApiClient
 
         var url = $"/items/{Uri.EscapeDataString(itemId)}/vectors/{Uri.EscapeDataString(modelId)}";
         using var response = await httpClient.PutAsJsonAsync(url, vectors);
-        response.EnsureSuccessStatusCode();
+        await response.EnsureSuccessAsync();
     }
 
     public async Task<IList<VectorSearchResultModel>> SearchVectorsAsync(VectorSearchParametersModel parameters)
@@ -59,7 +60,7 @@ internal class VectorApiClient : IVectorApiClient
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
 
         using var response = await httpClient.PostAsJsonAsync("/vectors/search", parameters);
-        response.EnsureSuccessStatusCode();
+        await response.EnsureSuccessAsync();
 
         var results = await response.Content.ReadFromJsonAsync<IList<VectorSearchResultModel>>();
         return results!;
