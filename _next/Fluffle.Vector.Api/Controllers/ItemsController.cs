@@ -68,7 +68,7 @@ public class ItemsController : ControllerBase
     {
         var item = await _itemRepository.GetAsync(itemId);
         if (item == null)
-            return NotFound();
+            return NotFound($"No item with ID '{itemId}' could be found.");
 
         await _itemVectorsRepository.DeleteAsync(itemId);
         await _itemRepository.DeleteAsync(itemId);
@@ -79,13 +79,16 @@ public class ItemsController : ControllerBase
     [HttpPut("/items/{itemId}/vectors/{modelId}", Name = "PutItemVectors")]
     public async Task<IActionResult> PutItemVectorsAsync(string itemId, string modelId, [FromBody] ICollection<PutItemVectorModel> models)
     {
+        var item = await _itemRepository.GetAsync(itemId);
+        if (item == null)
+            return NotFound($"No item with ID '{itemId}' could be found.");
+
         var model = await _modelRepository.GetAsync(modelId);
         if (model == null)
             return NotFound($"No model with ID '{modelId}' could be found.");
 
-        var item = await _itemRepository.GetAsync(itemId);
-        if (item == null)
-            return NotFound($"No item with ID '{itemId}' could be found.");
+        if (models.Any(x => x.Value.Length != model.VectorDimensions))
+            return BadRequest($"Query length of at least one vector does not equal expected vector length of model ({model.VectorDimensions}).");
 
         await _itemVectorsRepository.UpsertAsync(model, item, models.Select(x => new ItemVector
         {
