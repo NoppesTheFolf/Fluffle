@@ -5,7 +5,7 @@ using Fluffle.Ingestion.Core.Services;
 
 namespace Fluffle.Ingestion.Api.Visitors;
 
-public class ItemActionServiceVisitor : IPutItemActionModelVisitor<Task>
+public class ItemActionServiceVisitor : IPutItemActionModelVisitor<Task<string>>
 {
     private readonly ItemActionService _itemActionService;
 
@@ -14,7 +14,7 @@ public class ItemActionServiceVisitor : IPutItemActionModelVisitor<Task>
         _itemActionService = itemActionService;
     }
 
-    public Task Visit(PutIndexItemActionModel model)
+    public Task<string> Visit(PutIndexItemActionModel model)
     {
         var item = new Item
         {
@@ -30,7 +30,7 @@ public class ItemActionServiceVisitor : IPutItemActionModelVisitor<Task>
         return _itemActionService.EnqueueIndexAsync(item, model.Priority);
     }
 
-    public Task Visit(PutDeleteItemActionModel model)
+    public Task<string> Visit(PutDeleteItemActionModel model)
     {
         return _itemActionService.EnqueueDeleteAsync(model.ItemId);
     }

@@ -5,20 +5,19 @@ using DotNet.Testcontainers.Images;
 using DotNet.Testcontainers.Networks;
 using System.Net;
 using Testcontainers.MongoDb;
-using Testcontainers.Qdrant;
 
-namespace Fluffle.Vector.Api.IntegrationTests;
+namespace Fluffle.Ingestion.Api.IntegrationTests;
 
 [SetUpFixture]
 public class SetUp
 {
     private static readonly INetwork Network = new NetworkBuilder()
-        .WithName("fluffle-vector-api-integration-tests")
+        .WithName("fluffle-ingestion-api-integration-tests")
         .Build();
 
     private static readonly IFutureDockerImage ApiImage = new ImageFromDockerfileBuilder()
         .WithDockerfileDirectory(CommonDirectoryPath.GetSolutionDirectory(), string.Empty)
-        .WithDockerfile("./Fluffle.Vector.Api/Dockerfile")
+        .WithDockerfile("./Fluffle.Ingestion.Api/Dockerfile")
         .Build();
 
     private static readonly IContainer ApiContainer = new ContainerBuilder()
@@ -26,7 +25,7 @@ public class SetUp
         .WithNetwork(Network)
         .WithPortBinding(1080, 8080)
         .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(x => x.ForPort(8080).ForStatusCode(HttpStatusCode.Unauthorized)))
-        .WithBindMount(Path.Join(CommonDirectoryPath.GetSolutionDirectory().DirectoryPath, "Fluffle.Vector.Api/appsettings.Integration.json"), "/app/appsettings.json", AccessMode.ReadOnly)
+        .WithBindMount(Path.Join(CommonDirectoryPath.GetSolutionDirectory().DirectoryPath, "Fluffle.Ingestion.Api/appsettings.Integration.json"), "/app/appsettings.json", AccessMode.ReadOnly)
         .Build();
 
     private static readonly MongoDbContainer MongoContainer = new MongoDbBuilder()
@@ -37,25 +36,17 @@ public class SetUp
         .WithPassword("noo4aeNai3ohthah3rohmie9zi7veph9")
         .Build();
 
-    private static readonly QdrantContainer QdrantContainer = new QdrantBuilder()
-        .WithImage("qdrant/qdrant:v1.14.0")
-        .WithNetwork(Network)
-        .WithHostname("qdrant")
-        .WithApiKey("eep3waharah7chah4tohshe4Aephohsh")
-        .Build();
-
     [OneTimeSetUp]
     public async Task OneTimeSetUpAsync()
     {
         await Network.CreateAsync();
 
         var startMongoTask = MongoContainer.StartAsync();
-        var startQdrantTask = QdrantContainer.StartAsync();
 
         await ApiImage.CreateAsync();
         await ApiContainer.StartAsync();
 
-        await Task.WhenAll(startMongoTask, startQdrantTask);
+        await startMongoTask;
     }
 
     [OneTimeTearDown]
@@ -63,7 +54,6 @@ public class SetUp
     {
         await ApiContainer.DisposeAsync();
         await ApiImage.DisposeAsync();
-        await QdrantContainer.DisposeAsync();
         await MongoContainer.DisposeAsync();
         await Network.DisposeAsync();
     }
