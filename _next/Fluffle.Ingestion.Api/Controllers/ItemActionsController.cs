@@ -17,7 +17,7 @@ public class ItemActionsController : ControllerBase
     }
 
     [HttpPut("/item-actions", Name = "PutItemActions")]
-    public async Task<IActionResult> PutItemActionsAsync(ICollection<PutItemActionModel> models)
+    public async Task<IActionResult> PutItemActionsAsync(IList<PutItemActionModel> models)
     {
         var validator = new PutItemActionModelCollectionValidator();
         var validationResult = await validator.ValidateAsync(models);
@@ -27,11 +27,15 @@ public class ItemActionsController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+        var ids = new List<string>();
         var visitor = new ItemActionServiceVisitor(_itemActionService);
         foreach (var model in models)
-            await model.Visit(visitor);
+        {
+            var id = await model.Visit(visitor);
+            ids.Add(id);
+        }
 
-        return Accepted();
+        return Accepted(ids);
     }
 
     [HttpGet("/item-actions/dequeue", Name = "DequeueItemAction")]

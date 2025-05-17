@@ -18,11 +18,11 @@ public class ItemActionService
         _failureRepository = failureRepository;
     }
 
-    public async Task EnqueueIndexAsync(Item item, long priority)
+    public async Task<string> EnqueueIndexAsync(Item item, long priority)
     {
         using var _ = await Locker.LockAsync();
 
-        await EnqueueAsync(item.ItemId, visibleWhen => new IndexItemAction
+        return await EnqueueAsync(item.ItemId, visibleWhen => new IndexItemAction
         {
             ItemId = item.ItemId,
             Priority = priority,
@@ -32,11 +32,11 @@ public class ItemActionService
         });
     }
 
-    public async Task EnqueueDeleteAsync(string itemId)
+    public async Task<string> EnqueueDeleteAsync(string itemId)
     {
         using var _ = await Locker.LockAsync();
 
-        await EnqueueAsync(itemId, visibleWhen => new DeleteItemAction
+        return await EnqueueAsync(itemId, visibleWhen => new DeleteItemAction
         {
             ItemId = itemId,
             Priority = int.MaxValue,
@@ -45,7 +45,7 @@ public class ItemActionService
         });
     }
 
-    private async Task EnqueueAsync(string itemId, Func<DateTime, ItemAction> createItemAction)
+    private async Task<string> EnqueueAsync(string itemId, Func<DateTime, ItemAction> createItemAction)
     {
         var existingItemAction = await _repository.GetByItemIdAsync(itemId);
         var needsDelay = false;
@@ -66,6 +66,8 @@ public class ItemActionService
 
         var itemAction = createItemAction(visibleWhen);
         await _repository.CreateAsync(itemAction);
+
+        return itemAction.ItemActionId!;
     }
 
     public async Task<ItemAction?> DequeueAsync()

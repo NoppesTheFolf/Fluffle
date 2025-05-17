@@ -13,6 +13,17 @@ internal class IngestionApiClient : IIngestionApiClient
         _httpClientFactory = httpClientFactory;
     }
 
+    public async Task<IList<string>> PutItemActionsAsync(ICollection<PutItemActionModel> itemActions)
+    {
+        using var httpClient = _httpClientFactory.CreateClient(nameof(IngestionApiClient));
+
+        using var response = await httpClient.PutAsJsonAsync("/item-actions", itemActions);
+        response.EnsureSuccessStatusCode();
+
+        var ids = await response.Content.ReadFromJsonAsync<IList<string>>();
+        return ids!;
+    }
+
     public async Task<ItemActionModel?> DequeueItemActionAsync()
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(IngestionApiClient));
