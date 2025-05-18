@@ -126,6 +126,7 @@ internal class E621ContentProducer : ContentProducer<Post>
             FileFormatConstant.Swf => MediaTypeConstant.Other,
             FileFormatConstant.Gif => MediaTypeConstant.AnimatedImage,
             FileFormatConstant.WebP => MediaTypeConstant.Image,
+            FileFormatConstant.Mp4 => MediaTypeConstant.Video,
             _ => throw new ArgumentOutOfRangeException(nameof(src))
         };
     }
