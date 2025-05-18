@@ -23,16 +23,7 @@ internal class QdrantItemVectorsRepository : IItemVectorsRepository
     {
         await EnsureCreatedAsync(model);
 
-        var count = (int)await _client.CountAsync(model.Id, Conditions.MatchKeyword("itemId", item.ItemId));
-        if (count == vectors.Count)
-        {
-            return;
-        }
-
-        if (count > 0)
-        {
-            await _client.DeleteAsync(model.Id, Conditions.MatchKeyword("itemId", item.ItemId), wait: true);
-        }
+        await _client.DeleteAsync(model.Id, Conditions.MatchKeyword("itemId", item.ItemId), wait: true);
 
         var points = vectors.Select(x =>
         {
