@@ -45,7 +45,7 @@ public class Tests
     [Test, Order(2)]
     public async Task Test02_AcknowledgeItemAction_NonExistentItemAction()
     {
-        await _ingestionApiClient.AcknowledgeItemActionAsync("non-existent-id");
+        await _ingestionApiClient.AcknowledgeItemActionAsync("nonExistentId");
     }
 
     [Test, Order(3)]

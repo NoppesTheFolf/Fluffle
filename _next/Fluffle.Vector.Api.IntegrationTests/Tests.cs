@@ -39,14 +39,14 @@ public class Tests
     [Test, Order(1)]
     public async Task Test01_GetItem_NonExistentItem()
     {
-        var item = await _vectorApiClient.GetItemAsync("non-existent-id");
+        var item = await _vectorApiClient.GetItemAsync("nonExistentId");
         item.ShouldBeNull();
     }
 
     [Test, Order(2)]
     public async Task Test02_PutItem_NewItem()
     {
-        await _vectorApiClient.PutItemAsync("test-id", new PutItemModel
+        await _vectorApiClient.PutItemAsync("testId", new PutItemModel
         {
             Images = new List<ImageModel>
             {
@@ -82,12 +82,12 @@ public class Tests
     [Test, Order(3)]
     public async Task Test03_GetItem_ItemExists()
     {
-        var item = await _vectorApiClient.GetItemAsync("test-id");
+        var item = await _vectorApiClient.GetItemAsync("testId");
 
         var itemSerialized = JsonSerializer.Serialize(item, JsonSerializerOptions.Web);
         var expectedItemSerialized = """
                                      {
-                                         "itemId": "test-id",
+                                         "itemId": "testId",
                                          "images": [
                                              {
                                                  "width": 123,
@@ -123,72 +123,72 @@ public class Tests
     [Test, Order(4)]
     public async Task Test04_PutItemVectors_NonExistentItem()
     {
-        var act = _vectorApiClient.PutItemVectorsAsync("non-existent-id", "exactMatchV1",
+        var act = _vectorApiClient.PutItemVectorsAsync("nonExistentId", "integrationTest",
             new List<PutItemVectorModel>
             {
                 new()
                 {
-                    Value = CreateRandomVector(1),
+                    Value = [0.1f, 0.2f],
                     Properties = null
                 }
             });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
-        e.Message.ShouldBe("No item with ID 'non-existent-id' could be found.");
+        e.Message.ShouldBe("No item with ID 'nonExistentId' could be found.");
     }
 
     [Test, Order(5)]
     public async Task Test05_PutItemVectors_NonExistentModel()
     {
-        var act = _vectorApiClient.PutItemVectorsAsync("test-id", "non-existent-model",
+        var act = _vectorApiClient.PutItemVectorsAsync("testId", "nonExistentModel",
             new List<PutItemVectorModel>
             {
                 new()
                 {
-                    Value = CreateRandomVector(1),
+                    Value = [0.1f, 0.2f],
                     Properties = null
                 }
             });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
-        e.Message.ShouldBe("No model with ID 'non-existent-model' could be found.");
+        e.Message.ShouldBe("No model with ID 'nonExistentModel' could be found.");
     }
 
     [Test, Order(6)]
     public async Task Test06_PutItemVectors_InvalidVectorLength()
     {
-        var act = _vectorApiClient.PutItemVectorsAsync("test-id", "exactMatchV1",
+        var act = _vectorApiClient.PutItemVectorsAsync("testId", "integrationTest",
             new List<PutItemVectorModel>
             {
                 new()
                 {
-                    Value = CreateRandomVector(32),
+                    Value = [0.1f, 0.2f],
                     Properties = null
                 },
                 new()
                 {
-                    Value = CreateRandomVector(1),
+                    Value = [0.1f],
                     Properties = null
                 }
             });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
-        e.Message.ShouldBe("Query length of at least one vector does not equal expected vector length of model (32).");
+        e.Message.ShouldBe("Query length of at least one vector does not equal expected vector length of model (2).");
     }
 
     [Test, Order(7)]
     public async Task Test07_PutItemVectors_NewItemVector()
     {
-        await _vectorApiClient.PutItemVectorsAsync("test-id", "exactMatchV1", new List<PutItemVectorModel>
+        await _vectorApiClient.PutItemVectorsAsync("testId", "integrationTest", new List<PutItemVectorModel>
         {
             new()
             {
-                Value = CreateRandomVector(32),
+                Value = [0.1f, 0.2f],
                 Properties = null
             },
             new()
             {
-                Value = CreateRandomVector(32),
+                Value = [0.3f, 0.4f],
                 Properties = JsonSerializer.SerializeToNode(new
                 {
                     ValueString = "string",
@@ -203,13 +203,13 @@ public class Tests
     {
         var act = _vectorApiClient.SearchVectorsAsync(new VectorSearchParametersModel
         {
-            ModelId = "non-existent-model",
-            Query = CreateRandomVector(1),
+            ModelId = "nonExistentModel",
+            Query = [0.1f, 0.2f],
             Limit = 10
         });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
-        e.Message.ShouldBe("No model with ID 'non-existent-model' could be found.");
+        e.Message.ShouldBe("No model with ID 'nonExistentModel' could be found.");
     }
 
     [Test, Order(9)]
@@ -217,13 +217,13 @@ public class Tests
     {
         var act = _vectorApiClient.SearchVectorsAsync(new VectorSearchParametersModel
         {
-            ModelId = "exactMatchV1",
-            Query = CreateRandomVector(1),
+            ModelId = "integrationTest",
+            Query = [0.1f],
             Limit = 10
         });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
-        e.Message.ShouldBe("Query length of vector does not equal expected vector length of model (32).");
+        e.Message.ShouldBe("Query length of vector does not equal expected vector length of model (2).");
     }
 
     [Test, Order(10)]
@@ -231,53 +231,71 @@ public class Tests
     {
         var results = await _vectorApiClient.SearchVectorsAsync(new VectorSearchParametersModel
         {
-            ModelId = "exactMatchV1",
-            Query = CreateRandomVector(32),
+            ModelId = "integrationTest",
+            Query = [0.5f, 0.6f],
+            Limit = 10
+        });
+
+        results.Count.ShouldBe(2);
+        results[0].ItemId.ShouldBe("testId");
+        results[0].Distance.ShouldBe(0.998f, 0.001f);
+    }
+
+    [Test, Order(11)]
+    public async Task Test11_PutItemVectorsAndSearchVectors_ExistingItemVector()
+    {
+        await _vectorApiClient.PutItemVectorsAsync("testId", "integrationTest", new List<PutItemVectorModel>
+        {
+            new()
+            {
+                Value = [0.05f, 0.2f],
+                Properties = null
+            },
+            new()
+            {
+                Value = [-0.05f, 0.2f],
+                Properties = null
+            }
+        });
+
+        var results = await _vectorApiClient.SearchVectorsAsync(new VectorSearchParametersModel
+        {
+            ModelId = "integrationTest",
+            Query = [0.5f, 0.6f],
             Limit = 1
         });
 
         results.Count.ShouldBe(1);
-        results[0].ItemId.ShouldBe("test-id");
-        results[0].Distance.ShouldBeInRange(0, 1);
-    }
-
-    [Test, Order(11)]
-    public async Task Test11_DeleteItem_NonExistentItem()
-    {
-        var act = _vectorApiClient.DeleteItemAsync("non-existent-id");
-
-        var e = await act.ShouldThrowAsync<VectorApiException>();
-        e.Message.ShouldBe("No item with ID 'non-existent-id' could be found.");
+        results[0].ItemId.ShouldBe("testId");
+        results[0].Distance.ShouldBe(0.901f, 0.001f);
     }
 
     [Test, Order(12)]
-    public async Task Test12_DeleteItem_ItemExists()
+    public async Task Test12_DeleteItem_NonExistentItem()
     {
-        var existingItem = await _vectorApiClient.GetItemAsync("test-id");
+        var act = _vectorApiClient.DeleteItemAsync("nonExistentId");
+
+        var e = await act.ShouldThrowAsync<VectorApiException>();
+        e.Message.ShouldBe("No item with ID 'nonExistentId' could be found.");
+    }
+
+    [Test, Order(13)]
+    public async Task Test13_DeleteItem_ItemExists()
+    {
+        var existingItem = await _vectorApiClient.GetItemAsync("testId");
         existingItem.ShouldNotBeNull();
 
-        await _vectorApiClient.DeleteItemAsync("test-id");
+        await _vectorApiClient.DeleteItemAsync("testId");
 
-        var deletedItem = await _vectorApiClient.GetItemAsync("test-id");
+        var deletedItem = await _vectorApiClient.GetItemAsync("testId");
         deletedItem.ShouldBeNull();
 
         var searchResults = await _vectorApiClient.SearchVectorsAsync(new VectorSearchParametersModel
         {
-            ModelId = "exactMatchV1",
-            Query = CreateRandomVector(32),
+            ModelId = "integrationTest",
+            Query = [0.1f, 0.2f],
             Limit = 1
         });
         searchResults.ShouldBeEmpty();
-    }
-
-    private static float[] CreateRandomVector(int length)
-    {
-        var vector = new float[length];
-        for (var i = 0; i < vector.Length; i++)
-        {
-            vector[i] = (float)Random.Shared.NextDouble();
-        }
-
-        return vector;
     }
 }
