@@ -6,5 +6,5 @@ public class PutItemVectorModel
 {
     public required float[] Value { get; set; }
 
-    public required JsonNode? Properties { get; set; }
+    public required JsonNode Properties { get; set; }
 }

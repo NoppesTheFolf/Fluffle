@@ -5,6 +5,7 @@ using Nito.AsyncEx;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Fluffle.Vector.Qdrant;
 
@@ -35,8 +36,9 @@ internal class QdrantItemVectorsRepository : IItemVectorsRepository
 
             point.Payload.Add("itemId", item.ItemId);
 
-            if (x.Properties != null)
-                point.Payload.Add("properties", JsonSerializer.Serialize(x.Properties));
+            var propertiesSerialized = JsonSerializer.Serialize(x.Properties);
+            if (propertiesSerialized != "{}")
+                point.Payload.Add("properties", propertiesSerialized);
 
             return point;
         }).ToList();
@@ -51,10 +53,20 @@ internal class QdrantItemVectorsRepository : IItemVectorsRepository
             limit: (ulong)limit
         );
 
-        return results.Select(x => new VectorSearchResult
+        return results.Select(x =>
         {
-            ItemId = x.Payload["itemId"].StringValue,
-            Distance = x.Score
+            JsonNode properties = new JsonObject();
+            if (x.Payload.TryGetValue("properties", out var propertiesValue))
+            {
+                properties = JsonSerializer.Deserialize<JsonNode>(propertiesValue.StringValue)!;
+            }
+
+            return new VectorSearchResult
+            {
+                ItemId = x.Payload["itemId"].StringValue,
+                Distance = x.Score,
+                Properties = properties
+            };
         }).ToList();
     }
 

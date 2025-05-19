@@ -90,7 +90,7 @@ public class ItemsController : ControllerBase
         await _itemVectorsRepository.UpsertAsync(model, item, models.Select(x => new ItemVector
         {
             Value = x.Value,
-            Properties = x.Properties?.ToExpando()
+            Properties = x.Properties.ToExpando()
         }).ToList());
 
         return Ok();

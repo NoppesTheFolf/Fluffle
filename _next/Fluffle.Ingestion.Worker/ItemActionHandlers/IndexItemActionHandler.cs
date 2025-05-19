@@ -6,6 +6,7 @@ using Fluffle.Ingestion.Worker.ThumbnailStorage;
 using Fluffle.Vector.Api.Client;
 using Fluffle.Vector.Api.Models.Items;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using IngestionItemModel = Fluffle.Ingestion.Api.Models.Items.ItemModel;
 using PutItemModel = Fluffle.Vector.Api.Models.Items.PutItemModel;
 using VectorItemModel = Fluffle.Vector.Api.Models.Items.ItemModel;
@@ -148,7 +149,7 @@ public class IndexItemActionHandler : IItemActionHandler
             new PutItemVectorModel
             {
                 Value = x,
-                Properties = null
+                Properties = new JsonObject()
             }).ToList());
 
         _logger.LogInformation("Item has been indexed!");

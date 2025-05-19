@@ -4,5 +4,5 @@ public class ItemVector
 {
     public required float[] Value { get; set; }
 
-    public required object? Properties { get; set; }
+    public required object Properties { get; set; }
 }
