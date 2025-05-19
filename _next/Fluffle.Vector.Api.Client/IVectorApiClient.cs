@@ -9,6 +9,8 @@ public interface IVectorApiClient
 
     Task<ItemModel?> GetItemAsync(string itemId);
 
+    Task<ICollection<ItemModel>> GetItemsAsync(ICollection<string> itemIds);
+
     Task DeleteItemAsync(string itemId);
 
     Task PutItemVectorsAsync(string itemId, string modelId, ICollection<PutItemVectorModel> vectors);
