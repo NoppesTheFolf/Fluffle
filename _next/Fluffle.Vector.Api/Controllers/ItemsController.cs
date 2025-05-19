@@ -3,7 +3,6 @@ using Fluffle.Vector.Api.Models.Items;
 using Fluffle.Vector.Core.Domain.Items;
 using Fluffle.Vector.Core.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 
 namespace Fluffle.Vector.Api.Controllers;
 
@@ -49,18 +48,16 @@ public class ItemsController : ControllerBase
         if (item == null)
             return NotFound($"No item with ID '{itemId}' could be found.");
 
-        return Ok(new ItemModel
-        {
-            ItemId = item.ItemId,
-            Images = item.Images.Select(x => new ImageModel
-            {
-                Width = x.Width,
-                Height = x.Height,
-                Url = x.Url
-            }).ToList(),
-            Properties = JsonSerializer.SerializeToNode(item.Properties) ??
-                         throw new InvalidOperationException("Item properties should never serialize to null.")
-        });
+        return Ok(item.ToModel());
+    }
+
+    [HttpGet("/items", Name = "GetItems")]
+    public async Task<IActionResult> GetItemsAsync([FromQuery] ICollection<string> itemIds)
+    {
+        var items = await _itemRepository.GetAsync(itemIds);
+
+        var models = items.Select(x => x.ToModel()).ToList();
+        return Ok(models);
     }
 
     [HttpDelete("/items/{itemId}", Name = "DeleteItem")]

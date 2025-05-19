@@ -80,7 +80,7 @@ public class Tests
     }
 
     [Test, Order(3)]
-    public async Task Test03_GetItem_ItemExists()
+    public async Task Test03_GetItemAndGetItems_ItemExists()
     {
         var item = await _vectorApiClient.GetItemAsync("testId");
 
@@ -116,8 +116,11 @@ public class Tests
                                          }
                                      }
                                      """.Replace("\r", string.Empty).Replace("\n", string.Empty).Replace(" ", string.Empty);
-
         itemSerialized.ShouldBe(expectedItemSerialized);
+
+        var items = await _vectorApiClient.GetItemsAsync(["something", "testId", "testId", "somethingElse"]);
+        var itemsSerialized = JsonSerializer.Serialize(items, JsonSerializerOptions.Web);
+        itemsSerialized.ShouldBe($"[{itemSerialized}]");
     }
 
     [Test, Order(4)]

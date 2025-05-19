@@ -30,6 +30,14 @@ internal class MongoItemRepository : IItemRepository
         return item;
     }
 
+    public async Task<ICollection<Item>> GetAsync(ICollection<string> itemIds)
+    {
+        var filter = Builders<Item>.Filter.In(x => x.ItemId, itemIds);
+        var items = await _context.Items.Find(filter).ToListAsync();
+
+        return items;
+    }
+
     public async Task DeleteAsync(string itemId)
     {
         var filter = Builders<Item>.Filter.Eq(x => x.ItemId, itemId);

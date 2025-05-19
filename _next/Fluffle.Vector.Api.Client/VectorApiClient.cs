@@ -38,6 +38,16 @@ internal class VectorApiClient : IVectorApiClient
         return model!;
     }
 
+    public async Task<ICollection<ItemModel>> GetItemsAsync(ICollection<string> itemIds)
+    {
+        using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
+
+        var parameters = string.Join("&", itemIds.Select(x => $"itemIds={Uri.EscapeDataString(x)}"));
+        var models = await httpClient.GetFromJsonAsync<ICollection<ItemModel>>($"/items?{parameters}");
+
+        return models!;
+    }
+
     public async Task DeleteItemAsync(string itemId)
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
