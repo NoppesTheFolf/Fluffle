@@ -1,6 +1,7 @@
 using Fluffle.Vector.Api.Models.Vectors;
 using Fluffle.Vector.Core.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace Fluffle.Vector.Api.Controllers;
 
@@ -34,7 +35,9 @@ public class VectorsController : ControllerBase
         var searchResultModels = searchResults.Select(x => new VectorSearchResultModel
         {
             ItemId = x.ItemId,
-            Distance = x.Distance
+            Distance = x.Distance,
+            Properties = JsonSerializer.SerializeToNode(x.Properties) ??
+                         throw new InvalidOperationException("Vector properties should never serialize to null.")
         }).ToList();
 
         return Ok(searchResultModels);

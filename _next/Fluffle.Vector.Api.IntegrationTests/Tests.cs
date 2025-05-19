@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Fluffle.Vector.Api.IntegrationTests;
 
@@ -132,7 +133,7 @@ public class Tests
                 new()
                 {
                     Value = [0.1f, 0.2f],
-                    Properties = null
+                    Properties = new JsonObject()
                 }
             });
 
@@ -149,7 +150,7 @@ public class Tests
                 new()
                 {
                     Value = [0.1f, 0.2f],
-                    Properties = null
+                    Properties = new JsonObject()
                 }
             });
 
@@ -166,12 +167,12 @@ public class Tests
                 new()
                 {
                     Value = [0.1f, 0.2f],
-                    Properties = null
+                    Properties = new JsonObject()
                 },
                 new()
                 {
                     Value = [0.1f],
-                    Properties = null
+                    Properties = new JsonObject()
                 }
             });
 
@@ -187,7 +188,7 @@ public class Tests
             new()
             {
                 Value = [0.1f, 0.2f],
-                Properties = null
+                Properties = new JsonObject()
             },
             new()
             {
@@ -196,7 +197,7 @@ public class Tests
                 {
                     ValueString = "string",
                     ValueInt = 123
-                })
+                })!
             }
         });
     }
@@ -242,6 +243,8 @@ public class Tests
         results.Count.ShouldBe(2);
         results[0].ItemId.ShouldBe("testId");
         results[0].Distance.ShouldBe(0.998f, 0.001f);
+        var propertiesSerialized = JsonSerializer.Serialize(results[0].Properties);
+        propertiesSerialized.ShouldBe("""{"ValueString":"string","ValueInt":123}""");
     }
 
     [Test, Order(11)]
@@ -252,12 +255,12 @@ public class Tests
             new()
             {
                 Value = [0.05f, 0.2f],
-                Properties = null
+                Properties = new JsonObject()
             },
             new()
             {
                 Value = [-0.05f, 0.2f],
-                Properties = null
+                Properties = new JsonObject()
             }
         });
 
@@ -271,6 +274,8 @@ public class Tests
         results.Count.ShouldBe(1);
         results[0].ItemId.ShouldBe("testId");
         results[0].Distance.ShouldBe(0.901f, 0.001f);
+        var propertiesSerialized = JsonSerializer.Serialize(results[0].Properties);
+        propertiesSerialized.ShouldBe("{}");
     }
 
     [Test, Order(12)]

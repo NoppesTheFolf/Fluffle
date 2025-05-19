@@ -5,4 +5,6 @@ public class VectorSearchResult
     public required string ItemId { get; set; }
 
     public required float Distance { get; set; }
+
+    public required object Properties { get; set; }
 }
