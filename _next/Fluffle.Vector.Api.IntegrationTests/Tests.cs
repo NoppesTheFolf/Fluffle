@@ -142,9 +142,9 @@ public class Tests
     }
 
     [Test, Order(5)]
-    public async Task Test05_PutItemVectors_NonExistentModel()
+    public async Task Test05_PutItemVectors_NonExistentCollection()
     {
-        var act = _vectorApiClient.PutItemVectorsAsync("testId", "nonExistentModel",
+        var act = _vectorApiClient.PutItemVectorsAsync("testId", "nonExistentCollection",
             new List<PutItemVectorModel>
             {
                 new()
@@ -155,7 +155,7 @@ public class Tests
             });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
-        e.Message.ShouldBe("No model with ID 'nonExistentModel' could be found.");
+        e.Message.ShouldBe("No collection with ID 'nonExistentCollection' could be found.");
     }
 
     [Test, Order(6)]
@@ -177,7 +177,7 @@ public class Tests
             });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
-        e.Message.ShouldBe("Query length of at least one vector does not equal expected vector length of model (2).");
+        e.Message.ShouldBe("Query length of at least one vector does not equal expected vector length of collection (2).");
     }
 
     [Test, Order(7)]
@@ -203,39 +203,36 @@ public class Tests
     }
 
     [Test, Order(8)]
-    public async Task Test08_SearchVectorsAsync_NonExistentModel()
+    public async Task Test08_SearchVectorsAsync_NonExistentCollection()
     {
-        var act = _vectorApiClient.SearchVectorsAsync(new VectorSearchParametersModel
+        var act = _vectorApiClient.SearchCollectionAsync("nonExistentCollection", new VectorSearchParametersModel
         {
-            ModelId = "nonExistentModel",
             Query = [0.1f, 0.2f],
             Limit = 10
         });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
-        e.Message.ShouldBe("No model with ID 'nonExistentModel' could be found.");
+        e.Message.ShouldBe("No collection with ID 'nonExistentCollection' could be found.");
     }
 
     [Test, Order(9)]
     public async Task Test09_SearchVectorsAsync_InvalidVectorLength()
     {
-        var act = _vectorApiClient.SearchVectorsAsync(new VectorSearchParametersModel
+        var act = _vectorApiClient.SearchCollectionAsync("integrationTest", new VectorSearchParametersModel
         {
-            ModelId = "integrationTest",
             Query = [0.1f],
             Limit = 10
         });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
-        e.Message.ShouldBe("Query length of vector does not equal expected vector length of model (2).");
+        e.Message.ShouldBe("Query length of vector does not equal expected vector length of collection (2).");
     }
 
     [Test, Order(10)]
     public async Task Test10_SearchVectorsAsync_CreatedItemReturned()
     {
-        var results = await _vectorApiClient.SearchVectorsAsync(new VectorSearchParametersModel
+        var results = await _vectorApiClient.SearchCollectionAsync("integrationTest", new VectorSearchParametersModel
         {
-            ModelId = "integrationTest",
             Query = [0.5f, 0.6f],
             Limit = 10
         });
@@ -264,9 +261,8 @@ public class Tests
             }
         });
 
-        var results = await _vectorApiClient.SearchVectorsAsync(new VectorSearchParametersModel
+        var results = await _vectorApiClient.SearchCollectionAsync("integrationTest", new VectorSearchParametersModel
         {
-            ModelId = "integrationTest",
             Query = [0.5f, 0.6f],
             Limit = 1
         });
@@ -298,9 +294,8 @@ public class Tests
         var deletedItem = await _vectorApiClient.GetItemAsync("testId");
         deletedItem.ShouldBeNull();
 
-        var searchResults = await _vectorApiClient.SearchVectorsAsync(new VectorSearchParametersModel
+        var searchResults = await _vectorApiClient.SearchCollectionAsync("integrationTest", new VectorSearchParametersModel
         {
-            ModelId = "integrationTest",
             Query = [0.1f, 0.2f],
             Limit = 1
         });

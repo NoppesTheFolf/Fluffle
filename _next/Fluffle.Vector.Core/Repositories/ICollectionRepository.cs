@@ -2,7 +2,7 @@
 
 namespace Fluffle.Vector.Core.Repositories;
 
-public interface IModelRepository
+public interface ICollectionRepository
 {
-    Task<Model?> GetAsync(string modelId);
+    Task<Model?> GetAsync(string collectionId);
 }
