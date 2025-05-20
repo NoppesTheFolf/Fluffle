@@ -56,20 +56,20 @@ internal class VectorApiClient : IVectorApiClient
         await response.EnsureSuccessAsync();
     }
 
-    public async Task PutItemVectorsAsync(string itemId, string modelId, ICollection<PutItemVectorModel> vectors)
+    public async Task PutItemVectorsAsync(string itemId, string collectionId, ICollection<PutItemVectorModel> vectors)
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
 
-        var url = $"/items/{Uri.EscapeDataString(itemId)}/vectors/{Uri.EscapeDataString(modelId)}";
+        var url = $"/items/{Uri.EscapeDataString(itemId)}/vectors/{Uri.EscapeDataString(collectionId)}";
         using var response = await httpClient.PutAsJsonAsync(url, vectors);
         await response.EnsureSuccessAsync();
     }
 
-    public async Task<IList<VectorSearchResultModel>> SearchVectorsAsync(VectorSearchParametersModel parameters)
+    public async Task<IList<VectorSearchResultModel>> SearchCollectionAsync(string collectionId, VectorSearchParametersModel parameters)
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
 
-        using var response = await httpClient.PostAsJsonAsync("/vectors/search", parameters);
+        using var response = await httpClient.PostAsJsonAsync($"/collections/{Uri.EscapeDataString(collectionId)}/search", parameters);
         await response.EnsureSuccessAsync();
 
         var results = await response.Content.ReadFromJsonAsync<IList<VectorSearchResultModel>>();

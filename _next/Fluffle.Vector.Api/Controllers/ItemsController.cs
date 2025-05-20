@@ -11,16 +11,16 @@ public class ItemsController : ControllerBase
 {
     private readonly IItemRepository _itemRepository;
     private readonly IItemVectorsRepository _itemVectorsRepository;
-    private readonly IModelRepository _modelRepository;
+    private readonly ICollectionRepository _collectionRepository;
 
     public ItemsController(
         IItemRepository itemRepository,
         IItemVectorsRepository itemVectorsRepository,
-        IModelRepository modelRepository)
+        ICollectionRepository collectionRepository)
     {
         _itemRepository = itemRepository;
         _itemVectorsRepository = itemVectorsRepository;
-        _modelRepository = modelRepository;
+        _collectionRepository = collectionRepository;
     }
 
     [HttpPut("/items/{itemId}", Name = "PutItem")]
@@ -73,21 +73,21 @@ public class ItemsController : ControllerBase
         return Ok();
     }
 
-    [HttpPut("/items/{itemId}/vectors/{modelId}", Name = "PutItemVectors")]
-    public async Task<IActionResult> PutItemVectorsAsync(string itemId, string modelId, [FromBody] ICollection<PutItemVectorModel> models)
+    [HttpPut("/items/{itemId}/vectors/{collectionId}", Name = "PutItemVectors")]
+    public async Task<IActionResult> PutItemVectorsAsync(string itemId, string collectionId, [FromBody] ICollection<PutItemVectorModel> models)
     {
         var item = await _itemRepository.GetAsync(itemId);
         if (item == null)
             return NotFound($"No item with ID '{itemId}' could be found.");
 
-        var model = await _modelRepository.GetAsync(modelId);
-        if (model == null)
-            return NotFound($"No model with ID '{modelId}' could be found.");
+        var collection = await _collectionRepository.GetAsync(collectionId);
+        if (collection == null)
+            return NotFound($"No collection with ID '{collectionId}' could be found.");
 
-        if (models.Any(x => x.Value.Length != model.VectorDimensions))
-            return BadRequest($"Query length of at least one vector does not equal expected vector length of model ({model.VectorDimensions}).");
+        if (models.Any(x => x.Value.Length != collection.VectorDimensions))
+            return BadRequest($"Query length of at least one vector does not equal expected vector length of collection ({collection.VectorDimensions}).");
 
-        await _itemVectorsRepository.UpsertAsync(model, item, models.Select(x => new ItemVector
+        await _itemVectorsRepository.UpsertAsync(collection, item, models.Select(x => new ItemVector
         {
             Value = x.Value,
             Properties = x.Properties.ToExpando()

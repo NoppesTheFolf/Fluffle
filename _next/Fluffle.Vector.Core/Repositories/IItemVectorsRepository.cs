@@ -7,7 +7,7 @@ public interface IItemVectorsRepository
 {
     Task UpsertAsync(Model model, Item item, ICollection<ItemVector> vectors);
 
-    Task<IList<VectorSearchResult>> GetAsync(string modelId, float[] query, int limit);
+    Task<IList<VectorSearchResult>> GetAsync(string collectionId, float[] query, int limit);
 
     Task DeleteAsync(string itemId);
 }

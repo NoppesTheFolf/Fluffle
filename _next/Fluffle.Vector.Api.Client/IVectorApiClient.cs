@@ -13,7 +13,7 @@ public interface IVectorApiClient
 
     Task DeleteItemAsync(string itemId);
 
-    Task PutItemVectorsAsync(string itemId, string modelId, ICollection<PutItemVectorModel> vectors);
+    Task PutItemVectorsAsync(string itemId, string collectionId, ICollection<PutItemVectorModel> vectors);
 
-    Task<IList<VectorSearchResultModel>> SearchVectorsAsync(VectorSearchParametersModel parameters);
+    Task<IList<VectorSearchResultModel>> SearchCollectionAsync(string collectionId, VectorSearchParametersModel parameters);
 }

@@ -7,7 +7,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddCore(this IServiceCollection services)
     {
-        services.AddSingleton<IModelRepository, PredefinedModelRepository>();
+        services.AddSingleton<ICollectionRepository, PredefinedCollectionRepository>();
 
         return services;
     }

@@ -45,10 +45,10 @@ internal class QdrantItemVectorsRepository : IItemVectorsRepository
         await _client.UpsertAsync(model.Id, points, wait: true);
     }
 
-    public async Task<IList<VectorSearchResult>> GetAsync(string modelId, float[] query, int limit)
+    public async Task<IList<VectorSearchResult>> GetAsync(string collectionId, float[] query, int limit)
     {
         var results = await _client.QueryAsync(
-            collectionName: modelId,
+            collectionName: collectionId,
             query: query,
             limit: (ulong)limit
         );
