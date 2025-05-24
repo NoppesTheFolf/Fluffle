@@ -5,10 +5,10 @@ using Fluffle.Ingestion.Worker.ItemContentClient;
 using Fluffle.Ingestion.Worker.ThumbnailStorage;
 using Fluffle.Vector.Api.Client;
 using Fluffle.Vector.Api.Models.Items;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using IngestionItemModel = Fluffle.Ingestion.Api.Models.Items.ItemModel;
 using PutItemModel = Fluffle.Vector.Api.Models.Items.PutItemModel;
+using ThumbnailModel = Fluffle.Vector.Api.Models.Items.ThumbnailModel;
 using VectorItemModel = Fluffle.Vector.Api.Models.Items.ItemModel;
 
 namespace Fluffle.Ingestion.Worker.ItemActionHandlers;
@@ -51,14 +51,6 @@ public class IndexItemActionHandler : IItemActionHandler
 
     private async Task HandleExistingItem(VectorItemModel existingItem, IngestionItemModel newItem)
     {
-        _logger.LogInformation("Updating existing item...");
-
-        var propertiesClone = newItem.Properties.DeepClone();
-
-        var thumbnailNode = existingItem.Properties["thumbnail"];
-        if (thumbnailNode != null)
-            propertiesClone["thumbnail"] = thumbnailNode.DeepClone();
-
         _logger.LogInformation("Updating item information on Vector API...");
         await _vectorApiClient.PutItemAsync(existingItem.ItemId, new PutItemModel
         {
@@ -68,7 +60,8 @@ public class IndexItemActionHandler : IItemActionHandler
                 Height = x.Height,
                 Url = x.Url
             }).ToList(),
-            Properties = propertiesClone
+            Thumbnail = existingItem.Thumbnail,
+            Properties = newItem.Properties
         });
 
         _logger.LogInformation("Item has been updated!");
@@ -82,7 +75,7 @@ public class IndexItemActionHandler : IItemActionHandler
         var (downloadedImage, imageStream) = await _itemContentClient.DownloadAsync(item.Images);
         await using var _ = imageStream;
 
-        ThumbnailModel thumbnail;
+        Imaging.Api.Client.ThumbnailModel thumbnail;
         if (new Uri(downloadedImage.Url).Host == "static.fluffle.xyz")
         {
             _logger.LogInformation("Detected content from legacy Fluffle. Skipping thumbnail creation.");
@@ -97,7 +90,7 @@ public class IndexItemActionHandler : IItemActionHandler
             thumbnailStream.Position = 0;
             var thumbnailMetadata = await _imagingApiClient.GetMetadataAsync(thumbnailStream);
 
-            thumbnail = new ThumbnailModel
+            thumbnail = new Imaging.Api.Client.ThumbnailModel
             {
                 Thumbnail = thumbnailData,
                 Metadata = thumbnailMetadata
@@ -124,16 +117,6 @@ public class IndexItemActionHandler : IItemActionHandler
         }
 
         _logger.LogInformation("Adding item and vectors to Vector API...");
-        var properties = item.Properties.DeepClone();
-        properties["thumbnail"] = JsonSerializer.SerializeToNode(new
-        {
-            width = thumbnail.Metadata.Width,
-            height = thumbnail.Metadata.Height,
-            centerX = thumbnail.Metadata.CenterX,
-            centerY = thumbnail.Metadata.CenterY,
-            url = thumbnailUrl
-        });
-
         await _vectorApiClient.PutItemAsync(item.ItemId, new PutItemModel
         {
             Images = item.Images.Select(x => new ImageModel
@@ -142,7 +125,15 @@ public class IndexItemActionHandler : IItemActionHandler
                 Height = x.Height,
                 Url = x.Url
             }).ToList(),
-            Properties = properties
+            Thumbnail = new ThumbnailModel
+            {
+                Width = thumbnail.Metadata.Width,
+                Height = thumbnail.Metadata.Height,
+                CenterX = thumbnail.Metadata.CenterX,
+                CenterY = thumbnail.Metadata.CenterY,
+                Url = thumbnailUrl
+            },
+            Properties = item.Properties
         });
 
         await _vectorApiClient.PutItemVectorsAsync(item.ItemId, "exactMatchV1", vectors.Select(x =>

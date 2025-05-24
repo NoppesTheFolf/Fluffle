@@ -64,6 +64,14 @@ public class Tests
                     Url = "https://fluffle.xyz/def"
                 }
             },
+            Thumbnail = new ThumbnailModel
+            {
+                Width = 100,
+                Height = 200,
+                CenterX = 30,
+                CenterY = 40,
+                Url = "https://fluffle.xyz/thumbnail"
+            },
             Properties = JsonSerializer.SerializeToNode(new
             {
                 ValueString = "string",
@@ -101,6 +109,13 @@ public class Tests
                                                  "url": "https://fluffle.xyz/def"
                                              }
                                          ],
+                                         "thumbnail": {
+                                             "width": 100,
+                                             "height": 200,
+                                             "centerX": 30,
+                                             "centerY": 40,
+                                             "url": "https://fluffle.xyz/thumbnail"
+                                         },
                                          "properties": {
                                              "valueString": "string",
                                              "valueInt": 123,

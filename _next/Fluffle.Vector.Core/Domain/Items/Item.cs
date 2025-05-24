@@ -6,5 +6,7 @@ public class Item
 
     public required ICollection<Image> Images { get; set; }
 
+    public required Thumbnail? Thumbnail { get; set; }
+
     public required object Properties { get; set; }
 }

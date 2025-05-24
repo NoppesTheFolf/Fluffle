@@ -35,6 +35,14 @@ public class ItemsController : ControllerBase
                 Height = x.Height,
                 Url = x.Url
             }).ToList(),
+            Thumbnail = model.Thumbnail == null ? null : new Thumbnail
+            {
+                Width = model.Thumbnail.Width,
+                Height = model.Thumbnail.Height,
+                CenterX = model.Thumbnail.CenterX,
+                CenterY = model.Thumbnail.CenterY,
+                Url = model.Thumbnail.Url
+            },
             Properties = model.Properties.ToExpando()
         });
 

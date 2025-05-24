@@ -6,5 +6,7 @@ public class PutItemModel
 {
     public required ICollection<ImageModel> Images { get; set; }
 
+    public required ThumbnailModel? Thumbnail { get; set; }
+
     public required JsonNode Properties { get; set; }
 }
