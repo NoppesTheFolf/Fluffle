@@ -41,6 +41,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.Framework", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.Legacy", "Fluffle.Feeder.Legacy\Fluffle.Feeder.Legacy.csproj", "{165D6FF9-9D87-4197-B410-3F4E0C5910F2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Search.Api", "Fluffle.Search.Api\Fluffle.Search.Api.csproj", "{38617D87-718A-A18C-B137-DC4D0F579C7A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -123,6 +125,10 @@ Global
 		{165D6FF9-9D87-4197-B410-3F4E0C5910F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{165D6FF9-9D87-4197-B410-3F4E0C5910F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{165D6FF9-9D87-4197-B410-3F4E0C5910F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38617D87-718A-A18C-B137-DC4D0F579C7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38617D87-718A-A18C-B137-DC4D0F579C7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38617D87-718A-A18C-B137-DC4D0F579C7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38617D87-718A-A18C-B137-DC4D0F579C7A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
