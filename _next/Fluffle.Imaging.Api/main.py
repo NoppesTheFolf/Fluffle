@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 import pyvips
 import math
 import base64
@@ -18,6 +18,13 @@ async def authenticate(request: Request, call_next):
         }, status_code=401)
 
     return await call_next(request)
+
+@app.post("/thumbnail-data-only")
+async def post_thumbnail_data_only(image: UploadFile, size: int, quality: int):
+    image_content = await image.read()
+    thumbnail, _, _ = create_thumbnail(open_image(image_content), size, quality)
+
+    return Response(thumbnail, media_type="image/jpeg")
 
 @app.post("/thumbnail")
 async def post_thumbnail(image: UploadFile, size: int, quality: int):
