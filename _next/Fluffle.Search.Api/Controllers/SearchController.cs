@@ -24,10 +24,10 @@ public class SearchController : ControllerBase
     [HttpPost("/exact-search", Name = "ExactSearch")]
     public async Task<IActionResult> Get(SearchModel model)
     {
-        var imageStream = model.Image.OpenReadStream();
-        var thumbnailModel = await _imagingApiClient.CreateThumbnailAsync(imageStream, 300, 95);
+        await using var imageStream = model.Image.OpenReadStream();
+        var (thumbnail, _) = await _imagingApiClient.CreateThumbnailAsync(imageStream, size: 300, quality: 95, calculateCenter: false);
 
-        using var thumbnailStream = new MemoryStream(thumbnailModel.Thumbnail);
+        using var thumbnailStream = new MemoryStream(thumbnail);
         var vectors = await _inferenceApiClient.CreateAsync([thumbnailStream]);
         var vector = vectors[0];
 

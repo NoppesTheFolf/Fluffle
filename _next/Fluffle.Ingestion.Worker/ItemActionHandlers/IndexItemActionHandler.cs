@@ -1,4 +1,5 @@
 using Fluffle.Imaging.Api.Client;
+using Fluffle.Imaging.Api.Models;
 using Fluffle.Inference.Api.Client;
 using Fluffle.Ingestion.Api.Models.ItemActions;
 using Fluffle.Ingestion.Worker.ItemContentClient;
@@ -75,7 +76,8 @@ public class IndexItemActionHandler : IItemActionHandler
         var (downloadedImage, imageStream) = await _itemContentClient.DownloadAsync(item.Images);
         await using var _ = imageStream;
 
-        Imaging.Api.Client.ThumbnailModel thumbnail;
+        byte[] thumbnail;
+        ImageMetadataModel thumbnailMetadata;
         if (new Uri(downloadedImage.Url).Host == "static.fluffle.xyz")
         {
             _logger.LogInformation("Detected content from legacy Fluffle. Skipping thumbnail creation.");
@@ -85,33 +87,27 @@ public class IndexItemActionHandler : IItemActionHandler
             await imageStream.FlushAsync();
 
             thumbnailStream.Position = 0;
-            var thumbnailData = thumbnailStream.ToArray();
+            thumbnail = thumbnailStream.ToArray();
 
             thumbnailStream.Position = 0;
-            var thumbnailMetadata = await _imagingApiClient.GetMetadataAsync(thumbnailStream);
-
-            thumbnail = new Imaging.Api.Client.ThumbnailModel
-            {
-                Thumbnail = thumbnailData,
-                Metadata = thumbnailMetadata
-            };
+            thumbnailMetadata = await _imagingApiClient.GetMetadataAsync(thumbnailStream);
         }
         else
         {
             _logger.LogInformation("Creating thumbnail...");
-            thumbnail = await _imagingApiClient.CreateThumbnailAsync(imageStream, 300, 75);
+            (thumbnail, thumbnailMetadata) = await _imagingApiClient.CreateThumbnailAsync(imageStream, size: 300, quality: 75, calculateCenter: true);
         }
 
         _logger.LogInformation("Running inference on thumbnail...");
         float[][] vectors;
-        using (var thumbnailStream = new MemoryStream(thumbnail.Thumbnail))
+        using (var thumbnailStream = new MemoryStream(thumbnail))
         {
             vectors = await _inferenceApiClient.CreateAsync([thumbnailStream]);
         }
 
         _logger.LogInformation("Uploading thumbnail to storage...");
         string thumbnailUrl;
-        using (var thumbnailStream = new MemoryStream(thumbnail.Thumbnail))
+        using (var thumbnailStream = new MemoryStream(thumbnail))
         {
             thumbnailUrl = await _thumbnailStorage.PutAsync(item.ItemId, thumbnailStream);
         }
@@ -127,10 +123,10 @@ public class IndexItemActionHandler : IItemActionHandler
             }).ToList(),
             Thumbnail = new ThumbnailModel
             {
-                Width = thumbnail.Metadata.Width,
-                Height = thumbnail.Metadata.Height,
-                CenterX = thumbnail.Metadata.CenterX,
-                CenterY = thumbnail.Metadata.CenterY,
+                Width = thumbnailMetadata.Width,
+                Height = thumbnailMetadata.Height,
+                CenterX = thumbnailMetadata.Center!.X,
+                CenterY = thumbnailMetadata.Center.Y,
                 Url = thumbnailUrl
             },
             Properties = item.Properties
