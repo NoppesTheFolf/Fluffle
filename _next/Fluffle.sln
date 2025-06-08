@@ -47,6 +47,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Imaging.Api", "Fluf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Imaging.Api.Models", "Fluffle.Imaging.Api.Models\Fluffle.Imaging.Api.Models.csproj", "{58A5AB0A-C769-4375-B499-437CD86C40D9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Imaging.Api.IntegrationTests", "Fluffle.Imaging.Api.IntegrationTests\Fluffle.Imaging.Api.IntegrationTests.csproj", "{2FE61C65-78A1-41CF-84CE-7CC0A55F670C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -141,6 +143,10 @@ Global
 		{58A5AB0A-C769-4375-B499-437CD86C40D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58A5AB0A-C769-4375-B499-437CD86C40D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58A5AB0A-C769-4375-B499-437CD86C40D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FE61C65-78A1-41CF-84CE-7CC0A55F670C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FE61C65-78A1-41CF-84CE-7CC0A55F670C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FE61C65-78A1-41CF-84CE-7CC0A55F670C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FE61C65-78A1-41CF-84CE-7CC0A55F670C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

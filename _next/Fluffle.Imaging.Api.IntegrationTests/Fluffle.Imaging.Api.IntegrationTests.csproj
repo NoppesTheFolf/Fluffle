@@ -22,12 +22,11 @@
 		</PackageReference>
 		<PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
 		<PackageReference Include="Shouldly" Version="4.3.0" />
-		<PackageReference Include="Testcontainers.MongoDb" Version="4.5.0" />
-		<PackageReference Include="Testcontainers.Qdrant" Version="4.5.0" />
+		<PackageReference Include="Testcontainers" Version="4.5.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Fluffle.Vector.Api.Client\Fluffle.Vector.Api.Client.csproj" />
+		<ProjectReference Include="..\Fluffle.Imaging.Api.Client\Fluffle.Imaging.Api.Client.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
