@@ -19,7 +19,7 @@ internal class ImagingApiClient : IImagingApiClient
 
         using var content = new StreamContent(imageStream);
         using var response = await httpClient.PostAsync("/metadata", content);
-        response.EnsureSuccessStatusCode();
+        await response.EnsureSuccessAsync();
 
         var model = await response.Content.ReadFromJsonAsync<ImageMetadataModel>();
         return model!;
@@ -31,7 +31,7 @@ internal class ImagingApiClient : IImagingApiClient
 
         using var content = new StreamContent(imageStream);
         using var response = await httpClient.PostAsync($"/thumbnail?size={size}&quality={quality}&calculateCenter={calculateCenter}", content);
-        response.EnsureSuccessStatusCode();
+        await response.EnsureSuccessAsync();
 
         var thumbnail = await response.Content.ReadAsByteArrayAsync();
         var metadataJson = response.Headers.GetValues("Imaging-Metadata").Single();
