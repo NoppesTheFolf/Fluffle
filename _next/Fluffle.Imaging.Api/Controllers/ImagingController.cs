@@ -1,6 +1,8 @@
 ﻿using Fluffle.Imaging.Api.Extensions;
 using Fluffle.Imaging.Api.Models;
+using Fluffle.Imaging.Api.Validation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using NetVips;
 using System.Text.Json;
 
@@ -9,12 +11,20 @@ namespace Fluffle.Imaging.Api.Controllers;
 [ApiController]
 public class ImagingController : ControllerBase
 {
+    private readonly FileSignatureChecker _fileSignatureChecker;
+    private readonly IOptions<ImagingOptions> _options;
+
+    public ImagingController(FileSignatureChecker fileSignatureChecker, IOptions<ImagingOptions> options)
+    {
+        _fileSignatureChecker = fileSignatureChecker;
+        _options = options;
+    }
+
     [HttpPost("/metadata", Name = "GetMetadata")]
     public async Task<IActionResult> GetMetadataAsync()
     {
         using var memoryStream = await HttpContext.Request.Body.ToMemoryStreamAsync();
-
-        using var sourceImage = Image.NewFromStream(memoryStream, access: Enums.Access.Sequential);
+        using var sourceImage = await OpenImageSafeAsync(memoryStream);
         using var rotatedImage = sourceImage.Autorot();
 
         var (centerX, centerY) = CalculateCenter(rotatedImage);
@@ -36,6 +46,16 @@ public class ImagingController : ControllerBase
     [HttpPost("/thumbnail", Name = "CreateThumbnail")]
     public async Task<IActionResult> CreateThumbnailAsync(int size, int quality, bool calculateCenter)
     {
+        if (size < 1)
+        {
+            throw ImagingExceptions.SizeOutOfRange(1);
+        }
+
+        if (quality < 1 || quality > 100)
+        {
+            throw ImagingExceptions.QualityOutOfRange(1, 100);
+        }
+
         using var memoryStream1 = await HttpContext.Request.Body.ToMemoryStreamAsync();
 
         using var memoryStream2 = new MemoryStream();
@@ -44,7 +64,7 @@ public class ImagingController : ControllerBase
         memoryStream1.Position = 0;
         memoryStream2.Position = 0;
 
-        using var sourceImage = Image.NewFromStream(memoryStream1, access: Enums.Access.Sequential);
+        using var sourceImage = await OpenImageSafeAsync(memoryStream1);
         using var rotatedImage = sourceImage.Autorot();
 
         var (targetWidth, targetHeight) = (rotatedImage.Width, rotatedImage.Height);
@@ -123,5 +143,41 @@ public class ImagingController : ControllerBase
         var centerY = (int)Math.Floor(yLeft == 0 ? 0 : (double)yOffset / yLeft * 100);
 
         return (centerX, centerY);
+    }
+
+    private async Task<Image> OpenImageSafeAsync(MemoryStream stream)
+    {
+        if (stream.Length == 0)
+        {
+            throw ImagingExceptions.EmptyBody();
+        }
+
+        if (stream.Length > _options.Value.MaximumFileSize)
+        {
+            throw ImagingExceptions.FileSizeTooLarge(stream.Length, _options.Value.MaximumFileSize);
+        }
+
+        var isSupported = await _fileSignatureChecker.CheckAsync(stream);
+        if (!isSupported)
+        {
+            throw ImagingExceptions.UnsupportedImage();
+        }
+
+        var image = Image.NewFromStream(stream, access: Enums.Access.Sequential);
+        try
+        {
+            var imageArea = image.Width * image.Height;
+            if (imageArea > _options.Value.MaximumImageArea)
+            {
+                throw ImagingExceptions.ImageAreaTooLarge(imageArea, _options.Value.MaximumImageArea);
+            }
+
+            return image;
+        }
+        catch
+        {
+            image.Dispose();
+            throw;
+        }
     }
 }

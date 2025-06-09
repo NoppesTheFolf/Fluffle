@@ -42,7 +42,7 @@ public class Tests
     [TestCase("WebP", "webp", 600, 75, true)]
     [TestCase("Png", "png", 400, 75, true)]
     [TestCase("Gif", "gif", 300, 75, true)]
-    public async Task Test(string name, string inputExtension, int size, int quality, bool calculateCenter)
+    public async Task Test01_ValidImage_ReturnsExpected(string name, string inputExtension, int size, int quality, bool calculateCenter)
     {
         var testCasePath = Path.Join(CommonDirectoryPath.GetProjectDirectory().DirectoryPath, "TestCases", name);
         var inputImagePath = Path.Join(testCasePath, $"input.{inputExtension}");
@@ -66,5 +66,22 @@ public class Tests
         var expectedImageMetadataJson = await File.ReadAllTextAsync(expectedImageMetadataPath);
         var expectedImageMetadata = JsonSerializer.Deserialize<ImageMetadataModel>(expectedImageMetadataJson, JsonSerializerOptions.Web);
         actualImageMetadata.ShouldBeEquivalentTo(expectedImageMetadata);
+    }
+
+    [Test]
+    public async Task Test02_RandomBytes_ReturnsUnsupportedImage()
+    {
+        var buffer = new byte[4096];
+        Random.Shared.NextBytes(buffer);
+
+        await using var bufferStream1 = new MemoryStream(buffer);
+        var actMetadata = _imagingApiClient.GetMetadataAsync(bufferStream1);
+        var eMetadata = await actMetadata.ShouldThrowAsync<ImagingApiException>();
+        eMetadata.Code.ShouldBe(ImagingErrorCode.UnsupportedImage);
+
+        await using var bufferStream2 = new MemoryStream(buffer);
+        var actThumbnail = _imagingApiClient.CreateThumbnailAsync(bufferStream2, size: 300, quality: 95, calculateCenter: true);
+        var eThumbnail = await actThumbnail.ShouldThrowAsync<ImagingApiException>();
+        eThumbnail.Code.ShouldBe(ImagingErrorCode.UnsupportedImage);
     }
 }
