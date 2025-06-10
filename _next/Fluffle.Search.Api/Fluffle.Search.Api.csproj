@@ -8,6 +8,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="FluentValidation" Version="12.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\Fluffle.Imaging.Api.Client\Fluffle.Imaging.Api.Client.csproj" />
 		<ProjectReference Include="..\Fluffle.Inference.Api.Client\Fluffle.Inference.Api.Client.csproj" />
 		<ProjectReference Include="..\Fluffle.Vector.Api.Client\Fluffle.Vector.Api.Client.csproj" />

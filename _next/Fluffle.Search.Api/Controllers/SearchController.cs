@@ -1,6 +1,8 @@
 using Fluffle.Imaging.Api.Client;
+using Fluffle.Imaging.Api.Models;
 using Fluffle.Inference.Api.Client;
 using Fluffle.Search.Api.Models;
+using Fluffle.Search.Api.Validation;
 using Fluffle.Vector.Api.Client;
 using Fluffle.Vector.Api.Models.Vectors;
 using Microsoft.AspNetCore.Mvc;
@@ -24,8 +26,46 @@ public class SearchController : ControllerBase
     [HttpPost("/exact-search", Name = "ExactSearch")]
     public async Task<IActionResult> Get(SearchModel model)
     {
-        await using var imageStream = model.Image.OpenReadStream();
-        var (thumbnail, _) = await _imagingApiClient.CreateThumbnailAsync(imageStream, size: 300, quality: 95, calculateCenter: false);
+        var validationResult = await new SearchModelValidator().ValidateAsync(model);
+        if (!validationResult.IsValid)
+        {
+            return Error.Create(400, validationResult);
+        }
+
+        await using var fileStream = model.File.OpenReadStream();
+
+        byte[] thumbnail;
+        try
+        {
+            (thumbnail, _) = await _imagingApiClient.CreateThumbnailAsync(fileStream, size: 300, quality: 95, calculateCenter: false);
+        }
+        catch (ImagingApiException e)
+        {
+            if (e.Code == ImagingErrorCode.UnsupportedImage)
+            {
+                return Error.Create(
+                    statusCode: 415,
+                    code: "unsupportedFileType",
+                    message: "The type of the submitted file isn't supported. Only JPEG, PNG, WebP and GIF are. " +
+                             "If you're getting this error even though the image seems te be valid, it might be that the extension is not representative of the encoding."
+                );
+            }
+
+            if (e.Code == ImagingErrorCode.ImageAreaTooLarge)
+            {
+                return Error.Create(
+                    statusCode: 400,
+                    code: "areaTooLarge",
+                    message: "The submitted image has an area (width * height) greater than the maximum allowed area of 16 megapixels."
+                );
+            }
+
+            return Error.Create(
+                statusCode: 422,
+                code: "corruptFile",
+                message: "The submitted file could not be read by Fluffle. This likely means it's corrupt."
+            );
+        }
 
         using var thumbnailStream = new MemoryStream(thumbnail);
         var vectors = await _inferenceApiClient.CreateAsync([thumbnailStream]);
