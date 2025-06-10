@@ -1,7 +1,9 @@
 using Fluffle.Imaging.Api.Client;
 using Fluffle.Inference.Api.Client;
+using Fluffle.Search.Api.Validation;
 using Fluffle.Vector.Api.Client;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Threading.RateLimiting;
 
@@ -33,13 +35,25 @@ services.AddRateLimiter(options =>
     options.RejectionStatusCode = (int)HttpStatusCode.TooManyRequests;
 });
 
-services.AddControllers();
+services.AddSingleton<RequireUserAgentMiddleware>();
+
+services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
+
+services.AddControllers(options =>
+{
+    options.Filters.Add<CustomModelStateInvalidFilter>();
+});
 
 var app = builder.Build();
 
 app.UseForwardedHeaders();
 
 app.UseRateLimiter();
+
+app.UseMiddleware<RequireUserAgentMiddleware>();
 
 app.MapControllers();
 
