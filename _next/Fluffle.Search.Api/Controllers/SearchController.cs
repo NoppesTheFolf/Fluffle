@@ -82,7 +82,7 @@ public class SearchController : ControllerBase
         var vectorSearchResults = await _vectorApiClient.SearchCollectionAsync("exactMatchV1", new VectorSearchParametersModel
         {
             Query = vector,
-            Limit = model.Limit
+            Limit = model.Limit + 4 // An extra 4 so that D2-D5 are filled with real values for the last item
         });
         var vectorSearchResultsLookup = vectorSearchResults.ToDictionary(x => x.ItemId);
 
@@ -139,6 +139,7 @@ public class SearchController : ControllerBase
                 };
             })
             .OrderByDescending(x => x.Distance)
+            .Take(model.Limit)
             .ToList();
 
         var probableModels = models
