@@ -8,7 +8,7 @@ namespace Fluffle.Imaging.Api.Client;
 
 internal static class HttpResponseMessageExtensions
 {
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Converters =

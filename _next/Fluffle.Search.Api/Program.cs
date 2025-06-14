@@ -2,13 +2,20 @@ using Fluffle.Imaging.Api.Client;
 using Fluffle.Inference.Api.Client;
 using Fluffle.Search.Api.Validation;
 using Fluffle.Vector.Api.Client;
+using Fluffle_Search_Api;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.ML;
 using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
+
+services.AddPredictionEnginePool<ExactMatchV1IsMatch.ModelInput, ExactMatchV1IsMatch.ModelOutput>()
+    .FromFile("ML/ExactMatchV1IsMatch.mlnet");
 
 services.AddImagingApiClient();
 
@@ -29,7 +36,7 @@ services.AddRateLimiter(options =>
             factory: _ => new ConcurrencyLimiterOptions
             {
                 PermitLimit = 1,
-                QueueLimit = 4,
+                QueueLimit = 32,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst
             }));
     options.RejectionStatusCode = (int)HttpStatusCode.TooManyRequests;
@@ -45,6 +52,9 @@ services.Configure<ApiBehaviorOptions>(options =>
 services.AddControllers(options =>
 {
     options.Filters.Add<CustomModelStateInvalidFilter>();
+}).AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
 });
 
 var app = builder.Build();

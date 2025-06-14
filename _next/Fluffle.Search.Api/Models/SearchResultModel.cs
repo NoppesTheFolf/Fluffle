@@ -4,7 +4,9 @@ public class SearchResultModel
 {
     public required string Id { get; set; }
 
-    public required float Score { get; set; }
+    public required float Distance { get; set; }
+
+    public required SearchResultModelMatch Match { get; set; }
 
     public required string Platform { get; set; }
 
