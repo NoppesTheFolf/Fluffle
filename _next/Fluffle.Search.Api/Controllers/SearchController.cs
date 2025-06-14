@@ -5,7 +5,9 @@ using Fluffle.Search.Api.Models;
 using Fluffle.Search.Api.Validation;
 using Fluffle.Vector.Api.Client;
 using Fluffle.Vector.Api.Models.Vectors;
+using Fluffle_Search_Api;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.ML;
 
 namespace Fluffle.Search.Api.Controllers;
 
@@ -15,12 +17,18 @@ public class SearchController : ControllerBase
     private readonly IImagingApiClient _imagingApiClient;
     private readonly IInferenceApiClient _inferenceApiClient;
     private readonly IVectorApiClient _vectorApiClient;
+    private readonly PredictionEnginePool<ExactMatchV1IsMatch.ModelInput, ExactMatchV1IsMatch.ModelOutput> _isMatchModel;
 
-    public SearchController(IImagingApiClient imagingApiClient, IInferenceApiClient inferenceApiClient, IVectorApiClient vectorApiClient)
+    public SearchController(
+        IImagingApiClient imagingApiClient,
+        IInferenceApiClient inferenceApiClient,
+        IVectorApiClient vectorApiClient,
+        PredictionEnginePool<ExactMatchV1IsMatch.ModelInput, ExactMatchV1IsMatch.ModelOutput> isMatchModel)
     {
         _imagingApiClient = imagingApiClient;
         _inferenceApiClient = inferenceApiClient;
         _vectorApiClient = vectorApiClient;
+        _isMatchModel = isMatchModel;
     }
 
     [HttpPost("/exact-search", Name = "ExactSearch")]
@@ -78,6 +86,22 @@ public class SearchController : ControllerBase
         });
         var vectorSearchResultsLookup = vectorSearchResults.ToDictionary(x => x.ItemId);
 
+        var isMatchPredictions = new Dictionary<string, bool>();
+        for (var i = 0; i < vectorSearchResults.Count; i++)
+        {
+            var modelInput = new ExactMatchV1IsMatch.ModelInput
+            {
+                D1 = vectorSearchResults[i].Distance,
+                D2 = i + 1 < vectorSearchResults.Count ? vectorSearchResults[i + 1].Distance : 0,
+                D3 = i + 2 < vectorSearchResults.Count ? vectorSearchResults[i + 2].Distance : 0,
+                D4 = i + 3 < vectorSearchResults.Count ? vectorSearchResults[i + 3].Distance : 0,
+                D5 = i + 4 < vectorSearchResults.Count ? vectorSearchResults[i + 4].Distance : 0,
+            };
+            var modelOutput = _isMatchModel.Predict(modelInput);
+
+            isMatchPredictions[vectorSearchResults[i].ItemId] = modelOutput.PredictedLabel;
+        }
+
         var items = await _vectorApiClient.GetItemsAsync(vectorSearchResultsLookup.Keys);
 
         var models = items
@@ -96,7 +120,8 @@ public class SearchController : ControllerBase
                 return new SearchResultModel
                 {
                     Id = x.ItemId,
-                    Score = vectorSearchResult.Distance,
+                    Distance = vectorSearchResult.Distance,
+                    Match = isMatchPredictions[x.ItemId] ? SearchResultModelMatch.Match : SearchResultModelMatch.Unlikely,
                     Platform = x.ItemId.Split('_', 2)[0],
                     Url = x.Properties["url"]!.GetValue<string>(),
                     IsSfw = x.Properties["isSfw"]!.GetValue<bool>(),
@@ -113,8 +138,18 @@ public class SearchController : ControllerBase
                     Authors = authors
                 };
             })
-            .OrderByDescending(x => x.Score)
+            .OrderByDescending(x => x.Distance)
             .ToList();
+
+        var probableModels = models
+            .Where(x => x.Match == SearchResultModelMatch.Match)
+            .GroupBy(x => x.Platform)
+            .SelectMany(x => x.OrderByDescending(x => x.Distance).Skip(1).ToList());
+
+        foreach (var probableModel in probableModels)
+        {
+            probableModel.Match = SearchResultModelMatch.Probable;
+        }
 
         return Ok(new SearchResultsModel
         {
