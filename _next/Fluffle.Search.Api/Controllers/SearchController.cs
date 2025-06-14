@@ -85,14 +85,6 @@ public class SearchController : ControllerBase
             {
                 var vectorSearchResult = vectorSearchResultsLookup[x.ItemId];
 
-                string? thumbnailUrl = null;
-                if (x.Thumbnail != null)
-                {
-                    var thumbnailPath = Path.GetRelativePath("/fluffle", new Uri(x.Thumbnail.Url).AbsolutePath);
-                    var thumbnailUrlBuilder = new UriBuilder("https", "content.fluffle.xyz", 443, thumbnailPath);
-                    thumbnailUrl = thumbnailUrlBuilder.Uri.AbsoluteUri;
-                }
-
                 var authors = (x.Properties["authors"]?.AsArray() ?? [])
                     .Select(authorNode => new SearchResultAuthorModel
                     {
@@ -116,7 +108,7 @@ public class SearchController : ControllerBase
                             Height = x.Thumbnail.Height,
                             CenterX = x.Thumbnail.CenterX,
                             CenterY = x.Thumbnail.CenterY,
-                            Url = thumbnailUrl!
+                            Url = x.Thumbnail.Url
                         },
                     Authors = authors
                 };

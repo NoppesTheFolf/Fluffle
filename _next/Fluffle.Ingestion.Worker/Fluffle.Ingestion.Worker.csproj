@@ -8,13 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="52.1.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.6" />
-    <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Fluffle.Content.Api.Client\Fluffle.Content.Api.Client.csproj" />
     <ProjectReference Include="..\Fluffle.Imaging.Api.Client\Fluffle.Imaging.Api.Client.csproj" />
     <ProjectReference Include="..\Fluffle.Inference.Api.Client\Fluffle.Inference.Api.Client.csproj" />
     <ProjectReference Include="..\Fluffle.Ingestion.Api.Client\Fluffle.Ingestion.Api.Client.csproj" />

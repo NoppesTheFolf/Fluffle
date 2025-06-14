@@ -1,3 +1,4 @@
+using Fluffle.Content.Api.Client;
 using Fluffle.Imaging.Api.Client;
 using Fluffle.Inference.Api.Client;
 using Fluffle.Ingestion.Api.Client;
@@ -32,14 +33,16 @@ services.AddImagingApiClient();
 
 services.AddInferenceApiClient();
 
+services.AddContentApiClient();
+
 services.AddVectorApiClient();
 
 services.AddSingleton<IItemContentClient, ItemContentClient>();
 
-services.AddOptions<FtpThumbnailStorageOptions>()
-    .BindConfiguration(FtpThumbnailStorageOptions.FtpThumbnailStorage)
+services.AddOptions<ThumbnailStorageOptions>()
+    .BindConfiguration(ThumbnailStorageOptions.ThumbnailStorage)
     .ValidateDataAnnotations().ValidateOnStart();
-services.AddSingleton<IThumbnailStorage, FtpThumbnailStorage>();
+services.AddSingleton<IThumbnailStorage, ContentApiThumbnailStorage>();
 
 services.AddSingleton<ItemActionHandlerFactory>();
 

@@ -1,3 +1,4 @@
+using Fluffle.Content.Api.Authentication;
 using Fluffle.Content.Api.Storage;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
@@ -5,6 +6,8 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
+
+services.AddApiKey();
 
 services.AddOptions<FtpStorageOptions>()
     .BindConfiguration(FtpStorageOptions.FtpStorage)
@@ -18,6 +21,8 @@ services.Configure<ForwardedHeadersOptions>(options =>
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
 });
 
+var concurrencyLimit = builder.Configuration.GetValue<int>("Concurrency:Limit");
+var concurrencyQueueSize = builder.Configuration.GetValue<int>("Concurrency:QueueSize");
 services.AddRateLimiter(options =>
 {
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
@@ -25,8 +30,8 @@ services.AddRateLimiter(options =>
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             factory: _ => new ConcurrencyLimiterOptions
             {
-                PermitLimit = 2,
-                QueueLimit = 50,
+                PermitLimit = concurrencyLimit,
+                QueueLimit = concurrencyQueueSize,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst
             }));
     options.RejectionStatusCode = (int)HttpStatusCode.TooManyRequests;
@@ -37,6 +42,8 @@ services.AddControllers();
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+
+app.UseApiKey();
 
 app.UseRateLimiter();
 

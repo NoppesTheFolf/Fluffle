@@ -15,6 +15,26 @@ public class ContentController : ControllerBase
         _storage = storage;
     }
 
+    [HttpPut("/{*path}")]
+    public async Task<IActionResult> PutContentAsync(string? path)
+    {
+        path = path?.TrimStart('/');
+
+        if (string.IsNullOrWhiteSpace(path))
+            return BadRequest("Invalid path was provided.");
+
+        using var memoryStream = new MemoryStream();
+        await HttpContext.Request.Body.CopyToAsync(memoryStream);
+
+        if (memoryStream.Length == 0)
+            return BadRequest("No body was provided.");
+
+        memoryStream.Position = 0;
+        await _storage.PutAsync(path, memoryStream);
+
+        return Ok();
+    }
+
     [HttpGet("/{*path}")]
     public async Task<IActionResult> GetContentAsync(string? path)
     {
@@ -31,5 +51,18 @@ public class ContentController : ControllerBase
             contentType = "application/octet-stream";
 
         return new FileStreamResult(stream, contentType);
+    }
+
+    [HttpDelete("/{*path}")]
+    public async Task<IActionResult> DeleteContentAsync(string? path)
+    {
+        path = path?.TrimStart('/');
+
+        if (string.IsNullOrWhiteSpace(path))
+            return BadRequest("Invalid path was provided.");
+
+        await _storage.DeleteAsync(path);
+
+        return Ok();
     }
 }

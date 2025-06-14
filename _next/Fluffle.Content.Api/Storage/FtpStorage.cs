@@ -1,3 +1,4 @@
+using FluentFTP;
 using FluentFTP.Exceptions;
 using Microsoft.Extensions.Options;
 using System.Text.RegularExpressions;
@@ -16,6 +17,43 @@ public sealed class FtpStorage
     {
         _ftpClientPool = ftpClientPool;
         _options = options;
+    }
+
+    public async Task PutAsync(string path, Stream stream)
+    {
+        if (!stream.CanSeek)
+        {
+            throw new ArgumentException("Stream must be seekable.", nameof(stream));
+        }
+
+        var ftpPath = Path.Join(_options.Value.DirectoryPrefix, path);
+        var ftpClient = await _ftpClientPool.RentAsync();
+        try
+        {
+            var streamStartingPosition = stream.Position;
+            await ftpClient.UploadStream(stream, ftpPath, FtpRemoteExists.Overwrite, true);
+
+            var checksum = await ftpClient.GetChecksum(ftpPath, FtpHashAlgorithm.SHA1);
+
+            stream.Position = streamStartingPosition;
+            if (!checksum.Verify(stream))
+            {
+                throw new InvalidOperationException("FTP SHA1 checksum check failed after upload.");
+            }
+        }
+        catch
+        {
+            if (await ftpClient.FileExists(ftpPath))
+            {
+                await ftpClient.DeleteFile(ftpPath);
+            }
+
+            throw;
+        }
+        finally
+        {
+            _ftpClientPool.Return(ftpClient);
+        }
     }
 
     public async Task<Stream?> GetAsync(string path)
@@ -43,6 +81,23 @@ public sealed class FtpStorage
 
             stream.Position = 0;
             return stream;
+        }
+        finally
+        {
+            _ftpClientPool.Return(ftpClient);
+        }
+    }
+
+    public async Task DeleteAsync(string path)
+    {
+        var ftpClient = await _ftpClientPool.RentAsync();
+        try
+        {
+            var ftpPath = Path.Join(_options.Value.DirectoryPrefix, path);
+            if (await ftpClient.FileExists(ftpPath))
+            {
+                await ftpClient.DeleteFile(ftpPath);
+            }
         }
         finally
         {
