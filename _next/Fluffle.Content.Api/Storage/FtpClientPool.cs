@@ -31,9 +31,7 @@ public sealed class FtpClientPool : IDisposable
         }
 
         _logger.LogTrace("No FTP client available from pool, creating a new one.");
-        ftpClient = new AsyncFtpClient(_options.Value.Host, _options.Value.Username, _options.Value.Password);
-        ftpClient.Config.EncryptionMode = FtpEncryptionMode.Explicit;
-        ftpClient.Config.SelfConnectMode = FtpSelfConnectMode.Always;
+        ftpClient = CreateFtpClient();
         _logger.LogTrace("Created FTP client with ID {Id}.", RuntimeHelpers.GetHashCode(ftpClient));
 
         return ftpClient;
@@ -44,6 +42,31 @@ public sealed class FtpClientPool : IDisposable
         _logger.LogTrace("FTP client with ID {Id} has been returned to pool.", RuntimeHelpers.GetHashCode(ftpClient));
         _ftpClients.Push(ftpClient);
         _lock.Release();
+    }
+
+    public async Task<AsyncFtpClient> ReplaceAsync(AsyncFtpClient ftpClient)
+    {
+        try
+        {
+            await ftpClient.DisposeAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning(e, "An exception occurred disposing FTP client with ID {Id}.", RuntimeHelpers.GetHashCode(ftpClient));
+        }
+
+        var newFtpClient = CreateFtpClient();
+        _logger.LogTrace("FTP client with ID {OldId} is being replaced by FTP client with ID {NewId}.", RuntimeHelpers.GetHashCode(ftpClient), RuntimeHelpers.GetHashCode(newFtpClient));
+        return newFtpClient;
+    }
+
+    private AsyncFtpClient CreateFtpClient()
+    {
+        var ftpClient = new AsyncFtpClient(_options.Value.Host, _options.Value.Username, _options.Value.Password);
+        ftpClient.Config.EncryptionMode = FtpEncryptionMode.Explicit;
+        ftpClient.Config.SelfConnectMode = FtpSelfConnectMode.Always;
+
+        return ftpClient;
     }
 
     public void Dispose()
