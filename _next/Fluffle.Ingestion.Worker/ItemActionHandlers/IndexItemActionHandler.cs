@@ -3,9 +3,11 @@ using Fluffle.Imaging.Api.Models;
 using Fluffle.Inference.Api.Client;
 using Fluffle.Ingestion.Api.Models.ItemActions;
 using Fluffle.Ingestion.Worker.ItemContentClient;
+using Fluffle.Ingestion.Worker.Telemetry;
 using Fluffle.Ingestion.Worker.ThumbnailStorage;
 using Fluffle.Vector.Api.Client;
 using Fluffle.Vector.Api.Models.Items;
+using Microsoft.ApplicationInsights;
 using System.Text.Json.Nodes;
 using IngestionItemModel = Fluffle.Ingestion.Api.Models.Items.ItemModel;
 using PutItemModel = Fluffle.Vector.Api.Models.Items.PutItemModel;
@@ -23,6 +25,7 @@ public class IndexItemActionHandler : IItemActionHandler
     private readonly IThumbnailStorage _thumbnailStorage;
     private readonly IVectorApiClient _vectorApiClient;
     private readonly ILogger<IndexItemActionHandler> _logger;
+    private readonly TelemetryClient _telemetryClient;
 
     public IndexItemActionHandler(IndexItemActionModel itemAction, IServiceProvider serviceProvider)
     {
@@ -33,13 +36,14 @@ public class IndexItemActionHandler : IItemActionHandler
         _thumbnailStorage = serviceProvider.GetRequiredService<IThumbnailStorage>();
         _vectorApiClient = serviceProvider.GetRequiredService<IVectorApiClient>();
         _logger = serviceProvider.GetRequiredService<ILogger<IndexItemActionHandler>>();
+        _telemetryClient = serviceProvider.GetRequiredService<TelemetryClient>();
     }
 
     public async Task RunAsync()
     {
         var item = _itemAction.Item;
 
-        var existingItem = await _vectorApiClient.GetItemAsync(item.ItemId);
+        var existingItem = await _vectorApiClient.GetItemAsync(item.ItemId).Timed(_telemetryClient, "VectorApiGetItem");
         if (existingItem == null)
         {
             await HandleNewItem(item);
@@ -63,7 +67,7 @@ public class IndexItemActionHandler : IItemActionHandler
             }).ToList(),
             Thumbnail = existingItem.Thumbnail,
             Properties = newItem.Properties
-        });
+        }).Timed(_telemetryClient, "VectorApiPutItem");
 
         _logger.LogInformation("Item has been updated!");
     }
@@ -73,7 +77,7 @@ public class IndexItemActionHandler : IItemActionHandler
         _logger.LogInformation("Indexing new item...");
 
         _logger.LogInformation("Downloading image...");
-        var (downloadedImage, imageStream) = await _itemContentClient.DownloadAsync(item.Images);
+        var (downloadedImage, imageStream) = await _itemContentClient.DownloadAsync(item.Images).Timed(_telemetryClient, "DownloadImage");
         await using var _ = imageStream;
 
         byte[] thumbnail;
@@ -90,26 +94,26 @@ public class IndexItemActionHandler : IItemActionHandler
             thumbnail = thumbnailStream.ToArray();
 
             thumbnailStream.Position = 0;
-            thumbnailMetadata = await _imagingApiClient.GetMetadataAsync(thumbnailStream);
+            thumbnailMetadata = await _imagingApiClient.GetMetadataAsync(thumbnailStream).Timed(_telemetryClient, "ImagingApiGetMetadata");
         }
         else
         {
             _logger.LogInformation("Creating thumbnail...");
-            (thumbnail, thumbnailMetadata) = await _imagingApiClient.CreateThumbnailAsync(imageStream, size: 300, quality: 75, calculateCenter: true);
+            (thumbnail, thumbnailMetadata) = await _imagingApiClient.CreateThumbnailAsync(imageStream, size: 300, quality: 75, calculateCenter: true).Timed(_telemetryClient, "ImagingApiCreateThumbnail");
         }
 
         _logger.LogInformation("Running inference on thumbnail...");
         float[][] vectors;
         using (var thumbnailStream = new MemoryStream(thumbnail))
         {
-            vectors = await _inferenceApiClient.CreateAsync([thumbnailStream]);
+            vectors = await _inferenceApiClient.CreateAsync([thumbnailStream]).Timed(_telemetryClient, "InferenceApiGetVector");
         }
 
         _logger.LogInformation("Uploading thumbnail to storage...");
         string thumbnailUrl;
         using (var thumbnailStream = new MemoryStream(thumbnail))
         {
-            thumbnailUrl = await _thumbnailStorage.PutAsync(item.ItemId, thumbnailStream);
+            thumbnailUrl = await _thumbnailStorage.PutAsync(item.ItemId, thumbnailStream).Timed(_telemetryClient, "ContentApiPutThumbnail");
         }
 
         _logger.LogInformation("Adding item and vectors to Vector API...");
@@ -130,14 +134,14 @@ public class IndexItemActionHandler : IItemActionHandler
                 Url = thumbnailUrl
             },
             Properties = item.Properties
-        });
+        }).Timed(_telemetryClient, "VectorApiPutItem");
 
         await _vectorApiClient.PutItemVectorsAsync(item.ItemId, "exactMatchV1", vectors.Select(x =>
             new PutItemVectorModel
             {
                 Value = x,
                 Properties = new JsonObject()
-            }).ToList());
+            }).ToList()).Timed(_telemetryClient, "VectorApiPutItemVectors");
 
         _logger.LogInformation("Item has been indexed!");
     }
