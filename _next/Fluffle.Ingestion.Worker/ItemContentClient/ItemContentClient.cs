@@ -27,12 +27,12 @@ public class ItemContentClient : IItemContentClient
                 stream = await httpClient.GetStreamAsync(image.Url);
                 return (image, stream);
             }
-            catch (Exception exception)
+            catch (Exception e)
             {
                 if (stream != null)
                     await stream.DisposeAsync();
 
-                if (exception is not HttpRequestException httpRequestException)
+                if (e is not HttpRequestException httpRequestException)
                     throw;
 
                 if (httpRequestException.StatusCode == null)
