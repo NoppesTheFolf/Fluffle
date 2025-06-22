@@ -76,7 +76,7 @@ public class SearchController : ControllerBase
         }
 
         using var thumbnailStream = new MemoryStream(thumbnail);
-        var vectors = await _inferenceApiClient.CreateAsync([thumbnailStream]);
+        var vectors = await _inferenceApiClient.ExactMatchV1Async([thumbnailStream]);
         var vector = vectors[0];
 
         var vectorSearchResults = await _vectorApiClient.SearchCollectionAsync("exactMatchV1", new VectorSearchParametersModel
@@ -121,7 +121,7 @@ public class SearchController : ControllerBase
                 {
                     Id = x.ItemId,
                     Distance = vectorSearchResult.Distance,
-                    Match = isMatchPredictions[x.ItemId] ? SearchResultModelMatch.Match : SearchResultModelMatch.Unlikely,
+                    Match = isMatchPredictions[x.ItemId] ? SearchResultModelMatch.Exact : SearchResultModelMatch.Unlikely,
                     Platform = x.ItemId.Split('_', 2)[0],
                     Url = x.Properties["url"]!.GetValue<string>(),
                     IsSfw = x.Properties["isSfw"]!.GetValue<bool>(),
@@ -143,7 +143,7 @@ public class SearchController : ControllerBase
             .ToList();
 
         var probableModels = models
-            .Where(x => x.Match == SearchResultModelMatch.Match)
+            .Where(x => x.Match == SearchResultModelMatch.Exact)
             .GroupBy(x => x.Platform)
             .SelectMany(x => x.OrderByDescending(x => x.Distance).Skip(1).ToList());
 
