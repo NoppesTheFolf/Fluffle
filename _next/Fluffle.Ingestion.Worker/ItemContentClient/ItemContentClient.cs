@@ -13,6 +13,25 @@ public class ItemContentClient : IItemContentClient
         _logger = logger;
     }
 
+    public async Task<Stream> DownloadAsync(string url)
+    {
+        using var httpClient = CreateClient();
+
+        Stream? stream = null;
+        try
+        {
+            stream = await httpClient.GetStreamAsync(url);
+            return stream;
+        }
+        catch
+        {
+            if (stream != null)
+                await stream.DisposeAsync();
+
+            throw;
+        }
+    }
+
     public async Task<(ImageModel, Stream)> DownloadAsync(ICollection<ImageModel> images)
     {
         var rankedImages = RankImages(images);
