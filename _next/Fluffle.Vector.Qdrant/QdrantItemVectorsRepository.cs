@@ -45,6 +45,23 @@ internal class QdrantItemVectorsRepository : IItemVectorsRepository
         await _client.UpsertAsync(model.Id, points, wait: true);
     }
 
+    public async Task<ICollection<string>> GetCollectionsAsync(string itemId)
+    {
+        var foundCollections = new List<string>();
+
+        var collections = await _client.ListCollectionsAsync();
+        foreach (var collection in collections)
+        {
+            var count = await _client.CountAsync(collection, Conditions.MatchKeyword("itemId", itemId));
+            if (count > 0)
+            {
+                foundCollections.Add(collection);
+            }
+        }
+
+        return foundCollections;
+    }
+
     public async Task<IList<VectorSearchResult>> GetAsync(string collectionId, float[] query, int limit)
     {
         var results = await _client.QueryAsync(

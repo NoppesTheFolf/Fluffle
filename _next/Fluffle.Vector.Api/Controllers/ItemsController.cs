@@ -59,6 +59,17 @@ public class ItemsController : ControllerBase
         return Ok(item.ToModel());
     }
 
+    [HttpGet("/items/{itemId}/collections", Name = "GetItemCollections")]
+    public async Task<IActionResult> GetItemCollectionsAsync(string itemId)
+    {
+        var item = await _itemRepository.GetAsync(itemId);
+        if (item == null)
+            return NotFound($"No item with ID '{itemId}' could be found.");
+
+        var collections = await _itemVectorsRepository.GetCollectionsAsync(itemId);
+        return Ok(collections);
+    }
+
     [HttpGet("/items", Name = "GetItems")]
     public async Task<IActionResult> GetItemsAsync([FromQuery] ICollection<string> itemIds)
     {
