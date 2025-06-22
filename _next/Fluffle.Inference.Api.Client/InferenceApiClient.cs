@@ -11,7 +11,17 @@ internal class InferenceApiClient : IInferenceApiClient
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<float[][]> CreateAsync(IList<Stream> imageStreams)
+    public async Task<float[][]> ExactMatchV1Async(IList<Stream> imageStreams)
+    {
+        return await RunInferenceAsync("exact-match-v1", imageStreams);
+    }
+
+    public async Task<float[][]> ExactMatchV2Async(IList<Stream> imageStreams)
+    {
+        return await RunInferenceAsync("exact-match-v2", imageStreams);
+    }
+
+    private async Task<float[][]> RunInferenceAsync(string path, IList<Stream> imageStreams)
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(InferenceApiClient));
 
@@ -21,7 +31,7 @@ internal class InferenceApiClient : IInferenceApiClient
             content.Add(new StreamContent(imageStream), "images", "image");
         }
 
-        using var response = await httpClient.PostAsync("/", content);
+        using var response = await httpClient.PostAsync($"/{path}", content);
         response.EnsureSuccessStatusCode();
         var vectors = await response.Content.ReadFromJsonAsync<float[][]>();
 
