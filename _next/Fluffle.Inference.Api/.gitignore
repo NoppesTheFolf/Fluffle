@@ -174,4 +174,5 @@ cython_debug/
 .pypirc
 
 # Model weights are too large to save in the repository itself
-model.pt
+exactMatchV1.pt
+exactMatchV2.pt
