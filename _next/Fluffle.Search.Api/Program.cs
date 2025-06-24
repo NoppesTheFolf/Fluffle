@@ -14,8 +14,8 @@ using System.Threading.RateLimiting;
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
-services.AddPredictionEnginePool<ExactMatchV1IsMatch.ModelInput, ExactMatchV1IsMatch.ModelOutput>()
-    .FromFile("ML/ExactMatchV1IsMatch.mlnet");
+services.AddPredictionEnginePool<ExactMatchV2IsMatch.ModelInput, ExactMatchV2IsMatch.ModelOutput>()
+    .FromFile("ML/ExactMatchV2IsMatch.mlnet");
 
 services.AddImagingApiClient();
 

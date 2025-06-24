@@ -21,7 +21,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="ML\ExactMatchV1IsMatch.mlnet">
+		<None Update="ML\ExactMatchV2IsMatch.mlnet">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>

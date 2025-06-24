@@ -17,13 +17,13 @@ public class SearchController : ControllerBase
     private readonly IImagingApiClient _imagingApiClient;
     private readonly IInferenceApiClient _inferenceApiClient;
     private readonly IVectorApiClient _vectorApiClient;
-    private readonly PredictionEnginePool<ExactMatchV1IsMatch.ModelInput, ExactMatchV1IsMatch.ModelOutput> _isMatchModel;
+    private readonly PredictionEnginePool<ExactMatchV2IsMatch.ModelInput, ExactMatchV2IsMatch.ModelOutput> _isMatchModel;
 
     public SearchController(
         IImagingApiClient imagingApiClient,
         IInferenceApiClient inferenceApiClient,
         IVectorApiClient vectorApiClient,
-        PredictionEnginePool<ExactMatchV1IsMatch.ModelInput, ExactMatchV1IsMatch.ModelOutput> isMatchModel)
+        PredictionEnginePool<ExactMatchV2IsMatch.ModelInput, ExactMatchV2IsMatch.ModelOutput> isMatchModel)
     {
         _imagingApiClient = imagingApiClient;
         _inferenceApiClient = inferenceApiClient;
@@ -76,10 +76,10 @@ public class SearchController : ControllerBase
         }
 
         using var thumbnailStream = new MemoryStream(thumbnail);
-        var vectors = await _inferenceApiClient.ExactMatchV1Async([thumbnailStream]);
+        var vectors = await _inferenceApiClient.ExactMatchV2Async([thumbnailStream]);
         var vector = vectors[0];
 
-        var vectorSearchResults = await _vectorApiClient.SearchCollectionAsync("exactMatchV1", new VectorSearchParametersModel
+        var vectorSearchResults = await _vectorApiClient.SearchCollectionAsync("exactMatchV2", new VectorSearchParametersModel
         {
             Query = vector,
             Limit = model.Limit + 4 // An extra 4 so that D2-D5 are filled with real values for the last item
@@ -89,7 +89,7 @@ public class SearchController : ControllerBase
         var isMatchPredictions = new Dictionary<string, bool>();
         for (var i = 0; i < vectorSearchResults.Count; i++)
         {
-            var modelInput = new ExactMatchV1IsMatch.ModelInput
+            var modelInput = new ExactMatchV2IsMatch.ModelInput
             {
                 D1 = vectorSearchResults[i].Distance,
                 D2 = i + 1 < vectorSearchResults.Count ? vectorSearchResults[i + 1].Distance : 0,

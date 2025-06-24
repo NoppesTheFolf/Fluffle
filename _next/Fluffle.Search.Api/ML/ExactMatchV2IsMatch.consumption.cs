@@ -3,10 +3,10 @@ using Microsoft.ML;
 using Microsoft.ML.Data;
 namespace Fluffle_Search_Api
 {
-    public partial class ExactMatchV1IsMatch
+    public partial class ExactMatchV2IsMatch
     {
         /// <summary>
-        /// model input class for ExactMatchV1IsMatch.
+        /// model input class for ExactMatchV2IsMatch.
         /// </summary>
         #region model input class
         public class ModelInput
@@ -40,7 +40,7 @@ namespace Fluffle_Search_Api
         #endregion
 
         /// <summary>
-        /// model output class for ExactMatchV1IsMatch.
+        /// model output class for ExactMatchV2IsMatch.
         /// </summary>
         #region model output class
         public class ModelOutput
@@ -79,7 +79,7 @@ namespace Fluffle_Search_Api
 
         #endregion
 
-        private static string MLNetModelPath = Path.GetFullPath("ML/ExactMatchV1IsMatch.mlnet");
+        private static string MLNetModelPath = Path.GetFullPath("ML/ExactMatchV2IsMatch.mlnet");
 
         public static readonly Lazy<PredictionEngine<ModelInput, ModelOutput>> PredictEngine = new Lazy<PredictionEngine<ModelInput, ModelOutput>>(() => CreatePredictEngine(), true);
 
