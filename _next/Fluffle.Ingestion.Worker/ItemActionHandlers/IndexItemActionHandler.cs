@@ -121,13 +121,6 @@ public class IndexItemActionHandler : IItemActionHandler
             (thumbnail, thumbnailMetadata) = await _imagingApiClient.CreateThumbnailAsync(imageStream, size: 300, quality: 75, calculateCenter: true).Timed(_telemetryClient, "ImagingApiCreateThumbnail");
         }
 
-        _logger.LogInformation("Running V1 inference on thumbnail...");
-        float[][] v1Vectors;
-        using (var thumbnailStream = new MemoryStream(thumbnail))
-        {
-            v1Vectors = await _inferenceApiClient.ExactMatchV1Async([thumbnailStream]).Timed(_telemetryClient, "InferenceApiExactMatchV1");
-        }
-
         _logger.LogInformation("Running V2 inference on thumbnail...");
         float[][] v2Vectors;
         using (var thumbnailStream = new MemoryStream(thumbnail))
@@ -161,13 +154,6 @@ public class IndexItemActionHandler : IItemActionHandler
             },
             Properties = item.Properties
         }).Timed(_telemetryClient, "VectorApiPutItem");
-
-        await _vectorApiClient.PutItemVectorsAsync(item.ItemId, "exactMatchV1", v1Vectors.Select(x =>
-            new PutItemVectorModel
-            {
-                Value = x,
-                Properties = new JsonObject()
-            }).ToList()).Timed(_telemetryClient, "VectorApiPutItemVectorsExactMatchV1");
 
         await _vectorApiClient.PutItemVectorsAsync(item.ItemId, "exactMatchV2", v2Vectors.Select(x =>
             new PutItemVectorModel
