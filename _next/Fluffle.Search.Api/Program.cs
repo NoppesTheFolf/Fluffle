@@ -23,6 +23,25 @@ services.AddInferenceApiClient();
 
 services.AddVectorApiClient();
 
+services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+        }
+        else
+        {
+            policy
+                .WithOrigins("https://fluffle.xyz")
+                .AllowAnyMethod();
+        }
+    });
+});
+
 services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
@@ -41,7 +60,6 @@ services.AddRateLimiter(options =>
             }));
     options.RejectionStatusCode = (int)HttpStatusCode.TooManyRequests;
 });
-
 services.AddSingleton<RequireUserAgentMiddleware>();
 
 services.Configure<ApiBehaviorOptions>(options =>
@@ -58,6 +76,8 @@ services.AddControllers(options =>
 });
 
 var app = builder.Build();
+
+app.UseCors();
 
 app.UseForwardedHeaders();
 
