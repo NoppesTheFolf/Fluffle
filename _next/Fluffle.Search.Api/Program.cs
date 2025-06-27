@@ -1,3 +1,4 @@
+using Fluffle.Content.Api.Client;
 using Fluffle.Imaging.Api.Client;
 using Fluffle.Inference.Api.Client;
 using Fluffle.Search.Api.Validation;
@@ -22,6 +23,8 @@ services.AddImagingApiClient();
 services.AddInferenceApiClient();
 
 services.AddVectorApiClient();
+
+services.AddContentApiClient();
 
 services.AddCors(options =>
 {

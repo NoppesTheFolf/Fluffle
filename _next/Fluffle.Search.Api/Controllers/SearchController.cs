@@ -1,6 +1,8 @@
+using Fluffle.Content.Api.Client;
 using Fluffle.Imaging.Api.Client;
 using Fluffle.Imaging.Api.Models;
 using Fluffle.Inference.Api.Client;
+using Fluffle.Search.Api.IdGeneration;
 using Fluffle.Search.Api.Models;
 using Fluffle.Search.Api.Validation;
 using Fluffle.Vector.Api.Client;
@@ -18,21 +20,24 @@ public class SearchController : ControllerBase
     private readonly IInferenceApiClient _inferenceApiClient;
     private readonly IVectorApiClient _vectorApiClient;
     private readonly PredictionEnginePool<ExactMatchV2IsMatch.ModelInput, ExactMatchV2IsMatch.ModelOutput> _isMatchModel;
+    private readonly IContentApiClient _contentApiClient;
 
     public SearchController(
         IImagingApiClient imagingApiClient,
         IInferenceApiClient inferenceApiClient,
         IVectorApiClient vectorApiClient,
-        PredictionEnginePool<ExactMatchV2IsMatch.ModelInput, ExactMatchV2IsMatch.ModelOutput> isMatchModel)
+        PredictionEnginePool<ExactMatchV2IsMatch.ModelInput, ExactMatchV2IsMatch.ModelOutput> isMatchModel,
+        IContentApiClient contentApiClient)
     {
         _imagingApiClient = imagingApiClient;
         _inferenceApiClient = inferenceApiClient;
         _vectorApiClient = vectorApiClient;
         _isMatchModel = isMatchModel;
+        _contentApiClient = contentApiClient;
     }
 
     [HttpPost("/exact-search", Name = "ExactSearch")]
-    public async Task<IActionResult> Get(SearchModel model)
+    public async Task<IActionResult> ExactSearchAsync(SearchModel model)
     {
         var validationResult = await new SearchModelValidator().ValidateAsync(model);
         if (!validationResult.IsValid)
@@ -75,8 +80,8 @@ public class SearchController : ControllerBase
             );
         }
 
-        using var thumbnailStream = new MemoryStream(thumbnail);
-        var vectors = await _inferenceApiClient.ExactMatchV2Async([thumbnailStream]);
+        using var thumbnailStream1 = new MemoryStream(thumbnail);
+        var vectors = await _inferenceApiClient.ExactMatchV2Async([thumbnailStream1]);
         var vector = vectors[0];
 
         var vectorSearchResults = await _vectorApiClient.SearchCollectionAsync("exactMatchV2", new VectorSearchParametersModel
@@ -152,9 +157,16 @@ public class SearchController : ControllerBase
             probableModel.Match = SearchResultModelMatch.Probable;
         }
 
+        var requestId = $"{ShortUuidDateTime.ToString(DateTime.UtcNow)}{ShortUuid.Random(12)}";
+        if (model.CreateLink)
+        {
+            using var thumbnailStream2 = new MemoryStream(thumbnail);
+            await _contentApiClient.PutAsync($"users/{requestId}.jpg", thumbnailStream2);
+        }
+
         return Ok(new SearchResultsModel
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = requestId,
             Results = models
         });
     }
