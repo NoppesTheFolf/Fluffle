@@ -8,8 +8,6 @@ public class ImageModel
 
     public string IdOnPlatform { get; set; } = null!;
 
-    public long ChangeId { get; set; }
-
     public string ViewLocation { get; set; } = null!;
 
     public bool IsDeleted { get; set; }

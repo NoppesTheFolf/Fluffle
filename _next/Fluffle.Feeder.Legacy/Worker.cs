@@ -100,7 +100,7 @@ public class Worker : BackgroundService
 
                 var indexItemActionBuilder = new PutIndexItemActionModelBuilder()
                     .WithItemId(itemId)
-                    .WithPriority(image.ChangeId)
+                    .WithPriority(-1)
                     .WithImage(image.Thumbnail!.Width, image.Thumbnail.Height, image.Thumbnail.Location)
                     .WithUrl(image.ViewLocation)
                     .WithIsSfw(image.IsSfw);
