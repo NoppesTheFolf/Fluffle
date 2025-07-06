@@ -27,7 +27,7 @@ internal static class HttpResponseMessageExtensions
         {
             if (e.StatusCode != HttpStatusCode.BadRequest)
             {
-                return;
+                throw;
             }
 
             var errorModel = await httpResponseMessage.Content.ReadFromJsonAsync<ImagingErrorModel>(JsonSerializerOptions);
