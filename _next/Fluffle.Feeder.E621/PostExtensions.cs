@@ -4,7 +4,7 @@ using Noppes.E621;
 
 namespace Fluffle.Feeder.E621;
 
-public static class PostExtensions
+internal static class PostExtensions
 {
     public static IEnumerable<ImageModel> GetImages(this Post post)
     {

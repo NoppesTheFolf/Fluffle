@@ -6,7 +6,7 @@ using Noppes.E621;
 
 namespace Fluffle.Feeder.E621;
 
-public class E621Feeder
+internal class E621Feeder
 {
     private readonly IE621Client _e621Client;
     private readonly IIngestionApiClient _ingestionApiClient;
