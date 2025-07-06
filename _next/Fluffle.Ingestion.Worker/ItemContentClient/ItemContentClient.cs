@@ -75,12 +75,12 @@ public class ItemContentClient : IItemContentClient
         if (rankedImages.Count > 0)
             return rankedImages;
 
-        // Else order by the largest and work from there
-        rankedImages = images
+        // Else order by the largest and only use the largest available image
+        var largestImage = images
             .OrderByDescending(x => x.Width * x.Height)
-            .ToList();
+            .First();
 
-        return rankedImages;
+        return [largestImage];
     }
 
     private HttpClient CreateClient()

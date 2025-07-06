@@ -9,7 +9,9 @@ internal class CosmosOptions
     [Required]
     public required string ConnectionString { get; set; }
 
-    public string DatabaseId { get; set; } = "fluffle";
+    [Required]
+    public required string DatabaseId { get; set; }
 
-    public string ContainerId { get; set; } = "feederStates";
+    [Required]
+    public required string ContainerId { get; set; }
 }
