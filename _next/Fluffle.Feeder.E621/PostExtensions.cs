@@ -54,14 +54,14 @@ internal static class PostExtensions
         return authors;
     }
 
-    public static bool IsSfw(this Post post)
+    public static bool IsSfw(this PostRating postRating)
     {
-        var isSfw = post.Rating switch
+        var isSfw = postRating switch
         {
             PostRating.Safe => true,
             PostRating.Questionable => false,
             PostRating.Explicit => false,
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(nameof(postRating), postRating, "Unexpected post rating value")
         };
 
         return isSfw;
