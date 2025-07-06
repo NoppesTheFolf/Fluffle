@@ -5,7 +5,7 @@ using Noppes.E621;
 
 namespace Fluffle.Feeder.E621;
 
-public class RecentWorker : BackgroundService
+internal class RecentWorker : BackgroundService
 {
     private readonly IE621Client _e621Client;
     private readonly IIngestionApiClient _ingestionApiClient;
@@ -35,10 +35,8 @@ public class RecentWorker : BackgroundService
             CurrentId = null
         };
 
-        while (true)
+        while (!stoppingToken.IsCancellationRequested)
         {
-            stoppingToken.ThrowIfCancellationRequested();
-
             var timeToWait = _options.Value.RecentRunInterval - (DateTime.UtcNow - state.LastRunWhen);
             if (timeToWait > TimeSpan.Zero)
             {
@@ -53,5 +51,6 @@ public class RecentWorker : BackgroundService
             state.LastRunWhen = DateTime.UtcNow;
             await _stateRepository.PutAsync(state);
         }
+        stoppingToken.ThrowIfCancellationRequested();
     }
 }

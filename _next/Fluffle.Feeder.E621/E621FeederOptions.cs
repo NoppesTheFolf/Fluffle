@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Fluffle.Feeder.E621;
 
-public class E621FeederOptions
+internal class E621FeederOptions
 {
     public const string E621Feeder = "E621Feeder";
 

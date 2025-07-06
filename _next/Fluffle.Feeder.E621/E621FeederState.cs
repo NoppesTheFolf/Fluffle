@@ -1,6 +1,6 @@
 namespace Fluffle.Feeder.E621;
 
-public class E621FeederState
+internal class E621FeederState
 {
     public required DateTime LastRunWhen { get; set; }
 
