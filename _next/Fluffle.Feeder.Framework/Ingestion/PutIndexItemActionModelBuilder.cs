@@ -32,14 +32,19 @@ public class PutIndexItemActionModelBuilder
         return this;
     }
 
-    public PutIndexItemActionModelBuilder WithImage(int width, int height, string url)
+    public PutIndexItemActionModelBuilder WithImage(int width, int height, string url) =>
+        WithImages([
+            new ImageModel
+            {
+                Width = width,
+                Height = height,
+                Url = url
+            }
+        ]);
+
+    public PutIndexItemActionModelBuilder WithImages(IEnumerable<ImageModel> images)
     {
-        _images.Add(new ImageModel
-        {
-            Width = width,
-            Height = height,
-            Url = url
-        });
+        _images.AddRange(images);
 
         return this;
     }
@@ -58,13 +63,18 @@ public class PutIndexItemActionModelBuilder
         return this;
     }
 
-    public PutIndexItemActionModelBuilder WithAuthor(string id, string name)
+    public PutIndexItemActionModelBuilder WithAuthor(string id, string name) =>
+        WithAuthors([
+            new FeederAuthor
+            {
+                Id = id,
+                Name = name
+            }
+        ]);
+
+    public PutIndexItemActionModelBuilder WithAuthors(IEnumerable<FeederAuthor> authors)
     {
-        _authors.Add(new FeederAuthor
-        {
-            Id = id,
-            Name = name
-        });
+        _authors.AddRange(authors);
 
         return this;
     }
