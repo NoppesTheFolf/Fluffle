@@ -37,8 +37,8 @@ internal class E621Feeder
             state.CurrentId = mostRecentPost.Id + 1; // + 1 so also the most recent post gets retrieved in the loop
         }
 
-        Post? newestPost = null;
-        while (newestPost == null || newestPost.CreatedAt.UtcDateTime > retrieveUntil)
+        Post? oldestPost = null;
+        while (oldestPost == null || oldestPost.CreatedAt.UtcDateTime > retrieveUntil)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -76,7 +76,7 @@ internal class E621Feeder
                     .WithPriority(x.CreatedAt)
                     .WithUrl($"https://e621.net/posts/{x.Id}")
                     .WithImages(x.GetImages())
-                    .WithIsSfw(x.IsSfw())
+                    .WithIsSfw(x.Rating.IsSfw())
                     .WithAuthors(x.GetAuthors())
                     .Build())
                 .ToList<PutItemActionModel>();
@@ -90,7 +90,7 @@ internal class E621Feeder
             var models = indexModels.Concat(deleteModels).ToList();
             await _ingestionApiClient.PutItemActionsAsync(models);
 
-            newestPost = posts.OrderBy(x => x.CreatedAt).First();
+            oldestPost = posts.OrderBy(x => x.CreatedAt).First();
 
             state.CurrentId = minId;
             await _stateRepository.PutAsync(state);
