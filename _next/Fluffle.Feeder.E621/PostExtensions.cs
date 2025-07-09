@@ -61,7 +61,7 @@ internal static class PostExtensions
             PostRating.Safe => true,
             PostRating.Questionable => false,
             PostRating.Explicit => false,
-            _ => throw new ArgumentOutOfRangeException(nameof(postRating), postRating, "Unexpected post rating value")
+            _ => throw new ArgumentOutOfRangeException(nameof(postRating), postRating, null)
         };
 
         return isSfw;
