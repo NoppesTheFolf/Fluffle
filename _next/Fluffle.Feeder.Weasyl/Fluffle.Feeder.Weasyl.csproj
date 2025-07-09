@@ -1,15 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<UserSecretsId>dotnet-Fluffle.Feeder.E621-53ad8106-6805-447a-ace1-e32c8b19959b</UserSecretsId>
+		<UserSecretsId>dotnet-Fluffle.Feeder.Weasyl-efb1c52c-6f96-4dfe-b037-427ac9b2ec90</UserSecretsId>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Noppes.E621Client" Version="0.10.0" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Fluffle.Feeder.Framework\Fluffle.Feeder.Framework.csproj" />
