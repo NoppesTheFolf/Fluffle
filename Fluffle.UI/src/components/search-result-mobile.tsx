@@ -76,12 +76,6 @@ const SearchResultMobile = ({ data }: { data: SearchResult }) => {
             <div className="flex flex-col items-center space-y-6">
                 <img className="rounded" src={data.parameters.imageUrl} style={{ maxWidth: "75vw", maxHeight: "50vh" }} />
                 <div className="text-center">
-                    <div className="text-muted">
-                        <span>Searched {data.stats.count.toLocaleString()} images</span>
-                        {!data.parameters.fromQuery &&
-                            <span> in {data.stats.elapsedMilliseconds.toLocaleString()} ms</span>
-                        }
-                    </div>
                     <div className="text-3xl">
                         {
                             {
@@ -98,9 +92,6 @@ const SearchResultMobile = ({ data }: { data: SearchResult }) => {
             <div className="space-y-3">
                 <div className="space-y-1">
                     <div className="px-1 space-y-1">
-                        <div className="text-xs text-center text-muted">
-                            We've hidden improbable matches to keep you from viewing content you might experience as unpleasant
-                        </div>
                         <button className="btn btn-sm btn-secondary w-full space-x-1" onClick={toggleHide}>
                             <span>
                                 <Icon name={shouldHide ? "visibility-off" : "visibility"} />
