@@ -39,7 +39,8 @@ services.AddCors(options =>
         else
         {
             policy
-                .WithOrigins("https://fluffle.xyz")
+                .WithOrigins("https://fluffle.xyz", "https://*.fluffle.xyz")
+                .SetIsOriginAllowedToAllowWildcardSubdomains()
                 .AllowAnyMethod();
         }
     });
@@ -80,9 +81,9 @@ services.AddControllers(options =>
 
 var app = builder.Build();
 
-app.UseCors();
-
 app.UseForwardedHeaders();
+
+app.UseCors();
 
 app.UseRateLimiter();
 

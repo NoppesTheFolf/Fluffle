@@ -16,6 +16,26 @@ services.AddOptions<FtpStorageOptions>()
 services.AddSingleton<FtpClientPool>();
 services.AddSingleton<FtpStorage>();
 
+services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+        }
+        else
+        {
+            policy
+                .WithOrigins("https://fluffle.xyz", "https://*.fluffle.xyz")
+                .SetIsOriginAllowedToAllowWildcardSubdomains()
+                .AllowAnyMethod();
+        }
+    });
+});
+
 services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
@@ -42,6 +62,8 @@ services.AddControllers();
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+
+app.UseCors();
 
 app.UseApiKey();
 
