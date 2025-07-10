@@ -17,11 +17,14 @@ internal static class WeasylSubmissionExtensions
             };
         }
 
-        yield return new ImageModel
+        if (submission.Media.Submission != null)
         {
-            Url = submission.Media.Submission.Single().Url.AbsoluteUri,
-            Width = 2000,
-            Height = 2000
-        };
+            yield return new ImageModel
+            {
+                Url = submission.Media.Submission.Single().Url.AbsoluteUri,
+                Width = 2000,
+                Height = 2000
+            };
+        }
     }
 }
