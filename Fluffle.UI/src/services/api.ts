@@ -25,7 +25,6 @@ export interface SearchResultThumbnail {
 
 export interface SearchResultItem {
     id: number;
-    score: number;
     match: { class: string };
     platform: string;
     location: string;
@@ -41,10 +40,6 @@ export interface SearchResult {
         fromQuery: boolean
     },
     id: string,
-    stats: {
-        count: number,
-        elapsedMilliseconds: number
-    },
     probableResults: SearchResultItem[],
     improbableResults: SearchResultItem[]
 }
@@ -53,7 +48,7 @@ const Api = function () {
     const sizeLimit = 4194304;
 
     function url(path: string, params: ParamMap = {}) {
-        const baseUrl = urlcat(process.env.GATSBY_API_URL as string, 'v1');
+        const baseUrl = urlcat(process.env.GATSBY_API_URL as string);
         return urlcat(baseUrl, path, params);
     }
 
@@ -71,28 +66,6 @@ const Api = function () {
 
     function searchResultUrl(id, extension) {
         return urlcat(process.env.GATSBY_SEARCH_RESULT_URL as string, ':fileName', { fileName: `${id}.${extension}` });
-    }
-
-    function processSearchData(data, imageUrl, includeNsfw: boolean | undefined = undefined, fromQuery = false) {
-        const results = data.results.map(r => {
-            r.credits = r.credits.map(c => c.name).join(" & ");
-            r.score = (r.score - 0.5) * 2;
-            r.score = Math.sign(r.score) === -1 ? 0 : r.score;
-            r.match = r.match === 'exact' ? Match.Excellent : r.match === 'unlikely' ? Match.Unlikely : Match.Doubtful;
-            return r;
-        });
-
-        return {
-            parameters: {
-                imageUrl: imageUrl,
-                includeNsfw: includeNsfw,
-                fromQuery: fromQuery
-            },
-            id: data.id,
-            stats: data.stats,
-            probableResults: results.filter(r => r.match === Match.Excellent),
-            improbableResults: results.filter(r => r.match !== Match.Excellent)
-        } as SearchResult
     }
 
     function b2Retrieve(url, timeout = 4000, maxAttempts = 3, delayDue = 500, retryStatusCodes: number[] = []) {
@@ -138,54 +111,74 @@ const Api = function () {
             formData.append('includeNsfw', String(includeNsfw));
             formData.append('createLink', String(createLink));
 
-            return axios.post(url('search'), formData, config)
-                .then<SearchResult>(response => {
-                    return processSearchData(response.data, URL.createObjectURL(file), includeNsfw, false);
+            return axios.post(url('/exact-search'), formData, config)
+                .then(response => {
+                    const data = response.data;
+
+                    const results = data.results.map(x => {
+                        return {
+                            id: x.id,
+                            match: x.match === 'exact' ? Match.Excellent : x.match === 'probable' ? Match.Doubtful : Match.Unlikely,
+                            platform: x.platform,
+                            location: x.url,
+                            isSfw: x.isSfw,
+                            thumbnail: {
+                                width: x.thumbnail.width,
+                                centerX: x.thumbnail.centerX,
+                                height: x.thumbnail.height,
+                                centerY: x.thumbnail.centerY,
+                                location: x.thumbnail.url
+                            },
+                            credits: x.authors.map(y => y.name).join(' & ')
+                        } as SearchResultItem
+                    });
+
+                    return {
+                        parameters: {
+                            imageUrl: URL.createObjectURL(file),
+                            includeNsfw: includeNsfw,
+                            fromQuery: false
+                        },
+                        id: data.id,
+                        probableResults: results.filter(r => r.match === Match.Excellent),
+                        improbableResults: results.filter(r => r.match !== Match.Excellent)
+                    } as SearchResult
                 })
                 .catch(error => {
-                    let message = 'Something went horribly wrong and we\'re not quite sure what.';
+                    let message = 'Your request caused an error. If you think this is a bug, consider reporting it (see contact) so that it can be fixed.';
 
                     if (error.code === 'ERR_NETWORK') {
                         message = 'Fluffle seems to be offline, please try again later.';
                     } else {
-                        const errorCode = error.response.data?.code;
+                        const errorCode = error.response.data?.errors[0].code;
                         if (errorCode == null) {
                             return;
                         }
 
                         switch (errorCode) {
-                            case 'FILE_TOO_LARGE':
-                                message = 'The submitted file is too large to process.';
-                                break;
-                            case 'UNSUPPORTED_FILE_TYPE':
+                            case 'unsupportedFileType':
                                 message = 'The submitted file is of an unsupported type.';
                                 break;
-                            case 'CORRUPT_FILE':
-                                message = 'The image you submitted seems to be corrupt.';
-                                break;
-                            case 'AREA_TOO_LARGE':
+                            case 'areaTooLarge':
                                 message = 'The submitted image its area exceeds the limit of 16MP.';
                                 break;
-                            case 'UNAVAILABLE':
-                                message = 'Fluffle is still starting up. Please try again in a bit.';
-                                break;
-                            case 'KABOOM':
-                                message = `You crashed Fluffle, congratulations! Please consider reporting this (see contact). Make sure you can provide the following code if you choose to do so: ${error.response.data.traceId}`;
+                            case 'corruptFile':
+                                message = 'The image you submitted seems to be corrupt.';
                                 break;
                         }
                     }
 
                     return Promise.reject(message);
-                })
+                });
         },
-        processSearchData,
         searchResultUrl,
         searchResult(id: string, maxAttempts: number, delayDue: number, retryStatusCodes: number[]) {
-            return b2Retrieve(searchResultUrl(id, 'json'), undefined, maxAttempts, delayDue, retryStatusCodes).pipe(
-                map(response => {
-                    return processSearchData(response.data, searchResultUrl(id, 'jpg'), undefined, true);
-                })
-            );
+            // TODO
+            // return b2Retrieve(searchResultUrl(id, 'json'), undefined, maxAttempts, delayDue, retryStatusCodes).pipe(
+            //     map(response => {
+            //         return processSearchData(response.data, searchResultUrl(id, 'jpg'), undefined, true);
+            //     })
+            // );
         },
         async status(config: AxiosRequestConfig | undefined = undefined) {
             const response = await axios.get(url('status'), config);

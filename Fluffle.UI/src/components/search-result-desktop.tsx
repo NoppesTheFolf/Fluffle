@@ -14,7 +14,6 @@ const GalleryDesktopCard = ({ image, shouldBlur }: { image: GalleryRowImage<Sear
                 <span className="w-6">
                     <Icon name={image.data.platform} />
                 </span>
-                <div>{(image.data.score * 100).toFixed(2)}%</div>
             </div>
             <div className={`absolute w-full h-full bg-black transition-colors z-10 ${hasHover ? 'bg-opacity-20' : 'bg-opacity-0'}`}></div>
             <div className={`absolute bottom-0 w-full px-1 py-1.5 whitespace-nowrap overflow-hidden overflow-ellipsis transition-opacity bg-black bg-opacity-80 text-xs z-20 opacity-0 ${hasHover ? 'opacity-100' : ''}`}>
@@ -106,12 +105,6 @@ const SearchResultDesktop = ({ data }: { data: SearchResult }) => {
             <div className="flex justify-center items-center space-x-3">
                 <img className="rounded" src={data.parameters.imageUrl} style={{ maxWidth: "50%", height: "100%", maxHeight: "300px" }} />
                 <div className="max-w-xl">
-                    <div className="text-muted">
-                        <span>Searched {data.stats.count.toLocaleString()} images</span>
-                        {!data.parameters.fromQuery &&
-                            <span> in {data.stats.elapsedMilliseconds.toLocaleString()} ms</span>
-                        }
-                    </div>
                     <div className="text-4xl font-light">
                         {
                             {
@@ -137,7 +130,6 @@ const SearchResultDesktop = ({ data }: { data: SearchResult }) => {
                             </span>
                             <span>{hideImprobable ? "Show" : "Hide"} improbable matches</span>
                         </button>
-                        <span className="text-sm text-muted hidden lg:inline">We've hidden improbable matches to keep you from viewing content you might experience as unpleasant</span>
                     </div>
                     <GalleryDesktop shouldBlur={hideImprobable} data={data.improbableResults} width={width} targetHeight={200} maximumHeight={250} />
                 </div>
