@@ -231,9 +231,6 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
                     <div className="mb-4 flex justify-center w-auto">
                         <Link className="flex justify-center sm:block" to="/">
                             <Banner />
-                            <span className="absolute text-muted uppercase hidden sm:inline">
-                                {process.env.GATSBY_VERSION}
-                            </span>
                         </Link>
                     </div>
                     <div className="text-muted text-center italic">

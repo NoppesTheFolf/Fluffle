@@ -1,0 +1,2 @@
+yarn clean
+yarn develop
