@@ -26,7 +26,7 @@ internal class WeasylApiClient
     public async Task<int> GetNewestIdAsync()
     {
         var submissions = await GetFrontPageSubmissionsAsync();
-        var newestId = submissions.Max(x => x.SubmitId);
+        var newestId = submissions.Max(x => x.SubmitId)!.Value;
 
         return newestId;
     }

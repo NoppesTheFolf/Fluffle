@@ -5,5 +5,5 @@ namespace Fluffle.Feeder.Weasyl.ApiClient;
 internal class WeasylFrontPageSubmission
 {
     [JsonPropertyName("submitid")]
-    public required int SubmitId { get; set; }
+    public int? SubmitId { get; set; } // Character submissions don't have a submission ID
 }
