@@ -135,7 +135,7 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
 
     function searchInternal(file: Blob) {
         setState(State.UPLOADING);
-        Api.search(file, searchConfig.includeNsfw, undefined, false, {
+        Api.searchByFile(file, searchConfig.includeNsfw, {
             onUploadProgress: e => {
                 const progress = Math.round(e.loaded / e.total * 100);
 
