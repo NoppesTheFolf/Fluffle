@@ -64,10 +64,6 @@ const Api = function () {
         return urlcat(baseUrl, ':id/:file', { id: id, file: file });
     }
 
-    function searchResultUrl(id, extension) {
-        return urlcat(process.env.GATSBY_SEARCH_RESULT_URL as string, ':fileName', { fileName: `${id}.${extension}` });
-    }
-
     function b2Retrieve(url, timeout = 4000, maxAttempts = 3, delayDue = 500, retryStatusCodes: number[] = []) {
         // Backblaze B2 is laughably unreliable. We will attempt to retrieve the index three
         // times and retry when the request times out or errors with a 500 or 503 response. It would be neat
@@ -98,51 +94,81 @@ const Api = function () {
         );
     }
 
+    function processExactSearchResponse(data, includeNsfw, imageUrl, fromQuery) {
+        let results = data.results.map(x => {
+            return {
+                id: x.id,
+                match: x.match === 'exact' ? Match.Excellent : x.match === 'probable' ? Match.Doubtful : Match.Unlikely,
+                platform: x.platform,
+                location: x.url,
+                isSfw: x.isSfw,
+                thumbnail: {
+                    width: x.thumbnail.width,
+                    centerX: x.thumbnail.centerX,
+                    height: x.thumbnail.height,
+                    centerY: x.thumbnail.centerY,
+                    location: x.thumbnail.url
+                },
+                credits: x.authors.map(y => y.name).join(' & ')
+            } as SearchResultItem
+        });
+
+        if (!includeNsfw) {
+            results = results.filter(x => x.isSfw);
+        }
+
+        return {
+            parameters: {
+                imageUrl: imageUrl,
+                includeNsfw: includeNsfw,
+                fromQuery: fromQuery
+            },
+            id: data.id,
+            probableResults: results.filter(r => r.match === Match.Excellent),
+            improbableResults: results.filter(r => r.match !== Match.Excellent)
+        } as SearchResult
+    }
+
     return {
         mediaGroupThumbnailUrl,
-        search(file: Blob, includeNsfw: boolean, limit: number = 32, createLink: boolean = false, config: AxiosRequestConfig | undefined = undefined) {
+        createLink(file: Blob) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            return axios.post(url('create-link'), formData)
+                .then(response => {
+                    const data = response.data;
+
+                    return data;
+                });
+        },
+        searchById(id: string, includeNsfw: boolean, ) {
+            return axios.get(url('/exact-search-by-id', { id: id, limit: 32 }))
+                .then(response => {
+                    const data = response.data;
+
+                    const p1 = id.substring(0, 2);
+                    const p2 = id.substring(2, 4);
+
+                    const imageUrl = urlcat(process.env.GATSBY_CONTENT_API_URL as string, 'users/:p1/:p2/:fileName', { p1: p1, p2: p2, fileName: `${id}.jpg` });
+
+                    return processExactSearchResponse(data, includeNsfw, imageUrl, true);
+                })
+        },
+        searchByFile(file: Blob, includeNsfw: boolean, config: AxiosRequestConfig | undefined = undefined) {
             if (file.size > sizeLimit) {
                 return Promise.reject('The selected file is over the 4 MiB limit.');
             }
 
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('limit', String(limit));
-            formData.append('includeNsfw', String(includeNsfw));
-            formData.append('createLink', String(createLink));
+            formData.append('limit', String(32));
 
-            return axios.post(url('/exact-search'), formData, config)
+            return axios.post(url('/exact-search-by-file'), formData, config)
                 .then(response => {
                     const data = response.data;
 
-                    const results = data.results.map(x => {
-                        return {
-                            id: x.id,
-                            match: x.match === 'exact' ? Match.Excellent : x.match === 'probable' ? Match.Doubtful : Match.Unlikely,
-                            platform: x.platform,
-                            location: x.url,
-                            isSfw: x.isSfw,
-                            thumbnail: {
-                                width: x.thumbnail.width,
-                                centerX: x.thumbnail.centerX,
-                                height: x.thumbnail.height,
-                                centerY: x.thumbnail.centerY,
-                                location: x.thumbnail.url
-                            },
-                            credits: x.authors.map(y => y.name).join(' & ')
-                        } as SearchResultItem
-                    });
-
-                    return {
-                        parameters: {
-                            imageUrl: URL.createObjectURL(file),
-                            includeNsfw: includeNsfw,
-                            fromQuery: false
-                        },
-                        id: data.id,
-                        probableResults: results.filter(r => r.match === Match.Excellent),
-                        improbableResults: results.filter(r => r.match !== Match.Excellent)
-                    } as SearchResult
+                    return processExactSearchResponse(data, includeNsfw, URL.createObjectURL(file), false);
                 })
                 .catch(error => {
                     let message = 'Your request caused an error. If you think this is a bug, consider reporting it (see contact) so that it can be fixed.';
@@ -170,15 +196,6 @@ const Api = function () {
 
                     return Promise.reject(message);
                 });
-        },
-        searchResultUrl,
-        searchResult(id: string, maxAttempts: number, delayDue: number, retryStatusCodes: number[]) {
-            // TODO
-            // return b2Retrieve(searchResultUrl(id, 'json'), undefined, maxAttempts, delayDue, retryStatusCodes).pipe(
-            //     map(response => {
-            //         return processSearchData(response.data, searchResultUrl(id, 'jpg'), undefined, true);
-            //     })
-            // );
         },
         async status(config: AxiosRequestConfig | undefined = undefined) {
             const response = await axios.get(url('status'), config);

@@ -12,33 +12,22 @@ export const Head = () => (
 )
 
 const ExistingSearchPage = ({ id }) => {
-    const retryWindow = 120;
-    const retryDelay = 5;
-
     const messages = {
         NOT_FOUND: ['Not found', 'The referenced search query does not seem to exist.'],
-        UNAVAILABLE: ['Yikes!', 'The search query could not be loaded at the moment. This might indicate that Fluffle is partially offline. Please try again later.']
+        UNAVAILABLE: ['Yikes!', 'The search query could not be loaded at the moment. This could indicate that Fluffle is offline. Please try again later.']
     }
     const [message, setMessage] = React.useState<string[]>();
     const [searchResult, setSearchResult] = React.useState<any>();
 
     React.useEffect(() => {
-        const createdAt = ShortUuidDateTime.fromString(id);
-        let seconds = DateTime.utc().diff(createdAt, 'seconds').toObject().seconds!;
-
-        let retryStatusCodes = seconds < retryWindow ? [404] : [];
-        let maxAttempts = Math.max(Math.ceil((retryWindow - seconds) / retryDelay), 3);
-        maxAttempts = Math.min(maxAttempts, 24);
-
-        Api.searchResult(id, maxAttempts, retryDelay * 1000, retryStatusCodes).subscribe({
-            next: searchResult => {
-                setSearchResult(searchResult);
-            },
-            error: error => {
+        Api.searchById(id, true)
+            .then(data => {
+                setSearchResult(data);
+            })
+            .catch(error => {
                 const message = error.response?.status == 404 ? messages.NOT_FOUND : messages.UNAVAILABLE;
                 setMessage(message);
-            }
-        });
+            });
     }, []);
 
     const loadingPage = (
