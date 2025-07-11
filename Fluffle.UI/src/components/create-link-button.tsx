@@ -25,14 +25,14 @@ const CreateLinkButton = ({ data }) => {
             return;
         }
 
-        if (![states.IDLE, states.ERROR].includes(state)) {
+        if (state !== states.IDLE) {
             return;
         }
 
         setState(states.WAITING);
         fetch(data.parameters.imageUrl).then(r => r.blob()).then(file => {
-            Api.search(file, data.parameters.includeNsfw, undefined, true).then(response => {
-                const url = urlcat(process.env.GATSBY_SITE_URL as string, 'q/:id', { id: response.id });
+            Api.createLink(file).then(data => {
+                const url = urlcat(process.env.GATSBY_SITE_URL as string, 'q/:id', { id: data.id });
                 setUrl(url);
                 copyToClipboard(url);
                 setState(states.SUCCESS);

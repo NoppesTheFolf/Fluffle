@@ -135,7 +135,7 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
 
     function searchInternal(file: Blob) {
         setState(State.UPLOADING);
-        Api.search(file, searchConfig.includeNsfw, undefined, false, {
+        Api.searchByFile(file, searchConfig.includeNsfw, {
             onUploadProgress: e => {
                 const progress = Math.round(e.loaded / e.total * 100);
 
@@ -231,9 +231,6 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
                     <div className="mb-4 flex justify-center w-auto">
                         <Link className="flex justify-center sm:block" to="/">
                             <Banner />
-                            <span className="absolute text-muted uppercase hidden sm:inline">
-                                {process.env.GATSBY_VERSION}
-                            </span>
                         </Link>
                     </div>
                     <div className="text-muted text-center italic">
