@@ -18,7 +18,7 @@ const NotFoundPage = () => {
         <Layout center={true}>
             {!shouldLeaveEmpty &&
                 <div className="flex flex-col items-center text-center">
-                    <div className="text-4xl sm:text-7xl font-light mb-4">Blimey! 404 Not Found</div>
+                    <div className="text-4xl sm:text-7xl font-light mb-4">404 Not Found</div>
                     <div className="text-muted text-xl sm:text-3xl font-light">We couldn't find the page you're looking for</div>
                 </div>
             }
