@@ -2,11 +2,11 @@ using FluentValidation;
 
 namespace Fluffle.Search.Api.Models;
 
-public class SearchModelValidator : AbstractValidator<SearchModel>
+public class SearchByFileModelValidator : AbstractValidator<SearchByFileModel>
 {
     private const int MaximumFileSize = 4 * 1024 * 1024;
 
-    public SearchModelValidator()
+    public SearchByFileModelValidator()
     {
         RuleFor(x => x.File)
             .NotEmpty()

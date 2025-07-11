@@ -6,7 +6,7 @@ namespace Fluffle.Search.Api.Validation;
 
 public static class Error
 {
-    public static ObjectResult Create(int statusCode, string code, string message)
+    public static ObjectResult Create(int statusCode, string? code, string message)
     {
         return Create(statusCode, [
             new ErrorModel
