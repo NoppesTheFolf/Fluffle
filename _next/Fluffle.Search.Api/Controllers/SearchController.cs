@@ -6,6 +6,7 @@ using Fluffle.Inference.Api.Client;
 using Fluffle.Search.Api.IdGeneration;
 using Fluffle.Search.Api.Models;
 using Fluffle.Search.Api.Validation;
+using Fluffle.Search.Api.Validation.Validators;
 using Fluffle.Vector.Api.Client;
 using Fluffle.Vector.Api.Models.Vectors;
 using Fluffle_Search_Api;
@@ -37,6 +38,33 @@ public class SearchController : ControllerBase
         _contentApiClient = contentApiClient;
     }
 
+    [HttpPost("create-link")]
+    public async Task<IActionResult> CreateLinkAsync([FromForm] CreateLinkModel model)
+    {
+        var validationResult = await new CreateLinkModelValidator().ValidateAsync(model);
+        if (!validationResult.IsValid)
+        {
+            return Error.Create(400, validationResult);
+        }
+
+        await using var fileStream = model.File.OpenReadStream();
+        var (thumbnail, error) = await CreateThumbnailAsync(fileStream);
+        if (thumbnail == null)
+        {
+            return error.AsResult();
+        }
+
+        var id = $"{ShortUuidDateTime.ToString(DateTime.UtcNow)}{ShortUuid.Random(12)}";
+
+        using var thumbnailStream = new MemoryStream(thumbnail);
+        await _contentApiClient.PutAsync($"users/{id[..2]}/{id[2..4]}/{id}.jpg", thumbnailStream);
+
+        return Ok(new CreateLinkResultModel
+        {
+            Id = id
+        });
+    }
+
     [HttpGet("/exact-search-by-id", Name = "ExactSearchById")]
     public async Task<IActionResult> ExactSearchByIdAsync([FromQuery] SearchByIdModel model)
     {
@@ -46,7 +74,7 @@ public class SearchController : ControllerBase
             return Error.Create(400, validationResult);
         }
 
-        await using var stream = await _contentApiClient.GetAsync($"users/{model.Id}.jpg");
+        await using var stream = await _contentApiClient.GetAsync($"users/{model.Id[..2]}/{model.Id[2..4]}/{model.Id}.jpg");
         if (stream == null)
         {
             return Error.Create(404, null, "No link has been created with the given ID.");
@@ -72,54 +100,34 @@ public class SearchController : ControllerBase
 
         await using var fileStream = model.File.OpenReadStream();
 
-        byte[] thumbnail;
-        try
+        var (thumbnail, thumbnailError) = await CreateThumbnailAsync(fileStream);
+        if (thumbnail == null)
         {
-            (thumbnail, _) = await _imagingApiClient.CreateThumbnailAsync(fileStream, size: 300, quality: 95, calculateCenter: false);
-        }
-        catch (ImagingApiException e)
-        {
-            if (e.Code == ImagingErrorCode.UnsupportedImage)
-            {
-                return Error.Create(
-                    statusCode: 415,
-                    code: "unsupportedFileType",
-                    message: "The type of the submitted file isn't supported. Only JPEG, PNG, WebP and GIF are. " +
-                             "If you're getting this error even though the image seems te be valid, it might be that the extension is not representative of the encoding."
-                );
-            }
-
-            if (e.Code == ImagingErrorCode.ImageAreaTooLarge)
-            {
-                return Error.Create(
-                    statusCode: 400,
-                    code: "areaTooLarge",
-                    message: "The submitted image has an area (width * height) greater than the maximum allowed area of 16 megapixels."
-                );
-            }
-
-            return Error.Create(
-                statusCode: 422,
-                code: "corruptFile",
-                message: "The submitted file could not be read by Fluffle. This likely means it's corrupt."
-            );
+            return thumbnailError.AsResult();
         }
 
-        using var thumbnailStream1 = new MemoryStream(thumbnail);
-        var searchModels = await ExactSearchAsync(thumbnailStream1, model.Limit);
+        using var thumbnailStream = new MemoryStream(thumbnail);
+        var searchModels = await ExactSearchAsync(thumbnailStream, model.Limit);
 
         var requestId = $"{ShortUuidDateTime.ToString(DateTime.UtcNow)}{ShortUuid.Random(12)}";
-        if (model.CreateLink)
-        {
-            using var thumbnailStream2 = new MemoryStream(thumbnail);
-            await _contentApiClient.PutAsync($"users/{requestId}.jpg", thumbnailStream2);
-        }
-
         return Ok(new SearchResultsModel
         {
             Id = requestId,
             Results = searchModels
         });
+    }
+
+    private async Task<(byte[]? thumbnail, ImagingErrorCode? errorCode)> CreateThumbnailAsync(Stream stream)
+    {
+        try
+        {
+            var (thumbnail, _) = await _imagingApiClient.CreateThumbnailAsync(stream, size: 300, quality: 95, calculateCenter: false);
+            return (thumbnail, null);
+        }
+        catch (ImagingApiException e)
+        {
+            return (null, e.Code);
+        }
     }
 
     private async Task<List<SearchResultModel>> ExactSearchAsync(Stream stream, int limit)
