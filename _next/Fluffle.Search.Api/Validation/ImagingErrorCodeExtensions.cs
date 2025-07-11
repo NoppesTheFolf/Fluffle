@@ -13,7 +13,7 @@ public static class ImagingErrorCodeExtensions
                 statusCode: 415,
                 code: "unsupportedFileType",
                 message: "The type of the submitted file isn't supported. Only JPEG, PNG, WebP and GIF are. " +
-                         "If you're getting this error even though the image seems te be valid, it might be that the extension is not representative of the encoding."
+                         "If you're getting this error even though the image seems to be valid, it might be that the extension is not representative of the encoding."
             );
         }
 
