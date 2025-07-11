@@ -1,3 +1,4 @@
+using FluentValidation;
 using Fluffle.Content.Api.Client;
 using Fluffle.Imaging.Api.Client;
 using Fluffle.Imaging.Api.Models;
@@ -36,10 +37,34 @@ public class SearchController : ControllerBase
         _contentApiClient = contentApiClient;
     }
 
-    [HttpPost("/exact-search", Name = "ExactSearch")]
-    public async Task<IActionResult> ExactSearchAsync(SearchModel model)
+    [HttpGet("/exact-search-by-id", Name = "ExactSearchById")]
+    public async Task<IActionResult> ExactSearchByIdAsync([FromQuery] SearchByIdModel model)
     {
-        var validationResult = await new SearchModelValidator().ValidateAsync(model);
+        var validationResult = await new SearchByIdModelValidator().ValidateAsync(model);
+        if (!validationResult.IsValid)
+        {
+            return Error.Create(400, validationResult);
+        }
+
+        await using var stream = await _contentApiClient.GetAsync($"users/{model.Id}.jpg");
+        if (stream == null)
+        {
+            return Error.Create(404, null, "No link has been created with the given ID.");
+        }
+
+        var searchModels = await ExactSearchAsync(stream, model.Limit);
+
+        return Ok(new SearchResultsModel
+        {
+            Id = model.Id,
+            Results = searchModels
+        });
+    }
+
+    [HttpPost("/exact-search-by-file", Name = "ExactSearchByFile")]
+    public async Task<IActionResult> ExactSearchByFileAsync([FromForm] SearchByFileModel model)
+    {
+        var validationResult = await new SearchByFileModelValidator().ValidateAsync(model);
         if (!validationResult.IsValid)
         {
             return Error.Create(400, validationResult);
@@ -81,13 +106,31 @@ public class SearchController : ControllerBase
         }
 
         using var thumbnailStream1 = new MemoryStream(thumbnail);
-        var vectors = await _inferenceApiClient.ExactMatchV2Async([thumbnailStream1]);
+        var searchModels = await ExactSearchAsync(thumbnailStream1, model.Limit);
+
+        var requestId = $"{ShortUuidDateTime.ToString(DateTime.UtcNow)}{ShortUuid.Random(12)}";
+        if (model.CreateLink)
+        {
+            using var thumbnailStream2 = new MemoryStream(thumbnail);
+            await _contentApiClient.PutAsync($"users/{requestId}.jpg", thumbnailStream2);
+        }
+
+        return Ok(new SearchResultsModel
+        {
+            Id = requestId,
+            Results = searchModels
+        });
+    }
+
+    private async Task<List<SearchResultModel>> ExactSearchAsync(Stream stream, int limit)
+    {
+        var vectors = await _inferenceApiClient.ExactMatchV2Async([stream]);
         var vector = vectors[0];
 
         var vectorSearchResults = await _vectorApiClient.SearchCollectionAsync("exactMatchV2", new VectorSearchParametersModel
         {
             Query = vector,
-            Limit = model.Limit + 4 // An extra 4 so that D2-D5 are filled with real values for the last item
+            Limit = limit + 4 // An extra 4 so that D2-D5 are filled with real values for the last item
         });
         var vectorSearchResultsLookup = vectorSearchResults.ToDictionary(x => x.ItemId);
 
@@ -109,7 +152,7 @@ public class SearchController : ControllerBase
 
         var items = await _vectorApiClient.GetItemsAsync(vectorSearchResultsLookup.Keys);
 
-        var models = items
+        var searchModels = items
             .Select(x =>
             {
                 var vectorSearchResult = vectorSearchResultsLookup[x.ItemId];
@@ -144,10 +187,10 @@ public class SearchController : ControllerBase
                 };
             })
             .OrderByDescending(x => x.Distance)
-            .Take(model.Limit)
+            .Take(limit)
             .ToList();
 
-        var probableModels = models
+        var probableModels = searchModels
             .Where(x => x.Match == SearchResultModelMatch.Exact)
             .GroupBy(x => x.Platform)
             .SelectMany(x => x.OrderByDescending(x => x.Distance).Skip(1).ToList());
@@ -157,17 +200,6 @@ public class SearchController : ControllerBase
             probableModel.Match = SearchResultModelMatch.Probable;
         }
 
-        var requestId = $"{ShortUuidDateTime.ToString(DateTime.UtcNow)}{ShortUuid.Random(12)}";
-        if (model.CreateLink)
-        {
-            using var thumbnailStream2 = new MemoryStream(thumbnail);
-            await _contentApiClient.PutAsync($"users/{requestId}.jpg", thumbnailStream2);
-        }
-
-        return Ok(new SearchResultsModel
-        {
-            Id = requestId,
-            Results = models
-        });
+        return searchModels;
     }
 }

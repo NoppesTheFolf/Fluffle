@@ -1,6 +1,6 @@
 namespace Fluffle.Search.Api.Models;
 
-public class SearchModel
+public class SearchByFileModel
 {
     public required IFormFile File { get; set; }
 
