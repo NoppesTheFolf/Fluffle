@@ -33,11 +33,12 @@ internal class WeasylFeeder
 
             _logger.LogInformation("Start retrieving submission with ID {Id}.", i);
             var submission = await _weasylApiClient.GetSubmissionAsync(i);
+            var submissionImages = submission?.GetImages().ToList();
             _logger.LogInformation("Retrieved submission with ID {Id}.", i);
 
             var itemId = $"weasyl_{i}";
             PutItemActionModel itemAction;
-            if (submission == null || submission.Subtype != WeasylSubmissionSubtype.Visual)
+            if (submission == null || submission.Subtype != WeasylSubmissionSubtype.Visual || submissionImages == null || submissionImages.Count == 0)
             {
                 _logger.LogInformation("Marking submission with {Id} to be deleted.", i);
 
@@ -53,7 +54,7 @@ internal class WeasylFeeder
                     .WithItemId(itemId)
                     .WithPriority(submission.PostedAt)
                     .WithUrl($"https://weasyl.com/submission/{submission.SubmitId}")
-                    .WithImages(submission.GetImages())
+                    .WithImages(submissionImages)
                     .WithIsSfw(submission.Rating == WeasylSubmissionRating.General)
                     .WithAuthor(submission.OwnerLogin, submission.Owner)
                     .Build();
