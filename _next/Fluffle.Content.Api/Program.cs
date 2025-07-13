@@ -29,7 +29,7 @@ services.AddCors(options =>
         else
         {
             policy
-                .WithOrigins("https://fluffle.xyz", "https://*.fluffle.xyz")
+                .WithOrigins("https://fluffle.xyz", "https://*.fluffle.xyz", "https://fluffle.pages.dev", "https://*.fluffle.pages.dev")
                 .SetIsOriginAllowedToAllowWildcardSubdomains()
                 .AllowAnyMethod();
         }
