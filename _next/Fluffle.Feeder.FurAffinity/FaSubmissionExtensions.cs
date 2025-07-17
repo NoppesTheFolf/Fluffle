@@ -39,7 +39,7 @@ internal static class FaSubmissionExtensions
             return "Submission was not found";
         }
 
-        var fileExtension = Path.GetExtension(submission.FileLocation.OriginalString);
+        var fileExtension = Path.GetExtension(submission.FileLocation.AbsolutePath);
         if (!ImageHelper.IsSupportedExtension(fileExtension))
         {
             return $"Submission is of an unsupported type ({fileExtension})";
