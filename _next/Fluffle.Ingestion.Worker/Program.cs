@@ -37,6 +37,14 @@ services.AddContentApiClient();
 
 services.AddVectorApiClient();
 
+services.AddHttpClient(nameof(ItemContentClient), client =>
+{
+    client.DefaultRequestHeaders.Add("User-Agent", "fluffle.xyz by NoppesTheFolf");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    AllowAutoRedirect = false
+});
+
 services.AddSingleton<IItemContentClient, ItemContentClient>();
 
 services.AddOptions<ThumbnailStorageOptions>()

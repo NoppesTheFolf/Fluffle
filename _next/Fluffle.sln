@@ -55,6 +55,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.E621", "Fluf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.Weasyl", "Fluffle.Feeder.Weasyl\Fluffle.Feeder.Weasyl.csproj", "{E2F5E44D-ADF2-4DA2-B33C-D22C609D4C81}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.FurAffinity", "Fluffle.Feeder.FurAffinity\Fluffle.Feeder.FurAffinity.csproj", "{3EECB3BB-4029-44AE-8FFC-F2DD0D0E4DA8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -165,6 +167,10 @@ Global
 		{E2F5E44D-ADF2-4DA2-B33C-D22C609D4C81}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2F5E44D-ADF2-4DA2-B33C-D22C609D4C81}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2F5E44D-ADF2-4DA2-B33C-D22C609D4C81}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EECB3BB-4029-44AE-8FFC-F2DD0D0E4DA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EECB3BB-4029-44AE-8FFC-F2DD0D0E4DA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EECB3BB-4029-44AE-8FFC-F2DD0D0E4DA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EECB3BB-4029-44AE-8FFC-F2DD0D0E4DA8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
