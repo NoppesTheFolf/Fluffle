@@ -71,7 +71,7 @@ internal class FurAffinityFeeder
         PutItemActionModel itemAction;
         if (deleteReason == null)
         {
-            _logger.LogInformation("Indexing submission with {Id}.", i);
+            _logger.LogInformation("Indexing submission with ID {Id}.", i);
 
             itemAction = new PutIndexItemActionModelBuilder()
                 .WithItemId(itemId)
@@ -84,7 +84,7 @@ internal class FurAffinityFeeder
         }
         else
         {
-            _logger.LogInformation("Marking submission with {Id} to be deleted. Reason: {Reason}.", i, deleteReason);
+            _logger.LogInformation("Marking submission with ID {Id} to be deleted. Reason: {Reason}.", i, deleteReason);
 
             itemAction = new PutDeleteItemActionModelBuilder()
                 .WithItemId(itemId)
