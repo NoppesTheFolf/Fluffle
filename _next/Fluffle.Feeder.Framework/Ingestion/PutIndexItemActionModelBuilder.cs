@@ -84,8 +84,17 @@ public class PutIndexItemActionModelBuilder
         if (string.IsNullOrWhiteSpace(_itemId)) throw new InvalidOperationException("Item ID has not been set.");
         if (_priority == null) throw new InvalidOperationException("Priority has not been set.");
         if (_images.Count == 0) throw new InvalidOperationException("No images have been added.");
+        foreach (var image in _images)
+        {
+            var imageExtension = Path.GetExtension(image.Url);
+            if (!ImageHelper.IsSupportedExtension(imageExtension))
+            {
+                throw new InvalidOperationException($"Image has an unsupported extension: {image.Url}");
+            }
+        }
         if (string.IsNullOrWhiteSpace(_url)) throw new InvalidOperationException("URL has not been set.");
         if (_isSfw == null) throw new InvalidOperationException("Whether the item is SFW has not been set.");
+        if (_authors.Count == 0) throw new InvalidOperationException("No authors have been added.");
 
         return new PutIndexItemActionModel
         {
