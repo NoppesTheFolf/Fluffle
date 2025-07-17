@@ -10,14 +10,14 @@ internal class AgedWorker : BackgroundService
     private readonly FurAffinityClient _furAffinityClient;
     private readonly IIngestionApiClient _ingestionApiClient;
     private readonly IStateRepository<FurAffinityFeederState> _stateRepository;
-    private readonly ILogger<NewestWorker> _logger;
+    private readonly ILogger<AgedWorker> _logger;
     private readonly IOptions<FurAffinityFeederOptions> _options;
 
     public AgedWorker(
         FurAffinityClient furAffinityClient,
         IIngestionApiClient ingestionApiClient,
         IStateRepositoryFactory stateRepositoryFactory,
-        ILogger<NewestWorker> logger,
+        ILogger<AgedWorker> logger,
         IOptions<FurAffinityFeederOptions> options)
     {
         _furAffinityClient = furAffinityClient;
