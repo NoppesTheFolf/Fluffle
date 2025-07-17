@@ -28,7 +28,7 @@ internal class FurAffinityFeeder
 
     public async Task RunUntilAsync(FurAffinityFeederState state, TimeSpan minimumAge, CancellationToken cancellationToken)
     {
-        for (var i = state.CurrentId; ; i++)
+        for (var i = state.CurrentId; !cancellationToken.IsCancellationRequested; i++)
         {
             var submission = await ProcessIdAsync(i);
             if (submission != null)
@@ -43,6 +43,7 @@ internal class FurAffinityFeeder
             state.CurrentId = i + 1;
             await _stateRepository.PutAsync(state);
         }
+        cancellationToken.ThrowIfCancellationRequested();
     }
 
     public async Task RunDecrementAsync(FurAffinityFeederState state, CancellationToken cancellationToken)
