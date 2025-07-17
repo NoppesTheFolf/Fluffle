@@ -19,26 +19,26 @@ internal partial class FurAffinityClient
     public async Task<FaSubmission?> GetSubmissionAsync(int submissionId)
     {
         var viewLocation = new Uri($"https://www.furaffinity.net/view/{submissionId}");
-        var response = await GetAsync(viewLocation.AbsolutePath);
+        var document = await GetAsync(viewLocation.AbsolutePath);
 
-        var hasSubmission = response.GetElementbyId("submission_page") != null;
+        var hasSubmission = document.GetElementbyId("submission_page") != null;
         if (!hasSubmission)
         {
-            if (response.DocumentNode.InnerText.Contains("The submission you are trying to find is not in our database."))
+            if (document.DocumentNode.InnerText.Contains("The submission you are trying to find is not in our database."))
                 return null;
-            if (response.DocumentNode.InnerText.Contains("The page you are trying to reach has been deactivated by the owner."))
+            if (document.DocumentNode.InnerText.Contains("The page you are trying to reach has been deactivated by the owner."))
                 return null;
 
-            if (response.DocumentNode.InnerText.Contains("The page you are trying to reach is currently pending deletion by a request from"))
+            if (document.DocumentNode.InnerText.Contains("The page you are trying to reach is currently pending deletion by a request from"))
                 return null;
 
             throw new InvalidOperationException($"Submission with ID {submissionId} didn't contain a submission and also not a known error.");
         }
 
-        ValidateLogin(response);
+        ValidateLogin(document);
 
-        var submissionContent = response.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-content')]")!;
-        var sidebar = response.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-sidebar')]")!;
+        var submissionContent = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-content')]")!;
+        var sidebar = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-sidebar')]")!;
 
         // Extract number of views, comments and favorites, and the submission its rating
         var statsNode = sidebar.SelectSingleNode("./section[contains(@class, 'stats-container')]")!;
@@ -122,10 +122,10 @@ internal partial class FurAffinityClient
 
     public async Task<ICollection<FaGallerySubmission>> GetNewestSubmissions()
     {
-        var response = await GetAsync("/");
-        ValidateLogin(response);
+        var document = await GetAsync("/");
+        ValidateLogin(document);
 
-        var node = response.GetElementbyId("gallery-frontpage-submissions");
+        var node = document.GetElementbyId("gallery-frontpage-submissions");
         var recentSubmissions = node.ChildNodes
             .Where(x => x.Name == "figure")
             .Select(x =>
