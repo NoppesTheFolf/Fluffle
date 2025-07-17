@@ -43,12 +43,20 @@ internal partial class FurAffinityClient
         // Extract number of views, comments and favorites, and the submission its rating
         var statsNode = sidebar.SelectSingleNode("./section[contains(@class, 'stats-container')]")!;
         var stats = statsNode.ChildNodes
-            .Where(x => x.NodeType != HtmlNodeType.Text)
-            .Select(x => x.ChildNodes.First(cn => cn.Name == "span"))
-            .Select(x => x.InnerText)
-            .ToArray();
+            .Where(x => x.NodeType == HtmlNodeType.Element)
+            .Select(x =>
+            {
+                var spans = x.ChildNodes.Where(y => y.Name == "span").ToArray();
 
-        var ratingUnparsed = stats[3];
+                return new
+                {
+                    Key = spans[1].InnerText.Trim(),
+                    Value = spans[0].InnerText.Trim()
+                };
+            })
+            .ToDictionary(x => x.Key, x => x.Value);
+
+        var ratingUnparsed = stats["Rating"];
         var rating = string.IsNullOrWhiteSpace(ratingUnparsed)
             ? FaSubmissionRating.General // Apparently some submissions have an empty rating and are publicly accessible, hence we're defaulting to general here
             : Enum.Parse<FaSubmissionRating>(ratingUnparsed, true);
