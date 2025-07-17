@@ -40,7 +40,7 @@ internal class WeasylFeeder
             PutItemActionModel itemAction;
             if (submission == null || submission.Subtype != WeasylSubmissionSubtype.Visual || submissionImages == null || submissionImages.Count == 0)
             {
-                _logger.LogInformation("Marking submission with {Id} to be deleted.", i);
+                _logger.LogInformation("Marking submission with ID {Id} to be deleted.", i);
 
                 itemAction = new PutDeleteItemActionModelBuilder()
                     .WithItemId(itemId)
@@ -48,7 +48,7 @@ internal class WeasylFeeder
             }
             else
             {
-                _logger.LogInformation("Indexing submission with {Id}.", i);
+                _logger.LogInformation("Indexing submission with ID {Id}.", i);
 
                 itemAction = new PutIndexItemActionModelBuilder()
                     .WithItemId(itemId)
