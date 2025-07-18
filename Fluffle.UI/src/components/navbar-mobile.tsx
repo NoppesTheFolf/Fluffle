@@ -5,7 +5,7 @@ import Icon from './icon'
 
 const NavbarItemMobile = ({ href, icon, children }) => {
     return (
-        <Link to={href} className={navbarItem} partiallyActive={href !== '/'} activeClassName={navbarItemActive}>
+        <Link to={href} target={href.startsWith("http") ? '_blank' : '_self'} className={navbarItem} partiallyActive={href !== '/'} activeClassName={navbarItemActive}>
             <span className="flex flex-col justify-center items-center">
                 <Icon name={icon} />
                 <div className="text-sm">{children}</div>
@@ -22,6 +22,7 @@ const NavbarMobile = React.forwardRef((_, ref) => {
             <NavbarItemMobile href="/about/" icon="info">About</NavbarItemMobile>
             <NavbarItemMobile href="/api/" icon="code">API</NavbarItemMobile>
             <NavbarItemMobile href="/contact/" icon="mail">Contact</NavbarItemMobile>
+            <NavbarItemMobile href="https://ko-fi.com/noppesthefolf" icon="ko-fi">Ko-fi</NavbarItemMobile>
         </nav>
     )
 })

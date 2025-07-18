@@ -6,7 +6,7 @@ import { navbarItem, navbarItemActive } from './navbar.module.scss'
 
 const NavbarItem = ({ href, icon, children }) => {
     return (
-        <Link to={href} partiallyActive={href !== '/'} activeClassName={navbarItemActive} className={navbarItem}>
+        <Link to={href} target={href.startsWith("http") ? '_blank' : '_self'} partiallyActive={href !== '/'} activeClassName={navbarItemActive} className={navbarItem}>
             <span className="hidden md:inline"><Icon name={icon} /></span>
             <span>{children}</span>
         </Link>
@@ -21,12 +21,13 @@ const Navbar = () => {
                 <span className="block text-xl">Fluffle</span>
             </Link>
             <nav>
-                <div className="flex flex-wrap space-x-2 md:space-x-3 lg:space-x-8">
+                <div className="flex flex-wrap space-x-2 md:space-x-1 lg:space-x-8">
                     <NavbarItem href="/" icon="youtube-searched-for">Reverse search</NavbarItem>
                     <NavbarItem href="/tools/" icon="handyman">Tools</NavbarItem>
                     <NavbarItem href="/about/" icon="info">About</NavbarItem>
                     <NavbarItem href="/api/" icon="code">API</NavbarItem>
                     <NavbarItem href="/contact/" icon="mail">Contact</NavbarItem>
+                    <NavbarItem href="https://ko-fi.com/noppesthefolf" icon="ko-fi">Ko-fi</NavbarItem>
                 </div>
             </nav>
         </header>
