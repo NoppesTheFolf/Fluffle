@@ -243,6 +243,13 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
                 <canvas className="hidden" ref={canvasRef}></canvas>
                 {![State.PREPROCESSING, State.UPLOADING, State.PROCESSING].includes(state) &&
                     <div className={classNames("flex w-full max-w-4xl flex-col space-y-3", { "hidden": state === State.WAITING_FOR_BROWSER_EXTENSION })}>
+                        <div className="flex items-center bg-gradient-info space-x-3 p-4 rounded">
+                            <Icon name="info" />
+                            <span>
+                                Fluffle has gotten a big update under the hood! Reverse searching should now be a lot more resilient to
+                                changes like cropping, mirroring, padding, etc. If you run into weird issues, please contact @NoppesTheFolf on Telegram.
+                            </span>
+                        </div>
                         {state === State.ERROR &&
                             <div className="flex items-center bg-gradient-danger space-x-3 p-4 rounded">
                                 <Icon name="report-problem" />
