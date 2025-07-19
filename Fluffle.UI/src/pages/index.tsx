@@ -237,7 +237,7 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
                         A reverse image search service for the furry community
                     </div>
                 </div>
-                <input className="hidden" type="file" id="image" onChange={onSelect} />
+                <input className="hidden" type="file" accept="image/jpeg, image/png, image/webp, image/gif" id="image" onChange={onSelect} />
                 <input className="hidden" type="text" id="image-data-url" ref={dataUrlRef} />
                 <button className="hidden" id="programmatic-submit" onClick={onProgrammaticSubmit}></button>
                 <canvas className="hidden" ref={canvasRef}></canvas>
