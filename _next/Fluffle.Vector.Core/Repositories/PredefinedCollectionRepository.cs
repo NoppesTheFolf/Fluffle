@@ -10,19 +10,13 @@ public class PredefinedCollectionRepository : ICollectionRepository
         VectorDimensions = 2
     };
 
-    private static readonly Model ExactMatchV1 = new()
-    {
-        Id = "exactMatchV1",
-        VectorDimensions = 32
-    };
-
     private static readonly Model ExactMatchV2 = new()
     {
         Id = "exactMatchV2",
         VectorDimensions = 64
     };
 
-    private static readonly Model[] All = [IntegrationTest, ExactMatchV1, ExactMatchV2];
+    private static readonly Model[] All = [IntegrationTest, ExactMatchV2];
     private static readonly Dictionary<string, Model> Lookup = All.ToDictionary(x => x.Id);
 
     public Task<Model?> GetAsync(string collectionId)

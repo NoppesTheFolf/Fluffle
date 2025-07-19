@@ -29,7 +29,6 @@ def load_model(embedding_size, filename):
 
     return model
 
-model_v1 = load_model(32, "exactMatchV1.pt")
 model_v2 = load_model(64, "exactMatchV2.pt")
 
 backbone_transforms = models.ConvNeXt_Tiny_Weights.IMAGENET1K_V1.transforms()
@@ -70,10 +69,6 @@ def run_inference(model, images):
     
     return embeddings.tolist()
 
-@app.post("/exact-match-v1")
-def inference(images: list[UploadFile]):
-    return run_inference(model_v1, images)
-
 @app.post("/exact-match-v2")
-def inference(images: list[UploadFile]):
+def exact_match_v2(images: list[UploadFile]):
     return run_inference(model_v2, images)

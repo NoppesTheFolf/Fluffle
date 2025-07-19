@@ -58,23 +58,6 @@ public class IndexItemActionHandler : IItemActionHandler
     {
         _logger.LogInformation("Updating existing item...");
 
-        var collections = await _vectorApiClient.GetItemCollectionsAsync(existingItem.ItemId).Timed(_telemetryClient, "VectorApiGetItemCollections");
-        if (!collections.Contains("exactMatchV2"))
-        {
-            _logger.LogInformation("Downloading thumbnail to create V2 model vectors...");
-            var thumbnailStream = await _itemContentClient.DownloadAsync(existingItem.Thumbnail!.Url).Timed(_telemetryClient, "ContentApiDownloadThumbnail");
-
-            _logger.LogInformation("Running V2 inference on thumbnail...");
-            var v2Vectors = await _inferenceApiClient.ExactMatchV2Async([thumbnailStream]).Timed(_telemetryClient, "InferenceApiExactMatchV2");
-
-            await _vectorApiClient.PutItemVectorsAsync(existingItem.ItemId, "exactMatchV2", v2Vectors.Select(x =>
-                new PutItemVectorModel
-                {
-                    Value = x,
-                    Properties = new JsonObject()
-                }).ToList()).Timed(_telemetryClient, "VectorApiPutItemVectorsExactMatchV2");
-        }
-
         _logger.LogInformation("Updating item information on Vector API...");
         await _vectorApiClient.PutItemAsync(existingItem.ItemId, new PutItemModel
         {

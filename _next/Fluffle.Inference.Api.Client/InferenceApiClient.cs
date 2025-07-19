@@ -11,11 +11,6 @@ internal class InferenceApiClient : IInferenceApiClient
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<float[][]> ExactMatchV1Async(IList<Stream> imageStreams)
-    {
-        return await RunInferenceAsync("exact-match-v1", imageStreams);
-    }
-
     public async Task<float[][]> ExactMatchV2Async(IList<Stream> imageStreams)
     {
         return await RunInferenceAsync("exact-match-v2", imageStreams);
