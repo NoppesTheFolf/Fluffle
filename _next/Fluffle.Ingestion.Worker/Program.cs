@@ -63,4 +63,4 @@ for (var i = 0; i < workerCount; i++)
     services.AddSingleton<IHostedService, Worker>();
 
 var host = builder.Build();
-host.Run();
+await host.RunAndSetExitCodeAsync();
