@@ -12,6 +12,7 @@ public class PutIndexItemActionModelBuilder
     private string? _url;
     private bool? _isSfw;
     private readonly List<FeederAuthor> _authors = [];
+    private bool _requireAuthors = true;
 
     public PutIndexItemActionModelBuilder WithItemId(string itemId)
     {
@@ -79,6 +80,13 @@ public class PutIndexItemActionModelBuilder
         return this;
     }
 
+    public PutIndexItemActionModelBuilder AllowNoAuthors()
+    {
+        _requireAuthors = false;
+
+        return this;
+    }
+
     public PutIndexItemActionModel Build()
     {
         if (string.IsNullOrWhiteSpace(_itemId)) throw new InvalidOperationException("Item ID has not been set.");
@@ -94,7 +102,7 @@ public class PutIndexItemActionModelBuilder
         }
         if (string.IsNullOrWhiteSpace(_url)) throw new InvalidOperationException("URL has not been set.");
         if (_isSfw == null) throw new InvalidOperationException("Whether the item is SFW has not been set.");
-        if (_authors.Count == 0) throw new InvalidOperationException("No authors have been added.");
+        if (_requireAuthors && _authors.Count == 0) throw new InvalidOperationException("No authors have been added.");
 
         return new PutIndexItemActionModel
         {

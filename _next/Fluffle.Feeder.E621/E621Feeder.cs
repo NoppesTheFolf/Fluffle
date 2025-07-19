@@ -78,6 +78,7 @@ internal class E621Feeder
                     .WithImages(x.GetImages())
                     .WithIsSfw(x.Rating.IsSfw())
                     .WithAuthors(x.GetAuthors())
+                    .AllowNoAuthors() // Not all posts are tagged with artists
                     .Build())
                 .ToList<PutItemActionModel>();
 
