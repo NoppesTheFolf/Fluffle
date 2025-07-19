@@ -14,6 +14,7 @@ const GalleryDesktopCard = ({ image, shouldBlur }: { image: GalleryRowImage<Sear
                 <span className="w-6">
                     <Icon name={image.data.platform} />
                 </span>
+                <div>{((image.data.score < 0.01 ? 0.01 : image.data.score) * 100).toFixed()}%</div>
             </div>
             <div className={`absolute w-full h-full bg-black transition-colors z-10 ${hasHover ? 'bg-opacity-20' : 'bg-opacity-0'}`}></div>
             <div className={`absolute bottom-0 w-full px-1 py-1.5 whitespace-nowrap overflow-hidden overflow-ellipsis transition-opacity bg-black bg-opacity-80 text-xs z-20 opacity-0 ${hasHover ? 'opacity-100' : ''}`}>
