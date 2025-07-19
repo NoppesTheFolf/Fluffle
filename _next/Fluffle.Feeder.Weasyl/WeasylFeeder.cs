@@ -32,7 +32,7 @@ internal class WeasylFeeder
             cancellationToken.ThrowIfCancellationRequested();
 
             _logger.LogInformation("Start retrieving submission with ID {Id}.", i);
-            var submission = await _weasylApiClient.GetSubmissionAsync(i);
+            var submission = await _weasylApiClient.GetSubmissionAsync(i, anyway: true);
             var submissionImages = submission?.GetImages().ToList();
             _logger.LogInformation("Retrieved submission with ID {Id}.", i);
 

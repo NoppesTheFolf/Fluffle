@@ -41,11 +41,15 @@ internal class WeasylApiClient
         return submissions!;
     }
 
-    public async Task<WeasylSubmission?> GetSubmissionAsync(int submissionId)
+    public async Task<WeasylSubmission?> GetSubmissionAsync(int submissionId, bool anyway)
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(WeasylApiClient));
 
         var url = $"/api/submissions/{submissionId}/view";
+
+        if (anyway)
+            url += "?anyway=true";
+
         using var response = await httpClient.GetAsync(url);
 
         if (response.StatusCode == HttpStatusCode.NotFound)
