@@ -1,4 +1,4 @@
-Fluffle.Inference.Api/model.pt
+Fluffle.Inference.Api/*.pt
 
 */bin
 */obj
