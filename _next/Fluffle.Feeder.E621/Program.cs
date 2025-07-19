@@ -33,4 +33,4 @@ services.AddHostedService<RecentWorker>();
 services.AddHostedService<CompleteWorker>();
 
 var host = builder.Build();
-host.Run();
+await host.RunAndSetExitCodeAsync();

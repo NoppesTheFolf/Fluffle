@@ -28,4 +28,4 @@ services.AddSingleton<MainApiClient>();
 services.AddHostedService<Worker>();
 
 var host = builder.Build();
-host.Run();
+await host.RunAndSetExitCodeAsync();

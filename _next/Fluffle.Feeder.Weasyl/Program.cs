@@ -32,4 +32,4 @@ services.AddHostedService<NewestWorker>();
 services.AddHostedService<ArchiveWorker>();
 
 var host = builder.Build();
-host.Run();
+await host.RunAndSetExitCodeAsync();
