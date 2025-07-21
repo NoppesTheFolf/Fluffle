@@ -1,6 +1,7 @@
 using Fluffle.Content.Api.Client;
 using Fluffle.Imaging.Api.Client;
 using Fluffle.Inference.Api.Client;
+using Fluffle.Search.Api.SearchByUrl;
 using Fluffle.Search.Api.Validation;
 using Fluffle.Vector.Api.Client;
 using Fluffle_Search_Api;
@@ -62,6 +63,19 @@ services.AddRateLimiter(options =>
                 QueueLimit = 32,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst
             }));
+
+    options.AddPolicy("exact-search-by-url", httpContext => RateLimitPartition.GetTokenBucketLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new TokenBucketRateLimiterOptions
+        {
+            AutoReplenishment = true,
+            TokenLimit = 8,
+            TokensPerPeriod = 1,
+            ReplenishmentPeriod = TimeSpan.FromSeconds(5),
+            QueueLimit = 1,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+        }));
+
     options.RejectionStatusCode = (int)HttpStatusCode.TooManyRequests;
 });
 services.AddSingleton<RequireUserAgentMiddleware>();
@@ -78,6 +92,16 @@ services.AddControllers(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
 });
+
+services.AddHttpClient(nameof(SafeDownloadClient), client =>
+{
+    client.DefaultRequestHeaders.Add("User-Agent", "fluffle.xyz by NoppesTheFolf");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    AllowAutoRedirect = false,
+    UseCookies = false
+});
+services.AddSingleton<SafeDownloadClient>();
 
 var app = builder.Build();
 

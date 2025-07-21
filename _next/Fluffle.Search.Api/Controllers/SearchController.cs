@@ -5,12 +5,14 @@ using Fluffle.Imaging.Api.Models;
 using Fluffle.Inference.Api.Client;
 using Fluffle.Search.Api.IdGeneration;
 using Fluffle.Search.Api.Models;
+using Fluffle.Search.Api.SearchByUrl;
 using Fluffle.Search.Api.Validation;
 using Fluffle.Search.Api.Validation.Validators;
 using Fluffle.Vector.Api.Client;
 using Fluffle.Vector.Api.Models.Vectors;
 using Fluffle_Search_Api;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.ML;
 
 namespace Fluffle.Search.Api.Controllers;
@@ -23,19 +25,22 @@ public class SearchController : ControllerBase
     private readonly IVectorApiClient _vectorApiClient;
     private readonly PredictionEnginePool<ExactMatchV2IsMatch.ModelInput, ExactMatchV2IsMatch.ModelOutput> _isMatchModel;
     private readonly IContentApiClient _contentApiClient;
+    private readonly SafeDownloadClient _safeDownloadClient;
 
     public SearchController(
         IImagingApiClient imagingApiClient,
         IInferenceApiClient inferenceApiClient,
         IVectorApiClient vectorApiClient,
         PredictionEnginePool<ExactMatchV2IsMatch.ModelInput, ExactMatchV2IsMatch.ModelOutput> isMatchModel,
-        IContentApiClient contentApiClient)
+        IContentApiClient contentApiClient,
+        SafeDownloadClient safeDownloadClient)
     {
         _imagingApiClient = imagingApiClient;
         _inferenceApiClient = inferenceApiClient;
         _vectorApiClient = vectorApiClient;
         _isMatchModel = isMatchModel;
         _contentApiClient = contentApiClient;
+        _safeDownloadClient = safeDownloadClient;
     }
 
     [HttpPost("create-link")]
@@ -85,6 +90,40 @@ public class SearchController : ControllerBase
         return Ok(new SearchResultsModel
         {
             Id = model.Id,
+            Results = searchModels
+        });
+    }
+
+    [EnableRateLimiting("exact-search-by-url")]
+    [HttpGet("/exact-search-by-url", Name = "ExactSearchByUrl")]
+    public async Task<IActionResult> ExactSearchByUrlAsync([FromQuery] SearchByUrlModel model)
+    {
+        var validationResult = await new SearchByUrlModelValidator().ValidateAsync(model);
+        if (!validationResult.IsValid)
+        {
+            return Error.Create(400, validationResult);
+        }
+
+        var (xDownloadStream, downloadError) = await _safeDownloadClient.DownloadUrlAsync(model.Url);
+        await using var downloadStream = xDownloadStream;
+        if (downloadStream == null)
+        {
+            return downloadError.AsResult();
+        }
+
+        var (thumbnail, thumbnailError) = await CreateThumbnailAsync(downloadStream);
+        if (thumbnail == null)
+        {
+            return thumbnailError.AsResult();
+        }
+
+        using var thumbnailStream = new MemoryStream(thumbnail);
+        var searchModels = await ExactSearchAsync(thumbnailStream, model.Limit);
+
+        var requestId = $"{ShortUuidDateTime.ToString(DateTime.UtcNow)}{ShortUuid.Random(12)}";
+        return Ok(new SearchResultsModel
+        {
+            Id = requestId,
             Results = searchModels
         });
     }

@@ -26,6 +26,6 @@ public static class ValidationExtensions
         return ruleBuilder
             .NotEmpty()
             .Must(x => x == null || x.Length <= MaximumFileSize)
-            .WithMessage($"The submitted file is larger than the maximum allowed size, which is {MaximumFileSize} bytes (4 MiB).");
+            .WithMessage("The submitted file is larger than the maximum allowed size, which is 4 MiB.");
     }
 }
