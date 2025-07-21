@@ -72,7 +72,7 @@ services.AddRateLimiter(options =>
             TokenLimit = 8,
             TokensPerPeriod = 1,
             ReplenishmentPeriod = TimeSpan.FromSeconds(5),
-            QueueLimit = 1,
+            QueueLimit = 4,
             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
         }));
 

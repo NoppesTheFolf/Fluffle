@@ -20,5 +20,5 @@ public enum Ipv6SpecialRange
     Orchid2,
     DroneRemoteIdProtocolEntityTags,
     Reserved,
-    Default
+    Public
 }

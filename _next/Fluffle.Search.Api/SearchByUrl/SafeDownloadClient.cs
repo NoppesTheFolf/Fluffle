@@ -31,7 +31,7 @@ public class SafeDownloadClient
         try
         {
             ipAddresses = (await Dns.GetHostAddressesAsync(uri.DnsSafeHost))
-                .Where(x => x.AddressFamily is AddressFamily.InterNetwork or AddressFamily.InterNetworkV6)
+                .Where(x => x.AddressFamily is AddressFamily.InterNetwork) // Only allow IPv4 for now, later add IPv6 when it can be tested
                 .ToList();
         }
         catch (SocketException e)
@@ -50,7 +50,7 @@ public class SafeDownloadClient
         }
 
         ipAddresses = ipAddresses
-            .Where(x => x.IsSpecialRangeDefault())
+            .Where(x => x.IsPublic())
             .ToList();
 
         if (ipAddresses.Count == 0)

@@ -7,16 +7,16 @@ public static class SpecialRangeExtensions
 {
     // Based on https://github.com/whitequark/ipaddr.js/blob/08c2cd41e2cb3400683cbd503f60421bfdf66921/lib/ipaddr.js#L1021
 
-    public static bool IsSpecialRangeDefault(this IPAddress ipAddress)
+    public static bool IsPublic(this IPAddress ipAddress)
     {
         if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
         {
-            return ipAddress.GetIpv4SpecialRange() == Ipv4SpecialRange.Default;
+            return ipAddress.GetIpv4SpecialRange() == Ipv4SpecialRange.Public;
         }
 
         if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
         {
-            return ipAddress.GetIpv6SpecialRange() == Ipv6SpecialRange.Default;
+            return ipAddress.GetIpv6SpecialRange() == Ipv6SpecialRange.Public;
         }
 
         throw new ArgumentException("IP address must be IPv4 or IPv6.", nameof(ipAddress));
@@ -77,7 +77,7 @@ public static class SpecialRangeExtensions
             }
         }
 
-        return Ipv6SpecialRange.Default;
+        return Ipv6SpecialRange.Public;
     }
 
     public static Ipv4SpecialRange GetIpv4SpecialRange(this IPAddress ipAddress)
@@ -137,6 +137,6 @@ public static class SpecialRangeExtensions
             }
         }
 
-        return Ipv4SpecialRange.Default;
+        return Ipv4SpecialRange.Public;
     }
 }
