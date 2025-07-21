@@ -48,7 +48,7 @@ export interface SearchResult {
 const Api = function () {
     const sizeLimit = 4194304;
 
-    function url(path: string, params: ParamMap = {}) {
+    function createUrl(path: string, params: ParamMap = {}) {
         const baseUrl = urlcat(process.env.GATSBY_API_URL as string);
         return urlcat(baseUrl, path, params);
     }
@@ -149,13 +149,40 @@ const Api = function () {
         } as SearchResult
     }
 
+    function processSearchError(error: any) {
+        let message = 'Your request caused an error. If you think this is a bug, consider reporting it (see contact) so that it can be fixed.';
+
+        if (error.code === 'ERR_NETWORK') {
+            message = 'Fluffle seems to be offline, please try again later.';
+        } else {
+            const fluffleError = error.response.data?.errors[0];
+            if (fluffleError.code == null) {
+                return Promise.reject(fluffleError.message ?? message);
+            }
+
+            switch (fluffleError.code) {
+                case 'unsupportedFileType':
+                    message = 'The file is of an unsupported type.';
+                    break;
+                case 'areaTooLarge':
+                    message = 'The area of the image exceeds the limit of 16MP.';
+                    break;
+                case 'corruptFile':
+                    message = 'The image seems to be corrupt.';
+                    break;
+            }
+        }
+
+        return Promise.reject(message);
+    }
+
     return {
         mediaGroupThumbnailUrl,
         createLink(file: Blob) {
             const formData = new FormData();
             formData.append('file', file);
 
-            return axios.post(url('create-link'), formData)
+            return axios.post(createUrl('create-link'), formData)
                 .then(response => {
                     const data = response.data;
 
@@ -163,7 +190,7 @@ const Api = function () {
                 });
         },
         searchById(id: string, includeNsfw: boolean, ) {
-            return axios.get(url('/exact-search-by-id', { id: id, limit: 32 }))
+            return axios.get(createUrl('/exact-search-by-id', { id: id, limit: 32 }))
                 .then(response => {
                     const data = response.data;
 
@@ -175,6 +202,15 @@ const Api = function () {
                     return processExactSearchResponse(data, includeNsfw, imageUrl, true);
                 })
         },
+        searchByUrl(url: string, includeNsfw: boolean) {
+            return axios.get(createUrl('/exact-search-by-url', { url: url, limit: 32 }))
+                .then(response => {
+                        const data = response.data;
+
+                        return processExactSearchResponse(data, includeNsfw, url, false);
+                })
+                .catch(processSearchError);
+        },
         searchByFile(file: Blob, includeNsfw: boolean, config: AxiosRequestConfig | undefined = undefined) {
             if (file.size > sizeLimit) {
                 return Promise.reject('The selected file is over the 4 MiB limit.');
@@ -184,41 +220,16 @@ const Api = function () {
             formData.append('file', file);
             formData.append('limit', String(32));
 
-            return axios.post(url('/exact-search-by-file'), formData, config)
+            return axios.post(createUrl('/exact-search-by-file'), formData, config)
                 .then(response => {
                     const data = response.data;
 
                     return processExactSearchResponse(data, includeNsfw, URL.createObjectURL(file), false);
                 })
-                .catch(error => {
-                    let message = 'Your request caused an error. If you think this is a bug, consider reporting it (see contact) so that it can be fixed.';
-
-                    if (error.code === 'ERR_NETWORK') {
-                        message = 'Fluffle seems to be offline, please try again later.';
-                    } else {
-                        const errorCode = error.response.data?.errors[0].code;
-                        if (errorCode == null) {
-                            return;
-                        }
-
-                        switch (errorCode) {
-                            case 'unsupportedFileType':
-                                message = 'The submitted file is of an unsupported type.';
-                                break;
-                            case 'areaTooLarge':
-                                message = 'The submitted image its area exceeds the limit of 16MP.';
-                                break;
-                            case 'corruptFile':
-                                message = 'The image you submitted seems to be corrupt.';
-                                break;
-                        }
-                    }
-
-                    return Promise.reject(message);
-                });
+                .catch(processSearchError);
         },
         async status(config: AxiosRequestConfig | undefined = undefined) {
-            const response = await axios.get(url('status'), config);
+            const response = await axios.get(createUrl('status'), config);
 
             return response.data.map(status => {
                 status.scrapedPercentage = status.isComplete ? 100 : Math.round(status.storedCount / status.estimatedCount * 100);

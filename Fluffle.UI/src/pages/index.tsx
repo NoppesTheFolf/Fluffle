@@ -50,6 +50,19 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
         }
     }, [searchResult]);
 
+    React.useEffect(() => {
+        // Using the hash prevents the specific page with the hash from being indexed by
+        // search engines, and also makes it so there is no query parameter part of the resource
+        // fetching the SPA.
+        let hashParams = new URLSearchParams(window.location.hash);
+        let url = hashParams.get('#url');
+        if (url == null || url === '') {
+            return;
+        }
+
+        searchInternalByUrl(url);
+    }, []);
+
     function setError(message) {
         setErrorMessage(message);
         setState(State.ERROR);
@@ -131,6 +144,19 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
         }
 
         image.src = URL.createObjectURL(file);
+    }
+
+    function searchInternalByUrl(url: string) {
+        setState(State.PROCESSING);
+        setProgress(100);
+        Api.searchByUrl(url, searchConfig.includeNsfw)
+            .then(data => {
+                setReverseSearchTime(new Date().getTime());
+                setData(data);
+                setState(State.DONE);
+            }).catch(message => {
+                setError(message);
+            });
     }
 
     function searchInternal(file: Blob) {
