@@ -20,6 +20,12 @@ const CreateLinkButton = ({ data }) => {
     }
 
     function createLink() {
+        if (new URLSearchParams(window.location.hash).has("#url")) {
+                copyToClipboard(window.location.href);
+                setState(states.SUCCESS);
+            return;
+        }
+
         if (state === states.SUCCESS) {
             copyToClipboard(url!);
             return;
