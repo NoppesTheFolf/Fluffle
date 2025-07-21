@@ -12,5 +12,5 @@ public enum Ipv4SpecialRange
     Reserved,
     As112,
     Amt,
-    Default
+    Public
 }
