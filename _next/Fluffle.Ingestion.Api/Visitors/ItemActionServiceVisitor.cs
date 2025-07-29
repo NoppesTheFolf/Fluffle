@@ -19,6 +19,8 @@ public class ItemActionServiceVisitor : IPutItemActionModelVisitor<Task<string>>
         var item = new Item
         {
             ItemId = model.ItemId,
+            GroupId = model.GroupId,
+            GroupItemIds = model.GroupItemIds,
             Images = model.Images.Select(x => new Image
             {
                 Width = x.Width,

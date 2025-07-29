@@ -8,6 +8,8 @@ using Fluffle.Ingestion.Worker.ThumbnailStorage;
 using Fluffle.Vector.Api.Client;
 using Fluffle.Vector.Api.Models.Items;
 using Microsoft.ApplicationInsights;
+using System.Collections.Immutable;
+using System.Net;
 using System.Text.Json.Nodes;
 using IngestionItemModel = Fluffle.Ingestion.Api.Models.Items.ItemModel;
 using PutItemModel = Fluffle.Vector.Api.Models.Items.PutItemModel;
@@ -61,6 +63,7 @@ public class IndexItemActionHandler : IItemActionHandler
         _logger.LogInformation("Updating item information on Vector API...");
         await _vectorApiClient.PutItemAsync(existingItem.ItemId, new PutItemModel
         {
+            GroupId = newItem.GroupId,
             Images = newItem.Images.Select(x => new ImageModel
             {
                 Width = x.Width,
@@ -72,6 +75,8 @@ public class IndexItemActionHandler : IItemActionHandler
         }).Timed(_telemetryClient, "VectorApiPutItem");
 
         _logger.LogInformation("Item has been updated!");
+
+        await HandleGroupDeletionsAsync(newItem);
     }
 
     private async Task HandleNewItem(IngestionItemModel item)
@@ -121,6 +126,7 @@ public class IndexItemActionHandler : IItemActionHandler
         _logger.LogInformation("Adding item and vectors to Vector API...");
         await _vectorApiClient.PutItemAsync(item.ItemId, new PutItemModel
         {
+            GroupId = item.GroupId,
             Images = item.Images.Select(x => new ImageModel
             {
                 Width = x.Width,
@@ -146,5 +152,56 @@ public class IndexItemActionHandler : IItemActionHandler
             }).ToList()).Timed(_telemetryClient, "VectorApiPutItemVectorsExactMatchV2");
 
         _logger.LogInformation("Item has been indexed!");
+
+        await HandleGroupDeletionsAsync(item);
+    }
+
+    private async Task HandleGroupDeletionsAsync(IngestionItemModel item)
+    {
+        if (item.GroupId == null || item.GroupItemIds == null || item.GroupItemIds.Count == 0)
+        {
+            return;
+        }
+
+        _logger.LogInformation("Processing group with ID {GroupId}...", item.GroupId);
+        var existingItems = await _vectorApiClient.GetItemsAsync(
+            itemIds: null,
+            groupId: item.GroupId
+        ).Timed(_telemetryClient, "VectorApiGetItems");
+        var existingItemIds = existingItems.Select(x => x.ItemId).ToImmutableHashSet(StringComparer.Ordinal);
+
+        var deletedItemIds = existingItemIds.Except(item.GroupItemIds);
+        if (deletedItemIds.Count == 0)
+        {
+            _logger.LogInformation("No items in group with ID {GroupId} need to be deleted.", item.GroupId);
+            return;
+        }
+
+        // Multiple workers can be processing the same group, so it might happen another worker deleted an item
+        // before this worker got the chance to
+        foreach (var deletedItemId in deletedItemIds)
+        {
+            try
+            {
+                _logger.LogInformation("Deleting item with ID {ItemId} because of group with ID {GroupId}...", deletedItemId, item.GroupId);
+                await _vectorApiClient.DeleteItemAsync(deletedItemId).Timed(_telemetryClient, "VectorApiDeleteItem");
+            }
+            catch (VectorApiException e)
+            {
+                if (e.StatusCode != HttpStatusCode.NotFound)
+                {
+                    throw;
+                }
+
+                // Sanity check to verify the item was indeed deleted on an error
+                var deletedItem = await _vectorApiClient.GetItemAsync(deletedItemId).Timed(_telemetryClient, "VectorApiGetItem");
+                if (deletedItem != null)
+                {
+                    throw new InvalidOperationException($"Item with ID {deletedItem} was not deleted from group with ID {item.GroupId}!");
+                }
+            }
+        }
+
+        _logger.LogInformation("Group with ID {GroupId} has been processed!", item.GroupId);
     }
 }

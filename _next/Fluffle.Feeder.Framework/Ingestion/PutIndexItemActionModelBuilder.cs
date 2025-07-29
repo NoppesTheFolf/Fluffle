@@ -7,6 +7,8 @@ namespace Fluffle.Feeder.Framework.Ingestion;
 public class PutIndexItemActionModelBuilder
 {
     private string? _itemId;
+    private string? _groupId;
+    private ICollection<string>? _groupItemIds;
     private long? _priority;
     private readonly List<ImageModel> _images = [];
     private string? _url;
@@ -17,6 +19,14 @@ public class PutIndexItemActionModelBuilder
     public PutIndexItemActionModelBuilder WithItemId(string itemId)
     {
         _itemId = itemId;
+
+        return this;
+    }
+
+    public PutIndexItemActionModelBuilder WithGroup(string groupId, ICollection<string> groupItemIds)
+    {
+        _groupId = groupId;
+        _groupItemIds = groupItemIds;
 
         return this;
     }
@@ -107,6 +117,8 @@ public class PutIndexItemActionModelBuilder
         return new PutIndexItemActionModel
         {
             ItemId = _itemId,
+            GroupId = _groupId,
+            GroupItemIds = _groupItemIds,
             Priority = _priority.Value,
             Images = _images,
             Properties = JsonSerializer.SerializeToNode(new FeederProperties

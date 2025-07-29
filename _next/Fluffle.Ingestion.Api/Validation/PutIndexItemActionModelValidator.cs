@@ -8,6 +8,15 @@ public class PutIndexItemActionModelValidator : AbstractValidator<PutIndexItemAc
 {
     public PutIndexItemActionModelValidator()
     {
+        RuleFor(x => x)
+            .Must(x => (x.GroupId == null && x.GroupItemIds == null) || (x.GroupId != null && x.GroupItemIds != null))
+            .WithMessage("'GroupId' and 'GroupItemIds' must both be set when either is provided.")
+            .Must(x => x.GroupItemIds == null || x.GroupItemIds.Contains(x.ItemId))
+            .WithMessage("'GroupItemIds' must at least contain 'ItemId'.");
+
+        RuleForEach(x => x.GroupItemIds)
+            .NotEmpty();
+
         RuleForEach(x => x.Images)
             .NotEmpty()
             .ChildRules(image =>

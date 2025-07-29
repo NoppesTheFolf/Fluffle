@@ -11,6 +11,7 @@ internal static class MappingExtensions
         return new ItemModel
         {
             ItemId = item.ItemId,
+            GroupId = item.GroupId,
             Images = item.Images.Select(x => new ImageModel
             {
                 Width = x.Width,

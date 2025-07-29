@@ -197,7 +197,7 @@ public class SearchController : ControllerBase
             isMatchPredictions[vectorSearchResults[i].ItemId] = modelOutput.PredictedLabel;
         }
 
-        var items = await _vectorApiClient.GetItemsAsync(vectorSearchResultsLookup.Keys);
+        var items = await _vectorApiClient.GetItemsAsync(itemIds: vectorSearchResultsLookup.Keys, groupId: null);
 
         var searchModels = items
             .Select(x =>

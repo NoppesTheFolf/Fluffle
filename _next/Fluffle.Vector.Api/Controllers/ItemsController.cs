@@ -29,6 +29,7 @@ public class ItemsController : ControllerBase
         await _itemRepository.UpsertAsync(new Item
         {
             ItemId = itemId,
+            GroupId = model.GroupId,
             Images = model.Images.Select(x => new Image
             {
                 Width = x.Width,
@@ -71,9 +72,9 @@ public class ItemsController : ControllerBase
     }
 
     [HttpGet("/items", Name = "GetItems")]
-    public async Task<IActionResult> GetItemsAsync([FromQuery] ICollection<string> itemIds)
+    public async Task<IActionResult> GetItemsAsync([FromQuery] ICollection<string> itemIds, string? groupId)
     {
-        var items = await _itemRepository.GetAsync(itemIds);
+        var items = await _itemRepository.GetAsync(itemIds.Count == 0 ? null : itemIds, groupId);
 
         var models = items.Select(x => x.ToModel()).ToList();
         return Ok(models);

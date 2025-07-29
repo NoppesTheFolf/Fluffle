@@ -11,7 +11,7 @@ internal static class HttpResponseMessageExtensions
         catch (HttpRequestException e)
         {
             var bodyContent = await httpResponseMessage.Content.ReadAsStringAsync();
-            throw new VectorApiException(bodyContent, e);
+            throw new VectorApiException(e.StatusCode, bodyContent, e);
         }
     }
 }

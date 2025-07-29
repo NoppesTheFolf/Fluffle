@@ -49,12 +49,24 @@ internal class VectorApiClient : IVectorApiClient
         return collections!;
     }
 
-    public async Task<ICollection<ItemModel>> GetItemsAsync(ICollection<string> itemIds)
+    public async Task<ICollection<ItemModel>> GetItemsAsync(ICollection<string>? itemIds, string? groupId)
     {
         using var httpClient = _httpClientFactory.CreateClient(nameof(VectorApiClient));
 
-        var parameters = string.Join("&", itemIds.Select(x => $"itemIds={Uri.EscapeDataString(x)}"));
-        var models = await httpClient.GetFromJsonAsync<ICollection<ItemModel>>($"/items?{parameters}");
+        IEnumerable<string> parameters = [];
+
+        if (itemIds != null)
+        {
+            parameters = parameters.Concat(itemIds.Select(x => $"itemIds={Uri.EscapeDataString(x)}"));
+        }
+
+        if (groupId != null)
+        {
+            parameters = parameters.Concat([$"groupId={Uri.EscapeDataString(groupId)}"]);
+        }
+
+        var url = $"/items?{string.Join("&", parameters)}";
+        var models = await httpClient.GetFromJsonAsync<ICollection<ItemModel>>(url);
 
         return models!;
     }

@@ -19,4 +19,5 @@
     <ProjectReference Include="..\Fluffle.Ingestion.Api.Client\Fluffle.Ingestion.Api.Client.csproj" />
     <ProjectReference Include="..\Fluffle.Vector.Api.Client\Fluffle.Vector.Api.Client.csproj" />
   </ItemGroup>
+
 </Project>

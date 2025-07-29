@@ -11,7 +11,7 @@ public interface IVectorApiClient
 
     Task<ICollection<string>> GetItemCollectionsAsync(string itemId);
 
-    Task<ICollection<ItemModel>> GetItemsAsync(ICollection<string> itemIds);
+    Task<ICollection<ItemModel>> GetItemsAsync(ICollection<string>? itemIds, string? groupId);
 
     Task DeleteItemAsync(string itemId);
 

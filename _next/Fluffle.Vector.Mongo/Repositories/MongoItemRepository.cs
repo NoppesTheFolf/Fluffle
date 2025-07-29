@@ -30,9 +30,25 @@ internal class MongoItemRepository : IItemRepository
         return item;
     }
 
-    public async Task<ICollection<Item>> GetAsync(ICollection<string> itemIds)
+    public async Task<ICollection<Item>> GetAsync(ICollection<string>? itemIds, string? groupId)
     {
-        var filter = Builders<Item>.Filter.In(x => x.ItemId, itemIds);
+        if (itemIds == null && groupId == null)
+        {
+            throw new InvalidOperationException("Cannot get items without any filters.");
+        }
+
+        var filter = Builders<Item>.Filter.Empty;
+
+        if (itemIds != null)
+        {
+            filter &= Builders<Item>.Filter.In(x => x.ItemId, itemIds);
+        }
+
+        if (groupId != null)
+        {
+            filter &= Builders<Item>.Filter.Eq(x => x.GroupId, groupId);
+        }
+
         var items = await _context.Items.Find(filter).ToListAsync();
 
         return items;
