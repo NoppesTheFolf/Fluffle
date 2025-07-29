@@ -8,7 +8,7 @@ public interface IItemRepository
 
     Task<Item?> GetAsync(string itemId);
 
-    Task<ICollection<Item>> GetAsync(ICollection<string> itemIds);
+    Task<ICollection<Item>> GetAsync(ICollection<string>? itemIds, string? groupId);
 
     Task DeleteAsync(string itemId);
 }

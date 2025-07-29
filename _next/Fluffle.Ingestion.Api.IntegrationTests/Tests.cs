@@ -62,7 +62,9 @@ public class Tests
             new PutIndexItemActionModel
             {
                 Priority = 1,
-                ItemId = "1",
+                ItemId = "itemId1",
+                GroupId = null,
+                GroupItemIds = null,
                 Images = [new ImageModel
                 {
                     Width = 123,
@@ -73,12 +75,14 @@ public class Tests
             },
             new PutDeleteItemActionModel
             {
-                ItemId = "3"
+                ItemId = "itemId3"
             },
             new PutIndexItemActionModel
             {
                 Priority = 2,
-                ItemId = "2",
+                ItemId = "itemId2",
+                GroupId = "groupId2",
+                GroupItemIds = ["itemId2"],
                 Images = [new ImageModel
                 {
                     Width = 321,
@@ -92,17 +96,17 @@ public class Tests
         var itemAction1 = await _ingestionApiClient.DequeueItemActionAsync();
         itemAction1.ShouldBeOfType<DeleteItemActionModel>();
         itemAction1.ItemActionId.ShouldNotBeNull();
-        itemAction1.ItemId.ShouldBe("3");
+        itemAction1.ItemId.ShouldBe("itemId3");
 
         var itemAction2 = await _ingestionApiClient.DequeueItemActionAsync();
         var indexItemAction2 = itemAction2.ShouldBeOfType<IndexItemActionModel>();
         indexItemAction2.ItemActionId.ShouldNotBeNull();
-        indexItemAction2.ItemId.ShouldBe("2");
+        indexItemAction2.ItemId.ShouldBe("itemId2");
 
         var itemAction3 = await _ingestionApiClient.DequeueItemActionAsync();
         var indexItemAction3 = itemAction3.ShouldBeOfType<IndexItemActionModel>();
         indexItemAction3.ItemActionId.ShouldNotBeNull();
-        indexItemAction3.ItemId.ShouldBe("1");
+        indexItemAction3.ItemId.ShouldBe("itemId1");
 
         var itemAction4 = await _ingestionApiClient.DequeueItemActionAsync();
         itemAction4.ShouldBeNull();

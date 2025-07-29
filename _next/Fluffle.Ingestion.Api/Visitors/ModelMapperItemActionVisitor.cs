@@ -16,6 +16,8 @@ public class ModelMapperItemActionVisitor : IItemActionVisitor<ItemActionModel>
             Item = new ItemModel
             {
                 ItemId = itemAction.Item.ItemId,
+                GroupId = itemAction.Item.GroupId,
+                GroupItemIds = itemAction.Item.GroupItemIds,
                 Images = itemAction.Item.Images.Select(x => new ImageModel
                 {
                     Width = x.Width,

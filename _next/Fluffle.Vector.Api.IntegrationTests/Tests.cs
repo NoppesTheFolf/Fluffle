@@ -4,6 +4,7 @@ using Fluffle.Vector.Api.Models.Vectors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -50,14 +51,16 @@ public class Tests
         var act = _vectorApiClient.GetItemCollectionsAsync("nonExistentId");
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
+        e.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         e.Message.ShouldBe("No item with ID 'nonExistentId' could be found.");
     }
 
     [Test, Order(3)]
     public async Task Test03_PutItem_NewItem()
     {
-        await _vectorApiClient.PutItemAsync("testId", new PutItemModel
+        await _vectorApiClient.PutItemAsync("testItemId", new PutItemModel
         {
+            GroupId = "testGroupId",
             Images = new List<ImageModel>
             {
                 new()
@@ -100,12 +103,13 @@ public class Tests
     [Test, Order(4)]
     public async Task Test04_GetItemAndGetItems_ItemExists()
     {
-        var item = await _vectorApiClient.GetItemAsync("testId");
+        var item = await _vectorApiClient.GetItemAsync("testItemId");
 
         var itemSerialized = JsonSerializer.Serialize(item, JsonSerializerOptions.Web);
         var expectedItemSerialized = """
                                      {
-                                         "itemId": "testId",
+                                         "itemId": "testItemId",
+                                         "groupId": "testGroupId",
                                          "images": [
                                              {
                                                  "width": 123,
@@ -143,15 +147,22 @@ public class Tests
                                      """.Replace("\r", string.Empty).Replace("\n", string.Empty).Replace(" ", string.Empty);
         itemSerialized.ShouldBe(expectedItemSerialized);
 
-        var items = await _vectorApiClient.GetItemsAsync(["something", "testId", "testId", "somethingElse"]);
+        var items = await _vectorApiClient.GetItemsAsync(itemIds: ["something", "testItemId", "testItemId", "somethingElse"], groupId: null);
         var itemsSerialized = JsonSerializer.Serialize(items, JsonSerializerOptions.Web);
         itemsSerialized.ShouldBe($"[{itemSerialized}]");
+
+        items = await _vectorApiClient.GetItemsAsync(itemIds: null, groupId: "testGroupId");
+        itemsSerialized = JsonSerializer.Serialize(items, JsonSerializerOptions.Web);
+        itemsSerialized.ShouldBe($"[{itemSerialized}]");
+
+        items = await _vectorApiClient.GetItemsAsync(itemIds: null, groupId: "nonExistentId");
+        items.ShouldBeEmpty();
     }
 
     [Test, Order(5)]
     public async Task Test05_GetItemCollections_ItemExistsNoCollections()
     {
-        var collections = await _vectorApiClient.GetItemCollectionsAsync("testId");
+        var collections = await _vectorApiClient.GetItemCollectionsAsync("testItemId");
         collections.ShouldBeEmpty();
     }
 
@@ -169,13 +180,14 @@ public class Tests
             });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
+        e.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         e.Message.ShouldBe("No item with ID 'nonExistentId' could be found.");
     }
 
     [Test, Order(7)]
     public async Task Test07_PutItemVectors_NonExistentCollection()
     {
-        var act = _vectorApiClient.PutItemVectorsAsync("testId", "nonExistentCollection",
+        var act = _vectorApiClient.PutItemVectorsAsync("testItemId", "nonExistentCollection",
             new List<PutItemVectorModel>
             {
                 new()
@@ -186,13 +198,14 @@ public class Tests
             });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
+        e.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         e.Message.ShouldBe("No collection with ID 'nonExistentCollection' could be found.");
     }
 
     [Test, Order(8)]
     public async Task Test08_PutItemVectors_InvalidVectorLength()
     {
-        var act = _vectorApiClient.PutItemVectorsAsync("testId", "integrationTest",
+        var act = _vectorApiClient.PutItemVectorsAsync("testItemId", "integrationTest",
             new List<PutItemVectorModel>
             {
                 new()
@@ -208,13 +221,14 @@ public class Tests
             });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
+        e.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         e.Message.ShouldBe("Query length of at least one vector does not equal expected vector length of collection (2).");
     }
 
     [Test, Order(9)]
     public async Task Test09_PutItemVectors_NewItemVector()
     {
-        await _vectorApiClient.PutItemVectorsAsync("testId", "integrationTest", new List<PutItemVectorModel>
+        await _vectorApiClient.PutItemVectorsAsync("testItemId", "integrationTest", new List<PutItemVectorModel>
         {
             new()
             {
@@ -236,7 +250,7 @@ public class Tests
     [Test, Order(10)]
     public async Task Test10_GetItemCollections_ItemExistsSingleCollection()
     {
-        var collections = await _vectorApiClient.GetItemCollectionsAsync("testId");
+        var collections = await _vectorApiClient.GetItemCollectionsAsync("testItemId");
 
         collections.Count.ShouldBe(1);
         collections.ShouldContain("integrationTest");
@@ -252,6 +266,7 @@ public class Tests
         });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
+        e.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         e.Message.ShouldBe("No collection with ID 'nonExistentCollection' could be found.");
     }
 
@@ -265,6 +280,7 @@ public class Tests
         });
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
+        e.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         e.Message.ShouldBe("Query length of vector does not equal expected vector length of collection (2).");
     }
 
@@ -278,7 +294,7 @@ public class Tests
         });
 
         results.Count.ShouldBe(2);
-        results[0].ItemId.ShouldBe("testId");
+        results[0].ItemId.ShouldBe("testItemId");
         results[0].Distance.ShouldBe(0.998f, 0.001f);
         var propertiesSerialized = JsonSerializer.Serialize(results[0].Properties);
         propertiesSerialized.ShouldBe("""{"ValueString":"string","ValueInt":123}""");
@@ -287,7 +303,7 @@ public class Tests
     [Test, Order(14)]
     public async Task Test14_PutItemVectorsAndSearchVectors_ExistingItemVector()
     {
-        await _vectorApiClient.PutItemVectorsAsync("testId", "integrationTest", new List<PutItemVectorModel>
+        await _vectorApiClient.PutItemVectorsAsync("testItemId", "integrationTest", new List<PutItemVectorModel>
         {
             new()
             {
@@ -308,7 +324,7 @@ public class Tests
         });
 
         results.Count.ShouldBe(1);
-        results[0].ItemId.ShouldBe("testId");
+        results[0].ItemId.ShouldBe("testItemId");
         results[0].Distance.ShouldBe(0.901f, 0.001f);
         var propertiesSerialized = JsonSerializer.Serialize(results[0].Properties);
         propertiesSerialized.ShouldBe("{}");
@@ -320,23 +336,25 @@ public class Tests
         var act = _vectorApiClient.DeleteItemAsync("nonExistentId");
 
         var e = await act.ShouldThrowAsync<VectorApiException>();
+        e.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         e.Message.ShouldBe("No item with ID 'nonExistentId' could be found.");
     }
 
     [Test, Order(16)]
     public async Task Test16_DeleteItem_ItemExists()
     {
-        var existingItem = await _vectorApiClient.GetItemAsync("testId");
+        var existingItem = await _vectorApiClient.GetItemAsync("testItemId");
         existingItem.ShouldNotBeNull();
 
-        await _vectorApiClient.DeleteItemAsync("testId");
+        await _vectorApiClient.DeleteItemAsync("testItemId");
 
-        var deletedItem = await _vectorApiClient.GetItemAsync("testId");
+        var deletedItem = await _vectorApiClient.GetItemAsync("testItemId");
         deletedItem.ShouldBeNull();
 
-        var getItemCollectionsAct = _vectorApiClient.GetItemCollectionsAsync("testId");
+        var getItemCollectionsAct = _vectorApiClient.GetItemCollectionsAsync("testItemId");
         var e = await getItemCollectionsAct.ShouldThrowAsync<VectorApiException>();
-        e.Message.ShouldBe("No item with ID 'testId' could be found.");
+        e.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        e.Message.ShouldBe("No item with ID 'testItemId' could be found.");
 
         var searchResults = await _vectorApiClient.SearchCollectionAsync("integrationTest", new VectorSearchParametersModel
         {

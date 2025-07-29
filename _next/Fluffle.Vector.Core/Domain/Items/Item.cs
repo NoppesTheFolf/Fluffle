@@ -4,6 +4,8 @@ public class Item
 {
     public required string ItemId { get; set; }
 
+    public required string? GroupId { get; set; }
+
     public required ICollection<Image> Images { get; set; }
 
     public required Thumbnail? Thumbnail { get; set; }

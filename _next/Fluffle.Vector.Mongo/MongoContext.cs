@@ -25,6 +25,9 @@ internal sealed class MongoContext : IDisposable
         var database = _client.GetDatabase(options.Value.DatabaseName);
 
         Items = database.GetCollection<Item>("items");
+
+        var groupIdIndexKeys = Builders<Item>.IndexKeys.Ascending(x => x.GroupId);
+        Items.Indexes.CreateOne(new CreateIndexModel<Item>(groupIdIndexKeys));
     }
 
     public IMongoCollection<Item> Items { get; }
