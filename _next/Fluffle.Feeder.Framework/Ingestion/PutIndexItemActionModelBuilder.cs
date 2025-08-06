@@ -23,6 +23,13 @@ public class PutIndexItemActionModelBuilder
         return this;
     }
 
+    public string GetItemId()
+    {
+        if (_itemId == null) throw new InvalidOperationException("Item ID has not been set.");
+
+        return _itemId;
+    }
+
     public PutIndexItemActionModelBuilder WithGroup(string groupId, ICollection<string> groupItemIds)
     {
         _groupId = groupId;
