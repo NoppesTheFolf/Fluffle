@@ -33,7 +33,16 @@ internal class CosmosClientFactory
             var databaseResponse = await client.CreateDatabaseIfNotExistsAsync(_options.Value.DatabaseId, throughput: 400);
             var database = databaseResponse.Database;
 
-            await database.CreateContainerIfNotExistsAsync(_options.Value.ContainerId, "/id");
+            await database.CreateContainerIfNotExistsAsync(new ContainerProperties
+            {
+                Id = _options.Value.ContainerId,
+                PartitionKeyPath = "/id",
+                IndexingPolicy = new IndexingPolicy
+                {
+                    Automatic = false,
+                    IndexingMode = IndexingMode.None
+                }
+            });
 
             _client = client;
             return _client;
