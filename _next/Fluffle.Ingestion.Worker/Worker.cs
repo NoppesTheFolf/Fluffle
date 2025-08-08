@@ -52,7 +52,7 @@ public class Worker : BackgroundService
             var itemAction = await _ingestionApiClient.DequeueItemActionAsync().Timed(_telemetryClient, "IngestionApiDequeueItemAction");
             if (itemAction != null)
             {
-                using (_logger.BeginScope("ItemActionId:{ItemActionId} ItemId:{ItemId}", itemAction.ItemActionId, itemAction.ItemId))
+                using (_logger.BeginScope("ItemActionId:{ItemActionId}", itemAction.ItemActionId))
                 {
                     var handler = itemAction.Visit(_itemActionHandlerFactory);
 
@@ -64,14 +64,14 @@ public class Worker : BackgroundService
                     }
                     catch (Exception e)
                     {
-                        _logger.LogError(e, "An exception occurred while processing an item action.");
+                        _logger.LogError(e, "An exception occurred while processing an item action. Waiting {Interval} before trying again.", _options.Value.ErrorDelay);
                         await Task.Delay(_options.Value.ErrorDelay, stoppingToken);
                     }
                 }
             }
             else
             {
-                _logger.LogInformation("No item to process, trying again in {Interval}.", _options.Value.DequeueInterval);
+                _logger.LogInformation("No item action to process, trying again in {Interval}.", _options.Value.DequeueInterval);
                 await Task.Delay(_options.Value.DequeueInterval, stoppingToken);
             }
         }

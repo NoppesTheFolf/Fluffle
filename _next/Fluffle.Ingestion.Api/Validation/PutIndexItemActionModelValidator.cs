@@ -8,6 +8,8 @@ public class PutIndexItemActionModelValidator : AbstractValidator<PutIndexItemAc
 {
     public PutIndexItemActionModelValidator()
     {
+        RuleFor(x => x.ItemId).NotEmpty();
+
         RuleFor(x => x)
             .Must(x => (x.GroupId == null && x.GroupItemIds == null) || (x.GroupId != null && x.GroupItemIds != null))
             .WithMessage("'GroupId' and 'GroupItemIds' must both be set when either is provided.")

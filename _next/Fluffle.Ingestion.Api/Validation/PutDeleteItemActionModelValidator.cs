@@ -7,5 +7,6 @@ public class PutDeleteItemActionModelValidator : AbstractValidator<PutDeleteItem
 {
     public PutDeleteItemActionModelValidator()
     {
+        RuleFor(x => x.ItemId).NotEmpty();
     }
 }

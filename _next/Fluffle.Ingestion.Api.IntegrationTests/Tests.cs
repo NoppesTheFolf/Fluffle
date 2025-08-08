@@ -94,9 +94,9 @@ public class Tests
         });
 
         var itemAction1 = await _ingestionApiClient.DequeueItemActionAsync();
-        itemAction1.ShouldBeOfType<DeleteItemActionModel>();
-        itemAction1.ItemActionId.ShouldNotBeNull();
-        itemAction1.ItemId.ShouldBe("itemId3");
+        var deleteItemAction1 = itemAction1.ShouldBeOfType<DeleteItemActionModel>();
+        deleteItemAction1.ItemActionId.ShouldNotBeNull();
+        deleteItemAction1.ItemId.ShouldBe("itemId3");
 
         var itemAction2 = await _ingestionApiClient.DequeueItemActionAsync();
         var indexItemAction2 = itemAction2.ShouldBeOfType<IndexItemActionModel>();

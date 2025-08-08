@@ -55,9 +55,8 @@ internal class InkbunnyFeeder
             var missingSubmissionIds = ids.Except(retrievedSubmissionIds);
             foreach (var missingSubmissionId in missingSubmissionIds)
             {
-                // TODO: This needs to work based on group ID
-                var deleteItemAction = new PutDeleteItemActionModelBuilder()
-                    .WithItemId($"inkbunny_{missingSubmissionId}")
+                var deleteItemAction = new PutDeleteGroupItemActionModelBuilder()
+                    .WithGroupId($"inkbunny_{missingSubmissionId}")
                     .Build();
 
                 itemActions.Add(deleteItemAction);

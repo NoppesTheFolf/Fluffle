@@ -5,5 +5,7 @@ namespace Fluffle.Ingestion.Api.Models.ItemActions;
 [JsonDerivedType(typeof(PutDeleteItemActionModel), "delete")]
 public class PutDeleteItemActionModel : PutItemActionModel
 {
+    public required string ItemId { get; set; }
+
     public override T Visit<T>(IPutItemActionModelVisitor<T> visitor) => visitor.Visit(this);
 }

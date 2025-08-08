@@ -34,6 +34,11 @@ public class ItemActionServiceVisitor : IPutItemActionModelVisitor<Task<string>>
 
     public Task<string> Visit(PutDeleteItemActionModel model)
     {
-        return _itemActionService.EnqueueDeleteAsync(model.ItemId);
+        return _itemActionService.EnqueueDeleteItemAsync(model.ItemId);
+    }
+
+    public Task<string> Visit(PutDeleteGroupItemActionModel model)
+    {
+        return _itemActionService.EnqueueDeleteGroupAsync(model.GroupId);
     }
 }
