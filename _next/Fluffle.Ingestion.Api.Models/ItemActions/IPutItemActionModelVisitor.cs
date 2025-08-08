@@ -5,4 +5,6 @@ public interface IPutItemActionModelVisitor<out T>
     T Visit(PutIndexItemActionModel model);
 
     T Visit(PutDeleteItemActionModel model);
+
+    T Visit(PutDeleteGroupItemActionModel model);
 }

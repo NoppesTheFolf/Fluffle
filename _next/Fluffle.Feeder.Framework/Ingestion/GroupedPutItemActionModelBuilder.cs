@@ -25,9 +25,8 @@ public class GroupedPutItemActionModelBuilder
     {
         if (_builders.Count == 0)
         {
-            // TODO: This needs to work based on group ID
-            var deleteItemAction = new PutDeleteItemActionModelBuilder()
-                .WithItemId(_groupId)
+            var deleteItemAction = new PutDeleteGroupItemActionModelBuilder()
+                .WithGroupId(_groupId)
                 .Build();
 
             return [deleteItemAction];

@@ -13,6 +13,7 @@ public class ModelMapperItemActionVisitor : IItemActionVisitor<ItemActionModel>
         {
             ItemActionId = itemAction.ItemActionId!,
             ItemId = itemAction.ItemId,
+            GroupId = itemAction.GroupId,
             Item = new ItemModel
             {
                 ItemId = itemAction.Item.ItemId,
@@ -36,6 +37,15 @@ public class ModelMapperItemActionVisitor : IItemActionVisitor<ItemActionModel>
         {
             ItemActionId = itemAction.ItemActionId!,
             ItemId = itemAction.ItemId
+        };
+    }
+
+    public ItemActionModel Visit(DeleteGroupItemAction itemAction)
+    {
+        return new DeleteGroupItemActionModel
+        {
+            ItemActionId = itemAction.ItemActionId!,
+            GroupId = itemAction.GroupId
         };
     }
 }

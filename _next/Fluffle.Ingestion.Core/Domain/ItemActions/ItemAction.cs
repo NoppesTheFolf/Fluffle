@@ -4,8 +4,6 @@ public abstract class ItemAction
 {
     public string? ItemActionId { get; set; }
 
-    public required string ItemId { get; set; }
-
     public required long Priority { get; set; }
 
     public required int AttemptCount { get; set; }

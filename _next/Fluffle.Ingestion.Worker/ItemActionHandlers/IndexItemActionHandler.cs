@@ -1,6 +1,7 @@
 using Fluffle.Imaging.Api.Client;
 using Fluffle.Imaging.Api.Models;
 using Fluffle.Inference.Api.Client;
+using Fluffle.Ingestion.Api.Client;
 using Fluffle.Ingestion.Api.Models.ItemActions;
 using Fluffle.Ingestion.Worker.ItemContentClient;
 using Fluffle.Ingestion.Worker.Telemetry;
@@ -9,7 +10,6 @@ using Fluffle.Vector.Api.Client;
 using Fluffle.Vector.Api.Models.Items;
 using Microsoft.ApplicationInsights;
 using System.Collections.Immutable;
-using System.Net;
 using System.Text.Json.Nodes;
 using IngestionItemModel = Fluffle.Ingestion.Api.Models.Items.ItemModel;
 using PutItemModel = Fluffle.Vector.Api.Models.Items.PutItemModel;
@@ -26,6 +26,7 @@ public class IndexItemActionHandler : IItemActionHandler
     private readonly IInferenceApiClient _inferenceApiClient;
     private readonly IThumbnailStorage _thumbnailStorage;
     private readonly IVectorApiClient _vectorApiClient;
+    private readonly IIngestionApiClient _ingestionApiClient;
     private readonly ILogger<IndexItemActionHandler> _logger;
     private readonly TelemetryClient _telemetryClient;
 
@@ -37,22 +38,26 @@ public class IndexItemActionHandler : IItemActionHandler
         _inferenceApiClient = serviceProvider.GetRequiredService<IInferenceApiClient>();
         _thumbnailStorage = serviceProvider.GetRequiredService<IThumbnailStorage>();
         _vectorApiClient = serviceProvider.GetRequiredService<IVectorApiClient>();
+        _ingestionApiClient = serviceProvider.GetRequiredService<IIngestionApiClient>();
         _logger = serviceProvider.GetRequiredService<ILogger<IndexItemActionHandler>>();
         _telemetryClient = serviceProvider.GetRequiredService<TelemetryClient>();
     }
 
     public async Task RunAsync()
     {
-        var item = _itemAction.Item;
+        using (_logger.BeginScope("ItemId:{ItemId}", _itemAction.ItemId))
+        {
+            var item = _itemAction.Item;
 
-        var existingItem = await _vectorApiClient.GetItemAsync(item.ItemId).Timed(_telemetryClient, "VectorApiGetItem");
-        if (existingItem == null)
-        {
-            await HandleNewItem(item);
-        }
-        else
-        {
-            await HandleExistingItem(existingItem, item);
+            var existingItem = await _vectorApiClient.GetItemAsync(item.ItemId).Timed(_telemetryClient, "VectorApiGetItem");
+            if (existingItem == null)
+            {
+                await HandleNewItem(item);
+            }
+            else
+            {
+                await HandleExistingItem(existingItem, item);
+            }
         }
     }
 
@@ -177,30 +182,12 @@ public class IndexItemActionHandler : IItemActionHandler
             return;
         }
 
-        // Multiple workers can be processing the same group, so it might happen another worker deleted an item
-        // before this worker got the chance to
-        foreach (var deletedItemId in deletedItemIds)
+        _logger.LogInformation("Scheduling {ItemIds} to be deleted.", deletedItemIds);
+        var deleteItemActions = deletedItemIds.Select(PutItemActionModel (x) => new PutDeleteItemActionModel
         {
-            try
-            {
-                _logger.LogInformation("Deleting item with ID {ItemId} because of group with ID {GroupId}...", deletedItemId, item.GroupId);
-                await _vectorApiClient.DeleteItemAsync(deletedItemId).Timed(_telemetryClient, "VectorApiDeleteItem");
-            }
-            catch (VectorApiException e)
-            {
-                if (e.StatusCode != HttpStatusCode.NotFound)
-                {
-                    throw;
-                }
-
-                // Sanity check to verify the item was indeed deleted on an error
-                var deletedItem = await _vectorApiClient.GetItemAsync(deletedItemId).Timed(_telemetryClient, "VectorApiGetItem");
-                if (deletedItem != null)
-                {
-                    throw new InvalidOperationException($"Item with ID {deletedItem} was not deleted from group with ID {item.GroupId}!");
-                }
-            }
-        }
+            ItemId = x
+        }).ToList();
+        await _ingestionApiClient.PutItemActionsAsync(deleteItemActions).Timed(_telemetryClient, "IngestionApiPutItemActions");
 
         _logger.LogInformation("Group with ID {GroupId} has been processed!", item.GroupId);
     }

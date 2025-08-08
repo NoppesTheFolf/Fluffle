@@ -22,10 +22,18 @@ internal class MongoItemActionRepository : IItemActionRepository
 
     public async Task<ItemAction?> GetByItemIdAsync(string itemId)
     {
-        var filter = Builders<ItemAction>.Filter.Eq(x => x.ItemId, itemId);
+        var filter = Builders<ItemAction>.Filter.Eq(new StringFieldDefinition<ItemAction, string>("itemId"), itemId);
         var itemAction = await _context.ItemActions.Find(filter).FirstOrDefaultAsync();
 
         return itemAction;
+    }
+
+    public async Task<ICollection<ItemAction>> GetByGroupIdAsync(string groupId)
+    {
+        var filter = Builders<ItemAction>.Filter.Eq(new StringFieldDefinition<ItemAction, string>("groupId"), groupId);
+        var itemActions = await _context.ItemActions.Find(filter).ToListAsync();
+
+        return itemActions;
     }
 
     public async Task<ItemAction?> GetHighestPriorityAsync()
@@ -56,5 +64,11 @@ internal class MongoItemActionRepository : IItemActionRepository
     {
         var filter = Builders<ItemAction>.Filter.Eq(x => x.ItemActionId, itemActionId);
         await _context.ItemActions.DeleteOneAsync(filter);
+    }
+
+    public async Task DeleteAsync(ICollection<string> itemActionIds)
+    {
+        var filter = Builders<ItemAction>.Filter.In(x => x.ItemActionId, itemActionIds);
+        await _context.ItemActions.DeleteManyAsync(filter);
     }
 }

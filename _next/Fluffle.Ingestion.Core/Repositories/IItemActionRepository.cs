@@ -8,6 +8,8 @@ public interface IItemActionRepository
 
     Task<ItemAction?> GetByItemIdAsync(string itemId);
 
+    Task<ICollection<ItemAction>> GetByGroupIdAsync(string groupId);
+
     Task<ItemAction?> GetHighestPriorityAsync();
 
     Task SetVisibleWhenAsync(string itemActionId, DateTime visibleWhen);
@@ -15,4 +17,6 @@ public interface IItemActionRepository
     Task IncrementAttemptCountAsync(string itemActionId);
 
     Task DeleteAsync(string itemActionId);
+
+    Task DeleteAsync(ICollection<string> itemActionIds);
 }

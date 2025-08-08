@@ -7,6 +7,8 @@ namespace Fluffle.Ingestion.Api.Models.ItemActions;
 [JsonDerivedType(typeof(PutIndexItemActionModel), "index")]
 public class PutIndexItemActionModel : PutItemActionModel
 {
+    public required string ItemId { get; set; }
+
     public required long Priority { get; set; }
 
     public required string? GroupId { get; set; }

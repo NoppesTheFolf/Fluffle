@@ -22,9 +22,28 @@ public class ItemActionService
     {
         using var _ = await Locker.LockAsync();
 
-        return await EnqueueAsync(item.ItemId, visibleWhen => new IndexItemAction
+        var itemActionIds = new List<string>();
+
+        var itemAction = await _repository.GetByItemIdAsync(item.ItemId);
+        if (itemAction != null)
+        {
+            itemActionIds.Add(itemAction.ItemActionId!);
+        }
+
+        if (item.GroupId != null)
+        {
+            var itemActionsByGroup = await _repository.GetByGroupIdAsync(item.GroupId!);
+            var deleteItemActionsByGroup = itemActionsByGroup
+                .Where(x => x is DeleteGroupItemAction)
+                .Select(x => x.ItemActionId!);
+
+            itemActionIds.AddRange(deleteItemActionsByGroup);
+        }
+
+        return await EnqueueAsync(itemActionIds, visibleWhen => new IndexItemAction
         {
             ItemId = item.ItemId,
+            GroupId = item.GroupId,
             Priority = priority,
             AttemptCount = 0,
             VisibleWhen = visibleWhen,
@@ -32,11 +51,14 @@ public class ItemActionService
         });
     }
 
-    public async Task<string> EnqueueDeleteAsync(string itemId)
+    public async Task<string> EnqueueDeleteItemAsync(string itemId)
     {
         using var _ = await Locker.LockAsync();
 
-        return await EnqueueAsync(itemId, visibleWhen => new DeleteItemAction
+        var itemAction = await _repository.GetByItemIdAsync(itemId);
+        ICollection<string> itemActionIds = itemAction == null ? [] : [itemAction.ItemActionId!];
+
+        return await EnqueueAsync(itemActionIds, visibleWhen => new DeleteItemAction
         {
             ItemId = itemId,
             Priority = int.MaxValue,
@@ -45,14 +67,28 @@ public class ItemActionService
         });
     }
 
-    private async Task<string> EnqueueAsync(string itemId, Func<DateTime, ItemAction> createItemAction)
+    public async Task<string> EnqueueDeleteGroupAsync(string groupId)
     {
-        var existingItemAction = await _repository.GetByItemIdAsync(itemId);
-        var needsDelay = false;
+        using var _ = await Locker.LockAsync();
 
-        if (existingItemAction != null)
+        var itemActions = await _repository.GetByGroupIdAsync(groupId);
+        var itemActionIds = itemActions.Select(x => x.ItemActionId!).ToList();
+
+        return await EnqueueAsync(itemActionIds, visibleWhen => new DeleteGroupItemAction
         {
-            await _repository.DeleteAsync(existingItemAction.ItemActionId!);
+            GroupId = groupId,
+            Priority = int.MaxValue,
+            AttemptCount = 0,
+            VisibleWhen = visibleWhen
+        });
+    }
+
+    private async Task<string> EnqueueAsync(ICollection<string> existingItemActions, Func<DateTime, ItemAction> createItemAction)
+    {
+        var needsDelay = false;
+        if (existingItemActions.Count > 0)
+        {
+            await _repository.DeleteAsync(existingItemActions);
             needsDelay = true;
         }
 

@@ -22,6 +22,7 @@ internal sealed class MongoContext : IDisposable
         });
         BsonClassMap.RegisterClassMap<IndexItemAction>();
         BsonClassMap.RegisterClassMap<DeleteItemAction>();
+        BsonClassMap.RegisterClassMap<DeleteGroupItemAction>();
 
         _client = new MongoClient(options.Value.ConnectionString);
         var database = _client.GetDatabase(options.Value.DatabaseName);
@@ -29,8 +30,11 @@ internal sealed class MongoContext : IDisposable
         // Item actions
         ItemActions = database.GetCollection<ItemAction>("itemActions");
 
-        var itemIdIndexKeys = Builders<ItemAction>.IndexKeys.Ascending(x => x.ItemId);
-        ItemActions.Indexes.CreateOne(new CreateIndexModel<ItemAction>(itemIdIndexKeys, new CreateIndexOptions { Unique = true }));
+        var itemIdIndexKeys = Builders<ItemAction>.IndexKeys.Ascending(new StringFieldDefinition<ItemAction>("itemId"));
+        ItemActions.Indexes.CreateOne(new CreateIndexModel<ItemAction>(itemIdIndexKeys));
+
+        var groupIdIndexKeys = Builders<ItemAction>.IndexKeys.Ascending(new StringFieldDefinition<ItemAction>("groupId"));
+        ItemActions.Indexes.CreateOne(new CreateIndexModel<ItemAction>(groupIdIndexKeys));
 
         var priorityIndexKeys = Builders<ItemAction>.IndexKeys.Descending(x => x.Priority);
         ItemActions.Indexes.CreateOne(new CreateIndexModel<ItemAction>(priorityIndexKeys));
