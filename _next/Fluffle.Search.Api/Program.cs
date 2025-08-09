@@ -12,6 +12,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using IPNetwork = Microsoft.AspNetCore.HttpOverrides.IPNetwork;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -50,6 +51,8 @@ services.AddCors(options =>
 services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
+    options.KnownNetworks.Add(IPNetwork.Parse("0.0.0.0/0"));
+    options.KnownNetworks.Add(IPNetwork.Parse("::/0"));
 });
 
 services.AddRateLimiter(options =>

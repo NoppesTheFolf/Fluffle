@@ -3,6 +3,7 @@ using Fluffle.Content.Api.Storage;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
 using System.Threading.RateLimiting;
+using IPNetwork = Microsoft.AspNetCore.HttpOverrides.IPNetwork;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -39,6 +40,8 @@ services.AddCors(options =>
 services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
+    options.KnownNetworks.Add(IPNetwork.Parse("0.0.0.0/0"));
+    options.KnownNetworks.Add(IPNetwork.Parse("::/0"));
 });
 
 var concurrencyLimit = builder.Configuration.GetValue<int>("Concurrency:Limit");
