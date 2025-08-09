@@ -17,6 +17,12 @@ NetVips.Cache.MaxFiles = 0;
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
+var maxRequestBodySize = builder.Configuration.GetRequiredSection("MaxRequestBodySize").Get<int>();
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = maxRequestBodySize;
+});
+
 services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
