@@ -80,11 +80,19 @@ internal class InkbunnyFeeder
                         url += $"-p{i + 1}";
                     }
 
+                    // This shouldn't really happen, but it might for broken submissions.
+                    // Example where width/height are missing: https://inkbunny.net/s/2937680.
+                    var images = file.GetImages().ToList();
+                    if (images.Count == 0)
+                    {
+                        continue;
+                    }
+
                     groupBuilder.AddItem()
                         .WithItemId($"inkbunny_{submission.Id}-{file.Id}")
                         .WithPriority(submission.CreatedWhen)
                         .WithUrl(url)
-                        .WithImages(file.GetImages())
+                        .WithImages(images)
                         .WithAuthor(submission.UserId, submission.Username)
                         .WithIsSfw(submission.Rating == InkbunnySubmissionRating.General);
                 }
