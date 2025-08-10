@@ -11,4 +11,7 @@ internal class E621ApiClientOptions
 
     [Required]
     public required string ApiKey { get; set; }
+
+    [Required]
+    public required TimeSpan RateLimitPace { get; set; }
 }

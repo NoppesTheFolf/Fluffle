@@ -22,6 +22,7 @@ builder.Services.AddSingleton(provider =>
 
     var e621Client = new E621ClientBuilder()
         .WithUserAgent("Fluffle", "main", "NoppesTheFolf", "Everywhere")
+        .WithRequestInterval(options.Value.RateLimitPace)
         .Build();
 
     e621Client.LogInAsync(options.Value.Username, options.Value.ApiKey, skipValidation: true).Wait();
