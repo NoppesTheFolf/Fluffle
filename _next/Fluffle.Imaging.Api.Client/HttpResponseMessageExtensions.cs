@@ -1,22 +1,11 @@
 ﻿using Fluffle.Imaging.Api.Models;
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Fluffle.Imaging.Api.Client;
 
 internal static class HttpResponseMessageExtensions
 {
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters =
-        {
-            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-        }
-    };
-
     public static async Task EnsureSuccessAsync(this HttpResponseMessage httpResponseMessage)
     {
         try
@@ -30,7 +19,7 @@ internal static class HttpResponseMessageExtensions
                 throw;
             }
 
-            var errorModel = await httpResponseMessage.Content.ReadFromJsonAsync<ImagingErrorModel>(JsonSerializerOptions);
+            var errorModel = await httpResponseMessage.Content.ReadFromJsonAsync<ImagingErrorModel>(ImagingApiClient.JsonSerializerOptions);
             throw new ImagingApiException(errorModel!.Code, errorModel.Message);
         }
     }

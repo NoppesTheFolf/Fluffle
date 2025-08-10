@@ -1,11 +1,17 @@
 ﻿using Fluffle.Imaging.Api.Models;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fluffle.Imaging.Api.Client;
 
 internal class ImagingApiClient : IImagingApiClient
 {
+    internal static readonly JsonSerializerOptions JsonSerializerOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+    };
+
     private readonly IHttpClientFactory _httpClientFactory;
 
     public ImagingApiClient(IHttpClientFactory httpClientFactory)
@@ -35,7 +41,7 @@ internal class ImagingApiClient : IImagingApiClient
 
         var thumbnail = await response.Content.ReadAsByteArrayAsync();
         var metadataJson = response.Headers.GetValues("Imaging-Metadata").Single();
-        var metadata = JsonSerializer.Deserialize<ImageMetadataModel>(metadataJson, JsonSerializerOptions.Web)!;
+        var metadata = JsonSerializer.Deserialize<ImageMetadataModel>(metadataJson, JsonSerializerOptions)!;
 
         return (thumbnail, metadata);
     }

@@ -7,7 +7,7 @@ namespace Fluffle.Feeder.Weasyl.ApiClient;
 
 internal class WeasylApiClient
 {
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
         Converters =
