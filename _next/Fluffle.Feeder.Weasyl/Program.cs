@@ -4,6 +4,7 @@ using Fluffle.Feeder.Weasyl;
 using Fluffle.Feeder.Weasyl.ApiClient;
 using Fluffle.Feeder.Weasyl.Workers;
 using Microsoft.Extensions.Options;
+using System.Net;
 
 var builder = Host.CreateApplicationBuilder(args);
 var services = builder.Services;
@@ -25,6 +26,9 @@ services.AddHttpClient(nameof(WeasylApiClient), (serviceProvider, client) =>
 
     client.DefaultRequestHeaders.Add("User-Agent", "fluffle.xyz by NoppesTheFolf");
     client.DefaultRequestHeaders.Add("X-Weasyl-API-Key", options.Value.ApiKey);
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    AutomaticDecompression = DecompressionMethods.All
 }).AddPacedRateLimit(provider => provider.GetRequiredService<IOptions<WeasylApiClientOptions>>().Value.RateLimitPace);
 services.AddSingleton<WeasylApiClient>();
 

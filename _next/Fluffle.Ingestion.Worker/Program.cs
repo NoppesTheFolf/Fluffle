@@ -42,7 +42,8 @@ services.AddHttpClient(nameof(ItemContentClient), client =>
     client.DefaultRequestHeaders.Add("User-Agent", "fluffle.xyz by NoppesTheFolf");
 }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
-    AllowAutoRedirect = false
+    AllowAutoRedirect = false,
+    UseCookies = false
 });
 
 services.AddSingleton<IItemContentClient, ItemContentClient>();

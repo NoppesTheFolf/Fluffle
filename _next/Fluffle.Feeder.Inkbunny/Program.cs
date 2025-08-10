@@ -3,6 +3,7 @@ using Fluffle.Feeder.Framework.HttpClient;
 using Fluffle.Feeder.Inkbunny;
 using Fluffle.Feeder.Inkbunny.Client;
 using Microsoft.Extensions.Options;
+using System.Net;
 
 var builder = Host.CreateApplicationBuilder(args);
 var services = builder.Services;
@@ -21,6 +22,9 @@ services.AddHttpClient(nameof(InkbunnyClient), client =>
 {
     client.BaseAddress = new Uri("https://inkbunny.net");
     client.DefaultRequestHeaders.Add("User-Agent", "fluffle.xyz by NoppesTheFolf");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    AutomaticDecompression = DecompressionMethods.All
 }).AddPacedRateLimit(provider => provider.GetRequiredService<IOptions<InkbunnyClientOptions>>().Value.RateLimitPace);
 services.AddSingleton<InkbunnyClient>();
 

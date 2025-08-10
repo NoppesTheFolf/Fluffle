@@ -4,6 +4,7 @@ using Fluffle.Feeder.FurAffinity;
 using Fluffle.Feeder.FurAffinity.Client;
 using Fluffle.Feeder.FurAffinity.Workers;
 using Microsoft.Extensions.Options;
+using System.Net;
 
 var builder = Host.CreateApplicationBuilder(args);
 var services = builder.Services;
@@ -25,6 +26,9 @@ services.AddHttpClient(nameof(FurAffinityClient), (serviceProvider, client) =>
 
     client.DefaultRequestHeaders.Add("User-Agent", "fluffle.xyz by NoppesTheFolf");
     client.DefaultRequestHeaders.Add("Cookie", $"a={options.Value.A}; b={options.Value.B}");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    AutomaticDecompression = DecompressionMethods.All
 }).AddPacedRateLimit(provider => provider.GetRequiredService<IOptions<FurAffinityClientOptions>>().Value.RateLimitPace);
 
 services.AddSingleton<FurAffinityClient>();
