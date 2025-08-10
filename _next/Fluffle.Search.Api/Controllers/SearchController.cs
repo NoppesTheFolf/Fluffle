@@ -18,7 +18,7 @@ using Microsoft.Extensions.ML;
 namespace Fluffle.Search.Api.Controllers;
 
 [ApiController]
-public class SearchController : ControllerBase
+public partial class SearchController : ControllerBase
 {
     private readonly IImagingApiClient _imagingApiClient;
     private readonly IInferenceApiClient _inferenceApiClient;
