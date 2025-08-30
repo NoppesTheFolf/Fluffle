@@ -63,7 +63,7 @@ public partial class SearchController
         }
 
         using var thumbnailStream = new MemoryStream(thumbnail);
-        var searchModels = await ExactSearchAsync(thumbnailStream, model.Limit * 4);
+        var searchModels = await ExactSearchAsync(thumbnailStream, Math.Max(model.Limit * 4, 128));
 
         if (!model.IncludeNsfw)
         {
