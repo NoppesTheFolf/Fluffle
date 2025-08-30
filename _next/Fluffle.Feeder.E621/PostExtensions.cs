@@ -26,7 +26,7 @@ internal static class PostExtensions
         {
             return new ImageModel
             {
-                Url = postImage.Location.OriginalString,
+                Url = postImage.Location!.OriginalString,
                 Width = postImage.Width,
                 Height = postImage.Height
             };

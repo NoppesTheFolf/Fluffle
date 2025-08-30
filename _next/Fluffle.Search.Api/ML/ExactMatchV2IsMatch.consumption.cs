@@ -46,6 +46,7 @@ namespace Fluffle_Search_Api
         public class ModelOutput
         {
             [ColumnName(@"is_match")]
+            // ReSharper disable once InconsistentNaming
             public bool Is_match { get; set; }
 
             [ColumnName(@"d1")]
@@ -64,7 +65,7 @@ namespace Fluffle_Search_Api
             public float D5 { get; set; }
 
             [ColumnName(@"Features")]
-            public float[] Features { get; set; }
+            public float[] Features { get; set; } = null!;
 
             [ColumnName(@"PredictedLabel")]
             public bool PredictedLabel { get; set; }
