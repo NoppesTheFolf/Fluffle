@@ -39,8 +39,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Ingestion.Api.Integ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.Framework", "Fluffle.Feeder.Framework\Fluffle.Feeder.Framework.csproj", "{37639EAB-6924-44F4-832A-27B383C8DA3D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.Legacy", "Fluffle.Feeder.Legacy\Fluffle.Feeder.Legacy.csproj", "{165D6FF9-9D87-4197-B410-3F4E0C5910F2}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Search.Api", "Fluffle.Search.Api\Fluffle.Search.Api.csproj", "{38617D87-718A-A18C-B137-DC4D0F579C7A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Imaging.Api", "Fluffle.Imaging.Api\Fluffle.Imaging.Api.csproj", "{10276108-FC80-42F2-91C8-A2B3FF44D041}"
@@ -139,10 +137,6 @@ Global
 		{37639EAB-6924-44F4-832A-27B383C8DA3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{37639EAB-6924-44F4-832A-27B383C8DA3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{37639EAB-6924-44F4-832A-27B383C8DA3D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{165D6FF9-9D87-4197-B410-3F4E0C5910F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{165D6FF9-9D87-4197-B410-3F4E0C5910F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{165D6FF9-9D87-4197-B410-3F4E0C5910F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{165D6FF9-9D87-4197-B410-3F4E0C5910F2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{38617D87-718A-A18C-B137-DC4D0F579C7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{38617D87-718A-A18C-B137-DC4D0F579C7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38617D87-718A-A18C-B137-DC4D0F579C7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
