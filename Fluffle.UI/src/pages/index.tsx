@@ -14,7 +14,7 @@ import { dropZone, dropZoneActive } from './index.module.scss'
 
 import SEO from '../components/seo'
 export const Head = () => (
-    <SEO title="Reverse search" description="Reverse image search furry artwork and find the source on Fur Affinity, Twitter, e621 and more!" />
+    <SEO title="Reverse search" description="Reverse image search furry artwork and find the source on Fur Affinity, X (Formerly known as Twitter), e621 and more!" />
 )
 
 const State = {
@@ -293,7 +293,7 @@ const SearchPage = ({ forBrowserExtension, searchResult }) => {
                                             <button onClick={() => searchConfig.setIncludeNsfw(true)} className={`btn btn-${searchConfig.includeNsfw ? "danger" : "secondary"}`} data-ignore>NSFW</button>
                                         </div>
                                     </div>
-                                    <div className="text-sm text-muted">{!searchConfig.includeNsfw ? "Twitter isn't included in SFW mode." : 'Search both SFW and NSFW images.'}</div>
+                                    <div className="text-sm text-muted">{!searchConfig.includeNsfw ? "X (Formerly known as Twitter) isn't included in SFW mode." : 'Search both SFW and NSFW images.'}</div>
                                 </div>
                                 <div className="text-muted">Fluffle also has a Telegram bot and a browser extension, interested? Check out the <Link to="/tools/">tools page</Link>.</div>
                             </div>
