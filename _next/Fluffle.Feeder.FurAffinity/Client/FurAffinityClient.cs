@@ -103,7 +103,7 @@ internal partial class FurAffinityClient
 
         var whenNode = headerInfoNode.SelectSingleNode(".//span[contains(@class, 'popup_date')]")!;
         var whenUnparsed = whenNode.Attributes["title"].Value;
-        var when = DateTimeOffset.ParseExact(whenUnparsed, "MMM d, yyyy hh:mm tt", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+        var when = DateTimeOffset.ParseExact(whenUnparsed, "MMMM d, yyyy, HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
 
         var submission = new FaSubmission
         {
