@@ -80,6 +80,7 @@ public class IndexItemActionHandler : IItemActionHandler
         }).Timed(_telemetryClient, "VectorApiPutItem");
 
         _logger.LogInformation("Item has been updated!");
+        _telemetryClient.GetMetric("ItemsUpdated", "Platform").TrackValue(1, _itemAction.ItemId.Split('_', 2)[0]);
 
         await HandleGroupDeletionsAsync(newItem);
     }
@@ -157,6 +158,7 @@ public class IndexItemActionHandler : IItemActionHandler
             }).ToList()).Timed(_telemetryClient, "VectorApiPutItemVectorsExactMatchV2");
 
         _logger.LogInformation("Item has been indexed!");
+        _telemetryClient.GetMetric("ItemsIndexed", "Platform").TrackValue(1, _itemAction.ItemId.Split('_', 2)[0]);
 
         await HandleGroupDeletionsAsync(item);
     }

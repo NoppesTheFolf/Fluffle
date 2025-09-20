@@ -44,6 +44,7 @@ public class DeleteItemActionHandler : IItemActionHandler
             await _vectorApiClient.DeleteItemAsync(itemId).Timed(_telemetryClient, "VectorApiDeleteItem");
 
             _logger.LogInformation("Item deleted!");
+            _telemetryClient.GetMetric("ItemsDeleted", "Platform").TrackValue(1, _itemAction.ItemId.Split('_', 2)[0]);
         }
     }
 }
