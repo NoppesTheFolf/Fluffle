@@ -24,12 +24,15 @@ internal partial class FurAffinityClient
         var hasSubmission = document.GetElementbyId("submission_page") != null;
         if (!hasSubmission)
         {
-            if (document.DocumentNode.InnerText.Contains("The submission you are trying to find is not in our database."))
-                return null;
-            if (document.DocumentNode.InnerText.Contains("The page you are trying to reach has been deactivated by the owner."))
-                return null;
+            var knownErrors = new[]
+            {
+                "The submission you are trying to find is not in our database.",
+                "The page you are trying to reach has been deactivated by the owner.",
+                "The page you are trying to reach is currently pending deletion by a request from",
+                "Access has been disabled to the account and contents of user"
+            };
 
-            if (document.DocumentNode.InnerText.Contains("The page you are trying to reach is currently pending deletion by a request from"))
+            if (knownErrors.Any(x => document.DocumentNode.InnerText.Contains(x, StringComparison.InvariantCultureIgnoreCase)))
                 return null;
 
             throw new InvalidOperationException($"Submission with ID {submissionId} didn't contain a submission and also not a known error.");
