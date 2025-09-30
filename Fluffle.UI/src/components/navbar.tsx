@@ -25,7 +25,7 @@ const Navbar = () => {
                     <NavbarItem href="/" icon="youtube-searched-for">Reverse search</NavbarItem>
                     <NavbarItem href="/tools/" icon="handyman">Tools</NavbarItem>
                     <NavbarItem href="/about/" icon="info">About</NavbarItem>
-                    <NavbarItem href="/api/" icon="code">API</NavbarItem>
+                    <NavbarItem href="https://fluffle.readme.io/reference/search-api-introduction#/" icon="code">API</NavbarItem>
                     <NavbarItem href="/contact/" icon="mail">Contact</NavbarItem>
                     <NavbarItem href="https://ko-fi.com/noppesthefolf" icon="ko-fi">Ko-fi</NavbarItem>
                 </div>

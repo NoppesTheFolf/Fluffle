@@ -1,10 +1,11 @@
 import "./api.scss"
 
 import { Link } from "gatsby";
+import Icon from '../components/icon'
 
 import SEO from '../components/seo'
 export const Head = () => (
-    <SEO title="API" />
+    <SEO title="API" index={false} />
 )
 
 import hljs from "highlight.js/lib/core";
@@ -40,6 +41,15 @@ export const Response = ({ code, reason, state }) => (
     <div>{reason}</div>
   </div>
 );
+
+<div className="flex items-center bg-gradient-warning space-x-3 p-4 my-8 rounded">
+    <Icon name="report-problem" />
+    <span>
+      This API documentation is considered legacy.
+      You should not use this anymore for new projects.
+      Head over to https://fluffle.readme.io for the new API.
+    </span>
+</div>
 
 # API documentation
 
