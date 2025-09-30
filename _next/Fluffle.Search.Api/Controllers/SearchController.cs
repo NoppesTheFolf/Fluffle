@@ -225,7 +225,7 @@ public partial class SearchController : ControllerBase
                 return new SearchResultModel
                 {
                     Id = x.ItemId,
-                    Distance = vectorSearchResult.Distance,
+                    Distance = NormalizeDistance(vectorSearchResult.Distance),
                     Match = isMatchPredictions[x.ItemId] ? SearchResultModelMatch.Exact : SearchResultModelMatch.Unlikely,
                     Platform = x.ItemId.Split('_', 2)[0],
                     Url = x.Properties["url"]!.GetValue<string>(),
@@ -258,5 +258,29 @@ public partial class SearchController : ControllerBase
         }
 
         return searchModels;
+    }
+
+    private static float NormalizeDistance(float distance)
+    {
+        const float offset = 0.793177605f;
+
+        float normalizedDistance;
+        if (distance >= offset)
+        {
+            var x = (distance - offset) / (1.0f - offset);
+            normalizedDistance = 0.1f + x * (1.0f - 0.1f);
+        }
+        else
+        {
+            var x = distance / offset;
+            normalizedDistance = x * 0.1f;
+        }
+
+        return normalizedDistance switch
+        {
+            > 1 => 1,
+            < 0 => 0,
+            _ => normalizedDistance
+        };
     }
 }

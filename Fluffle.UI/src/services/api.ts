@@ -95,29 +95,11 @@ const Api = function () {
         );
     }
 
-    function calculate_score(distance: number) {
-        const offset = 0.793177605;
-
-        let score = distance - offset;
-        if (score < 0) {
-            return 0;
-        }
-
-        // We have to scale [threshold, 1.0] to [0.0, 1.0].
-        score = (score / (1 - offset));
-
-        if (score > 1) {
-            return 1;
-        }
-
-        return score;
-    }
-
     function processExactSearchResponse(data, includeNsfw, imageUrl, fromQuery) {
         let results = data.results.map(x => {
             return {
                 id: x.id,
-                score: calculate_score(x.distance),
+                score: x.distance,
                 match: x.match === 'exact' ? Match.Excellent : x.match === 'probable' ? Match.Doubtful : Match.Unlikely,
                 platform: x.platform,
                 location: x.url,

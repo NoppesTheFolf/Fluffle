@@ -8,7 +8,8 @@ public class SearchResultModel
 
     [Description("A number between 0 and 1 that says something about how good of a match the image is. " +
                  "The distances are only useful relative to the other images in the result. " +
-                 "You should not use this for thresholds or anything like that.")]
+                 "You should not use this for thresholds or anything like that. " +
+                 "It's subject to change and only meant to be displayed in a UI, like Fluffle's website does.")]
     public required float Distance { get; set; }
 
     [Description("Whether the image is an exact, probable or unlikely match. " +
