@@ -10,9 +10,11 @@ using System.Text;
 // ReSharper disable once CheckNamespace
 namespace Fluffle.Search.Api.Controllers;
 
+[Tags("Reverse search")]
 public partial class SearchController
 {
-    [HttpPost("/v1/search", Name = "LegacySearch")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpPost("/v1/search", Name = "legacy-search")]
     public async Task<IActionResult> LegacySearchAsync([FromForm] LegacySearchModel model)
     {
         var stopwatch = Stopwatch.StartNew();

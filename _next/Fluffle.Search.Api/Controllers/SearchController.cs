@@ -43,6 +43,7 @@ public partial class SearchController : ControllerBase
         _safeDownloadClient = safeDownloadClient;
     }
 
+    [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost("create-link")]
     public async Task<IActionResult> CreateLinkAsync([FromForm] CreateLinkModel model)
     {
@@ -70,7 +71,8 @@ public partial class SearchController : ControllerBase
         });
     }
 
-    [HttpGet("/exact-search-by-id", Name = "ExactSearchById")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpGet("/exact-search-by-id", Name = "exact-search-by-id")]
     public async Task<IActionResult> ExactSearchByIdAsync([FromQuery] SearchByIdModel model)
     {
         var validationResult = await new SearchByIdModelValidator().ValidateAsync(model);
@@ -94,8 +96,9 @@ public partial class SearchController : ControllerBase
         });
     }
 
+    [ApiExplorerSettings(IgnoreApi = true)]
     [EnableRateLimiting("exact-search-by-url")]
-    [HttpGet("/exact-search-by-url", Name = "ExactSearchByUrl")]
+    [HttpGet("/exact-search-by-url", Name = "exact-search-by-url")]
     public async Task<IActionResult> ExactSearchByUrlAsync([FromQuery] SearchByUrlModel model)
     {
         var validationResult = await new SearchByUrlModelValidator().ValidateAsync(model);
@@ -128,7 +131,14 @@ public partial class SearchController : ControllerBase
         });
     }
 
-    [HttpPost("/exact-search-by-file", Name = "ExactSearchByFile")]
+    [Consumes("multipart/form-data")]
+    [Produces("application/json")]
+    [ProducesResponseType<SearchResultsModel>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorResponseModel>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorResponseModel>(StatusCodes.Status415UnsupportedMediaType)]
+    [ProducesResponseType<ErrorResponseModel>(StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status429TooManyRequests)]
+    [HttpPost("/exact-search-by-file", Name = "exact-search-by-file")]
     public async Task<IActionResult> ExactSearchByFileAsync([FromForm] SearchByFileModel model)
     {
         var validationResult = await new SearchByFileModelValidator().ValidateAsync(model);

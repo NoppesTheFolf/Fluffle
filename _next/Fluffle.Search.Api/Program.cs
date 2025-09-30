@@ -1,6 +1,7 @@
 using Fluffle.Content.Api.Client;
 using Fluffle.Imaging.Api.Client;
 using Fluffle.Inference.Api.Client;
+using Fluffle.Search.Api.OpenApi;
 using Fluffle.Search.Api.SearchByUrl;
 using Fluffle.Search.Api.Validation;
 using Fluffle.Vector.Api.Client;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.ML;
 using System.Net;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -20,13 +22,16 @@ var services = builder.Services;
 services.AddPredictionEnginePool<ExactMatchV2IsMatch.ModelInput, ExactMatchV2IsMatch.ModelOutput>()
     .FromFile("ML/ExactMatchV2IsMatch.mlnet");
 
-services.AddImagingApiClient();
+if (Assembly.GetEntryAssembly()?.GetName().Name != "GetDocument.Insider")
+{
+    services.AddImagingApiClient();
 
-services.AddInferenceApiClient();
+    services.AddInferenceApiClient();
 
-services.AddVectorApiClient();
+    services.AddVectorApiClient();
 
-services.AddContentApiClient();
+    services.AddContentApiClient();
+}
 
 services.AddCors(options =>
 {
@@ -106,6 +111,12 @@ services.AddHttpClient(nameof(SafeDownloadClient), client =>
 });
 services.AddSingleton<SafeDownloadClient>();
 
+services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<FluffleDocumentTransformer>();
+    options.AddSchemaTransformer<JsonStringEnumSchemaTransformer>();
+});
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
@@ -117,5 +128,7 @@ app.UseRateLimiter();
 app.UseMiddleware<RequireUserAgentMiddleware>();
 
 app.MapControllers();
+
+app.MapOpenApi();
 
 app.Run();

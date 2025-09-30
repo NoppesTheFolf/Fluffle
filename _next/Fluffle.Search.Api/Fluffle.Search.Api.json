@@ -1,0 +1,258 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Fluffle Search API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.fluffle.xyz/"
+    }
+  ],
+  "paths": {
+    "/exact-search-by-file": {
+      "post": {
+        "tags": [
+          "Reverse search"
+        ],
+        "operationId": "exact-search-by-file",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "Limit": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResultsModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseModel"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseModel"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseModel"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": { }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorModel": {
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponseModel": {
+        "required": [
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorModel"
+            }
+          }
+        }
+      },
+      "SearchResultAuthorModel": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "The interpretation of this field is somewhat dependent on the platform from which the image was scraped. For e621, it's based on the artist tags and it's therefore safe to assume this field includes the names of the artist(s) that created the artwork. For all other platforms, it's the name of user that uploaded said image, which might be the artist, a commissioner, etc."
+          }
+        }
+      },
+      "SearchResultModel": {
+        "required": [
+          "id",
+          "distance",
+          "match",
+          "platform",
+          "url",
+          "isSfw",
+          "thumbnail",
+          "authors"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "distance": {
+            "type": "number",
+            "description": "A number between 0 and 1 that says something about how good of a match the image is. The distances are only useful relative to the other images in the result. You should not use this for thresholds or anything like that.",
+            "format": "float"
+          },
+          "match": {
+            "$ref": "#/components/schemas/SearchResultModelMatch"
+          },
+          "platform": {
+            "type": "string",
+            "description": "The platform (e621, Fur Affinity, etc) on which this image is hosted."
+          },
+          "url": {
+            "type": "string",
+            "description": "Link to the post, submission, etc. where this image can be viewed."
+          },
+          "isSfw": {
+            "type": "boolean",
+            "description": "Whether or not the image is considered safe for work. Platforms like Twitter don't disclose this. Images from those platforms are always marked as not safe for work."
+          },
+          "thumbnail": {
+            "$ref": "#/components/schemas/SearchResultThumbnailModel"
+          },
+          "authors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResultAuthorModel"
+            },
+            "description": "To whom credits can be given for uploading this image."
+          }
+        }
+      },
+      "SearchResultModelMatch": {
+        "enum": [
+          "exact",
+          "probable",
+          "unlikely"
+        ],
+        "type": "string",
+        "description": "Whether the image is an exact, probable or unlikely match. Exact match means there is a very high probability of the result being an exact match. Probable match means it cannot be reliably determined whether the result is an exact match: it's either a duplicate or an alternative version of the image. Unlikely tells you that the chance of the result being a match is very low. It can however still be worth checking unlikely matches if the submitted image was cropped, for example."
+      },
+      "SearchResultsModel": {
+        "required": [
+          "id",
+          "results"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResultModel"
+            }
+          }
+        }
+      },
+      "SearchResultThumbnailModel": {
+        "required": [
+          "width",
+          "centerX",
+          "height",
+          "centerY",
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "integer",
+            "description": "Width of the thumbnail.",
+            "format": "int32"
+          },
+          "centerX": {
+            "type": "integer",
+            "description": "Percentage the image has to shift horizontally for its content to be centered in a square. Works like the object-position CSS property.",
+            "format": "int32"
+          },
+          "height": {
+            "type": "integer",
+            "description": "Height of the thumbnail.",
+            "format": "int32"
+          },
+          "centerY": {
+            "type": "integer",
+            "description": "Percentage the image has to shift vertically for its content to be centered in a square. Works like the object-position CSS property.",
+            "format": "int32"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL at which the thumbnail can be found."
+          }
+        },
+        "description": "Tiny version of the scraped image hosted by Fluffle.",
+        "nullable": true
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Reverse search"
+    }
+  ]
+}

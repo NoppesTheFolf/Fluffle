@@ -11,7 +11,7 @@ public static class SafeDownloadErrorCodeExtensions
             or SafeDownloadErrorCode.InvalidScheme)
         {
             return Error.Create(
-                statusCode: 400,
+                statusCode: StatusCodes.Status400BadRequest,
                 code: null,
                 message: "The provided URL isn't formatted correctly."
             );
@@ -22,7 +22,7 @@ public static class SafeDownloadErrorCodeExtensions
             or SafeDownloadErrorCode.NoPublicIpAddresses)
         {
             return Error.Create(
-                statusCode: 400,
+                statusCode: StatusCodes.Status400BadRequest,
                 code: null,
                 message: "The domain specified in the URL is invalid."
             );
@@ -31,7 +31,7 @@ public static class SafeDownloadErrorCodeExtensions
         if (code is SafeDownloadErrorCode.NonSuccessStatusCode)
         {
             return Error.Create(
-                statusCode: 400,
+                statusCode: StatusCodes.Status400BadRequest,
                 code: null,
                 message: "The remote server responded with an error."
             );
@@ -40,7 +40,7 @@ public static class SafeDownloadErrorCodeExtensions
         if (code is SafeDownloadErrorCode.FileTooBig)
         {
             return Error.Create(
-                statusCode: 400,
+                statusCode: StatusCodes.Status400BadRequest,
                 code: null,
                 message: "The file is over Fluffle's 4 MiB limit."
             );
