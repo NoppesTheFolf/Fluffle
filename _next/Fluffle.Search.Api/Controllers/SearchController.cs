@@ -268,12 +268,12 @@ public partial class SearchController : ControllerBase
         if (distance >= offset)
         {
             var x = (distance - offset) / (1.0f - offset);
-            normalizedDistance = 0.1f + x * (1.0f - 0.1f);
+            normalizedDistance = 0.01f + x * (1.0f - 0.01f);
         }
         else
         {
             var x = distance / offset;
-            normalizedDistance = x * 0.1f;
+            normalizedDistance = x * 0.01f;
         }
 
         return normalizedDistance switch
