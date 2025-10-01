@@ -20,7 +20,7 @@ const NavbarMobile = React.forwardRef((_, ref) => {
             <NavbarItemMobile href="/" icon="youtube-searched-for">Search</NavbarItemMobile>
             <NavbarItemMobile href="/tools/" icon="handyman">Tools</NavbarItemMobile>
             <NavbarItemMobile href="/about/" icon="info">About</NavbarItemMobile>
-            <NavbarItemMobile href="/api/" icon="code">API</NavbarItemMobile>
+            <NavbarItemMobile href="https://fluffle.readme.io/reference/search-api-introduction#/" icon="code">API</NavbarItemMobile>
             <NavbarItemMobile href="/contact/" icon="mail">Contact</NavbarItemMobile>
             <NavbarItemMobile href="https://ko-fi.com/noppesthefolf" icon="ko-fi">Ko-fi</NavbarItemMobile>
         </nav>
