@@ -3,10 +3,10 @@ name = "fluffle-inference-api"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.13"
-torch = {version = "^2.6.0+cpu", source = "pytorch.org"}
-torchvision = {version = "^0.21.0+cpu", source = "pytorch.org"}
-fastapi = {extras = ["standard"], version = "^0.115.12"}
+python = ">=3.13,<3.14"
+torch = {version = "^2.8.0", source = "pytorch.org"}
+torchvision = {version = "^0.23.0", source = "pytorch.org"}
+fastapi = {extras = ["standard"], version = "^0.118.0"}
 
 
 [[tool.poetry.source]]

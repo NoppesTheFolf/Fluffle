@@ -13,11 +13,6 @@ internal class InferenceApiClient : IInferenceApiClient
 
     public async Task<float[][]> ExactMatchV2Async(IList<Stream> imageStreams)
     {
-        return await RunInferenceAsync("exact-match-v2", imageStreams);
-    }
-
-    private async Task<float[][]> RunInferenceAsync(string path, IList<Stream> imageStreams)
-    {
         using var httpClient = _httpClientFactory.CreateClient(nameof(InferenceApiClient));
 
         using var content = new MultipartFormDataContent();
@@ -26,10 +21,24 @@ internal class InferenceApiClient : IInferenceApiClient
             content.Add(new StreamContent(imageStream), "images", "image");
         }
 
-        using var response = await httpClient.PostAsync($"/{path}", content);
+        using var response = await httpClient.PostAsync("/exact-match-v2", content);
         response.EnsureSuccessStatusCode();
         var vectors = await response.Content.ReadFromJsonAsync<float[][]>();
 
         return vectors!;
+    }
+
+    public async Task<float> BlueskyFurryArtAsync(Stream imageStream)
+    {
+        using var httpClient = _httpClientFactory.CreateClient(nameof(InferenceApiClient));
+
+        using var content = new MultipartFormDataContent();
+        content.Add(new StreamContent(imageStream), "image", "image");
+
+        using var response = await httpClient.PostAsync("/bluesky-furry-art", content);
+        response.EnsureSuccessStatusCode();
+        var prediction = await response.Content.ReadFromJsonAsync<float>();
+
+        return prediction;
     }
 }

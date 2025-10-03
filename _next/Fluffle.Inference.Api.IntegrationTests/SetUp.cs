@@ -16,9 +16,10 @@ public class SetUp
 
     private static readonly IContainer ApiContainer = new ContainerBuilder()
         .WithImage(ApiImage)
-        .WithPortBinding(1080, 8000)
+        .WithPortBinding(51408, 8000)
         .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(x => x.ForPort(8000).ForStatusCode(HttpStatusCode.Unauthorized)))
         .WithBindMount(Path.Join(CommonDirectoryPath.GetSolutionDirectory().DirectoryPath, "Fluffle.Inference.Api/exactMatchV2.pt"), "/app/exactMatchV2.pt", AccessMode.ReadOnly)
+        .WithBindMount(Path.Join(CommonDirectoryPath.GetSolutionDirectory().DirectoryPath, "Fluffle.Inference.Api/blueskyFurryArt.pt"), "/app/blueskyFurryArt.pt", AccessMode.ReadOnly)
         .WithEnvironment("API_KEY", "iesheeguThu4Kee4ahthaek9zeetinei")
         .WithEnvironment("TORCH_NUM_THREADS", "1")
         .WithEnvironment("FASTAPI_WORKERS", "1")

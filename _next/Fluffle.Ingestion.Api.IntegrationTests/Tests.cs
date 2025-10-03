@@ -19,7 +19,7 @@ public class Tests
         _serviceProvider = new ServiceCollection()
             .AddSingleton<IConfiguration>(new ConfigurationBuilder()
                 .AddInMemoryCollection([
-                    new KeyValuePair<string, string?>("IngestionApiClient:Url", "http://127.0.0.1:1080"),
+                    new KeyValuePair<string, string?>("IngestionApiClient:Url", "http://127.0.0.1:58945"),
                     new KeyValuePair<string, string?>("IngestionApiClient:ApiKey", "Lahqu3ReiMu4ouvooveerahpiu7Yahpo")
                 ])
                 .Build())

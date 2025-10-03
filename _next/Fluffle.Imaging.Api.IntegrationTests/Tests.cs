@@ -19,7 +19,7 @@ public class Tests
         _serviceProvider = new ServiceCollection()
             .AddSingleton<IConfiguration>(new ConfigurationBuilder()
                 .AddInMemoryCollection([
-                    new KeyValuePair<string, string?>("ImagingApiClient:Url", "http://127.0.0.1:1080"),
+                    new KeyValuePair<string, string?>("ImagingApiClient:Url", "http://127.0.0.1:51502"),
                     new KeyValuePair<string, string?>("ImagingApiClient:ApiKey", "ooghahfeig9yiThaghozu4no7kae9Pho")
                 ])
                 .Build())

@@ -175,3 +175,4 @@ cython_debug/
 
 # Model weights are too large to save in the repository itself
 exactMatchV2.pt
+blueskyFurryArt.pt

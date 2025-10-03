@@ -24,7 +24,7 @@ public class SetUp
     private static readonly IContainer ApiContainer = new ContainerBuilder()
         .WithImage(ApiImage)
         .WithNetwork(Network)
-        .WithPortBinding(1080, 8080)
+        .WithPortBinding(53966, 8080)
         .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(x => x.ForPort(8080).ForStatusCode(HttpStatusCode.Unauthorized)))
         .WithBindMount(Path.Join(CommonDirectoryPath.GetSolutionDirectory().DirectoryPath, "Fluffle.Vector.Api/appsettings.Integration.json"), "/app/appsettings.json", AccessMode.ReadOnly)
         .Build();

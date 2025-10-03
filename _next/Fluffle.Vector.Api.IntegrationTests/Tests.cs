@@ -22,7 +22,7 @@ public class Tests
         _serviceProvider = new ServiceCollection()
             .AddSingleton<IConfiguration>(new ConfigurationBuilder()
                 .AddInMemoryCollection([
-                    new KeyValuePair<string, string?>("VectorApiClient:Url", "http://127.0.0.1:1080"),
+                    new KeyValuePair<string, string?>("VectorApiClient:Url", "http://127.0.0.1:53966"),
                     new KeyValuePair<string, string?>("VectorApiClient:ApiKey", "Lahqu3ReiMu4ouvooveerahpiu7Yahpo")
                 ])
                 .Build())

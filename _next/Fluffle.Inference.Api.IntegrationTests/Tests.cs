@@ -17,7 +17,7 @@ public class Tests
         _serviceProvider = new ServiceCollection()
             .AddSingleton<IConfiguration>(new ConfigurationBuilder()
                 .AddInMemoryCollection([
-                    new KeyValuePair<string, string?>("InferenceApiClient:Url", "http://127.0.0.1:1080"),
+                    new KeyValuePair<string, string?>("InferenceApiClient:Url", "http://127.0.0.1:51408"),
                     new KeyValuePair<string, string?>("InferenceApiClient:ApiKey", "iesheeguThu4Kee4ahthaek9zeetinei")
                 ])
                 .Build())
@@ -110,5 +110,16 @@ public class Tests
             -10.53797435760498f,
             28.262622833251953f
         ], 0.0001f);
+    }
+
+    [Test]
+    public async Task Test02_RunBlueskyFurryArtInference_ReturnsSinglePrediction()
+    {
+        var imagePath = Path.Join(CommonDirectoryPath.GetProjectDirectory().DirectoryPath, "image.jpg");
+        await using var imageStream = File.OpenRead(imagePath);
+
+        var prediction = await _inferenceApiClient.BlueskyFurryArtAsync(imageStream);
+
+        prediction.ShouldBe(0.6095377802848816f);
     }
 }
