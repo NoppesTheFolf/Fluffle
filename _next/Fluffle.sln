@@ -59,6 +59,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Inference.Api.Integ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.Inkbunny", "Fluffle.Feeder.Inkbunny\Fluffle.Feeder.Inkbunny.csproj", "{E621071B-40AE-4873-B2FC-7FEB87E18075}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.Bluesky.JetstreamWatcher", "Fluffle.Feeder.Bluesky.JetstreamWatcher\Fluffle.Feeder.Bluesky.JetstreamWatcher.csproj", "{2F4A03F2-B954-E886-5D31-5228742F0799}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.Bluesky.Core", "Fluffle.Feeder.Bluesky.Core\Fluffle.Feeder.Bluesky.Core.csproj", "{90828ABB-3310-A146-CAFA-AEC22E1E6EC6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.Bluesky.Mongo", "Fluffle.Feeder.Bluesky.Mongo\Fluffle.Feeder.Bluesky.Mongo.csproj", "{AC23AF39-F0ED-2450-843F-DAF27F40FFFB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluffle.Feeder.Bluesky.JetstreamProcessor", "Fluffle.Feeder.Bluesky.JetstreamProcessor\Fluffle.Feeder.Bluesky.JetstreamProcessor.csproj", "{F633C518-4736-458D-A1FD-27A6FCE9F185}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -177,6 +185,22 @@ Global
 		{E621071B-40AE-4873-B2FC-7FEB87E18075}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E621071B-40AE-4873-B2FC-7FEB87E18075}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E621071B-40AE-4873-B2FC-7FEB87E18075}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F4A03F2-B954-E886-5D31-5228742F0799}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F4A03F2-B954-E886-5D31-5228742F0799}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F4A03F2-B954-E886-5D31-5228742F0799}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F4A03F2-B954-E886-5D31-5228742F0799}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90828ABB-3310-A146-CAFA-AEC22E1E6EC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90828ABB-3310-A146-CAFA-AEC22E1E6EC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90828ABB-3310-A146-CAFA-AEC22E1E6EC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90828ABB-3310-A146-CAFA-AEC22E1E6EC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC23AF39-F0ED-2450-843F-DAF27F40FFFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC23AF39-F0ED-2450-843F-DAF27F40FFFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC23AF39-F0ED-2450-843F-DAF27F40FFFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC23AF39-F0ED-2450-843F-DAF27F40FFFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F633C518-4736-458D-A1FD-27A6FCE9F185}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F633C518-4736-458D-A1FD-27A6FCE9F185}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F633C518-4736-458D-A1FD-27A6FCE9F185}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F633C518-4736-458D-A1FD-27A6FCE9F185}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

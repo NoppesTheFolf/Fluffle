@@ -7,4 +7,6 @@ public class FeederProperties
     public required bool? IsSfw { get; set; }
 
     public required ICollection<FeederAuthor> Authors { get; set; }
+
+    public required DateTime CreatedWhen { get; set; }
 }

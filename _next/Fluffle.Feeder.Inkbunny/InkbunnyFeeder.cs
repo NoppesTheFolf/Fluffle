@@ -90,7 +90,7 @@ internal class InkbunnyFeeder
 
                     groupBuilder.AddItem()
                         .WithItemId($"inkbunny_{submission.Id}-{file.Id}")
-                        .WithPriority(submission.CreatedWhen)
+                        .WithCreatedWhen(submission.CreatedWhen)
                         .WithUrl(url)
                         .WithImages(images)
                         .WithAuthor(submission.UserId, submission.Username)

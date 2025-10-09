@@ -75,7 +75,7 @@ internal class FurAffinityFeeder
 
             itemAction = new PutIndexItemActionModelBuilder()
                 .WithItemId(itemId)
-                .WithPriority(submission!.When)
+                .WithCreatedWhen(submission!.When)
                 .WithImages(submission.GetImages())
                 .WithUrl($"https://www.furaffinity.net/view/{i}")
                 .WithIsSfw(submission.Rating == FaSubmissionRating.General)

@@ -73,7 +73,7 @@ internal class E621Feeder
 
             var indexModels = indexablePosts.Select(x => new PutIndexItemActionModelBuilder()
                     .WithItemId($"e621_{x.Id}")
-                    .WithPriority(x.CreatedAt)
+                    .WithCreatedWhen(x.CreatedAt)
                     .WithUrl($"https://e621.net/posts/{x.Id}")
                     .WithImages(x.GetImages())
                     .WithIsSfw(x.Rating.IsSfw())

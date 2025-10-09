@@ -52,7 +52,7 @@ internal class WeasylFeeder
 
                 itemAction = new PutIndexItemActionModelBuilder()
                     .WithItemId(itemId)
-                    .WithPriority(submission.PostedAt)
+                    .WithCreatedWhen(submission.PostedAt)
                     .WithUrl($"https://weasyl.com/submission/{submission.SubmitId}")
                     .WithImages(submissionImages)
                     .WithIsSfw(submission.Rating == WeasylSubmissionRating.General)

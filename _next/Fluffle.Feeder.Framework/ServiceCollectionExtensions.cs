@@ -11,7 +11,25 @@ public static class ServiceCollectionExtensions
 {
     public static void AddFeederTemplate(this IServiceCollection services)
     {
-        // Application Insights
+        services.AddFeederApplicationInsights();
+
+        services.AddFeederStatePersistence();
+
+        services.AddIngestionApiClient();
+    }
+
+    public static void AddFeederStatePersistence(this IServiceCollection services)
+    {
+        services.AddOptions<CosmosOptions>()
+            .BindConfiguration(CosmosOptions.Cosmos)
+            .ValidateDataAnnotations().ValidateOnStart();
+
+        services.AddSingleton<CosmosClientFactory>();
+        services.AddSingleton<IStateRepositoryFactory, CosmosStateRepositoryFactory>();
+    }
+
+    public static void AddFeederApplicationInsights(this IServiceCollection services)
+    {
         services.AddOptions<ApplicationInsightsOptions>()
             .BindConfiguration(ApplicationInsightsOptions.ApplicationInsights)
             .ValidateDataAnnotations().ValidateOnStart();
@@ -29,16 +47,5 @@ public static class ServiceCollectionExtensions
             options.AddAutoCollectedMetricExtractor = false;
             options.EnableDiagnosticsTelemetryModule = false;
         });
-
-        // State persistence
-        services.AddOptions<CosmosOptions>()
-            .BindConfiguration(CosmosOptions.Cosmos)
-            .ValidateDataAnnotations().ValidateOnStart();
-
-        services.AddSingleton<CosmosClientFactory>();
-        services.AddSingleton<IStateRepositoryFactory, CosmosStateRepositoryFactory>();
-
-        // Ingestion
-        services.AddIngestionApiClient();
     }
 }

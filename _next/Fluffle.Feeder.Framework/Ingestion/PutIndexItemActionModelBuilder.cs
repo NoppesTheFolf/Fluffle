@@ -9,8 +9,9 @@ public class PutIndexItemActionModelBuilder
     private string? _itemId;
     private string? _groupId;
     private ICollection<string>? _groupItemIds;
-    private long? _priority;
+    private DateTimeOffset? _createdWhen;
     private readonly List<ImageModel> _images = [];
+    private bool _requireImageExtensionValidation = true;
     private string? _url;
     private bool? _isSfw;
     private readonly List<FeederAuthor> _authors = [];
@@ -38,14 +39,9 @@ public class PutIndexItemActionModelBuilder
         return this;
     }
 
-    public PutIndexItemActionModelBuilder WithPriority(DateTimeOffset createdWhen)
+    public PutIndexItemActionModelBuilder WithCreatedWhen(DateTimeOffset createdWhen)
     {
-        return WithPriority(createdWhen.ToUnixTimeSeconds());
-    }
-
-    public PutIndexItemActionModelBuilder WithPriority(long priority)
-    {
-        _priority = priority;
+        _createdWhen = createdWhen;
 
         return this;
     }
@@ -63,6 +59,13 @@ public class PutIndexItemActionModelBuilder
     public PutIndexItemActionModelBuilder WithImages(IEnumerable<ImageModel> images)
     {
         _images.AddRange(images);
+
+        return this;
+    }
+
+    public PutIndexItemActionModelBuilder SkipImageExtensionValidation()
+    {
+        _requireImageExtensionValidation = false;
 
         return this;
     }
@@ -107,14 +110,17 @@ public class PutIndexItemActionModelBuilder
     public PutIndexItemActionModel Build()
     {
         if (string.IsNullOrWhiteSpace(_itemId)) throw new InvalidOperationException("Item ID has not been set.");
-        if (_priority == null) throw new InvalidOperationException("Priority has not been set.");
+        if (_createdWhen == null) throw new InvalidOperationException("Created when has not been set.");
         if (_images.Count == 0) throw new InvalidOperationException("No images have been added.");
-        foreach (var image in _images)
+        if (_requireImageExtensionValidation)
         {
-            var imageExtension = Path.GetExtension(image.Url);
-            if (!ImageHelper.IsSupportedExtension(imageExtension))
+            foreach (var image in _images)
             {
-                throw new InvalidOperationException($"Image has an unsupported extension: {image.Url}");
+                var imageExtension = Path.GetExtension(image.Url);
+                if (!ImageHelper.IsSupportedExtension(imageExtension))
+                {
+                    throw new InvalidOperationException($"Image has an unsupported extension: {image.Url}");
+                }
             }
         }
         if (string.IsNullOrWhiteSpace(_url)) throw new InvalidOperationException("URL has not been set.");
@@ -126,13 +132,14 @@ public class PutIndexItemActionModelBuilder
             ItemId = _itemId,
             GroupId = _groupId,
             GroupItemIds = _groupItemIds,
-            Priority = _priority.Value,
+            Priority = _createdWhen.Value.ToUnixTimeSeconds(),
             Images = _images,
             Properties = JsonSerializer.SerializeToNode(new FeederProperties
             {
                 Url = _url,
                 IsSfw = _isSfw,
-                Authors = _authors
+                Authors = _authors,
+                CreatedWhen = _createdWhen.Value.UtcDateTime
             }, JsonSerializerOptions.Web)!
         };
     }
