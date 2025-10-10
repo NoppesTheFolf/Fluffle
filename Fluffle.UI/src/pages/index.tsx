@@ -14,7 +14,7 @@ import { dropZone, dropZoneActive } from './index.module.scss'
 
 import SEO from '../components/seo'
 export const Head = () => (
-    <SEO title="Reverse search" description="Reverse image search furry artwork and find the source on Fur Affinity, Twitter, e621 and more!" />
+    <SEO title="Reverse search" description="Reverse image search furry artwork and find the source on Fur Affinity, Bluesky, e621 and more!" />
 )
 
 const State = {
