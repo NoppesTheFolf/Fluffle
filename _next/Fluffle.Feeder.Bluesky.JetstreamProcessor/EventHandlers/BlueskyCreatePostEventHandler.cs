@@ -138,7 +138,7 @@ public class BlueskyCreatePostEventHandler : IBlueskyEventHandler
                 .WithUrl($"https://bsky.app/profile/{_blueskyEvent.Did}/post/{_blueskyEvent.RKey}")
                 .WithImage(1000, 1000, $"https://cdn.bsky.app/img/feed_thumbnail/plain/{_blueskyEvent.Did}/{furryImagePredictions[i].Link}@jpeg")
                 .SkipImageExtensionValidation()
-                .WithAuthor(profile.Did, profile.DisplayName ?? profile.Handle)
+                .WithAuthor(profile.Did, string.IsNullOrWhiteSpace(profile.DisplayName) ? profile.Handle : profile.DisplayName)
                 .WithIsSfw(false);
         }
         var ingestionModels = ingestionModelBuilder.Build();

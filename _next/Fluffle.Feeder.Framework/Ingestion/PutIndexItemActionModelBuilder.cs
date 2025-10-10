@@ -126,6 +126,18 @@ public class PutIndexItemActionModelBuilder
         if (string.IsNullOrWhiteSpace(_url)) throw new InvalidOperationException("URL has not been set.");
         if (_isSfw == null) throw new InvalidOperationException("Whether the item is SFW has not been set.");
         if (_requireAuthors && _authors.Count == 0) throw new InvalidOperationException("No authors have been added.");
+        foreach (var author in _authors)
+        {
+            if (string.IsNullOrWhiteSpace(author.Id))
+            {
+                throw new InvalidOperationException("Author ID should not be null or whitespace.");
+            }
+
+            if (string.IsNullOrWhiteSpace(author.Name))
+            {
+                throw new InvalidOperationException("Author name should not be null or whitespace.");
+            }
+        }
 
         return new PutIndexItemActionModel
         {
