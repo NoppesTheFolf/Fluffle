@@ -15,7 +15,7 @@ services.AddOptions<BlueskyJetstreamProcessorOptions>()
     .BindConfiguration(BlueskyJetstreamProcessorOptions.BlueskyJetstreamProcessor)
     .ValidateDataAnnotations().ValidateOnStart();
 
-services.AddFeederApplicationInsights();
+services.AddFeederApplicationInsights("BlueskyJetstreamProcessor");
 
 services.AddInferenceApiClient();
 

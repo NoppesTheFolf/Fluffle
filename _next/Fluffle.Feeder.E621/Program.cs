@@ -6,7 +6,7 @@ using Noppes.E621;
 var builder = Host.CreateApplicationBuilder(args);
 var services = builder.Services;
 
-services.AddFeederTemplate();
+services.AddFeederTemplate("E621Feeder");
 
 builder.Services.AddOptions<E621FeederOptions>()
     .BindConfiguration(E621FeederOptions.E621Feeder)

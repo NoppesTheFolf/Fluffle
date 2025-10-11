@@ -1,20 +1,19 @@
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.Extensions.Options;
 
 namespace Fluffle.Feeder.Framework.ApplicationInsights;
 
 internal class CloudRoleNameInitializer : ITelemetryInitializer
 {
-    private readonly IOptions<ApplicationInsightsOptions> _options;
+    private readonly string _cloudRoleName;
 
-    public CloudRoleNameInitializer(IOptions<ApplicationInsightsOptions> options)
+    public CloudRoleNameInitializer(string cloudRoleName)
     {
-        _options = options;
+        _cloudRoleName = cloudRoleName;
     }
 
     public void Initialize(ITelemetry telemetry)
     {
-        telemetry.Context.Cloud.RoleName = _options.Value.CloudRoleName;
+        telemetry.Context.Cloud.RoleName = _cloudRoleName;
     }
 }

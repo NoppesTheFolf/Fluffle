@@ -8,7 +8,4 @@ internal class ApplicationInsightsOptions
 
     [Required]
     public required string ConnectionString { get; set; }
-
-    [Required]
-    public required string CloudRoleName { get; set; }
 }

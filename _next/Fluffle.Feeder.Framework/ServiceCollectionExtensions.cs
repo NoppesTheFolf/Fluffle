@@ -9,9 +9,9 @@ namespace Fluffle.Feeder.Framework;
 
 public static class ServiceCollectionExtensions
 {
-    public static void AddFeederTemplate(this IServiceCollection services)
+    public static void AddFeederTemplate(this IServiceCollection services, string cloudRoleName)
     {
-        services.AddFeederApplicationInsights();
+        services.AddFeederApplicationInsights(cloudRoleName);
 
         services.AddFeederStatePersistence();
 
@@ -28,13 +28,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IStateRepositoryFactory, CosmosStateRepositoryFactory>();
     }
 
-    public static void AddFeederApplicationInsights(this IServiceCollection services)
+    public static void AddFeederApplicationInsights(this IServiceCollection services, string cloudRoleName)
     {
         services.AddOptions<ApplicationInsightsOptions>()
             .BindConfiguration(ApplicationInsightsOptions.ApplicationInsights)
             .ValidateDataAnnotations().ValidateOnStart();
 
-        services.AddSingleton<ITelemetryInitializer, CloudRoleNameInitializer>();
+        services.AddSingleton<ITelemetryInitializer>(new CloudRoleNameInitializer(cloudRoleName));
         services.AddHostedService<ApplicationInsightsFlushService>();
         services.AddApplicationInsightsTelemetryWorkerService(options =>
         {

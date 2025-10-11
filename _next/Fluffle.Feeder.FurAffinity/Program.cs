@@ -9,7 +9,7 @@ using System.Net;
 var builder = Host.CreateApplicationBuilder(args);
 var services = builder.Services;
 
-services.AddFeederTemplate();
+services.AddFeederTemplate("FurAffinityFeeder");
 
 services.AddOptions<FurAffinityFeederOptions>()
     .BindConfiguration(FurAffinityFeederOptions.FurAffinityFeeder)

@@ -5,7 +5,7 @@ using Fluffle.Feeder.Framework;
 var builder = Host.CreateApplicationBuilder(args);
 var services = builder.Services;
 
-services.AddFeederApplicationInsights();
+services.AddFeederApplicationInsights("BlueskyJetstreamWatcher");
 
 services.AddFeederStatePersistence();
 
