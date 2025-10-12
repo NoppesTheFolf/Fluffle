@@ -38,7 +38,7 @@ public class SetUp
         .Build();
 
     private static readonly QdrantContainer QdrantContainer = new QdrantBuilder()
-        .WithImage("qdrant/qdrant:v1.14.1")
+        .WithImage("qdrant/qdrant:v1.15.5")
         .WithNetwork(Network)
         .WithHostname("qdrant")
         .WithApiKey("eep3waharah7chah4tohshe4Aephohsh")

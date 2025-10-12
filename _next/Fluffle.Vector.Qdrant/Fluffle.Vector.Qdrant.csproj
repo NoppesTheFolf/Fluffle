@@ -10,7 +10,7 @@
 		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.9" />
 		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.9" />
 		<PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
-		<PackageReference Include="Qdrant.Client" Version="1.14.1" />
+		<PackageReference Include="Qdrant.Client" Version="1.15.1" />
 	</ItemGroup>
 
 	<ItemGroup>
