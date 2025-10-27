@@ -1,5 +1,4 @@
-﻿using Humanizer;
-using Nito.AsyncEx;
+﻿using Nito.AsyncEx;
 using Noppes.Fluffle.Bot.Database;
 using System;
 using System.Collections.Concurrent;
@@ -40,7 +39,7 @@ public class BurstRateLimiter
         _mutex = new AsyncLock();
         _history = new Queue<DateTime>();
         _burstLimit = burstLimit;
-        _burstInterval = burstInterval.Milliseconds();
+        _burstInterval = TimeSpan.FromMilliseconds(burstInterval);
     }
 
     public async Task<BurstRateLimiterScope> NextAsync()
@@ -99,11 +98,11 @@ public static class RateLimiter
 
     public static async Task RunAsync(long chatId, ChatType chatType, Func<Task> makeRequest)
     {
-        await RunAsync<bool>(chatId, chatType, async () =>
+        await RunAsync(chatId, chatType, async () =>
         {
             await makeRequest();
 
-            return default;
+            return false;
         });
     }
 

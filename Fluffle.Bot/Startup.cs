@@ -1,5 +1,4 @@
-﻿using Humanizer;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +13,7 @@ using Noppes.Fluffle.Bot.Interceptors;
 using Noppes.Fluffle.Bot.Routing;
 using Noppes.Fluffle.Bot.Utils;
 using Noppes.Fluffle.Configuration;
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -89,7 +89,7 @@ public class Startup : ApiStartup<Startup>
         router.RegisterController<RateLimitController>();
 
         var conf = Configuration.Get<BotConfiguration>();
-        serviceBuilder.AddSingleton<MessageCleaner>(conf.MessageCleaner.Interval.Minutes());
+        serviceBuilder.AddSingleton<MessageCleaner>(TimeSpan.FromMinutes(conf.MessageCleaner.Interval));
     }
 }
 

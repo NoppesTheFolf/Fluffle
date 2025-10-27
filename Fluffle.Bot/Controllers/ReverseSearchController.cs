@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Nito.AsyncEx;
 using Noppes.Fluffle.Bot.Database;
 using Noppes.Fluffle.Bot.Routing;
@@ -180,12 +179,17 @@ public class ReverseSearchController
 
     private Task HandleChannelImage(Chat chat, Message message, MongoMessage mongoMessage, ReverseSearchResponse response)
     {
-        var config = new MapperConfiguration(cfg => cfg.CreateMap<MessageEntity, MessageEntity>());
-        var mapper = config.CreateMapper();
-
         response.MessageId = message.MessageId;
         response.ExistingText = mongoMessage.Caption;
-        response.ExistingTextEntities = mongoMessage.CaptionEntities?.Select(x => mapper.Map(x, new MessageEntity())).ToArray();
+        response.ExistingTextEntities = mongoMessage.CaptionEntities?.Select(x => new MessageEntity
+        {
+            Type = x.Type,
+            Offset = x.Offset,
+            Length = x.Length,
+            Url = x.Url,
+            User = null,
+            Language = x.Language
+        }).ToArray();
 
         // Use the text format if the message is part of a media group
         if (mongoMessage.MediaGroupId != null)

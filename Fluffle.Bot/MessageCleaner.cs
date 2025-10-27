@@ -1,5 +1,4 @@
-﻿using Humanizer;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Noppes.Fluffle.Api.RunnableServices;
 using Noppes.Fluffle.Bot.Database;
 using Noppes.Fluffle.Configuration;
@@ -23,7 +22,7 @@ public class MessageCleaner : IService
 
     public async Task RunAsync()
     {
-        var expirationDate = DateTime.UtcNow.Subtract(_botConfiguration.MessageCleaner.ExpirationTime.Hours());
+        var expirationDate = DateTime.UtcNow.Subtract(TimeSpan.FromHours(_botConfiguration.MessageCleaner.ExpirationTime));
 
         var removedCount = await _botContext.Messages.DeleteManyAsync(x => x.When < expirationDate);
         _logger.LogInformation("Deleted {count} old messages from the database.", removedCount);

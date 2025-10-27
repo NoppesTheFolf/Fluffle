@@ -1,5 +1,4 @@
-﻿using Humanizer;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
@@ -67,7 +66,7 @@ public class TelegramRouterWorker
     private async Task HandlePotentialInputAsync(IServiceScope scope, Update update)
     {
         var inputRoute = await _inputRouteRepository.GetAsync(update.Message!.Chat.Id);
-        if (inputRoute == null || inputRoute.CreatedAt.Add(2.Hours()) < DateTime.UtcNow)
+        if (inputRoute == null || inputRoute.CreatedAt.Add(TimeSpan.FromHours(2)) < DateTime.UtcNow)
         {
             await HandleUpdateAsync(scope, update);
             return;
@@ -154,7 +153,7 @@ public class TelegramRouterWorker
 
         // Callbacks older than two days cannot be answered. Allow for five minutes of processing time
         await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
-        if (DateTime.UtcNow.Subtract(callbackBatch.CreatedAt) > 2.Days().Subtract(5.Minutes()))
+        if (DateTime.UtcNow.Subtract(callbackBatch.CreatedAt) > TimeSpan.FromDays(2).Subtract(TimeSpan.FromMinutes(5)))
             return;
 
         // Callback batches are not reusable. Delete it to save memory/storage

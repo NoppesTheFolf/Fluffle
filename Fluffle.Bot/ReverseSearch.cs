@@ -1,5 +1,4 @@
-﻿using Humanizer;
-using Nito.AsyncEx;
+﻿using Nito.AsyncEx;
 using Noppes.Fluffle.Bot.Database;
 using Noppes.Fluffle.Configuration;
 using Noppes.Fluffle.Constants;
@@ -38,8 +37,8 @@ public class ReverseSearchRequestLimiter
     {
         var rateLimiterConf = configuration.ReverseSearch.RateLimiter;
 
-        _expirationTime = rateLimiterConf.ExpirationTime.Minutes();
-        _pressureTimeSpan = rateLimiterConf.PressureTimeSpan.Minutes();
+        _expirationTime = TimeSpan.FromMinutes(rateLimiterConf.ExpirationTime);
+        _pressureTimeSpan = TimeSpan.FromMinutes(rateLimiterConf.PressureTimeSpan);
         _requestCount = rateLimiterConf.Count;
         _saveEveryNthIncrement = rateLimiterConf.SaveEveryNthIncrement;
 
