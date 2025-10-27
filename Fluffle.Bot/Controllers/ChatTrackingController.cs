@@ -25,7 +25,13 @@ internal class ChatTrackingController
             return;
 
         await _context.Chats.UpsertAsync(message.Chat, true, message.From!.Id, null);
-        await RateLimiter.RunAsync(message.Chat, () => _botClient.SendTextMessageAsync(message.From.Id, Template.Start(), ParseMode.MarkdownV2));
+
+        const string startText = """
+                                 I am a bot that can reverse search furry art\. I'll try to find the sources of any images you throw at me\! I can also help out in channels and groups chats, check out Fluffle its [bot documentation](https://fluffle\.xyz/tools/telegram-bot/) if you are interested in that\.
+                                 
+                                 See /help to see which commands are available and such\.
+                                 """;
+        await RateLimiter.RunAsync(message.Chat, () => _botClient.SendTextMessageAsync(message.From.Id, startText, ParseMode.MarkdownV2));
     }
 
     [Update(UpdateType.MyChatMember)]

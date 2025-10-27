@@ -74,14 +74,35 @@ public class Startup : ApiStartup<Startup>
 
     public override void AfterConfigure(IApplicationBuilder app, IWebHostEnvironment env, ServiceBuilder serviceBuilder)
     {
-        Template.CompileAsync().Wait();
-
         var router = app.ApplicationServices.GetRequiredService<TelegramRouter>();
 
         router.RegisterInterceptor<ChatRegisterInterceptor>();
 
-        router.CommandHandlers.Add("help", new FuncUpdateHandler(Template.Help));
-        router.CommandHandlers.Add("ihasfoundbug", new FuncUpdateHandler(Template.IHasFoundBug));
+        const string helpText = """
+                                I am a bot that can reverse search furry art\. I'll try to find the sources of any images you throw at me\! I can also help out in channels and groups chats, check out Fluffle its [bot documentation](https://fluffle.xyz/tools/telegram-bot/) if you are interested in that\.
+                                
+                                *Configuration*
+                                [The website](http://fluffle.xyz/tools/telegram-bot/#configuration) contains examples and more details about how you can configure the bot\.
+                                
+                                /setformat \- Set if sources should be presented using the inline keyboard or text/captions\.
+                                /setinlinekeyboardformat \- When the inline keyboard format is used, configure the bot to use a specific inline keyboard format of your liking\.
+                                /settextformat \- When the text format is used, configure the bot to use a specific text format of your liking\.
+                                /settextseparator \- Configure the bot to use a separator character of your liking\. Applied when using the platform names text format\.
+                                
+                                *Rate limits*
+                                The bot makes use of rate limiting and prioritization to prevent abuse and guarantee service consistently to everyone\. Per chat, per 24\-hour period, a chat is allowed to make 400 reverse search requests\. Exceed this, and the bot will start ignoring any images sent\.
+                                
+                                /ratelimits \- See the reverse search consumption of your chats\.
+                                
+                                *Miscellaneous*
+                                /ihasfoundbug \- Found a bug? Get information on how to report it\.
+                                """;
+        router.CommandHandlers.Add("help", new FuncUpdateHandler(_ => helpText));
+
+        const string iHasFoundBugText = """
+                                        You can report any issues you have with the bot to @NoppesTheFolf\. If possible, please try to describe the problem you are experiencing in a way that is reproducible/replicable\.
+                                        """;
+        router.CommandHandlers.Add("ihasfoundbug", new FuncUpdateHandler(_ => iHasFoundBugText));
 
         router.RegisterController<ChatTrackingController>();
         router.RegisterController<SettingsMenuController>();

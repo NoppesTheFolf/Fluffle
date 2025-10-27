@@ -58,13 +58,6 @@ public class InputContextRepository : ITelegramRepository<InputContext, long>
     public async Task PutAsync(InputContext document) => await _mongoCollection.ReplaceOneAsync(x => x.Id == document.Id, document, new ReplaceOptions { IsUpsert = true });
 }
 
-public class MediaGroupRepository : Repository<MongoMediaGroup>
-{
-    public MediaGroupRepository(IMongoCollection<MongoMediaGroup> collection) : base(collection)
-    {
-    }
-}
-
 public class BotContext
 {
     private readonly IMongoClient _mongoClient;
@@ -77,7 +70,6 @@ public class BotContext
 
         Chats = new ChatRepository(_mongoDatabase.GetCollection<MongoChat>("Chat"));
         Messages = new MessageRepository(_mongoDatabase.GetCollection<MongoMessage>("Message"));
-        MediaGroups = new MediaGroupRepository(_mongoDatabase.GetCollection<MongoMediaGroup>("MediaGroup"));
 
         ReverseSearchRequestHistory = new ReverseSearchHistoryRepository(_mongoDatabase.GetCollection<MongoReverseSearchRequestHistory>("ReverseSearchRequestHistory"));
 
@@ -90,7 +82,6 @@ public class BotContext
 
     public IRepository<MongoChat> Chats { get; }
     public IRepository<MongoMessage> Messages { get; }
-    public IRepository<MongoMediaGroup> MediaGroups { get; }
 
     public IRepository<MongoReverseSearchRequestHistory> ReverseSearchRequestHistory { get; }
 }
