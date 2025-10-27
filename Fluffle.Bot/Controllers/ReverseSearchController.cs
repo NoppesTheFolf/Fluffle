@@ -27,17 +27,15 @@ public class ReverseSearchController
     private readonly BotContext _context;
     private readonly ReverseSearchScheduler _reverseSearchScheduler;
     private readonly ReverseSearchRequestLimiter _reverseSearchRequestLimiter;
-    private readonly MediaGroupTracker _mediaGroupTracker;
     private readonly ILogger<ReverseSearchController> _logger;
 
-    public ReverseSearchController(BotConfiguration configuration, ITelegramBotClient botClient, BotContext context, ReverseSearchScheduler reverseSearchScheduler, ReverseSearchRequestLimiter reverseSearchRequestLimiter, MediaGroupTracker mediaGroupTracker, ILogger<ReverseSearchController> logger)
+    public ReverseSearchController(BotConfiguration configuration, ITelegramBotClient botClient, BotContext context, ReverseSearchScheduler reverseSearchScheduler, ReverseSearchRequestLimiter reverseSearchRequestLimiter, ILogger<ReverseSearchController> logger)
     {
         _configuration = configuration;
         _botClient = botClient;
         _context = context;
         _reverseSearchScheduler = reverseSearchScheduler;
         _reverseSearchRequestLimiter = reverseSearchRequestLimiter;
-        _mediaGroupTracker = mediaGroupTracker;
         _logger = logger;
     }
 
@@ -154,12 +152,7 @@ public class ReverseSearchController
         if (!shouldContinue)
             return;
 
-        MediaGroupData mediaGroupData = null;
-        MediaGroupItem mediaGroupItem = null;
-        if (message.MediaGroupId != null && chat.Type is ChatType.Channel or ChatType.Group or ChatType.Supergroup)
-            (mediaGroupData, mediaGroupItem) = await _mediaGroupTracker.TrackAsync(message.Chat, mongoMessage);
-
-        await ReverseSearchAsync(message.Chat, message, mongoMessage, priority, mediaGroupData, mediaGroupItem);
+        await ReverseSearchAsync(message.Chat, message, mongoMessage, priority);
     }
 
     private async Task HandlePrivateImage(Chat chat, Message message, MongoMessage mongoMessage, ReverseSearchResponse response)
@@ -206,7 +199,7 @@ public class ReverseSearchController
         return Task.CompletedTask;
     }
 
-    private async Task ReverseSearchAsync(Chat chat, Message message, MongoMessage mongoMessage, int priority, MediaGroupData mediaGroupData = null, MediaGroupItem mediaGroupItem = null)
+    private async Task ReverseSearchAsync(Chat chat, Message message, MongoMessage mongoMessage, int priority)
     {
         var photos = ImageSizeHelper.OrderByDownloadPreference(message.Photo, x => x.Width, x => x.Height, 350).ToList();
 
@@ -241,22 +234,6 @@ public class ReverseSearchController
             .Where(x => x.Match == FluffleMatch.Exact)
             .OrderBy(x => x.Platform.Priority())
             .ToList();
-
-        if (mediaGroupItem != null)
-        {
-            await _context.Messages.ReplaceAsync(x => x.Id == mongoMessage.Id, mongoMessage);
-            mediaGroupItem.Priority = priority;
-            mediaGroupItem.Image = stream.ToArray();
-            mediaGroupItem.ReverseSearchEvent.Set();
-
-            await mediaGroupData!.AllReceivedEvent.WaitAsync();
-            if (!mediaGroupData.ShouldControllerContinue)
-            {
-                await mediaGroupData.ProcessedEvent.WaitAsync();
-
-                return;
-            }
-        }
 
         try
         {

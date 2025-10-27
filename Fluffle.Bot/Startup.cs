@@ -8,14 +8,12 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Noppes.Fluffle.Api;
 using Noppes.Fluffle.Api.RunnableServices;
-using Noppes.Fluffle.B2;
 using Noppes.Fluffle.Bot.Controllers;
 using Noppes.Fluffle.Bot.Database;
 using Noppes.Fluffle.Bot.Interceptors;
 using Noppes.Fluffle.Bot.Routing;
 using Noppes.Fluffle.Bot.Utils;
 using Noppes.Fluffle.Configuration;
-using Noppes.Fluffle.Thumbnail;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,32 +21,6 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace Noppes.Fluffle.Bot;
-
-public class BucketCollection
-{
-    public B2Bucket Index { get; set; }
-
-    public B2Bucket Thumbnail { get; set; }
-
-    public BucketCollection(B2Bucket index, B2Bucket thumbnail)
-    {
-        Index = index;
-        Thumbnail = thumbnail;
-    }
-}
-
-public class UploadManagerCollection
-{
-    public B2UploadManager Index { get; set; }
-
-    public B2UploadManager Thumbnail { get; set; }
-
-    public UploadManagerCollection(B2UploadManager index, B2UploadManager thumbnail)
-    {
-        Index = index;
-        Thumbnail = thumbnail;
-    }
-}
 
 public class Startup : ApiStartup<Startup>
 {
@@ -60,22 +32,8 @@ public class Startup : ApiStartup<Startup>
 
     public override void AdditionalConfigureServices(IServiceCollection services)
     {
-        services.AddFluffleThumbnail();
-
         var botConf = Configuration.Get<BotConfiguration>();
         services.AddSingleton(botConf);
-
-        var indexB2Client = new B2Client(botConf.IndexBackblazeB2.ApplicationKeyId, botConf.IndexBackblazeB2.ApplicationKey);
-        var indexBucket = indexB2Client.GetBucketAsync().Result;
-
-        var thumbnailB2Client = new B2Client(botConf.ThumbnailBackblazeB2.ApplicationKeyId, botConf.ThumbnailBackblazeB2.ApplicationKey);
-        var thumbnailBucket = thumbnailB2Client.GetBucketAsync().Result;
-
-        services.AddSingleton(new BucketCollection(indexBucket, thumbnailBucket));
-
-        var b2IndexUploadManager = new B2UploadManager(botConf.IndexBackblazeB2.Workers, indexBucket);
-        var b2ThumbnailUploaderManager = new B2UploadManager(botConf.ThumbnailBackblazeB2.Workers, thumbnailBucket);
-        services.AddSingleton(new UploadManagerCollection(b2IndexUploadManager, b2ThumbnailUploaderManager));
 
         services.AddSingleton<ITelegramRepository<CallbackContext, string>, CallbackContextRepository>();
         services.AddSingleton<CallbackManager>();
@@ -89,9 +47,6 @@ public class Startup : ApiStartup<Startup>
         services.AddSingleton<ReverseSearchRequestLimiter>();
 
         services.AddSingleton<MessageCleaner>();
-
-        services.AddSingleton<MediaGroupTracker>();
-        services.AddSingleton<MediaGroupHandler>();
 
         var context = new BotContext(botConf.MongoConnectionString, botConf.MongoDatabase);
         services.AddSingleton(context);

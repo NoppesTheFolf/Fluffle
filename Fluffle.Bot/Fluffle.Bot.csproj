@@ -22,17 +22,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Fluffle.Api\Fluffle.Api.csproj" />
-		<ProjectReference Include="..\Fluffle.B2\Fluffle.B2.csproj" />
-		<ProjectReference Include="..\Fluffle.Constants\Fluffle.Constants.csproj" />
-		<ProjectReference Include="..\Fluffle.Http\Fluffle.Http.csproj" />
-		<ProjectReference Include="..\Fluffle.PerceptualHashing\Fluffle.PerceptualHashing.csproj" />
-		<ProjectReference Include="..\Fluffle.Thumbnail\Fluffle.Thumbnail.csproj" />
-		<ProjectReference Include="..\Fluffle.Utils\Fluffle.Utils.csproj" />
+		<None Include="Templates\**" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="Templates\**" CopyToOutputDirectory="PreserveNewest" />
+	  <ProjectReference Include="..\Fluffle.Api\Fluffle.Api.csproj" />
+	  <ProjectReference Include="..\Fluffle.Configuration\Fluffle.Configuration.csproj" />
+	  <ProjectReference Include="..\Fluffle.Constants\Fluffle.Constants.csproj" />
 	</ItemGroup>
 
 </Project>
