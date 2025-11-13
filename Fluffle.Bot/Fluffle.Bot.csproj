@@ -18,9 +18,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Fluffle.Api\Fluffle.Api.csproj" />
 	  <ProjectReference Include="..\Fluffle.Configuration\Fluffle.Configuration.csproj" />
 	  <ProjectReference Include="..\Fluffle.Constants\Fluffle.Constants.csproj" />
+	  <ProjectReference Include="..\Fluffle.Http\Fluffle.Http.csproj" />
+	  <ProjectReference Include="..\Fluffle.Utils\Fluffle.Utils.csproj" />
 	</ItemGroup>
 
 </Project>

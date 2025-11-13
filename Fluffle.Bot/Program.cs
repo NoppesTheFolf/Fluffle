@@ -1,19 +1,131 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Noppes.Fluffle.Bot;
+using Noppes.Fluffle.Bot.Controllers;
+using Noppes.Fluffle.Bot.Database;
+using Noppes.Fluffle.Bot.Interceptors;
+using Noppes.Fluffle.Bot.Routing;
+using Noppes.Fluffle.Bot.Services;
+using Noppes.Fluffle.Bot.Utils;
+using Noppes.Fluffle.Configuration;
+using System.IO;
+using System.Threading.Tasks;
+using Telegram.Bot;
+using Telegram.Bot.Types;
 
-namespace Noppes.Fluffle.Bot;
+var builder = WebApplication.CreateBuilder(args);
+var services = builder.Services;
 
-public class Program
+services.Configure<ForwardedHeadersOptions>(options =>
 {
-    public static void Main(string[] args)
-    {
-        CreateHostBuilder(args).Build().Run();
-    }
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
+    options.KnownNetworks.Add(IPNetwork.Parse("0.0.0.0/0"));
+    options.KnownNetworks.Add(IPNetwork.Parse("::/0"));
+});
 
-    public static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
-            .ConfigureWebHostDefaults(webBuilder =>
-            {
-                webBuilder.UseStartup<Startup>();
-            });
-}
+var conf = FluffleConfiguration.Load<Program>(false);
+var botConf = conf.Get<BotConfiguration>();
+
+services.AddSingleton(botConf);
+
+services.AddSingleton<ITelegramRepository<CallbackContext, string>, CallbackContextRepository>();
+services.AddSingleton<CallbackManager>();
+
+services.AddSingleton<ITelegramRepository<InputContext, long>, InputContextRepository>();
+services.AddSingleton<InputManager>();
+
+var fluffleClient = new FluffleClient("telegram-bot");
+services.AddSingleton(fluffleClient);
+services.AddSingleton(new ReverseSearchScheduler(botConf.ReverseSearch.Workers, fluffleClient));
+services.AddSingleton<ReverseSearchRequestLimiter>();
+
+services.AddSingleton<MessageCleanerService>();
+
+var context = new BotContext(botConf.MongoConnectionString, botConf.MongoDatabase);
+services.AddSingleton(context);
+services.AddSingleton(context.CallbackContexts);
+services.AddSingleton(context.InputContexts);
+
+// Configure rate limiter to use values defined in the config
+RateLimiter.Initialize(botConf.TelegramGlobalBurstLimit, botConf.TelegramGlobalBurstInterval, botConf.TelegramGroupBurstLimit, botConf.TelegramGroupBurstInterval);
+
+var botClient = new TelegramBotClient(botConf.TelegramToken);
+services.AddSingleton<ITelegramBotClient>(botClient);
+services.AddHostedService<ConfigureWebhookService>();
+services.AddSingleton<TaskAwaiter<TelegramRouter>>();
+
+services.AddSingleton<TelegramRouter>();
+services.AddTransient<TelegramRouterWorker>();
+
+services.AddSingleton<ChatRegisterInterceptor>();
+
+services.AddTransient<ChatTrackingController>();
+services.AddTransient<SettingsMenuController>();
+services.AddTransient<ReverseSearchController>();
+services.AddTransient<RateLimitController>();
+
+var app = builder.Build();
+
+app.UseForwardedHeaders();
+
+app.MapPost("/{token}", async (
+    string token,
+    HttpRequest request,
+    BotConfiguration botConfiguration,
+    TelegramRouter router,
+    TaskAwaiter<TelegramRouter> taskAwaiter) =>
+{
+    if (string.IsNullOrWhiteSpace(token))
+        return Results.BadRequest();
+
+    if (token != botConfiguration.TelegramToken)
+        return Results.Unauthorized();
+
+    using var streamReader = new StreamReader(request.Body);
+    var json = await streamReader.ReadToEndAsync();
+    var update = JsonConvert.DeserializeObject<Update>(json);
+
+    taskAwaiter.Add(Task.Run(() => router.HandleUpdateAsync(update)));
+
+    return Results.Ok();
+});
+
+var router = app.Services.GetRequiredService<TelegramRouter>();
+
+router.RegisterInterceptor<ChatRegisterInterceptor>();
+
+const string helpText = """
+                                I am a bot that can reverse search furry art\. I'll try to find the sources of any images you throw at me\! I can also help out in channels and groups chats, check out Fluffle its [bot documentation](https://fluffle.xyz/tools/telegram-bot/) if you are interested in that\.
+                                
+                                *Configuration*
+                                [The website](http://fluffle.xyz/tools/telegram-bot/#configuration) contains examples and more details about how you can configure the bot\.
+                                
+                                /setformat \- Set if sources should be presented using the inline keyboard or text/captions\.
+                                /setinlinekeyboardformat \- When the inline keyboard format is used, configure the bot to use a specific inline keyboard format of your liking\.
+                                /settextformat \- When the text format is used, configure the bot to use a specific text format of your liking\.
+                                /settextseparator \- Configure the bot to use a separator character of your liking\. Applied when using the platform names text format\.
+                                
+                                *Rate limits*
+                                The bot makes use of rate limiting and prioritization to prevent abuse and guarantee service consistently to everyone\. Per chat, per 24\-hour period, a chat is allowed to make 400 reverse search requests\. Exceed this, and the bot will start ignoring any images sent\.
+                                
+                                /ratelimits \- See the reverse search consumption of your chats\.
+                                
+                                *Miscellaneous*
+                                /ihasfoundbug \- Found a bug? Get information on how to report it\.
+                                """;
+router.CommandHandlers.Add("help", new FuncUpdateHandler(_ => helpText));
+
+const string iHasFoundBugText = """
+                                        You can report any issues you have with the bot to @NoppesTheFolf\. If possible, please try to describe the problem you are experiencing in a way that is reproducible/replicable\.
+                                        """;
+router.CommandHandlers.Add("ihasfoundbug", new FuncUpdateHandler(_ => iHasFoundBugText));
+
+router.RegisterController<ChatTrackingController>();
+router.RegisterController<SettingsMenuController>();
+router.RegisterController<ReverseSearchController>();
+router.RegisterController<RateLimitController>();
+
+app.Run();
