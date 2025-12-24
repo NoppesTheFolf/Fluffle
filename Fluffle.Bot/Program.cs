@@ -3,14 +3,16 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
-using Noppes.Fluffle.Bot;
 using Noppes.Fluffle.Bot.Controllers;
 using Noppes.Fluffle.Bot.Database;
 using Noppes.Fluffle.Bot.Interceptors;
+using Noppes.Fluffle.Bot.ReverseSearch;
+using Noppes.Fluffle.Bot.ReverseSearch.Api;
 using Noppes.Fluffle.Bot.Routing;
 using Noppes.Fluffle.Bot.Services;
 using Noppes.Fluffle.Bot.Utils;
 using Noppes.Fluffle.Configuration;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -37,9 +39,14 @@ services.AddSingleton<CallbackManager>();
 services.AddSingleton<ITelegramRepository<InputContext, long>, InputContextRepository>();
 services.AddSingleton<InputManager>();
 
-var fluffleClient = new FluffleClient("telegram-bot");
-services.AddSingleton(fluffleClient);
-services.AddSingleton(new ReverseSearchScheduler(botConf.ReverseSearch.Workers, fluffleClient));
+services.AddHttpClient(nameof(FluffleApiClient), client =>
+{
+    client.BaseAddress = new Uri("https://api.fluffle.xyz");
+    client.DefaultRequestHeaders.Add("User-Agent", "fluffle.xyz/telegram-bot");
+});
+services.AddSingleton<FluffleApiClient>();
+
+services.AddSingleton(serviceProvider => new ReverseSearchScheduler(botConf.ReverseSearch.Workers, serviceProvider.GetRequiredService<FluffleApiClient>()));
 services.AddSingleton<ReverseSearchRequestLimiter>();
 
 services.AddSingleton<MessageCleanerService>();

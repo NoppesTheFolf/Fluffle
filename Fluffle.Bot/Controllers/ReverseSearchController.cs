@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using Nito.AsyncEx;
 using Noppes.Fluffle.Bot.Database;
+using Noppes.Fluffle.Bot.ReverseSearch;
+using Noppes.Fluffle.Bot.ReverseSearch.Api;
 using Noppes.Fluffle.Bot.Routing;
 using Noppes.Fluffle.Bot.Utils;
 using Noppes.Fluffle.Configuration;
@@ -160,7 +162,7 @@ public class ReverseSearchController
 
         await RateLimiter.RunAsync(chat, () => _botClient.DeleteMessageAsync(chat.Id, message.MessageId));
 
-        if (mongoMessage.FluffleResponse.Results.Count == 0)
+        if (response.FluffleApiResponse.Results.Count == 0)
             response.Text = "This image could not be found.";
         else
             Formatter.RouteMessage(mongoMessage, response);
@@ -168,7 +170,7 @@ public class ReverseSearchController
 
     private Task HandleGroupImage(Chat chat, Message message, MongoMessage mongoMessage, ReverseSearchResponse response)
     {
-        if (mongoMessage.FluffleResponse.Results.Count == 0)
+        if (response.FluffleApiResponse.Results.Count == 0)
             return Task.CompletedTask;
 
         Formatter.RouteMessage(mongoMessage, response);
@@ -195,7 +197,7 @@ public class ReverseSearchController
         if (mongoMessage.MediaGroupId != null)
             mongoMessage.ReverseSearchFormat = ReverseSearchFormat.Text;
 
-        if (mongoMessage.FluffleResponse.Results.Count <= 0)
+        if (response.FluffleApiResponse.Results.Count <= 0)
             return Task.CompletedTask;
 
         Formatter.RouteMessage(mongoMessage, response);
@@ -228,14 +230,13 @@ public class ReverseSearchController
         stream.Position = 0;
 
         mongoMessage.FileUniqueId = message.Photo.Largest().FileUniqueId;
-        mongoMessage.FluffleResponse = await _reverseSearchScheduler.ProcessAsync(new ReverseSearchSchedulerItem
+        var fluffleApiResponse = await _reverseSearchScheduler.ProcessAsync(new ReverseSearchSchedulerItem
         {
             Stream = stream,
-            IncludeNsfw = true,
             Limit = 8
         }, priority);
-        mongoMessage.FluffleResponse.Results = mongoMessage.FluffleResponse.Results
-            .Where(x => x.Match == FluffleMatch.Exact)
+        fluffleApiResponse.Results = fluffleApiResponse.Results
+            .Where(x => x.Match == FluffleApiMatch.Exact)
             .OrderBy(x => x.Platform.Priority())
             .ToList();
 
@@ -243,6 +244,7 @@ public class ReverseSearchController
         {
             var response = new ReverseSearchResponse
             {
+                FluffleApiResponse = fluffleApiResponse,
                 MessageId = mongoMessage.ResponseMessageId,
                 Chat = chat,
                 Photo = message.Photo.Largest()

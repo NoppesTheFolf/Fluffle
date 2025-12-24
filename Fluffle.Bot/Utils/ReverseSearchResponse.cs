@@ -1,4 +1,5 @@
-﻿using Noppes.Fluffle.Bot.Routing;
+﻿using Noppes.Fluffle.Bot.ReverseSearch.Api;
+using Noppes.Fluffle.Bot.Routing;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -8,6 +9,8 @@ namespace Noppes.Fluffle.Bot.Utils;
 
 public class ReverseSearchResponse
 {
+    public required FluffleApiResponse FluffleApiResponse { get; set; }
+
     public string ExistingText { get; set; }
 
     public MessageEntity[] ExistingTextEntities { get; set; }

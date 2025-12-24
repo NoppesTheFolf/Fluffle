@@ -16,11 +16,6 @@ public class MongoMessage
     /// </summary>
     public string FileUniqueId { get; set; }
 
-    /// <summary>
-    /// Response retrieved from Fluffle when the image got reverse searched.
-    /// </summary>
-    public FluffleResponse FluffleResponse { get; set; }
-
     public int? ResponseMessageId { get; set; }
 
     public string Caption { get; set; }

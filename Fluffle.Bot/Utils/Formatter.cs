@@ -1,4 +1,5 @@
 ﻿using Noppes.Fluffle.Bot.Database;
+using Noppes.Fluffle.Bot.ReverseSearch.Api;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,9 +58,9 @@ public static class TextFormatter
     {
         var (text, textEntities, shouldCaptionBeAfter) = message.TextFormat switch
         {
-            TextFormat.PlatformNames => PlatformNames(message, message.FluffleResponse),
-            TextFormat.Compact => Links(message.FluffleResponse, false),
-            TextFormat.Expanded => Links(message.FluffleResponse, true),
+            TextFormat.PlatformNames => PlatformNames(message, response.FluffleApiResponse),
+            TextFormat.Compact => Links(response.FluffleApiResponse, false),
+            TextFormat.Expanded => Links(response.FluffleApiResponse, true),
             _ => throw new ArgumentOutOfRangeException()
         };
 
@@ -93,7 +94,7 @@ public static class TextFormatter
         response.Text = text;
     }
 
-    public static (string, ICollection<MessageEntity>, bool) PlatformNames(MongoMessage message, FluffleResponse response)
+    public static (string, ICollection<MessageEntity>, bool) PlatformNames(MongoMessage message, FluffleApiResponse response)
     {
         var text = string.Empty;
         var messageEntities = new List<MessageEntity>();
@@ -110,7 +111,7 @@ public static class TextFormatter
                 Type = MessageEntityType.TextLink,
                 Offset = offset,
                 Length = platformName.Length,
-                Url = result.Location
+                Url = result.Url
             });
 
             if (i < response.Results.Count - 1)
@@ -122,7 +123,7 @@ public static class TextFormatter
         return (text, messageEntities, false);
     }
 
-    public static (string, ICollection<MessageEntity>, bool) Links(FluffleResponse response, bool expanded)
+    public static (string, ICollection<MessageEntity>, bool) Links(FluffleApiResponse response, bool expanded)
     {
         var text = string.Empty;
         var messageEntities = new List<MessageEntity>();
@@ -145,7 +146,7 @@ public static class TextFormatter
                 text += '\n';
             }
 
-            text += result.Location;
+            text += result.Url;
             text += '\n';
 
             if (expanded && i < results.Count - 1)
@@ -173,7 +174,7 @@ public static class InlineKeyboardFormatter
     {
         Action<MongoMessage, ReverseSearchResponse> routeAction = message.InlineKeyboardFormat switch
         {
-            InlineKeyboardFormat.Single => (x, y) => RouteSingle(x.FluffleResponse.Results.First().Location, "Source", y),
+            InlineKeyboardFormat.Single => (x, y) => RouteSingle(response.FluffleApiResponse.Results.First().Url, "Source", y),
             InlineKeyboardFormat.Multiple => RouteMultiple,
             _ => throw new ArgumentOutOfRangeException()
         };
@@ -208,15 +209,6 @@ public static class InlineKeyboardFormatter
         aspectRatio = aspectRatio < 0.25 ? 0.25 : aspectRatio;
         aspectRatio = aspectRatio > 1.0 ? 1.0 : aspectRatio;
 
-        var platformSizes = new Dictionary<FlufflePlatform, int>
-        {
-            { FlufflePlatform.FurAffinity, 79 },
-            { FlufflePlatform.Twitter, 54 },
-            { FlufflePlatform.E621, 36 },
-            { FlufflePlatform.Weasyl, 51 },
-            { FlufflePlatform.FurryNetwork, 100 }
-        };
-
         var binOptions = new BinOption[]
         {
             new(1, (int)Math.Floor(275 * aspectRatio)),
@@ -224,17 +216,17 @@ public static class InlineKeyboardFormatter
             new(3, (int)Math.Floor(90 * aspectRatio))
         };
 
-        List<List<FluffleResult>> ComputeBins(FluffleResult[] results)
+        List<List<FluffleApiResult>> ComputeBins(FluffleApiResult[] results)
         {
-            results = results.OrderByDescending(x => platformSizes[x.Platform]).ToArray();
+            results = results.OrderByDescending(x => x.Platform.InlineKeyboardSize()).ToArray();
 
-            var bins = new List<List<FluffleResult>>();
+            var bins = new List<List<FluffleApiResult>>();
             var index = 0;
             while (true)
             {
                 var item = results[index];
                 var binOption = binOptions
-                    .Where(x => x.CompartmentSize >= platformSizes[item.Platform])
+                    .Where(x => x.CompartmentSize >= item.Platform.InlineKeyboardSize())
                     .OrderBy(x => x.CompartmentSize)
                     .First();
 
@@ -249,8 +241,8 @@ public static class InlineKeyboardFormatter
             return bins;
         }
 
-        List<List<FluffleResult>> bins;
-        var results = message.FluffleResponse.Results.ToList();
+        List<List<FluffleApiResult>> bins;
+        var results = response.FluffleApiResponse.Results.ToList();
         while (true)
         {
             bins = ComputeBins(results.ToArray());
@@ -285,7 +277,7 @@ public static class InlineKeyboardFormatter
 
         var inlineKeyboardButtons = bins
             .Select(bin => bin
-                .Select(x => new InlineKeyboardButton(x.Platform.Pretty()) { Url = x.Location })
+                .Select(x => new InlineKeyboardButton(x.Platform.Pretty()) { Url = x.Url })
                 .ToList()
             ).ToList();
         response.ReplyMarkup = new InlineKeyboardMarkup(inlineKeyboardButtons);
