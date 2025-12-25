@@ -6,8 +6,8 @@ using Noppes.Fluffle.Bot.ReverseSearch.Api;
 using Noppes.Fluffle.Bot.Routing;
 using Noppes.Fluffle.Bot.Utils;
 using Noppes.Fluffle.Configuration;
-using Noppes.Fluffle.Utils;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -207,7 +207,7 @@ public class ReverseSearchController
 
     private async Task ReverseSearchAsync(Chat chat, Message message, MongoMessage mongoMessage, int priority)
     {
-        var photos = ImageSizeHelper.OrderByDownloadPreference(message.Photo, x => x.Width, x => x.Height, 350).ToList();
+        var photos = OrderByDownloadPreference(message.Photo, x => x.Width, x => x.Height, 350).ToList();
 
         await using var stream = new MemoryStream();
         for (var i = 0; i < photos.Count; i++)
@@ -317,5 +317,22 @@ public class ReverseSearchController
         {
             await _context.Messages.ReplaceAsync(x => x.Id == mongoMessage.Id, mongoMessage);
         }
+    }
+
+    private static IEnumerable<T> OrderByDownloadPreference<T>(IEnumerable<T> files, Func<T, int> getWidth, Func<T, int> getHeight, int target)
+    {
+        var imagesByArea = files
+            .OrderBy(s => getWidth(s) * getHeight(s))
+            .ToList();
+
+        var preferredImages = imagesByArea
+            .Where(s => getWidth(s) >= target && getHeight(s) >= target)
+            .ToList();
+
+        var leftOverImages = imagesByArea
+            .Except(preferredImages)
+            .OrderByDescending(s => getWidth(s) * getHeight(s));
+
+        return preferredImages.Concat(leftOverImages);
     }
 }

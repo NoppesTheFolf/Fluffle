@@ -1,5 +1,4 @@
 ﻿using Noppes.Fluffle.Bot.ReverseSearch.Api;
-using Noppes.Fluffle.Utils;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Bot.ReverseSearch;

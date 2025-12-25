@@ -1,8 +1,9 @@
 ﻿using Noppes.Fluffle.Bot.Database;
 using Noppes.Fluffle.Bot.Routing;
 using Noppes.Fluffle.Bot.Utils;
-using Noppes.Fluffle.Utils;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -169,7 +170,7 @@ public class SettingsMenuController
     [Input]
     public async Task SetTextSeparator(Message message, SetSetTextSeparatorData data)
     {
-        if (message.Text.EnumerateGraphemes().Count() != 1)
+        if (EnumerateGraphemes(message.Text).Count() != 1)
         {
             await _inputManager.CreateAsync(message.Chat.Id, data, nameof(SettingsMenuController), nameof(SetTextSeparator));
             await RateLimiter.RunAsync(message.Chat, () => _botClient.SendTextMessageAsync(message.Chat.Id, "A separator may only consist out of one character. Please try again."));
@@ -177,6 +178,15 @@ public class SettingsMenuController
         }
 
         await SetSetTextSeparator(message, data, message.Text);
+    }
+
+    private static IEnumerable<string> EnumerateGraphemes(string value)
+    {
+        var enumerator = StringInfo.GetTextElementEnumerator(value);
+        while (enumerator.MoveNext())
+        {
+            yield return enumerator.GetTextElement();
+        }
     }
 
     private async Task SetSetTextSeparator(Message message, SetSetTextSeparatorData data, string separator)
