@@ -1,4 +1,0 @@
-config.yml
-cache
-models/**/*.joblib
-models/**/*.hdf5
