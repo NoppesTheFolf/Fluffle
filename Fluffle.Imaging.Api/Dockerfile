@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y libvips
 USER $APP_UID
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0-noble AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
 WORKDIR /build
 
 COPY ./**/*.csproj ./
