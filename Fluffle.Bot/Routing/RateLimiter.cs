@@ -73,24 +73,18 @@ public class BurstRateLimiter
 
 public static class RateLimiter
 {
-    public static int GlobalBurstLimit { get; set; } = 30;
-    public static int GlobalBurstInterval { get; set; } = 1000;
-    public static int GroupBurstLimit { get; set; } = 20;
-    public static int GroupBurstInterval { get; set; } = 60000;
+    public const int GlobalBurstLimit = 29;
 
-    public static void Initialize(int globalBurstLimit, int globalBurstInterval, int groupBurstLimit, int groupBurstInterval)
-    {
-        GlobalBurstLimit = globalBurstLimit;
-        GlobalBurstInterval = globalBurstInterval;
-        _globalRateLimiter = new BurstRateLimiter(GlobalBurstLimit, GlobalBurstInterval);
+    public const int GlobalBurstInterval = 1000;
 
-        GroupBurstLimit = groupBurstLimit;
-        GroupBurstInterval = groupBurstInterval;
-        _groupRateLimiters = new ConcurrentDictionary<long, BurstRateLimiter>();
-    }
+    public const int GroupBurstLimit = 19;
 
-    private static BurstRateLimiter _globalRateLimiter = new(GlobalBurstLimit, GlobalBurstInterval);
-    private static ConcurrentDictionary<long, BurstRateLimiter> _groupRateLimiters = new();
+    public const int GroupBurstInterval = 60000;
+
+
+    private static readonly BurstRateLimiter GlobalRateLimiter = new(GlobalBurstLimit, GlobalBurstInterval);
+
+    private static readonly ConcurrentDictionary<long, BurstRateLimiter> GroupRateLimiters = new();
 
     public static async Task RunAsync(MongoChat mongoChat, Func<Task> makeRequest) => await RunAsync(mongoChat.Id, mongoChat.Type, makeRequest);
 
@@ -117,11 +111,11 @@ public static class RateLimiter
         {
             if (chatType is ChatType.Group or ChatType.Supergroup or ChatType.Channel)
             {
-                var rateLimiter = _groupRateLimiters.GetOrAdd(chatId, _ => new BurstRateLimiter(GroupBurstLimit, GroupBurstInterval));
+                var rateLimiter = GroupRateLimiters.GetOrAdd(chatId, _ => new BurstRateLimiter(GroupBurstLimit, GroupBurstInterval));
                 groupRateLimiterScope = await rateLimiter.NextAsync();
             }
 
-            using var _ = await _globalRateLimiter.NextAsync();
+            using var _ = await GlobalRateLimiter.NextAsync();
             return await makeRequest();
         }
         finally

@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Noppes.Fluffle.Bot;
 using Noppes.Fluffle.Bot.Controllers;
 using Noppes.Fluffle.Bot.Database;
 using Noppes.Fluffle.Bot.Interceptors;
@@ -11,7 +13,6 @@ using Noppes.Fluffle.Bot.ReverseSearch.Api;
 using Noppes.Fluffle.Bot.Routing;
 using Noppes.Fluffle.Bot.Services;
 using Noppes.Fluffle.Bot.Utils;
-using Noppes.Fluffle.Configuration;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -21,17 +22,16 @@ using Telegram.Bot.Types;
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
+services.AddOptions<BotConfiguration>()
+    .BindConfiguration("Bot")
+    .ValidateDataAnnotations().ValidateOnStart();
+
 services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
     options.KnownNetworks.Add(IPNetwork.Parse("0.0.0.0/0"));
     options.KnownNetworks.Add(IPNetwork.Parse("::/0"));
 });
-
-var conf = FluffleConfiguration.Load<Program>(false);
-var botConf = conf.Get<BotConfiguration>();
-
-services.AddSingleton(botConf);
 
 services.AddSingleton<ITelegramRepository<CallbackContext, string>, CallbackContextRepository>();
 services.AddSingleton<CallbackManager>();
@@ -46,21 +46,18 @@ services.AddHttpClient(nameof(FluffleApiClient), client =>
 });
 services.AddSingleton<FluffleApiClient>();
 
-services.AddSingleton(serviceProvider => new ReverseSearchScheduler(botConf.ReverseSearch.Workers, serviceProvider.GetRequiredService<FluffleApiClient>()));
+services.AddSingleton<ReverseSearchScheduler>();
 services.AddSingleton<ReverseSearchRequestLimiter>();
 
 services.AddSingleton<MessageCleanerService>();
 
-var context = new BotContext(botConf.MongoConnectionString, botConf.MongoDatabase);
-services.AddSingleton(context);
-services.AddSingleton(context.CallbackContexts);
-services.AddSingleton(context.InputContexts);
+services.AddSingleton<BotContext>();
 
-// Configure rate limiter to use values defined in the config
-RateLimiter.Initialize(botConf.TelegramGlobalBurstLimit, botConf.TelegramGlobalBurstInterval, botConf.TelegramGroupBurstLimit, botConf.TelegramGroupBurstInterval);
-
-var botClient = new TelegramBotClient(botConf.TelegramToken);
-services.AddSingleton<ITelegramBotClient>(botClient);
+services.AddSingleton<ITelegramBotClient>(serviceProvider =>
+{
+    var options = serviceProvider.GetRequiredService<IOptions<BotConfiguration>>();
+    return new TelegramBotClient(options.Value.TelegramToken);
+});
 services.AddHostedService<ConfigureWebhookService>();
 services.AddSingleton<TaskAwaiter<TelegramRouter>>();
 
@@ -81,14 +78,14 @@ app.UseForwardedHeaders();
 app.MapPost("/{token}", async (
     string token,
     HttpRequest request,
-    BotConfiguration botConfiguration,
+    IOptions<BotConfiguration> options,
     TelegramRouter router,
     TaskAwaiter<TelegramRouter> taskAwaiter) =>
 {
     if (string.IsNullOrWhiteSpace(token))
         return Results.BadRequest();
 
-    if (token != botConfiguration.TelegramToken)
+    if (token != options.Value.TelegramToken)
         return Results.Unauthorized();
 
     using var streamReader = new StreamReader(request.Body);

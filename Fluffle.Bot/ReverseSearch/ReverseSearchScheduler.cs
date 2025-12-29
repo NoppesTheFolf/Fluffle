@@ -1,4 +1,5 @@
-﻿using Noppes.Fluffle.Bot.ReverseSearch.Api;
+﻿using Microsoft.Extensions.Options;
+using Noppes.Fluffle.Bot.ReverseSearch.Api;
 using System.Threading.Tasks;
 
 namespace Noppes.Fluffle.Bot.ReverseSearch;
@@ -7,7 +8,7 @@ public class ReverseSearchScheduler : WorkScheduler<ReverseSearchSchedulerItem, 
 {
     private readonly FluffleApiClient _fluffleApiClient;
 
-    public ReverseSearchScheduler(int numberOfWorkers, FluffleApiClient fluffleApiClient) : base(numberOfWorkers)
+    public ReverseSearchScheduler(IOptions<BotConfiguration> options, FluffleApiClient fluffleApiClient) : base(options.Value.ReverseSearch.Workers)
     {
         _fluffleApiClient = fluffleApiClient;
     }

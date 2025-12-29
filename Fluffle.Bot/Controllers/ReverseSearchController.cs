@@ -1,11 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
 using Noppes.Fluffle.Bot.Database;
 using Noppes.Fluffle.Bot.ReverseSearch;
 using Noppes.Fluffle.Bot.ReverseSearch.Api;
 using Noppes.Fluffle.Bot.Routing;
 using Noppes.Fluffle.Bot.Utils;
-using Noppes.Fluffle.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,21 +22,24 @@ public class ReverseSearchController
 {
     private static readonly AsyncLock MessageLock = new();
 
-    private readonly BotConfiguration _configuration;
+    private readonly IOptions<BotConfiguration> _options;
     private readonly ITelegramBotClient _botClient;
     private readonly BotContext _context;
     private readonly ReverseSearchScheduler _reverseSearchScheduler;
     private readonly ReverseSearchRequestLimiter _reverseSearchRequestLimiter;
-    private readonly ILogger<ReverseSearchController> _logger;
 
-    public ReverseSearchController(BotConfiguration configuration, ITelegramBotClient botClient, BotContext context, ReverseSearchScheduler reverseSearchScheduler, ReverseSearchRequestLimiter reverseSearchRequestLimiter, ILogger<ReverseSearchController> logger)
+    public ReverseSearchController(
+        IOptions<BotConfiguration> options,
+        ITelegramBotClient botClient,
+        BotContext context,
+        ReverseSearchScheduler reverseSearchScheduler,
+        ReverseSearchRequestLimiter reverseSearchRequestLimiter)
     {
-        _configuration = configuration;
+        _options = options;
         _botClient = botClient;
         _context = context;
         _reverseSearchScheduler = reverseSearchScheduler;
         _reverseSearchRequestLimiter = reverseSearchRequestLimiter;
-        _logger = logger;
     }
 
     [Update(UpdateType.EditedChannelPost)]
@@ -109,7 +111,7 @@ public class ReverseSearchController
                 var hasSourcesInCaption = message.CaptionEntities
                     .Where(x => x.Url != null)
                     .Select(x => new Uri(x.Url))
-                    .Any(x => _configuration.TelegramKnownSources.Any(y => x.Host.Contains(y)));
+                    .Any(x => _options.Value.TelegramKnownSources.Any(y => x.Host.Contains(y)));
 
                 if (hasSourcesInCaption)
                     return;
@@ -121,7 +123,7 @@ public class ReverseSearchController
                     .SelectMany(x => x)
                     .Where(x => x.Url != null)
                     .Select(x => new Uri(x.Url))
-                    .Any(x => _configuration.TelegramKnownSources.Any(y => x.Host.Contains(y)));
+                    .Any(x => _options.Value.TelegramKnownSources.Any(y => x.Host.Contains(y)));
 
                 if (hasSourcesInReplyMarkup)
                     return;

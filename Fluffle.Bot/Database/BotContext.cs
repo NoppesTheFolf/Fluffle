@@ -1,4 +1,5 @@
-﻿using MongoDB.Driver;
+﻿using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using Noppes.Fluffle.Bot.Routing;
 using System.Threading.Tasks;
@@ -28,53 +29,50 @@ public class ReverseSearchHistoryRepository : Repository<MongoReverseSearchReque
 
 public class CallbackContextRepository : ITelegramRepository<CallbackContext, string>
 {
-    private readonly IMongoCollection<CallbackContext> _mongoCollection;
+    private readonly BotContext _context;
 
-    public CallbackContextRepository(IMongoCollection<CallbackContext> mongoCollection)
+    public CallbackContextRepository(BotContext context)
     {
-        _mongoCollection = mongoCollection;
+        _context = context;
     }
 
-    public async Task<CallbackContext> GetAsync(string id) => await _mongoCollection.AsQueryable().Where(x => x.Id == id).FirstOrDefaultAsync();
+    public async Task<CallbackContext> GetAsync(string id) => await _context.CallbackContexts.AsQueryable().Where(x => x.Id == id).FirstOrDefaultAsync();
 
-    public async Task DeleteAsync(string id) => await _mongoCollection.DeleteOneAsync(x => x.Id == id);
+    public async Task DeleteAsync(string id) => await _context.CallbackContexts.DeleteOneAsync(x => x.Id == id);
 
-    public async Task PutAsync(CallbackContext document) => await _mongoCollection.ReplaceOneAsync(x => x.Id == document.Id, document, new ReplaceOptions { IsUpsert = true });
+    public async Task PutAsync(CallbackContext document) => await _context.CallbackContexts.ReplaceOneAsync(x => x.Id == document.Id, document, new ReplaceOptions { IsUpsert = true });
 }
 
 public class InputContextRepository : ITelegramRepository<InputContext, long>
 {
-    private readonly IMongoCollection<InputContext> _mongoCollection;
+    private readonly BotContext _context;
 
-    public InputContextRepository(IMongoCollection<InputContext> mongoCollection)
+    public InputContextRepository(BotContext context)
     {
-        _mongoCollection = mongoCollection;
+        _context = context;
     }
 
-    public async Task<InputContext> GetAsync(long id) => await _mongoCollection.AsQueryable().Where(x => x.Id == id).FirstOrDefaultAsync();
+    public async Task<InputContext> GetAsync(long id) => await _context.InputContexts.AsQueryable().Where(x => x.Id == id).FirstOrDefaultAsync();
 
-    public async Task DeleteAsync(long id) => await _mongoCollection.DeleteOneAsync(x => x.Id == id);
+    public async Task DeleteAsync(long id) => await _context.InputContexts.DeleteOneAsync(x => x.Id == id);
 
-    public async Task PutAsync(InputContext document) => await _mongoCollection.ReplaceOneAsync(x => x.Id == document.Id, document, new ReplaceOptions { IsUpsert = true });
+    public async Task PutAsync(InputContext document) => await _context.InputContexts.ReplaceOneAsync(x => x.Id == document.Id, document, new ReplaceOptions { IsUpsert = true });
 }
 
 public class BotContext
 {
-    private readonly IMongoClient _mongoClient;
-    private readonly IMongoDatabase _mongoDatabase;
-
-    public BotContext(string connectionString, string database)
+    public BotContext(IOptions<BotConfiguration> options)
     {
-        _mongoClient = new MongoClient(connectionString);
-        _mongoDatabase = _mongoClient.GetDatabase(database);
+        var mongoClient = new MongoClient(options.Value.MongoConnectionString);
+        var mongoDatabase = mongoClient.GetDatabase(options.Value.MongoDatabase);
 
-        Chats = new ChatRepository(_mongoDatabase.GetCollection<MongoChat>("Chat"));
-        Messages = new MessageRepository(_mongoDatabase.GetCollection<MongoMessage>("Message"));
+        Chats = new ChatRepository(mongoDatabase.GetCollection<MongoChat>("Chat"));
+        Messages = new MessageRepository(mongoDatabase.GetCollection<MongoMessage>("Message"));
 
-        ReverseSearchRequestHistory = new ReverseSearchHistoryRepository(_mongoDatabase.GetCollection<MongoReverseSearchRequestHistory>("ReverseSearchRequestHistory"));
+        ReverseSearchRequestHistory = new ReverseSearchHistoryRepository(mongoDatabase.GetCollection<MongoReverseSearchRequestHistory>("ReverseSearchRequestHistory"));
 
-        CallbackContexts = _mongoDatabase.GetCollection<CallbackContext>("CallbackContext");
-        InputContexts = _mongoDatabase.GetCollection<InputContext>("InputContext");
+        CallbackContexts = mongoDatabase.GetCollection<CallbackContext>("CallbackContext");
+        InputContexts = mongoDatabase.GetCollection<InputContext>("InputContext");
     }
 
     public IMongoCollection<CallbackContext> CallbackContexts { get; }

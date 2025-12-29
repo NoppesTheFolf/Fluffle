@@ -1,6 +1,6 @@
-﻿using Nito.AsyncEx;
+﻿using Microsoft.Extensions.Options;
+using Nito.AsyncEx;
 using Noppes.Fluffle.Bot.Database;
-using Noppes.Fluffle.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,9 +20,9 @@ public class ReverseSearchRequestLimiter
 
     private readonly BotContext _botContext;
 
-    public ReverseSearchRequestLimiter(BotConfiguration configuration, BotContext botContext)
+    public ReverseSearchRequestLimiter(IOptions<BotConfiguration> options, BotContext botContext)
     {
-        var rateLimiterConf = configuration.ReverseSearch.RateLimiter;
+        var rateLimiterConf = options.Value.ReverseSearch.RateLimiter;
 
         _expirationTime = TimeSpan.FromMinutes(rateLimiterConf.ExpirationTime);
         _pressureTimeSpan = TimeSpan.FromMinutes(rateLimiterConf.PressureTimeSpan);

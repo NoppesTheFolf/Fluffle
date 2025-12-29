@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Noppes.Fluffle.Bot.Routing;
 using Noppes.Fluffle.Bot.Utils;
-using Noppes.Fluffle.Configuration;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -13,15 +13,15 @@ public class ConfigureWebhookService : IHostedService
 {
     private readonly ITelegramBotClient _botClient;
     private readonly TaskAwaiter<TelegramRouter> _taskAwaiter;
-    private readonly BotConfiguration _botConfiguration;
+    private readonly IOptions<BotConfiguration> _options;
     private readonly ILogger<ConfigureWebhookService> _logger;
 
     public ConfigureWebhookService(ITelegramBotClient botClient, TaskAwaiter<TelegramRouter> taskAwaiter,
-        BotConfiguration botConfiguration, ILogger<ConfigureWebhookService> logger)
+        IOptions<BotConfiguration> options, ILogger<ConfigureWebhookService> logger)
     {
         _botClient = botClient;
         _taskAwaiter = taskAwaiter;
-        _botConfiguration = botConfiguration;
+        _options = options;
         _logger = logger;
     }
 
@@ -30,7 +30,7 @@ public class ConfigureWebhookService : IHostedService
         // Setup webhook on app startup
         _logger.LogInformation("Setting webhook...");
 
-        var url = $"https://{_botConfiguration.TelegramHost}/{_botConfiguration.TelegramToken}";
+        var url = $"https://{_options.Value.TelegramHost}/{_options.Value.TelegramToken}";
         await _botClient.SetWebhookAsync(url, cancellationToken: cancellationToken);
     }
 

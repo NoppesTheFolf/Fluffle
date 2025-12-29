@@ -1,8 +1,8 @@
-﻿using Noppes.Fluffle.Bot.Database;
+﻿using Microsoft.Extensions.Options;
+using Noppes.Fluffle.Bot.Database;
 using Noppes.Fluffle.Bot.ReverseSearch;
 using Noppes.Fluffle.Bot.Routing;
 using Noppes.Fluffle.Bot.Utils;
-using Noppes.Fluffle.Configuration;
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,14 +16,14 @@ public class RateLimitController
 {
     private const int NumberOfBars = 8;
 
-    private readonly BotConfiguration _botConfiguration;
+    private readonly IOptions<BotConfiguration> _options;
     private readonly ReverseSearchRequestLimiter _historyTracker;
     private readonly BotContext _context;
     private readonly ITelegramBotClient _botClient;
 
-    public RateLimitController(BotConfiguration botConfiguration, ReverseSearchRequestLimiter historyTracker, BotContext context, ITelegramBotClient botClient)
+    public RateLimitController(IOptions<BotConfiguration> options, ReverseSearchRequestLimiter historyTracker, BotContext context, ITelegramBotClient botClient)
     {
-        _botConfiguration = botConfiguration;
+        _options = options;
         _historyTracker = historyTracker;
         _context = context;
         _botClient = botClient;
@@ -37,7 +37,7 @@ public class RateLimitController
         var builder = new StringBuilder();
         foreach (var (title, id) in chats)
         {
-            var limitPerChat = _botConfiguration.ReverseSearch.RateLimiter.Count;
+            var limitPerChat = _options.Value.ReverseSearch.RateLimiter.Count;
 
             // Add chat name
             builder.Append($"_{Markdown.Escape(title, ParseMode.MarkdownV2)}_\n");

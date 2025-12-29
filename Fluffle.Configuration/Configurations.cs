@@ -1,7 +1,6 @@
 ﻿using FluentValidation;
 using Noppes.Fluffle.Validation;
 using System;
-using System.Collections.Generic;
 
 namespace Noppes.Fluffle.Configuration;
 
@@ -128,118 +127,6 @@ public class SearchServerConfiguration : FluffleConfigurationPart<SearchServerCo
 
         RuleFor(o => o.SimilarityDataDumpLocation).NotEmpty();
         RuleFor(o => o.SimilarityDataDumpInterval).GreaterThan(TimeSpan.Zero);
-    }
-}
-
-[ConfigurationSection("Bot")]
-public class BotConfiguration : FluffleConfigurationPart<BotConfiguration>
-{
-    public string TelegramToken { get; set; }
-
-    public string TelegramHost { get; set; }
-
-    public int TelegramGlobalBurstLimit { get; set; }
-
-    public int TelegramGlobalBurstInterval { get; set; }
-
-    public int TelegramGroupBurstLimit { get; set; }
-
-    public int TelegramGroupBurstInterval { get; set; }
-
-    public ICollection<string> TelegramKnownSources { get; set; }
-
-    public string MongoConnectionString { get; set; }
-
-    public string MongoDatabase { get; set; }
-
-    public class ReverseSearchConfiguration : AbstractValidator<ReverseSearchConfiguration>
-    {
-        public int Workers { get; set; }
-
-        public class RateLimiterConfiguration : AbstractValidator<RateLimiterConfiguration>
-        {
-            public int Count { get; set; }
-
-            public int ExpirationTime { get; set; }
-
-            public int PressureTimeSpan { get; set; }
-
-            public int SaveEveryNthIncrement { get; set; }
-
-            public RateLimiterConfiguration()
-            {
-                RuleFor(o => o.Count).GreaterThan(0);
-                RuleFor(o => o.ExpirationTime).GreaterThan(0);
-                RuleFor(o => o.PressureTimeSpan).GreaterThan(0);
-                RuleFor(o => o.SaveEveryNthIncrement).GreaterThan(0);
-            }
-        }
-
-        public RateLimiterConfiguration RateLimiter { get; set; }
-
-        public ReverseSearchConfiguration()
-        {
-            RuleFor(o => o.Workers).GreaterThan(0);
-            RuleFor(o => o.RateLimiter).NotEmpty().SetValidator(o => o.RateLimiter);
-        }
-    }
-
-    public ReverseSearchConfiguration ReverseSearch { get; set; }
-
-    public class CleanerConfiguration : AbstractValidator<CleanerConfiguration>
-    {
-        public int Interval { get; set; }
-
-        public int ExpirationTime { get; set; }
-
-        public CleanerConfiguration()
-        {
-            RuleFor(o => o.Interval).GreaterThan(0);
-            RuleFor(o => o.ExpirationTime).GreaterThan(0);
-        }
-    }
-
-    public CleanerConfiguration MessageCleaner { get; set; }
-
-    public class BotBackblazeB2Configuration : BackblazeB2Configuration<BotBackblazeB2Configuration>
-    {
-        public int Workers { get; set; }
-
-        public BotBackblazeB2Configuration()
-        {
-            RuleFor(o => o.Workers).NotEmpty().GreaterThan(0);
-        }
-    }
-
-    public BotBackblazeB2Configuration IndexBackblazeB2 { get; set; }
-
-    public BotBackblazeB2Configuration ThumbnailBackblazeB2 { get; set; }
-
-    public string FluffleBaseUrl { get; set; }
-
-    public BotConfiguration()
-    {
-        RuleFor(o => o.TelegramToken).NotEmpty();
-        RuleFor(o => o.TelegramHost).NotEmpty();
-
-        RuleFor(o => o.TelegramGlobalBurstLimit).GreaterThan(0);
-        RuleFor(o => o.TelegramGlobalBurstInterval).GreaterThan(0);
-        RuleFor(o => o.TelegramGroupBurstLimit).GreaterThan(0);
-        RuleFor(o => o.TelegramGroupBurstInterval).GreaterThan(0);
-
-        RuleFor(o => o.TelegramKnownSources).NotEmpty();
-
-        RuleFor(o => o.MongoConnectionString).NotEmpty();
-        RuleFor(o => o.MongoDatabase).NotEmpty();
-
-        RuleFor(o => o.ReverseSearch).NotEmpty().SetValidator(o => o.ReverseSearch);
-
-        RuleFor(o => o.MessageCleaner).NotEmpty().SetValidator(o => o.MessageCleaner);
-
-        RuleFor(o => o.IndexBackblazeB2).NotEmpty().SetValidator(o => o.IndexBackblazeB2);
-        RuleFor(o => o.ThumbnailBackblazeB2).NotEmpty().SetValidator(o => o.ThumbnailBackblazeB2);
-
-        RuleFor(o => o.FluffleBaseUrl).NotEmpty().IsWellFormedHttpUrl();
     }
 }
 
