@@ -1,10 +1,12 @@
-.git/
-.vs/
-.vscode/
+.git
+.vs
+.vscode
+.idea
 
-*/bin/
-*/obj/
-*/.vscode/
+Fluffle.Inference.Api/*.pt
 
-*/node_modules/
-Fluffle.UI/dist/
+*/bin
+*/obj
+
+*/node_modules
+Fluffle.UI/dist
