@@ -5,6 +5,7 @@ using Fluffle.Feeder.Framework.StatePersistence;
 using Microsoft.Extensions.Options;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Fluffle.Feeder.Bluesky.JetstreamWatcher;
@@ -57,13 +58,21 @@ public class Worker : BackgroundService
                 }
 
                 messageBuffer.Position = 0;
-
                 var message = Encoding.UTF8.GetString(messageBuffer.ToArray());
-                var messageNode = JsonNode.Parse(message)!;
+                messageBuffer.SetLength(0);
+
+                JsonNode messageNode;
+                try
+                {
+                    messageNode = JsonNode.Parse(message)!;
+                }
+                catch (JsonException)
+                {
+                    _logger.LogWarning($"A {nameof(JsonException)} occurred while trying to parse a message as JSON.");
+                    continue;
+                }
 
                 await HandleMessage(messageNode);
-
-                messageBuffer.SetLength(0);
 
                 var unixTimeMicroseconds = messageNode["time_us"]!.GetValue<long>();
                 var elapsed = TimeSpan.FromMicroseconds(unixTimeMicroseconds - state.UnixTimeMicroseconds);
