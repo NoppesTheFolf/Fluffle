@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.1.1",
   "info": {
     "title": "Fluffle Search API",
     "version": "1.0.0"
@@ -23,11 +23,14 @@
                 "type": "object",
                 "properties": {
                   "File": {
-                    "type": "string",
-                    "format": "binary"
+                    "$ref": "#/components/schemas/IFormFile"
                   },
                   "Limit": {
-                    "type": "integer",
+                    "pattern": "^-?(?:0|[1-9]\\d*)$",
+                    "type": [
+                      "integer",
+                      "string"
+                    ],
                     "format": "int32"
                   }
                 }
@@ -97,8 +100,10 @@
         "type": "object",
         "properties": {
           "code": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "message": {
             "type": "string"
@@ -118,6 +123,10 @@
             }
           }
         }
+      },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
       },
       "SearchResultAuthorModel": {
         "required": [
@@ -152,11 +161,16 @@
             "type": "string"
           },
           "distance": {
-            "type": "number",
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
             "description": "A number between 0 and 1 that says something about how good of a match the image is. The distances are only useful relative to the other images in the result. You should not use this for thresholds or anything like that. It's subject to change and only meant to be displayed in a UI, like Fluffle's website does.",
             "format": "float"
           },
           "match": {
+            "description": "Whether the image is an exact, probable or unlikely match. Exact match means there is a very high probability of the result being an exact match. Probable match means it cannot be reliably determined whether the result is an exact match: it's either a duplicate or an alternative version of the image. Unlikely tells you that the chance of the result being a match is very low. It can however still be worth checking unlikely matches if the submitted image was cropped, for example.",
             "$ref": "#/components/schemas/SearchResultModelMatch"
           },
           "platform": {
@@ -172,7 +186,15 @@
             "description": "Whether or not the image is considered safe for work. Platforms like Twitter don't disclose this. Images from those platforms are always marked as not safe for work."
           },
           "thumbnail": {
-            "$ref": "#/components/schemas/SearchResultThumbnailModel"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Tiny version of the scraped image hosted by Fluffle.",
+                "$ref": "#/components/schemas/SearchResultThumbnailModel"
+              }
+            ]
           },
           "authors": {
             "type": "array",
@@ -189,8 +211,7 @@
           "probable",
           "unlikely"
         ],
-        "type": "string",
-        "description": "Whether the image is an exact, probable or unlikely match. Exact match means there is a very high probability of the result being an exact match. Probable match means it cannot be reliably determined whether the result is an exact match: it's either a duplicate or an alternative version of the image. Unlikely tells you that the chance of the result being a match is very low. It can however still be worth checking unlikely matches if the submitted image was cropped, for example."
+        "type": "string"
       },
       "SearchResultsModel": {
         "required": [
@@ -221,22 +242,38 @@
         "type": "object",
         "properties": {
           "width": {
-            "type": "integer",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
             "description": "Width of the thumbnail.",
             "format": "int32"
           },
           "centerX": {
-            "type": "integer",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
             "description": "Percentage the image has to shift horizontally for its content to be centered in a square. Works like the object-position CSS property.",
             "format": "int32"
           },
           "height": {
-            "type": "integer",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
             "description": "Height of the thumbnail.",
             "format": "int32"
           },
           "centerY": {
-            "type": "integer",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
             "description": "Percentage the image has to shift vertically for its content to be centered in a square. Works like the object-position CSS property.",
             "format": "int32"
           },
@@ -244,9 +281,7 @@
             "type": "string",
             "description": "URL at which the thumbnail can be found."
           }
-        },
-        "description": "Tiny version of the scraped image hosted by Fluffle.",
-        "nullable": true
+        }
       }
     }
   },

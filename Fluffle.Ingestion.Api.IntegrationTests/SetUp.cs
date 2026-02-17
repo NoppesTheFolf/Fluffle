@@ -20,16 +20,14 @@ public class SetUp
         .WithDockerfile("./Fluffle.Ingestion.Api/Dockerfile")
         .Build();
 
-    private static readonly IContainer ApiContainer = new ContainerBuilder()
-        .WithImage(ApiImage)
+    private static readonly IContainer ApiContainer = new ContainerBuilder(ApiImage)
         .WithNetwork(Network)
         .WithPortBinding(58945, 8080)
         .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(x => x.ForPort(8080).ForStatusCode(HttpStatusCode.Unauthorized)))
         .WithBindMount(Path.Join(CommonDirectoryPath.GetSolutionDirectory().DirectoryPath, "Fluffle.Ingestion.Api/appsettings.Integration.json"), "/app/appsettings.json", AccessMode.ReadOnly)
         .Build();
 
-    private static readonly MongoDbContainer MongoContainer = new MongoDbBuilder()
-        .WithImage("mongo:8.0")
+    private static readonly MongoDbContainer MongoContainer = new MongoDbBuilder("mongo:8.0")
         .WithNetwork(Network)
         .WithHostname("mongo")
         .WithUsername("root")

@@ -10,7 +10,7 @@ COPY . ./
 RUN dotnet build --no-restore --configuration Release
 RUN dotnet publish --no-build --configuration Release --output publish ./Fluffle.Feeder.Weasyl
 
-FROM mcr.microsoft.com/dotnet/runtime:9.0-noble-chiseled
+FROM mcr.microsoft.com/dotnet/runtime:10.0-noble-chiseled
 WORKDIR /app
 
 COPY --from=build /build/publish .

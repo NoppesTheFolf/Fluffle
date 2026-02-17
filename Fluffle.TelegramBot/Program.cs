@@ -1,13 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using Fluffle.TelegramBot;
+﻿using Fluffle.TelegramBot;
 using Fluffle.TelegramBot.Controllers;
 using Fluffle.TelegramBot.Database;
 using Fluffle.TelegramBot.Interceptors;
@@ -16,8 +7,18 @@ using Fluffle.TelegramBot.ReverseSearch.Api;
 using Fluffle.TelegramBot.Routing;
 using Fluffle.TelegramBot.Services;
 using Fluffle.TelegramBot.Utils;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using IPNetwork = System.Net.IPNetwork;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -29,8 +30,8 @@ services.AddOptions<BotConfiguration>()
 services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
-    options.KnownNetworks.Add(IPNetwork.Parse("0.0.0.0/0"));
-    options.KnownNetworks.Add(IPNetwork.Parse("::/0"));
+    options.KnownIPNetworks.Add(IPNetwork.Parse("0.0.0.0/0"));
+    options.KnownIPNetworks.Add(IPNetwork.Parse("::/0"));
 });
 
 services.AddSingleton<ITelegramRepository<CallbackContext, string>, CallbackContextRepository>();

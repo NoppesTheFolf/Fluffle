@@ -14,8 +14,7 @@ public class SetUp
         .WithDockerfile("./Fluffle.Imaging.Api/Dockerfile")
         .Build();
 
-    private static readonly IContainer ApiContainer = new ContainerBuilder()
-        .WithImage(ApiImage)
+    private static readonly IContainer ApiContainer = new ContainerBuilder(ApiImage)
         .WithPortBinding(51502, 8080)
         .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(x => x.ForPort(8080).ForStatusCode(HttpStatusCode.Unauthorized)))
         .WithBindMount(Path.Join(CommonDirectoryPath.GetSolutionDirectory().DirectoryPath, "Fluffle.Imaging.Api/appsettings.Integration.json"), "/app/appsettings.json", AccessMode.ReadOnly)

@@ -1,5 +1,5 @@
 # base stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS base
 
 RUN apt-get update && apt-get install -y libvips
 
@@ -18,7 +18,7 @@ COPY . ./
 RUN dotnet build --no-restore --configuration Release
 RUN dotnet publish --no-build --configuration Release --output publish ./Fluffle.Imaging.Api
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y libvips

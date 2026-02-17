@@ -25,7 +25,7 @@ public class BlueskyApiClient : IBlueskyApiClient
             var apiProfile = await response.Content.ReadFromJsonAsync<BlueskyApiProfile>();
             return apiProfile!;
         }
-        catch (HttpRequestException e)
+        catch (HttpRequestException)
         {
             var apiError = await response.Content.ReadFromJsonAsync<BlueskyApiError>();
             throw new BlueskyApiException(apiError!);

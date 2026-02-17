@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.OpenApi;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
+using System.Text.Json.Nodes;
 
 namespace Fluffle.Search.Api.OpenApi;
 
@@ -15,13 +15,14 @@ internal class JsonStringEnumSchemaTransformer : IOpenApiSchemaTransformer
             return Task.CompletedTask;
         }
 
-        schema.Type = "string";
+        schema.Type = JsonSchemaType.String;
+        schema.Enum ??= [];
         schema.Enum.Clear();
 
         var names = Enum.GetNames(type);
         foreach (var name in names)
         {
-            schema.Enum.Add(new OpenApiString(name.ToLowerInvariant()));
+            schema.Enum.Add(JsonValue.Create(name.ToLowerInvariant()));
         }
 
         return Task.CompletedTask;

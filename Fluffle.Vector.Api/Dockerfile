@@ -10,7 +10,7 @@ COPY . ./
 RUN dotnet build --no-restore --configuration Release
 RUN dotnet publish --no-build --configuration Release --output publish ./Fluffle.Vector.Api
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble-chiseled
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled
 WORKDIR /app
 
 COPY --from=build /build/publish .

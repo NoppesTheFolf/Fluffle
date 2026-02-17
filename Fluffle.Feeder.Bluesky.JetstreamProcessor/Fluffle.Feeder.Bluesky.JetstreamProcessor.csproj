@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UserSecretsId>dotnet-Fluffle.Feeder.Bluesky.JetstreamProcessor-387549b7-d9ad-477c-9756-8bc550316a4a</UserSecretsId>
@@ -9,7 +9,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="AsyncKeyedLock" Version="7.1.7" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
 	</ItemGroup>
 
 	<ItemGroup>

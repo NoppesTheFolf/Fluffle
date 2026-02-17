@@ -14,8 +14,7 @@ public class SetUp
         .WithDockerfile("./Fluffle.Inference.Api/Dockerfile")
         .Build();
 
-    private static readonly IContainer ApiContainer = new ContainerBuilder()
-        .WithImage(ApiImage)
+    private static readonly IContainer ApiContainer = new ContainerBuilder(ApiImage)
         .WithPortBinding(51408, 8000)
         .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(x => x.ForPort(8000).ForStatusCode(HttpStatusCode.Unauthorized)))
         .WithBindMount(Path.Join(CommonDirectoryPath.GetSolutionDirectory().DirectoryPath, "Fluffle.Inference.Api/exactMatchV2.pt"), "/app/exactMatchV2.pt", AccessMode.ReadOnly)
