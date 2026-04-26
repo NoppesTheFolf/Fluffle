@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-resolute AS build
 WORKDIR /build
 
 COPY ./**/*.csproj ./
@@ -10,7 +10,7 @@ COPY . ./
 RUN dotnet build --no-restore --configuration Release
 RUN dotnet publish --no-build --configuration Release --output publish ./Fluffle.Ingestion.Api
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-resolute-chiseled
 WORKDIR /app
 
 COPY --from=build /build/publish .
