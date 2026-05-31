@@ -39,44 +39,51 @@ internal partial class FurAffinityClient
         }
 
         ValidateLogin(document);
-
-        var submissionContent = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-content')]")!;
-        var sidebar = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-sidebar')]")!;
-
+        
         // Extract number of views, comments and favorites, and the submission its rating
-        var statsNode = sidebar.SelectSingleNode("./section[contains(@class, 'stats-container')]")!;
-        var stats = statsNode.ChildNodes
+        var pageStatsNode = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-page-stats')]")!;
+        var pageStats = pageStatsNode.ChildNodes
             .Where(x => x.NodeType == HtmlNodeType.Element)
             .Select(x =>
             {
-                var spans = x.ChildNodes.Where(y => y.Name == "span").ToArray();
-
+                var nodes = x.ChildNodes.Where(y => y.NodeType == HtmlNodeType.Element).ToArray();
+                
+                if (nodes.Length != 2)
+                    throw new InvalidOperationException("Submission page stats must have exactly 2 elements.");
+                
                 return new
                 {
-                    Key = spans[1].InnerText.Trim(),
-                    Value = spans[0].InnerText.Trim()
+                    Key = nodes[1].InnerText.Trim(),
+                    Value = nodes[0].InnerText.Trim()
                 };
             })
             .ToDictionary(x => x.Key, x => x.Value);
 
-        var ratingUnparsed = stats["Rating"];
+        var ratingUnparsed = pageStats["Rating"];
         var rating = string.IsNullOrWhiteSpace(ratingUnparsed)
             ? FaSubmissionRating.General // Apparently some submissions have an empty rating and are publicly accessible, hence we're defaulting to general here
             : Enum.Parse<FaSubmissionRating>(ratingUnparsed, true);
 
         // Extract the submission its size
-        var infoNode = sidebar.SelectSingleNode("./section[contains(@class, 'info')]")!;
-        var info = infoNode.ChildNodes
-            .Where(x => x.NodeType != HtmlNodeType.Text)
+        var contentStatsNode = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-content-stats')]");
+        var contentStatsNodeChildren = contentStatsNode.ChildNodes
+                .Where(x => x.NodeType == HtmlNodeType.Element)
+                .ToArray();
+        
+        if (contentStatsNodeChildren.Length != 2)
+            throw new InvalidOperationException("Submission content stats must have exactly 2 elements.");
+        
+        var contentStats = contentStatsNodeChildren[0].ChildNodes.Where(x => x.NodeType == HtmlNodeType.Element)
+            .Zip(contentStatsNodeChildren[1].ChildNodes.Where(x => x.NodeType == HtmlNodeType.Element))
             .Select(x => new
             {
-                Key = x.FirstChild.InnerText.Trim(),
-                Value = x.ChildNodes.Skip(1).First(y => y.NodeType != HtmlNodeType.Text).InnerText.Trim()
+                Key = x.First.InnerText.Trim(),
+                Value = x.Second.InnerText.Trim()
             }).ToDictionary(x => x.Key, x => x.Value);
-
+        
         // Not all submission have a size (Flash files for example)
         FaSize? size = null;
-        if (info.TryGetValue("Size", out var infoSize))
+        if (contentStats.TryGetValue("Resolution", out var infoSize))
         {
             var widthAndHeight = infoSize.Split("x").Select(int.Parse).ToArray();
             size = new FaSize
@@ -85,26 +92,31 @@ internal partial class FurAffinityClient
                 Height = widthAndHeight[1]
             };
         }
-
+        
         // Extract the submission its download URL and time
-        var buttonsNode = sidebar.SelectSingleNode("./section[contains(@class, 'buttons')]")!;
-        var downloadButton = buttonsNode.SelectSingleNode("./div[contains(@class, 'download')]")!;
-        var downloadUrl = "https:" + downloadButton.FirstChild.Attributes["href"].Value;
+        var buttonsNode = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-controls-upper')]")!;
+        var downloadButton = buttonsNode.SelectSingleNode("./a[text()='Download']")!;
+        var downloadUrl = "https:" + downloadButton.Attributes["href"].Value;
         var fileLocation = new Uri(downloadUrl);
 
         var thumbnailUnixTime = long.Parse(string.Concat(Path.GetFileName(Path.GetDirectoryName(downloadUrl))!.TakeWhile(char.IsDigit)));
         var thumbnailWhen = DateTimeOffset.FromUnixTimeSeconds(thumbnailUnixTime).ToUniversalTime();
 
         // Extract the owner
-        var headerInfoNode = submissionContent.SelectSingleNode(".//div[contains(@class, 'submission-id-sub-container')]")!;
-        var ownerNode = headerInfoNode.SelectSingleNode(".//a[contains(@href, '/user/')]")!;
+        var descriptionArtistNode = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'submission-description-artist')]");
+        var descriptionArtistDesktopNode = descriptionArtistNode.ChildNodes
+            .Where(x => x.NodeType == HtmlNodeType.Element)
+            .Skip(1)
+            .Last();
+        
+        var ownerNode = descriptionArtistDesktopNode.SelectSingleNode(".//a[contains(@href, '/user/')]")!;
         var owner = new FaOwner
         {
             Id = OwnerIdRegex().Match(ownerNode.Attributes["href"].Value).Groups[1].Value,
             Name = ownerNode.InnerText.Trim()
         };
-
-        var whenNode = headerInfoNode.SelectSingleNode(".//span[contains(@class, 'popup_date')]")!;
+        
+        var whenNode = descriptionArtistDesktopNode.SelectSingleNode(".//span[contains(@class, 'popup_date')]")!;
         var whenUnparsed = whenNode.Attributes["title"].Value;
         var when = DateTimeOffset.Parse(whenUnparsed, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
 
