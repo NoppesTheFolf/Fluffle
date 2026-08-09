@@ -1,17 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-Fluffle.Ingestion.Worker-3676b2ae-d4bb-4769-b053-eaa02e7ab1b8</UserSecretsId>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
+    <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Fluffle.Content.Api.Client\Fluffle.Content.Api.Client.csproj" />
     <ProjectReference Include="..\Fluffle.Imaging.Api.Client\Fluffle.Imaging.Api.Client.csproj" />
@@ -19,5 +16,4 @@
     <ProjectReference Include="..\Fluffle.Ingestion.Api.Client\Fluffle.Ingestion.Api.Client.csproj" />
     <ProjectReference Include="..\Fluffle.Vector.Api.Client\Fluffle.Vector.Api.Client.csproj" />
   </ItemGroup>
-
 </Project>

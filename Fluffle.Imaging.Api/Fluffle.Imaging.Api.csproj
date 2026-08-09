@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -7,14 +6,11 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <UserSecretsId>8f59b351-2636-494c-8587-cfb4a2e4d10b</UserSecretsId>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
-    <PackageReference Include="NetVips" Version="3.2.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+    <PackageReference Include="NetVips" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Fluffle.Imaging.Api.Models\Fluffle.Imaging.Api.Models.csproj" />
   </ItemGroup>
-
 </Project>

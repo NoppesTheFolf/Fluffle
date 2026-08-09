@@ -1,21 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
-
-	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<UserSecretsId>dotnet-Fluffle.Feeder.Bluesky.JetstreamProcessor-387549b7-d9ad-477c-9756-8bc550316a4a</UserSecretsId>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="AsyncKeyedLock" Version="8.0.2" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Fluffle.Feeder.Bluesky.Mongo\Fluffle.Feeder.Bluesky.Mongo.csproj" />
-		<ProjectReference Include="..\Fluffle.Feeder.Framework\Fluffle.Feeder.Framework.csproj" />
-		<ProjectReference Include="..\Fluffle.Inference.Api.Client\Fluffle.Inference.Api.Client.csproj" />
-	</ItemGroup>
-
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-Fluffle.Feeder.Bluesky.JetstreamProcessor-387549b7-d9ad-477c-9756-8bc550316a4a</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="AsyncKeyedLock" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Fluffle.Feeder.Bluesky.Mongo\Fluffle.Feeder.Bluesky.Mongo.csproj" />
+    <ProjectReference Include="..\Fluffle.Feeder.Framework\Fluffle.Feeder.Framework.csproj" />
+    <ProjectReference Include="..\Fluffle.Inference.Api.Client\Fluffle.Inference.Api.Client.csproj" />
+  </ItemGroup>
 </Project>

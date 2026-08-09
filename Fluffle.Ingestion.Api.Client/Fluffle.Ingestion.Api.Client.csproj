@@ -1,19 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.7" />
-		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.7" />
-		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.7" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Fluffle.Ingestion.Api.Models\Fluffle.Ingestion.Api.Models.csproj" />
-	</ItemGroup>
-
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Fluffle.Ingestion.Api.Models\Fluffle.Ingestion.Api.Models.csproj" />
+  </ItemGroup>
 </Project>

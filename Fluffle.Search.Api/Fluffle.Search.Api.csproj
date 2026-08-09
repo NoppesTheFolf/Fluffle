@@ -1,37 +1,32 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-
-	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<UserSecretsId>90e84049-781a-4156-bb6d-919f6450929d</UserSecretsId>
-		<OpenApiDocumentsDirectory>.</OpenApiDocumentsDirectory>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="FluentValidation" Version="12.1.1" />
-		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
-		<PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.7">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="Microsoft.Extensions.ML" Version="4.0.2" />
-		<PackageReference Include="Microsoft.ML" Version="4.0.2" />
-		<PackageReference Include="Microsoft.ML.LightGbm" Version="4.0.2" />
-		<PackageReference Include="System.IO.Hashing" Version="10.0.7" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Fluffle.Content.Api.Client\Fluffle.Content.Api.Client.csproj" />
-		<ProjectReference Include="..\Fluffle.Imaging.Api.Client\Fluffle.Imaging.Api.Client.csproj" />
-		<ProjectReference Include="..\Fluffle.Inference.Api.Client\Fluffle.Inference.Api.Client.csproj" />
-		<ProjectReference Include="..\Fluffle.Vector.Api.Client\Fluffle.Vector.Api.Client.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Update="ML\ExactMatchV2IsMatch.mlnet">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
-
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>90e84049-781a-4156-bb6d-919f6450929d</UserSecretsId>
+    <OpenApiDocumentsDirectory>.</OpenApiDocumentsDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.ML" />
+    <PackageReference Include="Microsoft.ML" />
+    <PackageReference Include="Microsoft.ML.LightGbm" />
+    <PackageReference Include="System.IO.Hashing" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Fluffle.Content.Api.Client\Fluffle.Content.Api.Client.csproj" />
+    <ProjectReference Include="..\Fluffle.Imaging.Api.Client\Fluffle.Imaging.Api.Client.csproj" />
+    <ProjectReference Include="..\Fluffle.Inference.Api.Client\Fluffle.Inference.Api.Client.csproj" />
+    <ProjectReference Include="..\Fluffle.Vector.Api.Client\Fluffle.Vector.Api.Client.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="ML\ExactMatchV2IsMatch.mlnet">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

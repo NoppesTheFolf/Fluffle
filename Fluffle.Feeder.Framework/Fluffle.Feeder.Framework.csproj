@@ -1,22 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
-		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.59.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-		<PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
-		<PackageReference Include="System.Threading.RateLimiting" Version="10.0.7" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Fluffle.Ingestion.Api.Client\Fluffle.Ingestion.Api.Client.csproj" />
-	</ItemGroup>
-
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Nito.AsyncEx" />
+    <PackageReference Include="System.Threading.RateLimiting" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Fluffle.Ingestion.Api.Client\Fluffle.Ingestion.Api.Client.csproj" />
+  </ItemGroup>
 </Project>
