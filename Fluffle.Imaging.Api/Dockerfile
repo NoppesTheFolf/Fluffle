@@ -12,6 +12,7 @@ WORKDIR /build
 COPY ./**/*.csproj ./
 RUN ls | while read line; do mkdir $(basename $line .csproj) && mv $line $(basename $line .csproj); done
 COPY ./Fluffle.sln ./
+COPY ./Directory.Packages.props ./
 RUN dotnet restore
 
 COPY . ./
