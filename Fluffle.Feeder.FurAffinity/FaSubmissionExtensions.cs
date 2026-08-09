@@ -45,6 +45,12 @@ internal static class FaSubmissionExtensions
             return $"Submission is of an unsupported type ({fileExtension})";
         }
 
+        // Handles weird submissions like https://www.furaffinity.net/view/43164534/ where the image leads to a 404
+        if (submission.Size == null)
+        {
+            return "Edge case where image has been deleted, but submission has not been";
+        }
+
         return null;
     }
 }
