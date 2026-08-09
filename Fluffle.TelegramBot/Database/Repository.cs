@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -17,21 +18,21 @@ public interface IRepository<T> where T : class
 
     public Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate) => QueryFirstOrDefaultAsync(x => x.Where(predicate));
 
-    public Task<T> QueryFirstOrDefaultAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+    public Task<T> QueryFirstOrDefaultAsync(Func<IQueryable<T>, IQueryable<T>> applyFilter);
 
     public Task<T> FirstAsync(Expression<Func<T, bool>> predicate) => QueryFirstAsync(x => x.Where(predicate));
 
-    public Task<T> QueryFirstAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+    public Task<T> QueryFirstAsync(Func<IQueryable<T>, IQueryable<T>> applyFilter);
 
     public Task<List<T>> ManyAsync(Expression<Func<T, bool>> predicate) => QueryManyAsync(x => x.Where(predicate));
 
-    public Task<List<T>> QueryManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+    public Task<List<T>> QueryManyAsync(Func<IQueryable<T>, IQueryable<T>> applyFilter);
 
     public Task<long> DeleteManyAsync(Expression<Func<T, bool>> predicate);
 
     public Task<bool> AnyAsync(Expression<Func<T, bool>> predicate) => QueryAnyAsync(x => x.Where(predicate));
 
-    public Task<bool> QueryAnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter);
+    public Task<bool> QueryAnyAsync(Func<IQueryable<T>, IQueryable<T>> applyFilter);
 }
 
 public abstract class Repository<T> : IRepository<T> where T : class, new()
@@ -53,7 +54,7 @@ public abstract class Repository<T> : IRepository<T> where T : class, new()
         return _collection.ReplaceOneAsync(predicate, document);
     }
 
-    public Task<List<T>> QueryManyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+    public Task<List<T>> QueryManyAsync(Func<IQueryable<T>, IQueryable<T>> applyFilter)
     {
         return applyFilter(_collection.AsQueryable()).ToListAsync();
     }
@@ -65,17 +66,17 @@ public abstract class Repository<T> : IRepository<T> where T : class, new()
         return result.DeletedCount;
     }
 
-    public Task<bool> QueryAnyAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+    public Task<bool> QueryAnyAsync(Func<IQueryable<T>, IQueryable<T>> applyFilter)
     {
         return applyFilter(_collection.AsQueryable()).AnyAsync();
     }
 
-    public Task<T> QueryFirstAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+    public Task<T> QueryFirstAsync(Func<IQueryable<T>, IQueryable<T>> applyFilter)
     {
         return applyFilter(_collection.AsQueryable()).FirstAsync();
     }
 
-    public Task<T> QueryFirstOrDefaultAsync(Func<IMongoQueryable<T>, IMongoQueryable<T>> applyFilter)
+    public Task<T> QueryFirstOrDefaultAsync(Func<IQueryable<T>, IQueryable<T>> applyFilter)
     {
         return applyFilter(_collection.AsQueryable()).FirstOrDefaultAsync();
     }

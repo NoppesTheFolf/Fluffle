@@ -8,7 +8,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MongoDB.Driver" Version="2.17.1" />
+		<PackageReference Include="MongoDB.Driver" Version="3.8.0" />
 		<PackageReference Include="Telegram.Bot" Version="18.0.0" />
 		<PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
 	</ItemGroup>
